@@ -1,0 +1,103 @@
+/* Placeholder styling. Palette follows the art direction (docs/CONCEPT.md §9):
+   bone, ink black, ember red, candle gold. */
+:root {
+  --ink: #16120f;
+  --ink-2: #211b16;
+  --ink-3: #2e261f;
+  --bone: #e8dfcf;
+  --bone-dim: #a89c88;
+  --ember: #b8412c;
+  --gold: #d9a441;
+  --line: #3d3329;
+  --radius: 6px;
+  font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+  color: var(--bone);
+  background: var(--ink);
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--ink); }
+h1, h2 { font-weight: normal; letter-spacing: 0.02em; margin: 0 0 12px; }
+h1 { font-size: 20px; color: var(--gold); margin: 0; }
+h2 { font-size: 18px; }
+
+button {
+  font: inherit;
+  color: var(--ink);
+  background: var(--gold);
+  border: none;
+  border-radius: var(--radius);
+  padding: 6px 14px;
+  cursor: pointer;
+}
+button:disabled { background: var(--ink-3); color: var(--bone-dim); cursor: not-allowed; }
+button.danger { background: var(--ember); color: var(--bone); }
+
+.muted { color: var(--bone-dim); }
+.warn { color: var(--ember); }
+
+.app {
+  display: grid;
+  grid-template-columns: 220px 1fr 240px;
+  grid-template-rows: auto 1fr auto;
+  grid-template-areas: "top top top" "skills actions inventory" "footer footer footer";
+  min-height: 100vh;
+  gap: 16px;
+  padding: 16px;
+}
+
+.topbar { grid-area: top; display: flex; align-items: center; gap: 24px; }
+.active { display: flex; align-items: center; gap: 12px; flex: 1; }
+.active .bar { flex: 1; max-width: 320px; }
+.active.idle { color: var(--bone-dim); }
+
+.bar { display: block; height: 6px; background: var(--ink-3); border-radius: 3px; overflow: hidden; }
+.bar-fill { display: block; height: 100%; background: var(--gold); }
+
+.skills { grid-area: skills; display: flex; flex-direction: column; gap: 6px; }
+.skill {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px;
+  text-align: left;
+  background: var(--ink-2);
+  color: var(--bone);
+  border: 1px solid var(--line);
+}
+.skill .bar { grid-column: 1 / -1; }
+.skill.selected { border-color: var(--gold); }
+.skill-level { color: var(--bone-dim); }
+
+.actions { grid-area: actions; display: flex; flex-direction: column; gap: 8px; }
+.action {
+  display: grid;
+  grid-template-columns: 1fr 2fr 110px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.action.running { border-color: var(--gold); }
+.action.locked { opacity: 0.5; }
+.action-main { display: flex; flex-direction: column; gap: 2px; }
+.action-io { font-size: 14px; }
+.short { color: var(--ember); }
+
+.inventory { grid-area: inventory; }
+.items { list-style: none; padding: 0; margin: 0; }
+.items li { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px solid var(--line); }
+
+.footer { grid-area: footer; }
+.save-tools { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.save-tools textarea { font: 12px monospace; background: var(--ink-2); color: var(--bone); border: 1px solid var(--line); border-radius: var(--radius); padding: 8px; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+.modal-backdrop { position: fixed; inset: 0; background: rgb(0 0 0 / 0.6); display: grid; place-items: center; padding: 16px; }
+.modal { background: var(--ink-2); border: 1px solid var(--gold); border-radius: var(--radius); padding: 24px; width: min(420px, 100%); display: flex; flex-direction: column; gap: 8px; }
+
+@media (max-width: 800px) {
+  .app { grid-template-columns: 1fr; grid-template-areas: "top" "skills" "actions" "inventory" "footer"; }
+  .action { grid-template-columns: 1fr; }
+}
