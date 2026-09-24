@@ -12,31 +12,31 @@ export const KINDLING_PARTS = {
   light: {
     name: "The Light",
     skill: "chandlery",
-    items: { tallow_candle: 8, beeswax_candle: 3 },
+    items: { tallow_candle: 25, beeswax_candle: 6 },
     placed: "Candles at the four quarters. The chalk under them remembers being warm.",
   },
   ward: {
     name: "The Ward",
     skill: "sigilcraft",
-    items: { salt_line: 12, ash_sigil: 4 },
+    items: { salt_line: 25, ash_sigil: 8 },
     placed: "Salt closes the ring. The draught along the floor stops.",
   },
   smoke: {
     name: "The Smoke",
     skill: "herbalism",
-    items: { smudge: 3, mugwort_incense: 1 },
+    items: { smudge: 13, mugwort_incense: 4 },
     placed: "Smoke settles in the circle and stays there, as if the room had walls inside it.",
   },
   words: {
     name: "The Words",
     skill: "scholarship",
-    items: { deciphered_page: 2, litany: 1 },
+    items: { deciphered_page: 7, litany: 1 },
     placed: "You lay the Litany open in the middle. The ink looks fresher than it did.",
   },
   offering: {
     name: "The Offering",
     skill: "ritualism",
-    items: { bread: 2, salt: 3, consecrated_salt: 6 },
+    items: { bread: 2, salt: 3, consecrated_salt: 10 },
     placed: "Bread and salt at the circle's edge, the way she wrote it. Now it only needs waking.",
   },
 } as const satisfies Record<string, { name: string; skill: SkillId; items: Partial<Record<ItemId, number>>; placed: string }>;
@@ -49,7 +49,7 @@ export const PART_DEFS: Record<PartId, { name: string; skill: SkillId; items: Pa
 export const HEARTH_RITE = {
   name: "Kindling of the Hearth-Circle",
   description: "Wake the circle grandmother drew in the floor. It has been waiting for you.",
-  skills: { ritualism: 5 } as Partial<Record<SkillId, number>>,
+  skills: { ritualism: 2 } as Partial<Record<SkillId, number>>,
   durationMs: 30 * MIN,
   /** Lines of the rite, revealed as it runs (fraction of the duration, text). */
   log: [

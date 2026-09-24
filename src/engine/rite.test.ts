@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { ACTION_DEFS } from "../content/actions";
 import { NOTES } from "../content/notes";
 import { PAGES } from "../content/pages";
 import { HEARTH_RITE, PART_DEFS, PART_IDS, QUALITIES } from "../content/rite";
@@ -45,7 +46,7 @@ describe("requirements", () => {
     const s = ready({ kindling: ["light", "ward"], skills: { ...newGame().skills } });
     const short = riteShortfall(s);
     expect(short.parts).toEqual(["smoke", "words", "offering"]);
-    expect(short.skills).toEqual([{ skill: "ritualism", have: 1, need: 5 }]);
+    expect(short.skills).toEqual([{ skill: "ritualism", have: 1, need: HEARTH_RITE.skills.ritualism }]);
     expect(beginRite(s).ok).toBe(false);
     expect(beginRite(ready({ kindling: ["light"] })).ok).toBe(false);
   });
@@ -55,30 +56,30 @@ describe("placing parts", () => {
   const early = () => ({ ...ready(), kindling: [], notesRevealed: 2 });
 
   it("uses the part's items and keeps it in the Circle", () => {
-    const s = { ...early(), inventory: { tallow_candle: 10, beeswax_candle: 3 } };
+    const s = { ...early(), inventory: { tallow_candle: PART_DEFS.light.items.tallow_candle! + 2, beeswax_candle: PART_DEFS.light.items.beeswax_candle! } };
     const placed = okay(placePart(s, "light"));
     expect(placed.kindling).toEqual(["light"]);
-    expect(placed.inventory).toEqual({ tallow_candle: 10 - PART_DEFS.light.items.tallow_candle!, beeswax_candle: 0 });
+    expect(placed.inventory).toEqual({ tallow_candle: 2, beeswax_candle: 0 });
   });
 
   it("refuses when short, or when already placed", () => {
-    const s = { ...early(), inventory: { tallow_candle: 10 } };
+    const s = { ...early(), inventory: { tallow_candle: 99 } };
     const r = placePart(s, "light");
     expect(!r.ok && r.reason).toMatch(/isn't ready/);
-    const full = { ...early(), inventory: { tallow_candle: 20, beeswax_candle: 6 } };
+    const full = { ...early(), inventory: { tallow_candle: 99, beeswax_candle: 99 } };
     const once = okay(placePart(full, "light"));
     expect(placePart(once, "light").ok).toBe(false);
   });
 
   it("completes the stage's note and brings the next skill", () => {
-    const s = { ...early(), inventory: { tallow_candle: 8, beeswax_candle: 3 } };
+    const s = { ...early(), inventory: { ...PART_DEFS.light.items } };
     const r = placePart(s, "light");
     expect(r.ok && r.notes).toEqual([NOTES[2]]);
     expect(okay(r).notesRevealed).toBe(3);
   });
 
   it("needs the Circle to be open", () => {
-    const closed = { ...newGame(T0, 1), notesRevealed: 0, inventory: { tallow_candle: 8, beeswax_candle: 3 } };
+    const closed = { ...newGame(T0, 1), notesRevealed: 0, inventory: { ...PART_DEFS.light.items } };
     expect(placePart(closed, "light").ok).toBe(false);
   });
 });
@@ -164,8 +165,8 @@ describe("after the chapter", () => {
 
   it("Janko speeds up whatever you're doing, more on Chandlery", () => {
     const s = done(); // Herbalism and Chandlery are still level 1 here
-    expect(actionDurationMs(s, "pick_nettle")).toBeCloseTo(2000 / 1.3);
-    expect(actionDurationMs(s, "tallow_candle")).toBeCloseTo(2000 / 1.5);
+    expect(actionDurationMs(s, "pick_nettle")).toBeCloseTo((ACTION_DEFS.pick_nettle.seconds * 1000) / 1.3);
+    expect(actionDurationMs(s, "tallow_candle")).toBeCloseTo((ACTION_DEFS.tallow_candle.seconds * 1000) / 1.5);
   });
 
   it("Hana's double pay ends with the chapter", () => {
@@ -203,7 +204,7 @@ describe("save v5", () => {
 
   it("mid-chapter keeps every skill and place, and starts the Kindling at the Light", () => {
     // Old note 5 was Sigilcraft: Scavenging, Chandlery, Herbalism, Scholarship and Sigilcraft were open, and the Grimoire.
-    const loaded = deserialize(v4({ notesRevealed: 5, inventory: { tallow_candle: 9, beeswax_candle: 3 } }));
+    const loaded = deserialize(v4({ notesRevealed: 5, inventory: { ...PART_DEFS.light.items } }));
     expect(loaded.kindling).toEqual([]);
     expect(loaded.kept.skills.sort()).toEqual(["chandlery", "herbalism", "scavenging", "scholarship", "sigilcraft"]);
     expect(isFeatureOpen(loaded, "grimoire")).toBe(true);

@@ -1,5 +1,6 @@
 import { ACTION_DEFS, type ActionId } from "../content/actions";
-import { PART_DEFS, PART_IDS } from "../content/rite";
+import { PART_DEFS, PART_IDS, type PartId } from "../content/rite";
+import { NOTES } from "../content/notes";
 import { REQUESTS } from "../content/requests";
 import { SHOP } from "../content/shop";
 import { GRIMOIRE_DEFS } from "../content/grimoire";
@@ -34,16 +35,41 @@ function inputsInReach(state: GameState, id: ActionId): boolean {
 }
 
 /**
+ * True if a gatherer's finds have a use you can see: an open Kindling part, a known recipe in an
+ * open skill (whose own inputs are in reach), or a request on the board. Crafts always count.
+ * So sweeping (ash) waits until Sigilcraft wants ash; the attic waits for Scholarship's pages.
+ */
+function outputWanted(state: GameState, id: ActionId): boolean {
+  const def = ACTION_DEFS[id];
+  if (Object.keys(def.inputs).length > 0) return true;
+  const openParts = PART_IDS.filter((p) => !state.kindling.includes(p) && partOpen(state, p));
+  const sure = def.outputs.filter((o) => o.chance === undefined || o.chance >= 0.3).map((o) => o.item);
+  return sure.some(
+    (item) =>
+      openParts.some((p) => (PART_DEFS[p].items[item] ?? 0) > 0) ||
+      ACTION_IDS.some((a) => a !== id && item in ACTION_DEFS[a].inputs && isSkillUnlocked(state, ACTION_DEFS[a].skill) && isRecipeKnown(state, a) && inputsInReach(state, a)) ||
+      state.board.some((b) => b.request && item in REQUESTS[b.request].needs),
+  );
+}
+
+/** A part is open once the note that asks for it has appeared. */
+function partOpen(state: GameState, part: PartId): boolean {
+  const at = NOTES.findIndex((n) => "goal" in n && n.goal.kind === "place" && n.goal.part === part);
+  return at >= 0 && at < state.notesRevealed;
+}
+
+/**
  * Recipes the player can see in a skill: everything reached, plus the single next one.
  * Recipes further up stay out of sight until they're next, and so does anything needing an
- * ingredient from a skill that hasn't opened yet.
+ * ingredient from a skill that hasn't opened yet, or a gatherer whose finds have no use yet.
  */
 export function revealedRecipes(state: GameState, skill: SkillId): ActionId[] {
   if (!isSkillUnlocked(state, skill)) return [];
   const level = skillLevel(state, skill);
-  const known = ACTION_IDS.filter((id) => ACTION_DEFS[id].skill === skill && isRecipeKnown(state, id) && inputsInReach(state, id)).sort((a, b) => ACTION_DEFS[a].level - ACTION_DEFS[b].level);
+  const known = ACTION_IDS.filter((id) => ACTION_DEFS[id].skill === skill && isRecipeKnown(state, id) && inputsInReach(state, id) && outputWanted(state, id)).sort((a, b) => ACTION_DEFS[a].level - ACTION_DEFS[b].level);
+  // Everything reached, plus whatever comes at the next level (recipes can share a level).
   const next = known.find((id) => ACTION_DEFS[id].level > level);
-  return known.filter((id) => ACTION_DEFS[id].level <= level || id === next);
+  return known.filter((id) => ACTION_DEFS[id].level <= level || (next !== undefined && ACTION_DEFS[id].level === ACTION_DEFS[next].level));
 }
 
 export function isRecipeRevealed(state: GameState, id: ActionId): boolean {

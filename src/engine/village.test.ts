@@ -110,9 +110,9 @@ describe("shop", () => {
 describe("upgrade effects", () => {
   it("reading lamp speeds up Scholarship by 15%", () => {
     const s = villageOpen();
-    expect(actionDurationMs(s, "decipher_page")).toBe(4000);
-    expect(actionDurationMs({ ...s, upgrades: ["reading_lamp"] }, "decipher_page")).toBeCloseTo(4000 / 1.15);
-    expect(actionDurationMs({ ...s, upgrades: ["reading_lamp"] }, "pick_nettle")).toBe(2000);
+    expect(actionDurationMs(s, "decipher_page")).toBe(ACTION_DEFS.decipher_page.seconds * 1000);
+    expect(actionDurationMs({ ...s, upgrades: ["reading_lamp"] }, "decipher_page")).toBeCloseTo((ACTION_DEFS.decipher_page.seconds * 1000) / 1.15);
+    expect(actionDurationMs({ ...s, upgrades: ["reading_lamp"] }, "pick_nettle")).toBe((ACTION_DEFS.pick_nettle.seconds * 1000));
   });
 
   it("drying rack adds about 10% to Herbalism yield", () => {

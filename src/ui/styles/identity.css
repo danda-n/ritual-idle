@@ -410,3 +410,4 @@ input[type="checkbox"] { accent-color: var(--color-accent); width: 16px; height:
   .topbar .tend-info { display: none; }
   .topbar .tend-bar { width: 44px; }
 }
+.chip.buff-out { font-size: var(--text-xs); white-space: normal; }

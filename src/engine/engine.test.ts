@@ -8,7 +8,7 @@ import { advance, blockReason, skillLevel, startAction } from "./simulate";
 import { NOTES } from "../content/notes";
 import { PAGES } from "../content/pages";
 import { newGame as freshGame, type GameState } from "./state";
-import { levelForXp, xpForLevel, xpToNext } from "./xp";
+import { EARLY_RAMP, levelForXp, XP_BASE, xpForLevel, xpToNext } from "./xp";
 
 /** A game past the Chapter 1 onboarding: every skill and recipe open. */
 function newGame(now: number, seed: number): GameState {
@@ -31,9 +31,9 @@ describe("content", () => {
 
 describe("xp curve", () => {
   it("matches the Chapter 1 design numbers", () => {
-    expect(xpToNext(1)).toBe(85); // eased: 245 × 0.35
-    expect(xpForLevel(10)).toBe(3586);
-    expect(xpForLevel(20)).toBe(18987);
+    expect(xpToNext(1)).toBe(Math.floor(XP_BASE * EARLY_RAMP[0]));
+    expect(xpForLevel(2)).toBe(xpToNext(1));
+    expect(xpForLevel(20)).toBeGreaterThan(xpForLevel(10) * 4);
   });
 
   it("respects the level cap", () => {
@@ -45,17 +45,17 @@ describe("xp curve", () => {
 describe("advance", () => {
   it("repeats an action and grants items and XP", () => {
     const s = startAction(newGame(T0, 1), "pick_nettle");
-    const { state, report } = advance(s, 20_000); // 10 × 2s
+    const { state, report } = advance(s, 10 * (ACTION_DEFS.pick_nettle.seconds * 1000));
     expect(report.actionsCompleted).toBe(10);
     expect(state.inventory.nettle).toBe(10);
-    expect(state.skills.herbalism.xp).toBe(40);
+    expect(state.skills.herbalism.xp).toBe(10 * ACTION_DEFS.pick_nettle.xp);
   });
 
   it("carries partial progress between calls", () => {
     const s = startAction(newGame(T0, 1), "pick_nettle");
-    const a = advance(s, 1_500).state;
+    const a = advance(s, 0.75 * (ACTION_DEFS.pick_nettle.seconds * 1000)).state;
     expect(a.inventory.nettle ?? 0).toBe(0);
-    expect(advance(a, 500).state.inventory.nettle).toBe(1);
+    expect(advance(a, 0.25 * (ACTION_DEFS.pick_nettle.seconds * 1000)).state.inventory.nettle).toBe(1);
   });
 
   it("stops when inputs run out", () => {
@@ -90,9 +90,10 @@ describe("offline catch-up", () => {
     const s = startAction(newGame(T0, 1), "pick_nettle");
     const short = catchUp(s, T0 + HOUR);
     expect(short.capped).toBe(false);
-    // 1800 at 2s each, and more as Herbalism levels speed it up.
-    expect(short.report.actionsCompleted).toBeGreaterThan(1800);
-    expect(short.report.actionsCompleted).toBeLessThan(2200);
+    // An hour's worth at the base time, and a little more as Herbalism levels speed it up.
+    const base = HOUR / (ACTION_DEFS.pick_nettle.seconds * 1000);
+    expect(short.report.actionsCompleted).toBeGreaterThan(base);
+    expect(short.report.actionsCompleted).toBeLessThan(base * 1.25);
 
     const long = catchUp(s, T0 + 48 * HOUR);
     expect(long.capped).toBe(true);

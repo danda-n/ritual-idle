@@ -20,18 +20,19 @@ const okay = (r: Result) => {
 
 describe("stage steps", () => {
   it("claim when met, grant their reward once, in any order", () => {
+    const first = NOTES[0].steps[0];
     const s = startAction(newGame(T0, 1), "search_pantry");
-    const { state, report } = advance(s, 4 * actionDurationMs(s, "search_pantry"));
+    const { state, report } = advance(s, first.goal.count * actionDurationMs(s, "search_pantry") + 1);
     expect(report.stepsDone.map((x) => x.id)).toEqual(["start.pantry"]);
     expect(state.stepsDone).toEqual(["start.pantry"]);
-    // 4 searches of tallow, plus the reward's 2
-    expect(state.inventory.tallow).toBe(4 + 2);
+    // The searches' XP, plus the reward's
+    expect(state.skills.scavenging.xp).toBe(first.goal.count * ACTION_DEFS.search_pantry.xp + first.reward.xp.amount);
     const again = advance(state, 1000);
     expect(again.report.stepsDone).toEqual([]);
   });
 
   it("use lifetime counts, so steps already done claim at once when their stage arrives", () => {
-    const s: GameState = { ...newGame(T0, 1), notesRevealed: 2, stats: { ...newGame().stats, completed: { tallow_candle: 5 } } };
+    const s: GameState = { ...newGame(T0, 1), notesRevealed: 2, stats: { ...newGame().stats, completed: { tallow_candle: NOTES[1].steps[0].goal.count } } };
     const claimed: Step[] = [];
     revealNotes(s, claimed);
     expect(claimed.map((x) => x.id)).toEqual(["light.candles"]);
@@ -55,7 +56,7 @@ describe("stage steps", () => {
 
   it("the Tend step is optional: the stage moves on without it", () => {
     const s = startAction(newGame(T0, 1), "search_pantry");
-    const { state } = advance(s, 8 * actionDurationMs(s, "search_pantry") + 10);
+    const { state } = advance(s, NOTES[0].goal.count * actionDurationMs(s, "search_pantry") + 10);
     expect(state.notesRevealed).toBe(2);
     expect(state.stepsDone).not.toContain("start.tend");
     expect(currentSteps(state)[0]!.id).toBe("light.candles");

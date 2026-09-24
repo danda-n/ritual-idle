@@ -35,13 +35,13 @@ describe("level speed", () => {
   it("each level makes its skill 1% faster, compounding", () => {
     expect(levelSpeed(at(1), "herbalism")).toBe(1);
     expect(levelSpeed(at(11), "herbalism")).toBeCloseTo(1.01 ** 10);
-    expect(actionDurationMs(at(11), "pick_nettle")).toBeCloseTo(2000 / 1.01 ** 10);
+    expect(actionDurationMs(at(11), "pick_nettle")).toBeCloseTo((ACTION_DEFS.pick_nettle.seconds * 1000) / 1.01 ** 10);
   });
 
   it("only speeds up its own skill", () => {
     const s = { ...at(1), skills: { ...at(1).skills, herbalism: { xp: xpForLevel(20) } } };
-    expect(actionDurationMs(s, "pick_nettle")).toBeLessThan(2000);
-    expect(actionDurationMs(s, "sweep_hearth")).toBe(3000);
+    expect(actionDurationMs(s, "pick_nettle")).toBeLessThan((ACTION_DEFS.pick_nettle.seconds * 1000));
+    expect(actionDurationMs(s, "sweep_hearth")).toBe(ACTION_DEFS.sweep_hearth.seconds * 1000);
   });
 });
 
@@ -100,7 +100,7 @@ describe("points", () => {
 describe("branch effects", () => {
   it("Swift adds 5% speed per rank", () => {
     const s = at(1, "herbalism", { ranks: { swift: 2 } });
-    expect(actionDurationMs(s, "pick_nettle")).toBeCloseTo(2000 / 1.1);
+    expect(actionDurationMs(s, "pick_nettle")).toBeCloseTo((ACTION_DEFS.pick_nettle.seconds * 1000) / 1.1);
   });
 
   it("Plenty adds about 5% per rank to sure outputs", () => {

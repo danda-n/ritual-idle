@@ -1,6 +1,6 @@
 // XP curve from docs/CHAPTER1.md §10: XP to next level = BASE × GROWTH^(level − 1), eased for levels 1–3.
 
-export const XP_BASE = 245;
+export const XP_BASE = 612;
 export const XP_GROWTH = 1.14;
 export const MAX_LEVEL = 99;
 

@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { ACTION_DEFS } from "../content/actions";
+import { PART_DEFS } from "../content/rite";
 import { ITEM_CATEGORIES, ITEMS } from "../content/items";
 import { NOTES } from "../content/notes";
 import { PAGES } from "../content/pages";
@@ -61,8 +63,8 @@ describe("fallback when work stops", () => {
 describe("estimates", () => {
   it("rates follow action time and bonuses", () => {
     const s = open();
-    expect(repsPerHour(s, "pick_nettle")).toBe(1800);
-    expect(xpPerHour(s, "pick_nettle")).toBe(7200);
+    expect(repsPerHour(s, "pick_nettle")).toBe(3_600_000 / (ACTION_DEFS.pick_nettle.seconds * 1000));
+    expect(xpPerHour(s, "pick_nettle")).toBe((3_600_000 / (ACTION_DEFS.pick_nettle.seconds * 1000)) * ACTION_DEFS.pick_nettle.xp);
     expect(outputPerHour(s, "sweep_hearth")).toEqual([
       { item: "ash", perHour: 1200 },
       { item: "charcoal", perHour: 120 },
@@ -71,9 +73,9 @@ describe("estimates", () => {
 
   it("knows how long inputs last and when the next level comes", () => {
     const s = open({ inventory: { tallow: 7 } });
-    expect(inputsLastMs(s, "tallow_candle")).toBe(3 * 2000);
+    expect(inputsLastMs(s, "tallow_candle")).toBe(3 * ACTION_DEFS.tallow_candle.seconds * 1000);
     expect(inputsLastMs(s, "pick_nettle")).toBeNull();
-    expect(timeToNextLevelMs(s, "pick_nettle")).toBe(22 * 2000); // 85 xp at 4 per nettle
+    expect(timeToNextLevelMs(s, "pick_nettle")).toBe(Math.ceil(xpForLevel(2) / ACTION_DEFS.pick_nettle.xp) * (ACTION_DEFS.pick_nettle.seconds * 1000));
   });
 
   it("picks the best action for time-to-cap", () => {
@@ -94,7 +96,7 @@ describe("item lookup", () => {
   it("knows the rite and the village want things", () => {
     const l = lookupItem(open(), "tallow_candle");
     expect(l.wantedBy).toContain("Old Tomas");
-    expect(lookupItem(open(), "tallow_candle").inKindling).toBe(8);
+    expect(lookupItem(open(), "tallow_candle").inKindling).toBe(PART_DEFS.light.items.tallow_candle);
     expect(lookupItem({ ...open(), kindling: ["light"] }, "tallow_candle").inKindling).toBe(0);
   });
 
@@ -106,11 +108,12 @@ describe("item lookup", () => {
 });
 
 describe("recipe reveal", () => {
-  it("shows what's reached plus the single next recipe", () => {
+  it("shows what's reached plus whatever comes at the next level", () => {
     const s = open();
-    expect(revealedRecipes(s, "chandlery")).toEqual(["tallow_candle", "beeswax_candle"]);
+    // Beeswax candles and smudge bundles share level 2, so both show.
+    expect(revealedRecipes(s, "chandlery")).toEqual(["tallow_candle", "smudge_bundle", "beeswax_candle"]);
     const lvl5 = { ...s, skills: { ...s.skills, chandlery: { xp: xpForLevel(5) } } };
-    expect(revealedRecipes(lvl5, "chandlery")).toEqual(["tallow_candle", "beeswax_candle", "smudge_bundle", "mugwort_incense"]);
+    expect(revealedRecipes(lvl5, "chandlery")).toEqual(["tallow_candle", "smudge_bundle", "beeswax_candle", "mugwort_incense", "hearth_candle"]);
     expect(revealedRecipes({ ...s, notesRevealed: 1 }, "chandlery")).toEqual([]);
   });
 
@@ -118,7 +121,16 @@ describe("recipe reveal", () => {
     // Chandlery 6 before Herbalism: smudge (nettle), mugwort incense and hearth candles wait for the Smoke.
     const s = { ...open(), notesRevealed: 3, skills: { ...open().skills, chandlery: { xp: xpForLevel(6) } } };
     expect(revealedRecipes(s, "chandlery")).toEqual(["tallow_candle", "beeswax_candle"]);
-    expect(revealedRecipes({ ...s, notesRevealed: 4 }, "chandlery")).toEqual(["tallow_candle", "beeswax_candle", "smudge_bundle", "mugwort_incense", "hearth_candle"]);
+    expect(revealedRecipes({ ...s, notesRevealed: 4 }, "chandlery")).toEqual(["tallow_candle", "smudge_bundle", "beeswax_candle", "mugwort_incense", "hearth_candle"]);
+  });
+
+  it("hides a gatherer until something you can see uses what it finds", () => {
+    // During the Light, nothing wants ash yet, so sweeping stays out of sight; the Ward brings it.
+    const light = { ...newGame(T0, 21), notesRevealed: 2, skills: { ...newGame().skills, scavenging: { xp: xpForLevel(5) } } };
+    expect(revealedRecipes(light, "scavenging")).not.toContain("sweep_hearth");
+    expect(revealedRecipes(light, "scavenging")).not.toContain("search_attic");
+    expect(revealedRecipes({ ...light, notesRevealed: 3 }, "scavenging")).toContain("sweep_hearth");
+    expect(revealedRecipes({ ...light, notesRevealed: 5 }, "scavenging")).toContain("search_attic");
   });
 
   it("skips recipes still in burnt pages", () => {
@@ -147,7 +159,7 @@ describe("producers (for item chips)", () => {
     const s = open();
     // Sweeping needs Scavenging 3: still offered, so the menu can say why it can't start yet.
     expect(producerAction(s, "ash", (id) => blockReason(s, id) === null)).toBe("sweep_hearth");
-    expect(blockReason(s, "sweep_hearth")).toEqual({ kind: "level_too_low", level: 3 });
+    expect(blockReason(s, "sweep_hearth")).toEqual({ kind: "level_too_low", level: ACTION_DEFS.sweep_hearth.level });
     const levelled = { ...s, skills: { ...s.skills, scavenging: { xp: xpForLevel(3) } } };
     expect(producerAction(levelled, "ash", (id) => blockReason(levelled, id) === null)).toBe("sweep_hearth");
     const early = { ...open(), notesRevealed: 1 };

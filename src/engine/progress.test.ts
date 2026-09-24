@@ -12,6 +12,7 @@ import { addInsight } from "./grimoire";
 import { newGame, type GameState } from "./state";
 
 const T0 = 1_000_000;
+const START_COUNT = NOTES[0].goal.count;
 
 function run(state: GameState, id: ActionId, times: number) {
   return advance(startAction(state, id), times * ACTION_DEFS[id].seconds * 1000);
@@ -38,7 +39,7 @@ describe("grandmother's notes", () => {
   });
 
   it("reveals the next note and its skill when the goal is met", () => {
-    const { state, report } = run(newGame(T0, 1), "search_pantry", 8);
+    const { state, report } = run(newGame(T0, 1), "search_pantry", START_COUNT);
     expect(state.notesRevealed).toBe(2);
     expect(report.notesRevealed).toEqual([NOTES[1]]);
     expect(isSkillUnlocked(state, "chandlery")).toBe(true);
@@ -46,7 +47,7 @@ describe("grandmother's notes", () => {
   });
 
   it("does not reveal early", () => {
-    const { state } = run(newGame(T0, 1), "search_pantry", 7);
+    const { state } = run(newGame(T0, 1), "search_pantry", START_COUNT - 1);
     expect(state.notesRevealed).toBe(1);
   });
 
@@ -144,7 +145,7 @@ describe("save migration", () => {
   });
 
   it("keeps note progress in current saves", () => {
-    const { state } = run(newGame(T0, 1), "search_pantry", 8);
+    const { state } = run(newGame(T0, 1), "search_pantry", START_COUNT);
     expect(deserialize(serialize(state)).notesRevealed).toBe(2);
   });
 });

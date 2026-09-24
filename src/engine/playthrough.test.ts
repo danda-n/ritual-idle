@@ -9,16 +9,18 @@ import { SHOP } from "../content/shop";
 import type { SkillId } from "../content/skills";
 import { beginRite, buy, declineRequest, fillRequest, placePart, setSetting, spendTalent, type Result } from "./commands";
 import { actionDurationMs } from "./modifiers";
-import { currentNote, isRecipeKnown, isSkillUnlocked } from "./progress";
+import { currentNote, isRecipeKnown, isSkillUnlocked, type Step } from "./progress";
 import { advance, blockReason, skillLevel, startAction } from "./simulate";
 import { newGame, type GameState } from "./state";
+import { xpForLevel } from "./xp";
 import { pointsFree, rankOf } from "./talents";
 import { SKILL_IDS } from "../content/skills";
 
-// A scripted player that finishes Chapter 1 using only the real engine and commands:
-// follow grandmother's notes, make each Kindling part and place it, spend talent points,
-// fill requests for coin, buy bread and an upgrade, then perform the rite. Active play only
-// (no offline). It's the pacing check for Chapter 1 (docs/CHAPTER1.md §10).
+// A scripted player that finishes Chapter 1 using only the real engine and commands. It follows
+// each stage's steps literally (make exactly what the step says), places each part, spends talent
+// points, fills requests for bread, then performs the rite. Idle play: it never tends or releases
+// omens. It's the pacing check for Chapter 1 (docs/CHAPTER1.md §10), and the no-grind check:
+// if anything needs a level the steps didn't earn, that's recorded as grinding and the test fails.
 
 const ACTION_IDS = Object.keys(ACTION_DEFS) as ActionId[];
 const MAX_STEPS = 200_000;
@@ -29,6 +31,11 @@ class Bot {
   steps = 0;
   /** Active time (ms) at which each note appeared, by note index. */
   noteAt: number[] = [0];
+  /** Times it had to train a level the steps hadn't earned. */
+  grinds: { at: string; action: ActionId; need: number; had: number; short: number }[] = [];
+  /** The step being worked on (for grind reports and the step table). */
+  doing = "start";
+  stepLog: { id: string; minutes: number }[] = [];
 
   constructor(seed: number) {
     this.state = this.must(setSetting(newGame(0, seed), "fallback", "stop"));
@@ -78,12 +85,16 @@ class Bot {
     return id;
   }
 
-  /** Make sure an action can run: its skill unlocked, recipe known, level reached. */
+  /** Make sure an action can run: its skill unlocked, recipe known, level reached (else it's grinding). */
   enable(id: ActionId) {
     const def = ACTION_DEFS[id];
     if (!isSkillUnlocked(this.state, def.skill)) throw new Error(`${def.skill} is not unlocked yet (needed for ${id})`);
     while (!isRecipeKnown(this.state, id)) this.run("decipher_page");
-    this.train(def.skill, def.level);
+    const had = skillLevel(this.state, def.skill);
+    if (had < def.level) {
+      this.grinds.push({ at: this.doing, action: id, need: def.level, had, short: xpForLevel(def.level) - this.state.skills[def.skill].xp });
+      this.train(def.skill, def.level);
+    }
   }
 
   /** Perform an action once, gathering its inputs first. */
@@ -142,14 +153,26 @@ class Bot {
     this.state = this.must(fillRequest(this.state, slot));
   }
 
-  /** Work toward the current note's goal. Returns false when the next goal is the rite. */
+  /** Do the current stage's steps in order, then its goal. Returns false when the next goal is the rite. */
   followNote(): boolean {
     const note = currentNote(this.state);
     if (!("goal" in note)) return false;
+    const at = this.state.notesRevealed;
+    for (const step of ("steps" in note ? note.steps : []) as readonly Step[]) {
+      if (this.state.notesRevealed !== at) break;
+      this.doing = step.id;
+      const g = step.goal;
+      if (g.kind === "complete") while ((this.state.stats.completed[g.action] ?? 0) < g.count) this.run(g.action);
+      else if (g.kind === "requests") while (this.state.stats.requestsFilled < g.count) this.fillOne();
+      else if (g.kind === "place") this.place(g.part as PartId);
+      this.stepLog.push({ id: step.id, minutes: this.activeMs / MIN });
+    }
+    if (this.state.notesRevealed !== at) return true;
     const goal = note.goal;
     if (goal.kind === "rite") return false;
+    this.doing = `${at}.goal`;
     if (goal.kind === "place") this.place(goal.part);
-    else this.run(goal.action);
+    else if (goal.kind === "complete") while ((this.state.stats.completed[goal.action] ?? 0) < goal.count) this.run(goal.action);
     return true;
   }
 
@@ -160,8 +183,6 @@ class Bot {
     for (const [item] of items) {
       if (item !== "bread" && !isSkillUnlocked(this.state, ACTION_DEFS[this.producer(item)].skill)) throw new Error(`${part} needs ${item}, from a skill not yet open`);
     }
-    // A player spends coin on the house once the village opens.
-    if (part === "offering") this.buyUpgrade();
     while (!items.every(([item, qty]) => (this.state.inventory[item] ?? 0) >= qty)) {
       for (const [item, qty] of items) this.ensure(item, qty);
       this.guard();
@@ -171,19 +192,21 @@ class Bot {
   }
 
   performRite() {
-    for (const [skill, level] of Object.entries(HEARTH_RITE.skills) as [SkillId, number][]) this.train(skill, level);
+    this.doing = "rite";
+    for (const [skill, level] of Object.entries(HEARTH_RITE.skills) as [SkillId, number][]) {
+      const had = skillLevel(this.state, skill);
+      if (had < level) this.grinds.push({ at: "rite", action: "bless_threshold", need: level, had, short: xpForLevel(level) - this.state.skills[skill].xp });
+      this.train(skill, level);
+    }
     this.riteAt = this.activeMs;
+    this.leftAtRite = { ...this.state.inventory };
     this.state = this.must(beginRite(this.state));
     this.wait(HEARTH_RITE.durationMs);
   }
 
   riteAt = 0;
+  leftAtRite: Partial<Record<ItemId, number>> = {};
 
-  /** Like a real player, spend some request coin on the house before the rite. */
-  buyUpgrade() {
-    this.earn(SHOP.omen_shelf.cost);
-    this.state = this.must(buy(this.state, "omen_shelf"));
-  }
 
   play() {
     while (this.followNote());
@@ -209,32 +232,46 @@ describe("Chapter 1 playthrough", () => {
       expect(bot.state.followers).toContain("janko");
       expect(bot.state.levelCap).toBe(HEARTH_RITE.rewards.levelCap);
       expect(blockReason(bot.state, "pick_nettle")).toBeNull();
-      expect(bot.state.upgrades).toContain("omen_shelf");
     }
   });
 
-  it("reaches the rite in 55–110 min of active play, then 30 min for the rite", () => {
+  it("never needs grinding: following the steps earns every level the next step needs", () => {
+    const bot = runs[0]!;
+    console.log(`Steps (seed 1, minutes): ${bot.stepLog.map((st) => `${st.id} ${st.minutes.toFixed(1)}`).join(" · ")}`);
+    for (const b of runs) {
+      const report = b.grinds.map((g) => `${g.at}: ${g.action} needs level ${g.need}, had ${g.had} (${g.short} XP short)`);
+      expect(report, "grinding needed").toEqual([]);
+    }
+  });
+
+  it("makes nothing without a use: crafted things are all spent by the rite", () => {
+    const crafted: ItemId[] = ["tallow_candle", "beeswax_candle", "salt_line", "ash_sigil", "smudge", "mugwort_incense", "deciphered_page", "consecrated_salt", "litany"];
+    console.log(`Left over at the rite (seed 1): ${JSON.stringify(runs[0]!.leftAtRite)}`);
+    for (const b of runs) for (const item of crafted) expect(b.leftAtRite[item] ?? 0, item).toBeLessThanOrEqual(3);
+  });
+
+  it("reaches the rite in 20–34 min of active play", () => {
     const minutes = runs.map((b) => Math.round(b.riteAt / MIN));
-    console.log(`Chapter 1 rite begins at: ${minutes.join(", ")} min (then 30 min for the rite)`);
+    console.log(`Chapter 1 rite begins at: ${minutes.join(", ")} min (then the ~5-min rite)`);
     const bot = runs[0]!;
     const names = ["Start", ...Object.values(PART_DEFS).map((p) => p.name.replace("The ", "")), "Perform"];
     console.log(`Stages (seed 1): ${bot.noteAt.slice(0, names.length).map((at, i) => `${names[i]} ${(at / MIN).toFixed(1)}`).join(" · ")} · rite ${(bot.riteAt / MIN).toFixed(1)} min`);
     for (const m of minutes) {
-      expect(m).toBeGreaterThanOrEqual(55);
-      expect(m).toBeLessThanOrEqual(110);
+      expect(m).toBeGreaterThanOrEqual(20);
+      expect(m).toBeLessThanOrEqual(34);
     }
   });
 
-  it("spreads the skills out: after the first candle, no two skills open within 8 minutes", () => {
+  it("spreads the skills out: after the first candle, no two skills open within 3 minutes", () => {
     for (const bot of runs) {
       const times = skillTimes(bot);
       expect(times.map((t) => t.skill)).toEqual(["scavenging", "chandlery", "sigilcraft", "herbalism", "scholarship", "ritualism"]);
       // Scavenging and Chandlery are the tutorial pair; from there on, one skill per stage.
-      for (let i = 2; i < times.length; i++) expect(times[i]!.at - times[i - 1]!.at).toBeGreaterThanOrEqual(8);
+      for (let i = 2; i < times.length; i++) expect(times[i]!.at - times[i - 1]!.at).toBeGreaterThanOrEqual(3);
     }
   });
 
-  it("each skill's stage takes 8–20 minutes", () => {
+  it("each skill's stage takes 3–10 minutes", () => {
     for (const bot of runs) {
       // Light, Ward, Smoke and Words run note to note. Ritualism's stage is the Offering plus
       // Perform (which brings no new skill), so it runs from the Offering note to the rite.
@@ -242,8 +279,8 @@ describe("Chapter 1 playthrough", () => {
       const ends = [...bot.noteAt.slice(2, 6), bot.riteAt];
       for (let i = 0; i < 5; i++) {
         const m = (ends[i]! - starts[i]!) / MIN;
-        expect(m, `stage ${i + 1}`).toBeGreaterThanOrEqual(8);
-        expect(m, `stage ${i + 1}`).toBeLessThanOrEqual(20);
+        expect(m, `stage ${i + 1}`).toBeGreaterThanOrEqual(3);
+        expect(m, `stage ${i + 1}`).toBeLessThanOrEqual(10);
       }
     }
   });

@@ -9,6 +9,8 @@ import type { Result } from "../../engine/commands";
 import { pointsFree } from "../../engine/talents";
 import { TalentPanel } from "../components/TalentPanel";
 import { TendControl } from "../components/TendControl";
+import { BUFFS, type BuffId } from "../../content/buffs";
+import { buffDuration, buffEffects } from "../effects";
 import { taskName } from "../tasks";
 import { actionDurationMs } from "../../engine/modifiers";
 import { isRecipeKnown, isSkillUnlocked } from "../../engine/progress";
@@ -144,6 +146,12 @@ function ActionRow({ id, state, onStart, fresh, onTend }: { id: ActionId; state:
         {def.outputs.map((o) => (
           <ItemChip key={o.item} item={o.item} qty={o.qty} chance={o.chance} />
         ))}
+        {def.buff && (
+          // A minor rite that gives an effect instead of an item: say exactly what it does.
+          <span className="chip accent buff-out" title={BUFFS[def.buff as BuffId].description}>
+            {BUFFS[def.buff as BuffId].name}: {buffEffects(def.buff as BuffId).join(", ")} for {buffDuration(def.buff as BuffId)}
+          </span>
+        )}
         {!locked && <Rates state={state} id={id} running={running} />}
       </div>
       <div className="action-control">
