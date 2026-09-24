@@ -17,6 +17,9 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
   const [placed, setPlaced] = useState<ItemId[]>([]);
   const [hideWrong, setHideWrong] = useState(true);
   const [last, setLast] = useState<ExperimentOutcome | null>(null);
+  const [closer, setCloser] = useState(false);
+  // Counts tries, so each result re-plays its animation.
+  const [tryNo, setTry] = useState(0);
   const attuned = state.attunedTo;
   const progress = attuned ? progressOf(state, attuned) : null;
 
@@ -42,9 +45,13 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
   const place = (item: ItemId) => setPlaced((p) => (p.includes(item) || p.length >= slots ? p : [...p, item]));
   const remove = (item: ItemId) => setPlaced((p) => p.filter((x) => x !== item));
   const run = () => {
+    // Best glow count so far for this recipe, to celebrate getting closer.
+    const best = progress ? Math.max(-1, ...progress.attempts.map((a) => a.glows)) : -1;
     const r = act((s) => experiment(s, placed));
     if (!r) return;
     setLast(r.outcome ?? null);
+    setCloser(r.outcome?.kind === "glow" && best >= 0 && r.outcome.glows > best);
+    setTry((n) => n + 1);
     setPlaced([]);
   };
 
@@ -129,6 +136,13 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
             </g>
             <circle className="ring-inner" r="40" fill="none" stroke="currentColor" strokeWidth="0.8" />
           </svg>
+          {last?.kind === "discovered" && (
+            <span key={tryNo} className="spark-ring" aria-hidden="true">
+              {Array.from({ length: 12 }, (_, i) => (
+                <span key={i} style={{ "--a": `${i * 30}deg` } as CSSProperties} />
+              ))}
+            </span>
+          )}
           <div className="ring-slots">
             {Array.from({ length: slots }, (_, i) => {
               const item = placed[i];
@@ -146,8 +160,9 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
         </div>
 
         {last && (
-          <div className={`outcome is-${last.kind}`} role="status">
-            {last.kind === "glow" && <Glows glows={last.glows} of={last.of} />}
+          <div key={tryNo} className={`outcome is-${last.kind}`} role="status">
+            {last.kind === "glow" && <Glows glows={last.glows} of={last.of} staggered />}
+            {closer && <span className="closer">Closer!</span>}
             <p className="outcome-help">{outcomeHelp(last)}</p>
           </div>
         )}

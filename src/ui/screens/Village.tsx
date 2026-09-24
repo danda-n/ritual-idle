@@ -9,12 +9,17 @@ import { requestCoin, trustMultiplier } from "../../engine/modifiers";
 import type { GameState } from "../../engine/state";
 import { CandleIcon, CoinIcon, HouseIcon, LeafIcon, MoonIcon } from "../art/icons";
 import { ItemChip } from "../components/ItemLookup";
+import type { FxEvent } from "../fx";
+import { useRecentFx } from "../useFx";
 import { upgradeEffect } from "../effects";
 
 type Act = (command: (s: GameState) => Result) => unknown;
 const SHOP_IDS = Object.keys(SHOP) as ShopId[];
 
+const pickHelped = (e: FxEvent) => (e.kind === "helped" ? [String(e.slot)] : []);
+
 export function Village({ state, act }: { state: GameState; act: Act }) {
+  const helped = useRecentFx(pickHelped, 1800);
   return (
     <div className="village">
       <section className="panel" aria-labelledby="board-heading">
@@ -31,7 +36,8 @@ export function Village({ state, act }: { state: GameState; act: Act }) {
             slot.request ? (
               <RequestCard key={i} state={state} index={i} act={act} />
             ) : (
-              <div key={i} className="request-card empty">
+              <div key={i} className={`request-card empty ${helped.has(String(i)) ? "helped" : ""}`}>
+                {helped.has(String(i)) && <span className="helped-stamp">Helped ✓</span>}
                 <p className="muted num">Someone will knock in {Math.max(0, Math.ceil((slot.refillAt - state.lastTickAt) / 1000))}s.</p>
               </div>
             ),

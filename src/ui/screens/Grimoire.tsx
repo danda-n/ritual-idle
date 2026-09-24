@@ -242,11 +242,12 @@ function SilhouettePage({ state, id, act, onAttuned }: { state: GameState; id: G
   );
 }
 
-export function Glows({ glows, of }: { glows: number; of: number }) {
+/** Glow dots. `staggered` lights them one after another, for a fresh result. */
+export function Glows({ glows, of, staggered }: { glows: number; of: number; staggered?: boolean }) {
   return (
-    <span className="glows" aria-label={`${glows} of ${of} glow`}>
+    <span className={`glows ${staggered ? "staggered" : ""}`} aria-label={`${glows} of ${of} glow`}>
       {Array.from({ length: of }, (_, i) => (
-        <span key={i} className={`glow ${i < glows ? "lit" : ""}`} aria-hidden="true" />
+        <span key={i} className={`glow ${i < glows ? "lit" : ""}`} style={staggered ? { animationDelay: `${i * 220}ms` } : undefined} aria-hidden="true" />
       ))}
     </span>
   );

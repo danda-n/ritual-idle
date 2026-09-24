@@ -1,7 +1,8 @@
 import { FOLLOWERS } from "../../content/followers";
 import { HEARTH_RITE, QUALITIES } from "../../content/rite";
 import type { GameState } from "../../engine/state";
-import { EmbroideryBand, Rosette } from "../art/ornaments";
+import { EmbroideryBand } from "../art/ornaments";
+import { Sanctum } from "../art/Sanctum";
 import { Modal } from "./Modal";
 import { followerEffects } from "../effects";
 
@@ -10,14 +11,14 @@ export function ChapterEnd({ state, onClose }: { state: GameState; onClose: () =
   const janko = FOLLOWERS.janko;
   return (
     <Modal title="Chapter I · Hearth" onClose={onClose}>
-      <div className="discovery-mark" aria-hidden="true">
-        <Rosette size={64} />
+      <div className="chapter-painting">
+        <Sanctum state={state} />
       </div>
       <p className="note-quote">{HEARTH_RITE.finale}</p>
       <p>
         The Kindling was <strong>{QUALITIES[quality]}</strong>.
       </p>
-      <ul className="ledger">
+      <ul className="ledger rewards-in">
         <li>
           <span>Skill caps</span>
           <span className="num">rise to {HEARTH_RITE.rewards.levelCap} (for Chapter II)</span>

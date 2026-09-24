@@ -6,8 +6,8 @@ export function DiscoveryModal({ id, onClose }: { id: GrimoireId; onClose: () =>
   const def = GRIMOIRE_DEFS[id];
   return (
     <Modal title={`Discovered: ${def.name}`} onClose={onClose}>
-      <div className="discovery-mark" aria-hidden="true">
-        <Rosette size={56} />
+      <div className="discovery-mark bloom" aria-hidden="true">
+        <Rosette size={72} />
       </div>
       <p className="effect-line big">{def.rewardText}</p>
       <p className="note-quote">{def.reveal}</p>

@@ -4,10 +4,16 @@ import { GRIMOIRE_DEFS, type GrimoireId } from "../content/grimoire";
 import type { Result, Success } from "../engine/commands";
 import { nextHintAt, progressOf, type Fragment } from "../engine/grimoire";
 import { NOTES } from "../content/notes";
+import { ITEMS, type ItemId } from "../content/items";
+import { SKILLS } from "../content/skills";
+import { isRecipeKnown } from "../engine/progress";
+import { emitFx } from "./fx";
+import { isRareDrop, unlockedByLevel } from "./tasks";
 import type { Note } from "../engine/progress";
 import { rewind } from "../engine/devtools";
 import { OMENS } from "../content/omens";
-import { buffDuration, buffEffects } from "./effects";
+import { buffDuration, buffEffects, upgradeEffectFor } from "./effects";
+import { SHOP } from "../content/shop";
 import { HEARTH_RITE } from "../content/rite";
 import { catchUp, type CatchUp } from "../engine/offline";
 import { clearLocal, loadLocal, saveLocal } from "../engine/save";
@@ -21,6 +27,8 @@ const AUTOSAVE_MS = 10_000;
 const SUMMARY_THRESHOLD_MS = 60_000;
 
 const TOAST_MS = 8_000;
+/** A beat between completing a step and its note appearing. */
+const STORY_DELAY_MS = 800;
 
 export interface Toast {
   id: number;
@@ -30,6 +38,20 @@ export interface Toast {
 
 /** Gaps longer than this (sleeping laptop, hidden tab) go through the offline path so the cap applies. */
 const OFFLINE_GAP_MS = 5 * 60_000;
+
+/** Feedback for a player command, worked out from what changed. */
+function celebrateCommand(before: GameState, after: GameState, toast: (t: Omit<Toast, "id">[]) => void) {
+  const coin = Math.floor(after.coin) - Math.floor(before.coin);
+  if (coin > 0) emitFx({ kind: "float", text: `+${coin} coin`, anchors: [".purse"], tone: "coin" });
+  const trust = Math.floor(after.trust) - Math.floor(before.trust);
+  if (trust > 0) emitFx({ kind: "float", text: `+${trust} trust`, anchors: [".village .panel-aside"], tone: "good" });
+  if (after.stats.requestsFilled > before.stats.requestsFilled) {
+    const slot = after.board.findIndex((b, i) => b.request === null && before.board[i]?.request !== null);
+    if (slot >= 0) emitFx({ kind: "helped", slot });
+  }
+  const bought = after.upgrades.filter((u) => !before.upgrades.includes(u));
+  if (bought.length > 0) toast(bought.map((u) => ({ title: `${SHOP[u].name} is up`, text: upgradeEffectFor(u) })));
+}
 
 /** "A fragment for the Dream pillow", noting when it unlocked a clearer hint. */
 function fragmentToast(state: GameState, f: Fragment): Omit<Toast, "id"> & { clearer: boolean } {
@@ -62,8 +84,9 @@ export function useGame() {
   const [lastStop, setLastStop] = useState<Report["stopped"]>();
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [discovery, setDiscovery] = useState<GrimoireId | null>(null);
-  // Grandmother's notes appear as story beats, one at a time. A new game opens with the first.
-  const [story, setStory] = useState<Note[]>(() => (initial.fresh ? [NOTES[0] as Note] : []));
+  // Grandmother's notes appear as story beats, one at a time, a moment after the step that earned
+  // them (so the step's own celebration can land first). A new game opens with the first.
+  const [story, setStory] = useState<{ note: Note; at: number }[]>(() => (initial.fresh ? [{ note: NOTES[0] as Note, at: 0 }] : []));
   const nextToastId = useRef(0);
 
   const pushToasts = useCallback((items: Omit<Toast, "id">[]) => {
@@ -76,10 +99,30 @@ export function useGame() {
 
   // New notes and pages pop up while playing; after an absence they appear in the summary instead.
   const announce = useCallback(
-    (report: Partial<Pick<Report, "notesRevealed" | "pagesRead" | "omensFound" | "omensLost" | "fragments" | "curioStories" | "riteStarted" | "fellBackTo">>) => {
+    (report: Partial<Pick<Report, "notesRevealed" | "pagesRead" | "omensFound" | "omensLost" | "fragments" | "curioStories" | "riteStarted" | "fellBackTo" | "itemsGained" | "levelUps">>) => {
       const notes = report.notesRevealed ?? [];
-      if (notes.length > 0) setStory((q) => [...q, ...notes]);
+      if (notes.length > 0) setStory((q) => [...q, ...notes.map((note) => ({ note, at: Date.now() }))]);
+
+      // Floating feedback: items from the running row, level-ups from the skill's tile.
+      const fromWork = [".action-row.running .action-io", ".working"];
+      for (const [item, n] of (Object.entries(report.itemsGained ?? {}) as [ItemId, number][]).slice(0, 3)) {
+        if (n > 0) emitFx({ kind: "float", text: `+${n} ${ITEMS[item].name}`, anchors: fromWork, tone: isRareDrop(item) ? "rare" : "item" });
+      }
+      const levelToasts: Omit<Toast, "id">[] = [];
+      for (const l of report.levelUps ?? []) {
+        emitFx({ kind: "float", text: `Level ${l.to}`, anchors: [`.skill-tile[data-skill="${l.skill}"]`, ".working"], tone: "level" });
+        const opened = unlockedByLevel(l.skill, l.from, l.to, (id) => isRecipeKnown(ref.current, id));
+        if (opened.length > 0) {
+          emitFx({ kind: "unlocked", ids: opened });
+          levelToasts.push({ title: `${SKILLS[l.skill].name} ${l.to}`, text: `New: ${opened.map((id) => ACTION_DEFS[id].name).join(", ")}` });
+        }
+      }
+      const rareToasts = (Object.keys(report.itemsGained ?? {}) as ItemId[])
+        .filter((item) => isRareDrop(item, 0.01))
+        .map((item) => ({ title: `Rare find: ${ITEMS[item].name}`, text: "" }));
       pushToasts([
+        ...levelToasts,
+        ...rareToasts,
         ...(report.fellBackTo ?? []).slice(0, 1).map((id) => ({ title: "Back to gathering", text: `Out of an ingredient, so you went back to ${ACTION_DEFS[id].name.toLowerCase()}.` })),
         ...(report.riteStarted ? [{ title: "The rite begins", text: `Everything was ready. The ${HEARTH_RITE.name} has begun.` }] : []),
         ...(report.curioStories ?? []).map((text) => ({ title: "A curio, read", text })),
@@ -168,8 +211,10 @@ export function useGame() {
         pushToasts([{ title: r.reason, text: "" }]);
         return null;
       }
+      const before = ref.current;
       commit(r.state);
       saveLocal(r.state); // choices are saved at once, not on the next autosave
+      celebrateCommand(before, r.state, pushToasts);
       if (r.aside) pushToasts([{ title: "They tell you something", text: r.aside }]);
       announce({ notesRevealed: r.notes, fragments: r.fragments });
       if (r.outcome?.kind === "discovered") setDiscovery(r.outcome.recipe);
@@ -190,5 +235,5 @@ export function useGame() {
   const dismissDiscovery = useCallback(() => setDiscovery(null), []);
   const dismissStory = useCallback(() => setStory((q) => q.slice(1)), []);
 
-  return { state, away, dismissAway, discovery, dismissDiscovery, story: story[0] ?? null, dismissStory, lastStop, toasts, dismissToast, start, stop, act, load, reset, dev };
+  return { state, away, dismissAway, discovery, dismissDiscovery, story: story[0] && Date.now() - story[0].at >= STORY_DELAY_MS ? story[0].note : null, dismissStory, lastStop, toasts, dismissToast, start, stop, act, load, reset, dev };
 }

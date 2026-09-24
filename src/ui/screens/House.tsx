@@ -11,6 +11,8 @@ import { levelProgress } from "../../engine/xp";
 import { SkillIcon } from "../art/icons";
 import { Bar, TimedBar } from "../components/Bar";
 import { ItemChip } from "../components/ItemLookup";
+import type { FxEvent } from "../fx";
+import { useRecentFx } from "../useFx";
 import { formatDuration, formatRate, formatStop } from "../format";
 
 const ACTION_IDS = Object.keys(ACTION_DEFS) as ActionId[];
@@ -40,7 +42,10 @@ export function SkillNav({ state, skill, onSelect }: { state: GameState; skill: 
   );
 }
 
+const pickUnlocked = (e: FxEvent) => (e.kind === "unlocked" ? e.ids : []);
+
 export function SkillActions({ state, skill, onStart }: { state: GameState; skill: SkillId; onStart: (id: ActionId) => void }) {
+  const fresh = useRecentFx(pickUnlocked, 5000);
   const level = skillLevel(state, skill);
   const toCap = timeToCapMs(state, skill);
   // Show what can be done now, then only the next thing to unlock; sum up the rest in one line.
@@ -64,7 +69,7 @@ export function SkillActions({ state, skill, onStart }: { state: GameState; skil
       </header>
       <div className="action-list">
         {open.map((id) => (
-          <ActionRow key={id} id={id} state={state} onStart={() => onStart(id)} />
+          <ActionRow key={id} id={id} state={state} onStart={() => onStart(id)} fresh={fresh.has(id)} />
         ))}
         {nextUp && <ActionRow key={nextUp} id={nextUp} state={state} onStart={() => onStart(nextUp)} />}
         {later.length > 0 && (
@@ -78,7 +83,7 @@ export function SkillActions({ state, skill, onStart }: { state: GameState; skil
   );
 }
 
-function ActionRow({ id, state, onStart }: { id: ActionId; state: GameState; onStart: () => void }) {
+function ActionRow({ id, state, onStart, fresh }: { id: ActionId; state: GameState; onStart: () => void; fresh?: boolean }) {
   const def = ACTION_DEFS[id];
   if (!isRecipeKnown(state, id)) {
     return (
@@ -97,7 +102,8 @@ function ActionRow({ id, state, onStart }: { id: ActionId; state: GameState; onS
   const inputs = Object.entries(def.inputs) as [ItemId, number][];
 
   return (
-    <div data-skill={def.skill} className={`action-row ${locked ? "locked" : ""} ${running ? "running" : ""}`}>
+    <div data-skill={def.skill} className={`action-row ${locked ? "locked" : ""} ${running ? "running" : ""} ${fresh ? "fresh" : ""}`}>
+      {fresh && <span className="new-badge">New</span>}
       <div className="action-name">
         <strong>{def.name}</strong>
         <span className="muted num">

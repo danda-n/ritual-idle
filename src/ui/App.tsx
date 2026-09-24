@@ -19,6 +19,7 @@ import { ChipContext } from "./chipContext";
 import { ItemLookupModal } from "./components/ItemLookup";
 import { SettingsModal } from "./components/SettingsModal";
 import { Tabs, type TabDef } from "./components/Tabs";
+import { Floats } from "./components/Floats";
 import { Toasts } from "./components/Toasts";
 import { TopBar } from "./components/TopBar";
 import { formatStop } from "./format";
@@ -98,6 +99,7 @@ export function App() {
       )}
 
       <Toasts toasts={game.toasts} onDismiss={game.dismissToast} />
+      <Floats />
       {game.away && <AwaySummary away={game.away} onClose={game.dismissAway} />}
       {game.discovery && !game.away && <DiscoveryModal id={game.discovery} onClose={game.dismissDiscovery} />}
       {state.rite.completed && !state.rite.completed.endingSeen && !game.away && !game.discovery && (

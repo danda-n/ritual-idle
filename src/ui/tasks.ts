@@ -46,3 +46,18 @@ export function taskPlace(goal: GoalDef<ActionId>): Place {
       return { tab: "circle" };
   }
 }
+
+/** Recipes a level-up just opened in a skill (known ones, at a level in (from, to]). */
+export function unlockedByLevel(skill: keyof typeof SKILLS, from: number, to: number, known: (id: ActionId) => boolean): ActionId[] {
+  return (Object.keys(ACTION_DEFS) as ActionId[]).filter((id) => {
+    const a = ACTION_DEFS[id];
+    return a.skill === skill && a.level > from && a.level <= to && known(id);
+  });
+}
+
+/** True if this item drops by chance, at `threshold` or rarer (default 10%). */
+export function isRareDrop(item: string, threshold = 0.1): boolean {
+  return (Object.values(ACTION_DEFS) as { outputs: readonly { item: string; chance?: number }[] }[]).some((a) =>
+    a.outputs.some((o) => o.item === item && o.chance !== undefined && o.chance <= threshold),
+  );
+}

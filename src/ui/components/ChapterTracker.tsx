@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { ACTION_DEFS } from "../../content/actions";
 import type { ItemId } from "../../content/items";
 import { SKILLS } from "../../content/skills";
@@ -16,8 +17,20 @@ import { ItemChip } from "./ItemLookup";
 export function ChapterTracker({ state, onGo }: { state: GameState; onGo: (p: Place) => void }) {
   const current = STEPS.findIndex((s) => s.index === state.notesRevealed - 1);
   const done = state.rite.completed ? STEPS.length : current < 0 ? STEPS.length : current;
+  // A step just finished: draw its tick and surge the bar.
+  const prev = useRef(done);
+  const [advanced, setAdvanced] = useState(false);
+  useEffect(() => {
+    if (done > prev.current) {
+      setAdvanced(true);
+      const t = setTimeout(() => setAdvanced(false), 1400);
+      prev.current = done;
+      return () => clearTimeout(t);
+    }
+    prev.current = done;
+  }, [done]);
   return (
-    <section className="panel paper tracker" aria-labelledby="tracker-heading">
+    <section className={`panel paper tracker ${advanced ? "advanced" : ""}`} aria-labelledby="tracker-heading">
       <div className="panel-title">
         <CircleRiteIcon size={18} />
         <h2 id="tracker-heading">Chapter I · Hearth</h2>
@@ -32,7 +45,7 @@ export function ChapterTracker({ state, onGo }: { state: GameState; onGo: (p: Pl
           const goal = s.note.goal;
           if (i < done) {
             return (
-              <li key={i} className="step done">
+              <li key={i} className={`step done ${advanced && i === done - 1 ? "just-done" : ""}`}>
                 <span className="step-mark" aria-hidden="true">✓</span>
                 {taskName(goal)}
               </li>

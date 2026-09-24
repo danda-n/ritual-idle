@@ -10,6 +10,7 @@ import { Rosette } from "../art/ornaments";
 import { formatClock } from "../format";
 import { buffEffects } from "../effects";
 import { TimedBar } from "./Bar";
+import { useCountUp } from "../useFx";
 
 export function TopBar({ state, onStop, stopNote, onSettings, onGo }: { state: GameState; onStop: () => void; stopNote?: string; onSettings: () => void; onGo: (p: Place) => void }) {
   return (
@@ -27,7 +28,7 @@ export function TopBar({ state, onStop, stopNote, onSettings, onGo }: { state: G
       {isFeatureOpen(state, "village") && (
         <div className="purse" aria-label={`${state.coin} coin`}>
           <CoinIcon size={18} />
-          <span className="num">{Math.floor(state.coin)}</span>
+          <Purse coin={Math.floor(state.coin)} />
         </div>
       )}
       <button className="btn btn-ghost icon-btn" onClick={onSettings} aria-label="Settings">
@@ -89,4 +90,8 @@ function Working({ state, onStop, stopNote, onGo }: { state: GameState; onStop: 
       </button>
     </div>
   );
+}
+
+function Purse({ coin }: { coin: number }) {
+  return <span className="num">{useCountUp(coin)}</span>;
 }
