@@ -215,3 +215,36 @@ input[type="checkbox"] { accent-color: var(--color-accent); width: 16px; height:
 .action-control .btn:disabled { white-space: normal; line-height: 1.2; font-size: var(--text-xs); padding: var(--space-1) var(--space-2); text-align: center; }
 .chip.item-chip.plain, .chip.item-chip.plain[data-skill], .chip.item-chip.plain[data-skill]:hover { border-color: transparent; background: transparent; color: var(--color-text); }
 .chip.item-chip.plain:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* ---------- Guidance: what is this, and what do I do next ---------- */
+.how-strip { grid-column: 1 / -1; list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); }
+.how-strip li { font-size: var(--text-xs); color: var(--color-text-2); padding: var(--space-2) var(--space-3); border: 1px solid #3a2d22; border-radius: var(--radius-md); background: rgb(0 0 0 / 0.2); }
+.how-strip strong { display: block; font-family: var(--font-display); font-weight: 500; letter-spacing: 0.03em; color: var(--folk-candle); font-size: var(--text-sm); }
+
+.gives { display: flex; align-items: baseline; gap: var(--space-2); color: var(--folk-candle); font-family: var(--font-display); letter-spacing: 0.02em; }
+.gives-label { font-size: var(--text-xs); letter-spacing: 0.08em; color: var(--color-muted); }
+
+.next-step { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-1); padding: var(--space-3) var(--space-4); border-left: 3px solid var(--folk-candle); background: rgb(232 176 78 / 0.08); border-radius: 0 var(--radius-md) var(--radius-md) 0; }
+.next-step-label { font-family: var(--font-display); font-size: var(--text-xs); letter-spacing: 0.08em; color: var(--color-muted); }
+.next-step strong { font-family: var(--font-display); font-weight: 500; font-size: var(--text-lg); color: var(--bone-100); }
+.next-step p { font-size: var(--text-sm); color: var(--color-text-2); }
+.next-step .btn { margin-top: var(--space-2); }
+
+.hints-title { font-size: var(--text-xs); letter-spacing: 0.08em; color: var(--color-muted); margin-top: var(--space-2); }
+.insight-line { font-size: var(--text-xs); }
+.attempts summary { margin-top: var(--space-2); }
+
+.circle-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-1); }
+.circle-steps li { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-xs); color: var(--color-muted); padding: var(--space-2); border-radius: var(--radius-sm); border: 1px solid transparent; }
+.circle-step-num { flex-shrink: 0; width: 20px; height: 20px; display: grid; place-items: center; border-radius: 50%; border: 1px solid currentColor; font-family: var(--font-display); }
+.circle-steps li.current { color: var(--folk-candle); border-color: rgb(232 176 78 / 0.45); background: rgb(232 176 78 / 0.08); }
+.circle-steps li.done { color: var(--color-text-2); }
+.circle-steps li.done .circle-step-num { background: var(--gold-600); color: var(--ink-950); border-color: var(--gold-600); }
+.working-on { display: flex; flex-direction: column; gap: 2px; font-size: var(--text-sm); }
+.circle-cost { font-size: var(--text-xs); }
+.outcome { flex-wrap: wrap; }
+.outcome-help { flex-basis: 100%; text-align: center; font-size: var(--text-sm); color: var(--color-text-2); }
+.chip.pick.right { border-color: var(--folk-candle); color: var(--folk-candle); }
+.chip.pick.right::before { content: "✓"; }
+
+@media (max-width: 860px) { .how-strip, .circle-steps { grid-template-columns: 1fr; } }

@@ -7,6 +7,7 @@ import type { GameState } from "../../engine/state";
 import { CircleRiteIcon } from "../art/icons";
 import { RitePanel } from "../components/RitePanel";
 import { itemName } from "../format";
+import { circleStep, outcomeHelp, recipeKnowledge } from "../guidance";
 import { Glows } from "./Grimoire";
 
 type Act = (command: (s: GameState) => Result) => Success | null;
@@ -44,7 +45,10 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
   const fill = slots > 0 ? placed.length / slots : 0;
   const litDots = Math.round(fill * 8);
 
+  const knowledge = attuned ? recipeKnowledge(state, attuned) : null;
+
   const choices = GRIMOIRE_IDS.filter((id) => isSilhouetteVisible(state, id) && !isDiscovered(state, id));
+  const step = circleStep(attuned !== null, choices.length > 0, placed.length, slots);
   const held = (Object.entries(state.inventory) as [ItemId, number][])
     .filter(([id, n]) => n > 0 && !(hideWrong && progress?.provenWrong.includes(id)))
     .map(([id]) => id);
@@ -70,8 +74,16 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
           <h2 id="circle-heading">The circle</h2>
         </div>
 
+        <ol className="circle-steps" aria-label="How to use the Circle">
+          {["Choose what to work on", attuned ? `Pick ${slots} things below` : "Pick 2 or 3 things below", "Place them in the circle"].map((label, i) => (
+            <li key={label} className={step === i + 1 ? "current" : step > i + 1 ? "done" : ""} aria-current={step === i + 1 ? "step" : undefined}>
+              <span className="circle-step-num">{i + 1}</span> {label}
+            </li>
+          ))}
+        </ol>
+
         <label className="field-label" htmlFor="attune">
-          Attuned to
+          Working on
         </label>
         <select
           id="attune"
@@ -82,18 +94,32 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
             act((s) => attune(s, (e.target.value || null) as GrimoireId | null));
           }}
         >
-          <option value="">Nothing: a free experiment (hunting secrets)</option>
+          <option value="">Free experiment: hunt secrets (no hints)</option>
           {choices.map((id) => (
             <option key={id} value={id}>
               {GRIMOIRE_DEFS[id].name} ({GRIMOIRE_DEFS[id].ingredients.length} things)
             </option>
           ))}
         </select>
-        <p className="muted circle-help">
-          {attuned
-            ? "The circle glows once for every right thing. Order doesn't matter. Each try uses one of each."
-            : "Only an exact answer speaks. Two or three things; each try uses one of each."}
-        </p>
+        {attuned && knowledge ? (
+          <div className="working-on">
+            <p className="gives">
+              <span className="gives-label">Gives</span> {GRIMOIRE_DEFS[attuned].rewardText}
+            </p>
+            <p className="muted">
+              Known {knowledge.belongs.length}/{knowledge.size}
+              {knowledge.belongs.length > 0 && `: ${knowledge.belongs.map(itemName).join(", ")}`}
+              {knowledge.ruledOut.length > 0 && ` · ${knowledge.ruledOut.length} crossed out (hidden below)`}
+            </p>
+          </div>
+        ) : (
+          <p className="muted circle-help">
+            {choices.length > 0
+              ? "Pick a recipe above to get a glow count for each try. Free experiments only answer an exact match."
+              : "Secrets have no hints: only an exact set of 2 or 3 things answers. Recipes to work on appear once you find hints."}
+          </p>
+        )}
+        <p className="muted circle-cost">Each try uses one of each thing placed.</p>
 
         <div
           className={`ring ${placed.length > 0 ? "is-filling" : ""} ${fill === 1 ? "is-full" : ""} ${last?.kind === "discovered" ? "is-answered" : ""}`}
@@ -143,6 +169,7 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
           <div className={`outcome is-${last.kind}`} role="status">
             {last.kind === "glow" && <Glows glows={last.glows} of={last.of} />}
             <p className="note-quote">{outcomeLine(last)}</p>
+            <p className="outcome-help">{outcomeHelp(last)}</p>
           </div>
         )}
 
@@ -160,7 +187,7 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
 
       <section className="panel" aria-labelledby="picker-heading">
         <div className="panel-title">
-          <h2 id="picker-heading">What you hold</h2>
+          <h2 id="picker-heading">Pick from what you hold</h2>
           {attuned && (
             <label className="panel-aside toggle">
               <input type="checkbox" checked={hideWrong} onChange={(e) => setHideWrong(e.target.checked)} /> Hide proven wrong
@@ -174,7 +201,7 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
             {held.map((id) => (
               <button
                 key={id}
-                className={`chip pick ${placed.includes(id) ? "accent" : ""} ${progress?.provenRight.includes(id) ? "right" : ""} ${progress?.marks[id] ?? ""}`}
+                className={`chip pick ${placed.includes(id) ? "accent" : ""} ${knowledge?.belongs.includes(id) ? "right" : ""} ${progress?.marks[id] ?? ""}`}
                 onClick={() => place(id)}
                 disabled={placed.includes(id) || placed.length >= slots}
               >

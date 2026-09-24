@@ -1,14 +1,15 @@
 import { useState, type ReactNode } from "react";
 import { GRIMOIRE_DEFS, INSIGHT, type GrimoireId } from "../../content/grimoire";
 import { PAGES } from "../../content/pages";
-import { attune, setMark, type Result } from "../../engine/commands";
+import { attune, type Result } from "../../engine/commands";
 import { GRIMOIRE_IDS, hintTier, isDiscovered, isSilhouetteVisible, nextHintAt, plainNamesShown, progressOf } from "../../engine/grimoire";
-import { isFeatureOpen, pagesRead, revealedNotes } from "../../engine/progress";
+import { pagesRead, revealedNotes } from "../../engine/progress";
 import type { GameState } from "../../engine/state";
 import { BookIcon, CircleRiteIcon, ScrollIcon } from "../art/icons";
 import { Bar } from "../components/Bar";
+import { ItemChip } from "../components/ItemLookup";
 import { itemName } from "../format";
-import type { ItemId } from "../../content/items";
+import { insightLine, recipeGuide, recipeKnowledge } from "../guidance";
 
 type Act = (command: (s: GameState) => Result) => unknown;
 type Selection = { kind: "recipe"; id: GrimoireId } | { kind: "notes" } | { kind: "pages" } | { kind: "secrets" } | { kind: "forbidden" };
@@ -34,6 +35,17 @@ export function Grimoire({ state, act, onAttuned }: { state: GameState; act: Act
 
   return (
     <div className="grimoire">
+      <ol className="how-strip" aria-label="How the Grimoire works">
+        <li>
+          <strong>1 · Collect hints</strong> Burnt pages, curios and villagers reveal hidden recipes here.
+        </li>
+        <li>
+          <strong>2 · Guess at the Circle</strong> Place things; it glows once per right one.
+        </li>
+        <li>
+          <strong>3 · Discover</strong> The right set makes it. Its bonus is yours for good.
+        </li>
+      </ol>
       <nav className="panel grimoire-index" aria-label="Grimoire contents">
         <h3>Silhouettes</h3>
         {silhouettes.length === 0 ? (
@@ -112,9 +124,8 @@ function SilhouettePage({ state, id, act, onAttuned }: { state: GameState; id: G
   const tier = hintTier(p.insight);
   const next = nextHintAt(id, p.insight);
   const names = def.hints?.plain.slice(0, plainNamesShown(id, p.insight)) ?? [];
-  const circleOpen = isFeatureOpen(state, "circle");
-  const marked = [...new Set(p.attempts.flatMap((a) => a.items))].filter((i) => !p.provenWrong.includes(i) && !p.provenRight.includes(i));
-  const cycle = (m?: "suspect" | "doubt") => (m === undefined ? "suspect" : m === "suspect" ? "doubt" : null);
+  const guide = recipeGuide(state, id);
+  const k = recipeKnowledge(state, id);
 
   return (
     <>
@@ -123,56 +134,72 @@ function SilhouettePage({ state, id, act, onAttuned }: { state: GameState; id: G
         <h2>{def.name}</h2>
         <span className="muted panel-aside">{def.ingredients.length} things</span>
       </div>
+      <p className="gives">
+        <span className="gives-label">Gives</span> {def.rewardText}
+      </p>
+
+      <div className="next-step" role="note">
+        <span className="next-step-label">Next step</span>
+        <strong>{guide.headline}</strong>
+        <p>{guide.detail}</p>
+        {guide.action && (
+          <button className="btn btn-primary" onClick={() => act((s) => attune(s, id)) && onAttuned()}>
+            <CircleRiteIcon size={16} /> {guide.action}
+          </button>
+        )}
+      </div>
+
+      <dl className="proofs">
+        <dt>Belongs</dt>
+        <dd>
+          {k.belongs.length === 0 ? <span className="muted">Nothing confirmed yet</span> : k.belongs.map((i) => <ItemChip key={i} item={i} qty={1} />)}
+          <span className="muted num">
+            {" "}
+            ({k.belongs.length}/{k.size})
+          </span>
+        </dd>
+        {k.ruledOut.length > 0 && (
+          <>
+            <dt>Crossed out</dt>
+            <dd>{k.ruledOut.map((i) => <span key={i} className="chip struck">{itemName(i)}</span>)}</dd>
+          </>
+        )}
+        {k.belongs.length < k.size && (
+          <>
+            <dt>Still possible</dt>
+            <dd>
+              {k.stillPossible.length === 0 ? (
+                <span className="muted">Nothing you hold. Gather more kinds of things.</span>
+              ) : (
+                k.stillPossible.slice(0, 12).map((i) => <span key={i} className="chip">{itemName(i)}</span>)
+              )}
+            </dd>
+          </>
+        )}
+      </dl>
+
+      <h3 className="hints-title">Hints</h3>
       <div className="hint">
         <span className="hint-num">I</span>
         <p className="note-quote">{def.hints?.riddle}</p>
       </div>
       <div className={`hint ${tier === "riddle" ? "locked" : ""}`}>
         <span className="hint-num">II</span>
-        {tier === "riddle" ? <p className="muted">A clearer hint at {INSIGHT.category} insight.</p> : <p>{def.hints?.category.join(" · ")}</p>}
+        {tier === "riddle" ? <p className="muted">Where each thing comes from, at {INSIGHT.category} insight.</p> : <p>{def.hints?.category.join(" · ")}</p>}
       </div>
       <div className={`hint ${names.length === 0 ? "locked" : ""}`}>
         <span className="hint-num">III</span>
-        {names.length === 0 ? <p className="muted">A plain name at {INSIGHT.plain} insight.</p> : <p>{names.map(itemName).join(", ")}.</p>}
+        {names.length === 0 ? <p className="muted">Names one thing outright, at {INSIGHT.plain} insight.</p> : <p>{names.map(itemName).join(", ")}.</p>}
       </div>
       <div className="goal">
         <Bar value={next ? p.insight / next : 1} label="Insight toward the next hint" />
-        <span className="muted num">{next ? `Insight ${p.insight}/${next}` : `Insight ${p.insight}`}</span>
+        <span className="muted num">{next ? `${p.insight}/${next}` : p.insight}</span>
       </div>
-
-      {(p.provenWrong.length > 0 || p.provenRight.length > 0) && (
-        <dl className="proofs">
-          {p.provenRight.length > 0 && (
-            <>
-              <dt>Belongs</dt>
-              <dd>{p.provenRight.map((i) => <span key={i} className="chip accent">{itemName(i)}</span>)}</dd>
-            </>
-          )}
-          {p.provenWrong.length > 0 && (
-            <>
-              <dt>Proven wrong</dt>
-              <dd>{p.provenWrong.map((i) => <span key={i} className="chip struck">{itemName(i)}</span>)}</dd>
-            </>
-          )}
-        </dl>
-      )}
-
-      {marked.length > 0 && (
-        <div className="marks">
-          <h3>Your pencil marks</h3>
-          <div className="action-io">
-            {marked.map((i: ItemId) => (
-              <button key={i} className={`chip mark ${p.marks[i] ?? ""}`} onClick={() => act((s) => setMark(s, id, i, cycle(p.marks[i])))} title="Click to mark as suspected, doubted, or clear">
-                {itemName(i)} {p.marks[i] === "suspect" ? "?" : p.marks[i] === "doubt" ? "✕?" : ""}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      <p className="muted insight-line">{insightLine(state, id)}</p>
 
       {p.attempts.length > 0 && (
-        <div className="attempts">
-          <h3>Attempts ({p.attempts.length})</h3>
+        <details className="attempts">
+          <summary>Your tries ({p.attempts.length})</summary>
           <ol className="ledger">
             {[...p.attempts].reverse().map((a, i) => (
               <li key={i}>
@@ -181,20 +208,8 @@ function SilhouettePage({ state, id, act, onAttuned }: { state: GameState; id: G
               </li>
             ))}
           </ol>
-        </div>
+        </details>
       )}
-
-      <div className="row">
-        <button
-          className="btn btn-primary"
-          disabled={!circleOpen}
-          title={circleOpen ? undefined : "The circle is still cold."}
-          onClick={() => act((s) => attune(s, id)) && onAttuned()}
-        >
-          <CircleRiteIcon size={16} /> Attune the circle
-        </button>
-        {!circleOpen && <span className="muted">The circle is still cold. Grandmother's notes will say when.</span>}
-      </div>
     </>
   );
 }

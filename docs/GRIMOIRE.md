@@ -235,3 +235,17 @@ Save state per recipe: `{ discovered, insight, attempts: [{ items, glows }], pro
   - Threshold nail trust is kept as a fraction internally.
 - **Toasts:** Insight from your own attempts only pops up a toast when it unlocks a clearer hint; otherwise the Grimoire page shows it.
 - Content lives in `src/content/grimoire.ts` and logic in `src/engine/grimoire.ts`; the screens are `src/ui/screens/Grimoire.tsx` and `Circle.tsx`.
+
+## 13. Guidance (UI feedback round)
+Every screen answers "what is this for, and what do I do next?". Gameplay, not lore. Logic is in `src/ui/guidance.ts` (tested).
+- **Grimoire:**
+  - A three-step strip: *Collect hints → Guess at the Circle → Discover*.
+  - Each recipe page leads with **Gives** (the reward, so the player knows why to bother).
+  - Then a **Next step** box that follows progress: "Try any 3 things at the Circle" → "2 of 3 known: find the last one" → "You know all 3: make it at the Circle". It has a button that attunes the Circle and goes there.
+  - Then *Belongs* (proven, or named by a hint), *Crossed out*, and *Still possible* (things held that aren't ruled out).
+  - The hints come last, with one line on where Insight comes from.
+- **Circle:**
+  - A step strip (① choose what to work on → ② pick things → ③ place them), with the current step lit.
+  - A "Working on" line showing the reward and what's known.
+  - A plain explanation under every result, honest that the glow is a count ("2 of 3 right, but not which. Swap one thing at a time…").
+- **Pencil marks** (§5) are no longer shown. They added noise on top of the automatic tracking. Saved marks are kept in the save, unused.
