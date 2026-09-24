@@ -148,8 +148,15 @@ class Bot {
     this.wait(HEARTH_RITE.durationMs);
   }
 
+  /** Like a real player, spend some request coin on the house before the rite. */
+  buyUpgrade() {
+    this.earn(SHOP.omen_shelf.cost);
+    this.state = this.must(buy(this.state, "omen_shelf"));
+  }
+
   play() {
     while (this.followNote());
+    this.buyUpgrade();
     this.performRite();
     return this;
   }
@@ -166,6 +173,7 @@ describe("Chapter 1 playthrough", () => {
       expect(bot.state.followers).toContain("janko");
       expect(bot.state.levelCap).toBe(HEARTH_RITE.rewards.levelCap);
       expect(blockReason(bot.state, "pick_nettle")).toBeNull();
+      expect(bot.state.upgrades).toContain("omen_shelf");
     }
   });
 

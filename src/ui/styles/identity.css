@@ -331,3 +331,14 @@ input[type="checkbox"] { accent-color: var(--color-accent); width: 16px; height:
 .rewards-in li:nth-child(2) { animation-delay: 650ms; }
 .rewards-in li:nth-child(3) { animation-delay: 900ms; }
 .rewards-in li:nth-child(4) { animation-delay: 1150ms; }
+.float.down { animation-name: float-down; }
+@keyframes float-down {
+  0% { opacity: 0; transform: translate(-50%, 0) scale(0.9); }
+  15% { opacity: 1; transform: translate(-50%, 20%) scale(1.05); }
+  100% { opacity: 0; transform: translate(-50%, 160%) scale(1); }
+}
+/* Narrower main column: ingredients get their own row under the name and the button. */
+@media (max-width: 1200px) and (min-width: 861px) {
+  .action-row { grid-template-columns: minmax(0, 1fr) 130px; }
+  .action-row .action-io { grid-column: 1 / -1; order: 3; }
+}
