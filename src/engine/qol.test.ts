@@ -11,6 +11,7 @@ import { deserialize } from "./save";
 import { advance, blockReason, fallbackFor, startAction } from "./simulate";
 import { xpForLevel } from "./xp";
 import { newGame, type GameState } from "./state";
+import type { Step } from "./progress";
 
 const T0 = 1_000_000;
 
@@ -122,6 +123,17 @@ describe("recipe reveal", () => {
     const s = { ...open(), notesRevealed: 3, skills: { ...open().skills, chandlery: { xp: xpForLevel(6) } } };
     expect(revealedRecipes(s, "chandlery")).toEqual(["tallow_candle", "beeswax_candle"]);
     expect(revealedRecipes({ ...s, notesRevealed: 4 }, "chandlery")).toEqual(["tallow_candle", "smudge_bundle", "beeswax_candle", "mugwort_incense", "hearth_candle"]);
+  });
+
+  it("always shows what the current stage asks for (a fresh game shows the pantry)", () => {
+    expect(revealedRecipes(newGame(T0, 21), "scavenging")).toEqual(["search_pantry"]);
+    for (let i = 0; i < NOTES.length; i++) {
+      const note = NOTES[i]!;
+      const maxed = { ...newGame(T0, 21), notesRevealed: i + 1, skills: Object.fromEntries(Object.keys(newGame().skills).map((k) => [k, { xp: xpForLevel(20) }])) as GameState["skills"] };
+      for (const st of ("steps" in note ? note.steps : []) as readonly Step[]) {
+        if (st.goal.kind === "complete") expect(revealedRecipes(maxed, ACTION_DEFS[st.goal.action].skill), st.id).toContain(st.goal.action);
+      }
+    }
   });
 
   it("hides a gatherer until something you can see uses what it finds", () => {

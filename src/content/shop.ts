@@ -14,7 +14,7 @@ export const SHOP = {
     effect: { kind: "speed", skill: "scholarship", bonus: 0.15 },
   },
   omen_shelf: {
-    kind: "upgrade", name: "Omen shelf", description: "Store up to 3 omens instead of 1.", cost: 50,
+    kind: "upgrade", name: "Omen shelf", description: "Store up to 3 omens instead of 2.", cost: 50,
     effect: { kind: "omen_capacity", capacity: 3 },
   },
   mended_shutters: {

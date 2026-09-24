@@ -40,6 +40,9 @@ export function DevPanel({ dev }: { dev: { skip: (ms: number) => void; mutate: (
         <button className="btn btn-ghost" onClick={() => dev.mutate((s) => ({ ...s, coin: s.coin + 100 }))}>
           +100 coin
         </button>
+        <button className="btn btn-ghost" onClick={() => dev.mutate((s) => ({ ...s, omens: { ...s.omens, still_night: (s.omens.still_night ?? 0) + 1 }, stats: { ...s.stats, omensSeen: s.stats.omensSeen + 1 } }))}>
+          +omen
+        </button>
         <button className="btn btn-ghost" onClick={() => dev.mutate((s) => ({ ...s, notesRevealed: Math.min(s.notesRevealed + 1, NOTES.length) }))}>
           Next note
         </button>

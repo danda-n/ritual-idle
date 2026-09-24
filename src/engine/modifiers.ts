@@ -17,7 +17,7 @@ import { levelForXp } from "./xp";
 
 const HOUR = 60 * 60 * 1000;
 export const BASE_OFFLINE_CAP_MS = 24 * HOUR;
-export const BASE_OMEN_CAPACITY = 1;
+export const BASE_OMEN_CAPACITY = 2;
 /** Each level past 1 makes its skill's actions this much faster, compounding (1.01 = 1%). */
 export const LEVEL_SPEED = 1.01;
 

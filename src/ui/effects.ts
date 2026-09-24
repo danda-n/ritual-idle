@@ -18,8 +18,8 @@ export function buffEffects(id: BuffId, skill?: SkillId): string[] {
   const out: string[] = [];
   if (def.blessSkill) {
     const b = def.blessSkill;
-    if (skill) out.push(`${pct(b.speed)} ${skillName(skill)} speed`, `${skillName(skill)} chance finds ×${b.chanceMultiplier}`);
-    else out.push(`${pct(b.speed)} speed to one skill you choose`, `Chance finds ×${b.chanceMultiplier} in that skill`);
+    if (skill) out.push(`×${1 + b.speed} ${skillName(skill)} speed`, `${skillName(skill)} chance finds ×${b.chanceMultiplier}`);
+    else out.push(`×${1 + b.speed} speed on one skill you choose`, `Chance finds ×${b.chanceMultiplier} in that skill`);
   }
   const speed = Object.entries(def.speed ?? {}) as [SkillId, number][];
   if (speed.length === SKILL_IDS.length && new Set(speed.map(([, v]) => v)).size === 1) out.push(`${pct(speed[0]![1])} speed, all skills`);

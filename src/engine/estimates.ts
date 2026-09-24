@@ -8,7 +8,7 @@ import type { ItemId } from "../content/items";
 import type { SkillId } from "../content/skills";
 import { actionDurationMs, chanceMultiplier, criticalChance, extraYieldChance } from "./modifiers";
 import { isDiscovered } from "./grimoire";
-import { isRecipeKnown, isSkillUnlocked } from "./progress";
+import { currentNote, isRecipeKnown, isSkillUnlocked, type Step } from "./progress";
 import { skillLevel } from "./simulate";
 import type { GameState } from "./state";
 import { xpForLevel } from "./xp";
@@ -42,6 +42,10 @@ function inputsInReach(state: GameState, id: ActionId): boolean {
 function outputWanted(state: GameState, id: ActionId): boolean {
   const def = ACTION_DEFS[id];
   if (Object.keys(def.inputs).length > 0) return true;
+  // Whatever the current stage asks for always shows.
+  const note = currentNote(state);
+  if ("goal" in note && note.goal.kind === "complete" && note.goal.action === id) return true;
+  if ("steps" in note && (note.steps as readonly Step[]).some((st) => st.goal.kind === "complete" && st.goal.action === id)) return true;
   const openParts = PART_IDS.filter((p) => !state.kindling.includes(p) && partOpen(state, p));
   const sure = def.outputs.filter((o) => o.chance === undefined || o.chance >= 0.3).map((o) => o.item);
   return sure.some(

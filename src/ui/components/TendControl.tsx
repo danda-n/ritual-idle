@@ -31,7 +31,7 @@ export function TendControl({ state, onTend, compact }: { state: GameState; onTe
 }
 
 /** Drains from its current level to empty on the compositor, like TimedBar in reverse. */
-function DrainBar({ leftMs, totalMs }: { leftMs: number; totalMs: number }) {
+export function DrainBar({ leftMs, totalMs }: { leftMs: number; totalMs: number }) {
   const [start] = useState(() => ({ total: Math.max(1, totalMs), spent: Math.max(0, totalMs - leftMs) }));
   return (
     <span className="bar thin tend-bar" role="progressbar" aria-label="Tend meter" aria-valuenow={Math.round((leftMs / totalMs) * 100)} aria-valuemin={0} aria-valuemax={100}>

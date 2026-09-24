@@ -3,9 +3,9 @@ import { buffDuration, buffEffects, followerEffects, upgradeEffectFor } from "./
 
 describe("effects are stated plainly, from the data", () => {
   it("Still Night", () => {
-    expect(buffEffects("still_night")).toEqual(["+50% speed to one skill you choose", "Chance finds ×2 in that skill"]);
-    expect(buffEffects("still_night", "herbalism")).toEqual(["+50% Herbalism speed", "Herbalism chance finds ×2"]);
-    expect(buffDuration("still_night")).toBe("15m");
+    expect(buffEffects("still_night")).toEqual(["×2 speed on one skill you choose", "Chance finds ×2 in that skill"]);
+    expect(buffEffects("still_night", "herbalism")).toEqual(["×2 Herbalism speed", "Herbalism chance finds ×2"]);
+    expect(buffDuration("still_night")).toBe("2m");
   });
   it("Blessing collapses to all skills", () => {
     expect(buffEffects("blessing")).toEqual(["+10% speed, all skills"]);

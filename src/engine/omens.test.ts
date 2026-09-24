@@ -6,7 +6,7 @@ import { OMENS } from "../content/omens";
 import { placePart, releaseOmen } from "./commands";
 import { PART_DEFS, type PartId } from "../content/rite";
 import { rewind } from "./devtools";
-import { actionDurationMs, chanceMultiplier } from "./modifiers";
+import { actionDurationMs, chanceMultiplier, omenCapacity } from "./modifiers";
 import { catchUp } from "./offline";
 import { deserialize } from "./save";
 import { advance, startAction } from "./simulate";
@@ -34,18 +34,22 @@ describe("content", () => {
 });
 
 describe("omen drops", () => {
-  it("drop at roughly 1 in 400 actions", () => {
+  it("drop at roughly the omen's rate (1 in 100 actions)", () => {
     const s = open({ upgrades: ["omen_shelf"] });
-    const { state, report } = advance(startAction(s, "pick_nettle"), 3000 * 8000);
+    const reps = 8000;
+    const { state, report } = advance(startAction(s, "pick_nettle"), reps * ACTION_DEFS.pick_nettle.seconds * 1000);
     const seen = state.stats.omensSeen;
-    expect(seen).toBeGreaterThan(8000 / 400 / 2);
-    expect(seen).toBeLessThan((8000 / 400) * 2);
+    const expected = report.actionsCompleted * OMENS.still_night.dropChance;
+    expect(seen).toBeGreaterThan(expected * 0.7);
+    expect(seen).toBeLessThan(expected * 1.3);
     expect(report.omensFound.length + report.omensLost).toBe(seen);
   });
 
   it("respect the shelf capacity; extras pass unseen", () => {
     const { state, report } = advance(startAction(open(), "pick_nettle"), 3000 * 8000);
-    expect(state.omens.still_night).toBe(1);
+    expect(state.omens.still_night).toBe(omenCapacity(open()));
+    expect(omenCapacity(open())).toBe(2);
+    expect(omenCapacity(open({ upgrades: ["omen_shelf"] }))).toBe(3);
     expect(report.omensLost).toBeGreaterThan(0);
   });
 
@@ -64,13 +68,13 @@ describe("omen drops", () => {
 });
 
 describe("releasing Still Night", () => {
-  it("blesses the chosen skill: +50% speed for 15 minutes, that skill only", () => {
+  it("blesses the chosen skill: ×2 speed for 2 minutes, that skill only", () => {
     const s = released(open({ omens: { still_night: 1 } }), "herbalism");
     const nettle = ACTION_DEFS.pick_nettle.seconds * 1000;
     expect(s.omens.still_night).toBe(0);
-    expect(actionDurationMs(s, "pick_nettle")).toBeCloseTo(nettle / 1.5);
+    expect(actionDurationMs(s, "pick_nettle")).toBeCloseTo(nettle / 2);
     expect(actionDurationMs(s, "tallow_candle")).toBe(ACTION_DEFS.tallow_candle.seconds * 1000);
-    expect(actionDurationMs(s, "pick_nettle", T0 + 15 * MIN)).toBe(nettle);
+    expect(actionDurationMs(s, "pick_nettle", T0 + BUFFS.still_night.durationMs)).toBe(nettle);
   });
 
   it("doubles chance finds in the chosen skill only", () => {
@@ -88,7 +92,7 @@ describe("releasing Still Night", () => {
 
   it("stacks duration when released twice on one skill; another skill runs alongside", () => {
     const s = released(released(open({ omens: { still_night: 2 } })));
-    expect(s.buffs).toEqual([{ id: "still_night", endsAt: T0 + 30 * MIN, skill: "scholarship" }]);
+    expect(s.buffs).toEqual([{ id: "still_night", endsAt: T0 + 2 * BUFFS.still_night.durationMs, skill: "scholarship" }]);
     const two = released(released(open({ omens: { still_night: 2 } }), "herbalism"), "chandlery");
     expect(two.buffs.map((b) => b.skill)).toEqual(["herbalism", "chandlery"]);
   });
@@ -104,7 +108,7 @@ describe("releasing Still Night", () => {
 
   it("is shifted by the dev time skip", () => {
     const s = released(open({ omens: { still_night: 1 } }));
-    expect(rewind(s, 5 * MIN).buffs[0]!.endsAt).toBe(T0 + 10 * MIN);
+    expect(rewind(s, MIN).buffs[0]!.endsAt).toBe(T0 + BUFFS.still_night.durationMs - MIN);
   });
 });
 

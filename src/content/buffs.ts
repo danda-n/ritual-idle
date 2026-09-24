@@ -8,9 +8,9 @@ export const BUFFS = {
   still_night: {
     name: "Still Night",
     description: "The house holds its breath.",
-    durationMs: 15 * MIN,
-    // You choose the skill when you release it.
-    blessSkill: { speed: 0.5, chanceMultiplier: 2 },
+    durationMs: 2 * MIN,
+    // You choose the skill when you release it: twice as fast, twice the chance finds.
+    blessSkill: { speed: 1, chanceMultiplier: 2 },
   },
   surge: {
     name: "Surge",
