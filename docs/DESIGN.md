@@ -93,3 +93,18 @@ Item names go through `ItemChip` (`src/ui/components/ItemLookup.tsx`), so any it
   - Inputs show have/need. **Enough** has a solid border and a quiet count. **Short** has a dashed border and a warning pill.
   - Clicking a short chip opens a small menu. It offers to start the action that makes the item, or says why it can't start yet, and has "Look up".
   - Disabled Start buttons say what's missing ("Needs 2 beeswax", "Level 8").
+
+## Feedback kit (`src/ui/fx.ts`, `components/Floats.tsx`, `useFx.ts`)
+- `emitFx({ kind: "float", text, anchors, tone })` sends a label rising from the first matching element. The tones are item, rare (gold with ✦), coin, level and good.
+- The `unlocked` and `helped` events drive the "New" badge on fresh recipe rows and the stamp on helped requests.
+- `useCountUp` animates the purse. The tracker ticks and surges when a step completes, and the next note waits 800ms.
+- Circle: glows light one by one, "Closer!" appears when a try beats your best, and discovery gives a spark ring and a blooming rosette.
+- Everything uses transform, opacity and box-shadow only, and all of it stops under reduced motion.
+
+## Words (one per thing)
+- **the Circle**: the place (lowercase "circle" only inside lore text)
+- **recipe**: a craftable action
+- **hidden recipe**: a Grimoire entry found by hints
+- **secret**: found with no hints
+- **Shelves**: the inventory ("the pantry" is only the Search the pantry action)
+- **insight** and **trust** are always shown together with what they unlock

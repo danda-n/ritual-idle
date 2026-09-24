@@ -61,7 +61,7 @@ Every skill feeds the ritual circle. Followers take over the work you have maste
 4. **Power has a price.** Forbidden work builds Taint. Taint raises yields but brings afflictions. They are always reversible and never end the game.
 5. **Respect the player.**
    - Full offline simulation, and no pay-to-win.
-   - Quality-of-life is built in: ETAs, action queues, presets.
+   - Quality-of-life is built in: ETAs, a fallback when work stops, presets.
    - A readable UI that doesn't require a wiki.
    - A real ending.
 
@@ -151,7 +151,7 @@ Every skill feeds the ritual circle. Followers take over the work you have maste
   - a focus
   - an offering
   - a follower to assist
-- **Rites never fail.** Once the requirements are met, a Rite succeeds. **Preparation sets the outcome quality** (e.g. *Faltering → Sound → Resplendent*):
+- **Rites never fail.** Once the requirements are met, a Rite succeeds. **Preparation sets the outcome quality** (Chapter 1: *Sound → Fine → Resplendent*):
   - Higher quality comes from better component grades (consecrated materials), followers assisting, a matching omen or invoked moon, low Taint, and a high Ritualism level.
   - A better outcome brings bonus rewards, extra lore and sanctum cosmetics.
   - A weaker outcome still advances the story.
@@ -410,7 +410,7 @@ We deliberately **do not** use:
 **Stack**
 - **TypeScript web app**, one codebase for the browser and Steam.
   - A UI framework (React or Svelte) for the panels.
-  - **PixiJS** (canvas) for the layered folk-art sanctum.
+  - The sanctum is **code-drawn SVG** in React (PixiJS stays an option if the scene ever needs canvas).
 - **Electron + steamworks.js** for the Steam build (achievements, Steam Cloud).
 - **Saves:**
   - local saves (browser storage / file on desktop)
@@ -423,14 +423,14 @@ We deliberately **do not** use:
 
 **Realistic path for a non-programmer designer building with AI help**
 1. **Vertical slice (browser only, placeholder art).** Chapter 1 only:
-   - 3 skills (Herbalism, Scavenging, Chandlery)
+   - 6 skills
    - the Grimoire with a few hidden recipes
    - one follower
    - omens
    - the Hearth-Circle Rite
    - offline progress
    Goal: **is the core loop fun?** Everything else waits for that answer.
-2. **Chapter 1 complete:** all Chapter 1 skills and a first Taint pass. Show it to a small group (the r/incremental_games feedback threads, friends).
+2. **Chapter 1 complete** (done): the full chapter, polished and tested. Show it to a small group (the r/incremental_games feedback threads, friends).
 3. **Chapters 2–5, then Patron cycles.** Commission art once the loop is proven.
 4. **Steam wrapper, Steam Cloud and achievements.** Free browser demo (Chapter 1) as marketing, then the premium release.
 
@@ -496,7 +496,7 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
 - **Placeholders first.** Commission art once the loop is proven fun.
 
 ### Q10: Tech (decided)
-- **TypeScript web app + Electron (steamworks.js)** for Steam, with PixiJS for the sanctum.
+- **TypeScript web app + Electron (steamworks.js)** for Steam, with a code-drawn SVG sanctum.
 - **Saves:** local + Steam Cloud + export/import strings. No server.
 - **Content-as-data.** Build path starts with a Chapter 1 vertical slice to test the fun (see §14).
 
@@ -523,7 +523,7 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
 ### Chapter 1 build: small decisions (M3–M4)
 - **Discovery grants the effect.** A successful circle experiment *is* the making; the reward applies at once, permanently.
 - **Janko, Follower 1 (draft):** in "assist me" mode, +30% speed at Initiate, plus the *Hearth-born* trait (+20% more on Chandlery). Assigning followers to their own actions comes in Chapter 2.
-- **The rite never fails**, and its outcome runs Faltering / Sound / Resplendent. Chapter 1 has no component grades yet, so its range is Sound to Resplendent.
+- **The rite never fails.** Its outcome counts three factors: 0 = Sound, 1–2 = Fine, all 3 = Resplendent (changed in the playtest-readiness round).
 - **Player commands save immediately**, not on the next autosave.
 
 ### Chapter 1 build: QoL (M5)
@@ -544,3 +544,10 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
   - Each note appears **once, as a modal story beat** when its step begins. It states plainly what opened and what's next.
   - All notes stay readable in the **Grimoire journal**.
 - **Effects are always explicit.** Buffs, omens, upgrades and rewards lead with what they do (generated from the data). Flavour text is one short line at most.
+
+### Playtest-readiness round
+- **Rite quality:** Sound / Fine / Resplendent by factors met (0 / 1–2 / 3). Every factor now matters.
+- **Curios** became a collection, not an item. There's **no sound** in this build.
+- **The Dream pillow** is +10% speed while away. It used to add extra simulated time, which pushed timers into the future.
+- **After the rite,** the house resumes work through the fallback rule.
+- **Inputs are checked again when a repetition finishes,** so nothing is ever made for free.

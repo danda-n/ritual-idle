@@ -21,12 +21,15 @@ The Grimoire is the game's manual, recipe book and lore journal in one.
 
 | Section | Contents |
 |---|---|
-| **Recipes** | Every known recipe, grouped by skill. It's also the "how do I make X" lookup: each item lists where it comes from and what it's *used in* |
-| **Silhouettes** | Undiscovered hidden recipes. Each shows its outline, how many ingredients it needs, its hints, the proven-wrong items and the attempt log |
-| **Materials** | Every item you've ever held: where it comes from and what it's used in. Unknown uses show as "?" |
-| **Lore** | Grandmother's notes, deciphered pages, curio stories, Rite logs, Patron voices |
-| **Omens** | The omens you've seen and what each does |
-| **Forbidden** | Black pages you can see but can't read yet (the Chapter 3 teaser) |
+| **Hidden recipes** | One page each: what it gives, the next step, Belongs / Crossed out / Still possible, the hints, and your tries |
+| **Discovered** | Found recipes and secrets, with what they do |
+| **Grandmother's notes** | Every note, as a journal |
+| **Deciphered pages** | The story pages |
+| **Curios** | The collection (n/5), with stories |
+| **Secrets** | How many are left, and how to find them |
+| **The black page** | The Chapter 3 teaser, once page 6 is read |
+
+The "where does X come from / what is it for" lookup lives on every item name (click it), not in the Grimoire.
 
 ---
 
@@ -52,10 +55,10 @@ The ritual circle in the sanctum is where experiments happen. **Experiments are 
 2. The circle shows as many slots as the recipe has ingredients (3 in Chapter 1, 3–4 later). Ingredient order never matters.
 3. Place one item in each slot. You can use only items you currently hold, and proven-wrong items are hidden by default (a toggle shows them).
 4. **Result:** the circle glows once for each correct item: *"The circle stirs twice."*
-5. If every slot is correct, **the recipe is discovered.** It gets a short illustrated reveal and a lore line, and becomes a normal craftable action in its skill.
+5. If every slot is correct, **the recipe is discovered.** It gets a reveal and a lore line, and its reward applies at once and permanently (discovering it *is* making it).
 
 ### 4.2 Free experiment (hunting secrets)
-- If the circle isn't attuned, you can place 2–3 items freely.
+- If the Circle isn't attuned, you place exactly 3 things (every Chapter 1 secret is 3 things).
 - **An exact match** to any secret, or to any hidden recipe, discovers it.
 - **There's no glow count.** The only exception: if 2 items match a secret, the circle gives a single uneasy flicker (*"Something almost answered."*). That's enough to tempt, not enough to brute-force.
 
@@ -74,7 +77,6 @@ The Grimoire keeps the notes, so the player doesn't have to.
 
 - **Proven wrong:** after an attempt with **zero glows**, every item in it is crossed out for that recipe.
 - **Proven right:** if the logic forces it, the Grimoire marks an item as confirmed. Example: 2 of 3 slots glow, and an earlier attempt showed which item was the wrong one.
-- **Player marks:** the player can pin an item as *suspected* or *doubted*, purely as personal notes.
 - **Attempt log:** every attempt is listed with its glow count, so the player can reason from the history.
 - **What it doesn't do:** it never solves the puzzle outright. It only records what the player has already proven.
 
@@ -193,7 +195,7 @@ Each hidden recipe has **three hint levels**. Hints are **addressed**: every fra
 ## 10. Data shape (for the build)
 
 ```ts
-// content/grimoire/ch1.ts (sketch)
+// src/content/grimoire.ts (as built)
 {
   id: "dream_pillow",
   kind: "hidden",              // "hidden" | "secret" | "scripted" | "forbidden"
@@ -204,12 +206,13 @@ Each hidden recipe has **three hint levels**. Hints are **addressed**: every fra
     category: ["A herb from the forest edge", "A herb from the garden", "Something from the attic"],
     plain:    ["mugwort", "chamomile"],            // revealed in this order
   },
-  insight: { category: 6, plain: 12, perExtraName: 6 },
-  reward: { sanctumItem: "dream_pillow", effect: { offlineProgress: 0.10 } },
-  revealLore: "lore.dream_pillow",
+  reward: { kind: "offline_bonus", bonus: 0.1 },   // +10% speed while away
+  rewardText: "+10% speed on everything while you're away.",
+  reveal: "The pillow smells of her. …",
 }
+// Insight thresholds are shared: INSIGHT = { category: 6, plain: 12, perExtraName: 6 }
 ```
-Save state per recipe: `{ discovered, insight, attempts: [{ items, glows }], provenWrong, provenRight, playerMarks }`.
+Save state per recipe: `{ discovered, insight, attempts: [{ items, glows }], provenWrong, provenRight, marks }` (marks are no longer shown).
 
 ---
 

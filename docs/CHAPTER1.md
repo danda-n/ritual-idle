@@ -102,7 +102,7 @@ The columns are: the level required · time per action · XP per action · input
 | Decipher a burnt page | 1 | 6s | 14 | 1 burnt page + 1 tallow candle → Deciphered page. Each one reveals the next 📜 recipe, lore or hint |
 | **Copy the Litany** | 8 | 6s | 20 | 3 deciphered pages + 1 beeswax candle → Grandmother's Litany (the rite's focus) |
 
-The first ~6 deciphered pages follow a set order (the story and recipe unlocks). After that they give hints toward hidden recipes and lore fragments.
+The first ~6 deciphered pages follow a set order (the story and recipe unlocks). After that each one adds 3 insight to a hidden recipe.
 
 ### Ritualism (minor rites: repeatable, longer, higher XP)
 | Rite | Lvl | Time | XP | Inputs → Output |
@@ -115,7 +115,7 @@ The first ~6 deciphered pages follow a set order (the story and recipe unlocks).
 ## 4. The village: coin and requests *(decided: Village coin)*
 
 - **The request board** shows **3 requests** at a time. Filling one pays **coin** plus **trust**, and a new request appears after a short delay.
-- **Trust** unlocks better requests (more coin, rare rewards) and, in later chapters, village-related story.
+- **Trust** unlocks better-paying requests (at 2, 3 and 5). The board shows when the next ones start.
 - **There's no "sell anything" market.** Coin comes only from requests, so the resource chains stay meaningful.
 - **Build details** *(M1)*:
   - An emptied slot refills after **30 seconds** of game time, including offline.
@@ -200,16 +200,16 @@ There are three hidden recipes in Chapter 1. None unlock by level. You find them
 
 - **Performing it:** 30 minutes, and it keeps going offline. It can be primed.
 - A short illustrated log plays while it runs (the candles lit one by one, the circle waking, a voice that isn't grandmother's).
-- **It never fails.** Outcome quality is Faltering → Sound → Resplendent:
-  - **Sound** is the base outcome.
-  - **+1 step** for each of: Still Night released during the Rite, Hearth mark discovered, Ritualism 10+.
-  - **−1 step** if any component is only the minimum grade *(consecrated or "fine" grades arrive in Chapter 2)*.
+- **It never fails.** Outcome quality counts three factors: Still Night active during the Rite, the Hearth mark discovered, Ritualism 10+.
+  - 0 factors → **Sound**, 1–2 → **Fine**, all 3 → **Resplendent**.
+  - Component grades are left for Chapter 2.
 - **Rewards:**
-  - All caps rise to **40**, and the Grave tier opens (4 new skills).
+  - All caps rise to **40** (the content for it comes with Chapter II).
   - **Follower 1** arrives. *(draft)* A village orphan who "heard the circle wake", with the trait *Hearth-born: +20% Chandlery*.
   - The **cellar** opens in the sanctum.
   - A lore chapter.
-- **Resplendent bonus:** a cosmetic (embroidered circle cloth) and an extra lore fragment.
+- **Resplendent bonus:** a cosmetic (embroidered circle cloth) and an extra lore line.
+- **Afterwards** the house goes back to work (through the fallback rule), and a bridge note closes the chapter.
 - **Build details** *(M4)*:
   - The Still Night bonus counts if the buff is active at any moment while the rite runs (released before or during it).
   - Priming begins the rite the moment the last component exists, even offline.
@@ -261,3 +261,22 @@ The first build needs:
 - a placeholder sanctum with visible states (dark → candlelit → warded → circle awake → cellar door)
 
 Everything after the Rite can be a "to be continued" screen.
+
+---
+
+## 12. Playtest-readiness round (review → fix → polish → joy)
+- **Curios** are a collection (Grimoire → Curios n/5) with their stories. They no longer sit in the pantry.
+- **Requests:** 8 in total. *Ash for the soapmaker* (trust 0) makes the early board vary; *juniper smoke for the sickroom* (trust 3) gives juniper incense a use.
+- **The free Circle** takes exactly 3 things; every Chapter 1 secret is 3 things.
+- **First ten minutes:**
+  - Each note ends with a **Go** button that takes you to the task.
+  - The tracker's current step shows what it needs as chips; a short chip offers to start what makes it.
+  - An idle top bar shows the next task.
+  - Locked recipes collapse into one summary line per skill.
+- **Feedback:**
+  - item, level and coin floats
+  - unlock toasts and "New" badges
+  - the helped stamp, the tracker tick
+  - staggered Circle glows, "Closer!", the discovery burst
+  - the framed room at the chapter end
+- **Pacing** (bot, 5 seeds): 89–91 minutes of active play, including the 30-minute Rite.
