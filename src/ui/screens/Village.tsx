@@ -73,7 +73,7 @@ function Shop({ state, act }: { state: GameState; act: Act }) {
           const entry = SHOP[id];
           if (entry.kind !== "item") return null;
           const use = lookupItem(state, entry.item);
-          const purpose = use.inRite > 0 ? "Needed for the Kindling's offering" : use.usedBy.length > 0 ? `For ${ACTION_DEFS[use.usedBy[0]!].name.toLowerCase()}` : entry.description;
+          const purpose = use.inKindling > 0 ? "Needed for the Kindling's offering" : use.usedBy.length > 0 ? `For ${ACTION_DEFS[use.usedBy[0]!].name.toLowerCase()}` : entry.description;
           return (
             <li key={id} className="shop-row">
               <div className="shop-info">

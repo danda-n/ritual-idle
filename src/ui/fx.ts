@@ -9,7 +9,9 @@ export type FxEvent =
   /** Something just unlocked (an action row to highlight). */
   | { kind: "unlocked"; ids: string[] }
   /** A request slot was just helped. */
-  | { kind: "helped"; slot: number };
+  | { kind: "helped"; slot: number }
+  /** A Kindling part was just placed in the Circle. */
+  | { kind: "placed"; part: string };
 
 type Listener = (e: FxEvent) => void;
 const listeners = new Set<Listener>();

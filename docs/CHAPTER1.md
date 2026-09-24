@@ -1,4 +1,4 @@
-# Chapter 1: Hearth. Content Pass (v0.1)
+# Chapter 1: Hearth. Content Pass (v0.2, first patch)
 
 > This is the detail layer beneath [CONCEPT.md](CONCEPT.md). It covers the first session: from arriving at the cold house to the **Kindling of the Hearth-Circle**.
 > The numbers are a first pass. They're checked by the headless playthrough test ([src/engine/playthrough.test.ts](../src/engine/playthrough.test.ts), see §10) and will be tuned in playtests.
@@ -31,24 +31,26 @@
 
 ---
 
-## 2. Opening and onboarding: Grandmother's notes
+## 2. The chapter's spine: the Kindling, built in five parts *(decided in the first patch)*
 
-Skills unlock through **margin notes** from the half-burnt grimoire. Each note is a small goal with a reward. The sequence takes about 20–30 minutes, and after it everything in Chapter 1 is open.
+The Kindling is visible from the first minute, on the Circle tab. It has **five parts**, and each part is one stage of the chapter. A stage's note from grandmother brings **one new skill**. You make that part mostly from what the new skill teaches, plus one stretch item, and **place it in the Circle**. The rosette lights one petal per part, in the skill's colour. The last stage is performing the rite.
 
-| # | Note (in her voice) | Goal | Unlocks / reward |
-|---|---|---|---|
-| 1 | *"The house is cold, child. Start with the hearth."* | Sweep the hearth ×5 | **Scavenging**. The first ash; the sanctum scene shows a dark room |
-| 2 | *"Light is the first ward."* | Make 3 Tallow candles | **Chandlery**. The room lights up (first sanctum change) |
-| 3 | *"The garden still remembers me."* | Pick 10 Nettles | **Herbalism** |
-| 4 | *"My pages burned. Read what's left by candlelight."* | Decipher 1 burnt page | **Scholarship**. The first Grimoire entries and a lore fragment |
-| 5 | *"Salt keeps what is inside, inside."* | Lay 3 salt lines | **Sigilcraft** |
-| 6 | *"They'll knock. They always knock."* | Fill 1 village request | **Village board** and coin |
-| 7 | *"Bless the threshold before you open the circle."* | Perform *Bless the Threshold* | **Ritualism**. The circle in the floor begins to glow |
-| 8 | *"The circle is warm. Wake it."* | — | **The Major Rite is revealed**, with its full recipe |
+| Stage | Note (in her voice) | New skill (and place) | Part placed | Stretch item |
+|---|---|---|---|---|
+| 0 Start | *"The house is cold, child. Under the floor is my circle…"* | **Scavenging** (+ the Circle) | Goal: Search the pantry ×8 | |
+| 1 Light | *"Light is the first ward."* | **Chandlery** | 8 tallow candles | + 3 beeswax candles (Chandlery 4, beeswax from Scavenging 5) |
+| 2 Ward | *"Salt keeps what is inside, inside."* | **Sigilcraft** | 12 salt lines | + 4 ash sigils (Sigilcraft 5, ash from Scavenging 3) |
+| 3 Smoke | *"The garden still remembers me."* | **Herbalism** | 3 smudge bundles | + 1 mugwort incense (Chandlery 7, mugwort from Herbalism 4) |
+| 4 Words | *"My pages burned. Read what's left by candlelight."* | **Scholarship** (+ the Grimoire, the first Still Night) | 2 deciphered pages | + the Litany (Scholarship 4; burnt pages from Scavenging 8) |
+| 5 Offering | *"They'll knock. They always knock."* | **Ritualism** (+ the Village) | 2 bread, 3 salt, 6 consecrated salt | |
+| 6 Perform | *"The circle is warm. Wake it."* | | Reach Ritualism 5, then begin the rite (30 min) | |
 
-The first **Still Night** omen drop is scripted around note 4, so the player learns to store and release omens early.
-
-**Build status:** all 8 notes are implemented in `src/content/notes.ts`, each with a plain hint line. Note 4 opens the Grimoire, note 6 the Village, and note 7 the Circle. Burnt pages are in `src/content/pages.ts`: pages 1–5 each teach one 📜 recipe, and page 6 is the black-page teaser.
+- **Parts that aren't reached yet** show only their name and the skill they bring. No part asks for anything from a skill that isn't open (a test checks this).
+- **Recipes show only when they matter:** each skill lists what you've reached plus the single next recipe. A recipe also stays hidden while one of its ingredients comes from a skill that hasn't opened yet.
+- **Placing:** from the Circle, or straight from the chapter tracker once a part is ready. The tracker's Go button opens the stage's new skill.
+- **Experiments** open with their own side note, when the first hint toward a hidden recipe arrives (once the Grimoire is open). They're optional, and the note names the Dream pillow as a good first goal.
+- **Build status:** the notes are in `src/content/notes.ts` (with `EXPERIMENTS_NOTE`), and the parts are `KINDLING_PARTS` in `src/content/rite.ts`.
+- **Burnt pages** (`src/content/pages.ts`) now teach only recipes off the main path: iron ward, chalk segment, hearth candle, hearth ward and juniper incense. The sixth page is the black-page teaser. Nothing a stage needs is locked behind a page.
 
 ---
 
@@ -57,58 +59,58 @@ The first **Still Night** omen drop is scripted around note 4, so the player lea
 The columns are: the level required · time per action · XP per action · inputs → outputs. The level cap in Chapter 1 is **20**.
 *Italic outputs are chance-based.* Some recipes also need a **deciphered page** before they unlock (marked 📜).
 
-### Herbalism (garden and forest edge)
-| Action | Lvl | Time | XP | Output |
-|---|---|---|---|---|
-| Pick nettle | 1 | 3s | 5 | Nettle |
-| Pick chamomile | 3 | 3s | 7 | Chamomile |
-| Pick yarrow | 6 | 4s | 10 | Yarrow |
-| Pick mugwort (the dream-herb) | 10 | 4s | 13 | Mugwort |
-| Pick St John's wort (the Kupala herb) | 14 | 5s | 17 | St John's wort |
-| Cut juniper | 18 | 5s | 21 | Juniper |
-
 ### Scavenging (house, attic, beehives, village midden)
 | Action | Lvl | Time | XP | Output |
 |---|---|---|---|---|
-| Sweep the hearth | 1 | 3s | 5 | Ash, *charcoal (10%)* |
-| Search the pantry | 2 | 3s | 6 | Tallow, *salt (50%)* |
-| Search the attic | 5 | 4s | 9 | *Burnt page (35%)*, *rags (50%)*, *glass (30%)*, *curio (0.5%)* |
-| Rob the old hives | 9 | 4s | 12 | Beeswax |
-| Sift the village midden | 13 | 5s | 16 | Iron nail, *rags (30%)* |
-| Open grandmother's chest | 17 | 5s | 20 | Chalk, *curio (1%)* |
+| Search the pantry | 1 | 3s | 6 | Tallow, *salt (50%)* |
+| Sweep the hearth | 3 | 3s | 5 | Ash, *charcoal (10%)* |
+| Rob the old hives | 5 | 4s | 12 | Beeswax |
+| Search the attic | 8 | 4s | 9 | *Burnt page (30%)*, *rags (50%)*, *glass (30%)*, *curio (0.5%)* |
+| Sift the village midden | 12 | 5s | 16 | Iron nail, *rags (30%)* |
+| Open grandmother's chest | 16 | 5s | 20 | Chalk, *curio (1%)* |
 
 ### Chandlery
 | Action | Lvl | Time | XP | Inputs → Output |
 |---|---|---|---|---|
 | Tallow candle | 1 | 3s | 6 | 2 tallow → Tallow candle |
-| Smudge bundle 📜 | 4 | 4s | 9 | 2 chamomile + 1 yarrow → Smudge bundle |
-| Beeswax candle | 8 | 4s | 12 | 2 beeswax → Beeswax candle |
-| Mugwort incense 📜 | 10 | 5s | 15 | 2 mugwort + 1 ash → Mugwort incense |
-| **Hearth candle** 📜 | 14 | 5s | 19 | 2 beeswax + 1 St John's wort → Hearth candle |
-| Juniper incense | 18 | 6s | 23 | 2 juniper + 1 ash → Juniper incense *(used in Chapter 2; gives Chandlery a reason to go past 14)* |
+| Beeswax candle | 4 | 4s | 12 | 2 beeswax → Beeswax candle |
+| Smudge bundle | 5 | 4s | 9 | 2 nettle + 1 chamomile → Smudge bundle |
+| Mugwort incense | 7 | 5s | 15 | 2 mugwort + 1 ash → Mugwort incense |
+| Hearth candle 📜 | 12 | 5s | 19 | 2 beeswax + 1 St John's wort → Hearth candle *(village requests)* |
+| Juniper incense 📜 | 16 | 6s | 23 | 2 juniper + 1 ash → Juniper incense *(village requests; Chapter 2)* |
 
 ### Sigilcraft
 | Action | Lvl | Time | XP | Inputs → Output |
 |---|---|---|---|---|
 | Salt line | 1 | 3s | 6 | 1 salt → Salt line |
-| Ash sigil | 4 | 4s | 9 | 2 ash + 1 nettle → Ash sigil *(a village request item)* |
+| Ash sigil | 5 | 4s | 9 | 2 ash + 1 salt → Ash sigil |
 | Iron ward 📜 | 8 | 4s | 12 | 2 iron nails + 1 salt → Iron ward |
-| Chalk segment | 12 | 5s | 16 | 1 chalk + 1 salt → Chalk segment |
-| **Hearth ward** 📜 | 15 | 6s | 22 | 2 chalk segments + 1 iron ward + 1 St John's wort → Hearth ward |
+| Chalk segment 📜 | 12 | 5s | 16 | 1 chalk + 1 salt → Chalk segment |
+| Hearth ward 📜 | 15 | 6s | 22 | 2 chalk segments + 1 iron ward + 1 St John's wort → Hearth ward *(a village request)* |
+
+### Herbalism (garden and forest edge)
+| Action | Lvl | Time | XP | Output |
+|---|---|---|---|---|
+| Pick nettle | 1 | 3s | 5 | Nettle |
+| Pick chamomile | 2 | 3s | 7 | Chamomile |
+| Pick mugwort (the dream-herb) | 4 | 4s | 13 | Mugwort |
+| Pick yarrow | 7 | 4s | 10 | Yarrow |
+| Pick St John's wort (the Kupala herb) | 12 | 5s | 17 | St John's wort |
+| Cut juniper | 16 | 5s | 21 | Juniper |
 
 ### Scholarship
 | Action | Lvl | Time | XP | Inputs → Output |
 |---|---|---|---|---|
-| Decipher a burnt page | 1 | 6s | 14 | 1 burnt page + 1 tallow candle → Deciphered page. Each one reveals the next 📜 recipe, lore or hint |
-| **Copy the Litany** | 8 | 6s | 20 | 3 deciphered pages + 1 beeswax candle → Grandmother's Litany (the rite's focus) |
+| Decipher a burnt page | 1 | 6s | 14 | 1 burnt page + 1 tallow candle → Deciphered page. The first six each teach a 📜 recipe or lore |
+| **Copy the Litany** | 4 | 6s | 20 | 3 deciphered pages + 1 beeswax candle → Grandmother's Litany (part of the Words) |
 
-The first ~6 deciphered pages follow a set order (the story and recipe unlocks). After that each one adds 3 insight to a hidden recipe.
+After the six story pages, each deciphered page adds 3 insight to a hidden recipe.
 
 ### Ritualism (minor rites: repeatable, longer, higher XP)
 | Rite | Lvl | Time | XP | Inputs → Output |
 |---|---|---|---|---|
-| Bless the threshold | 1 | 10s | 25 | 1 salt line + 1 tallow candle → Consecrated salt |
-| Smoke the rooms | 4 | 12s | 35 | 1 smudge bundle + 1 tallow candle → *Blessing* (a 15-minute +10% speed buff to all Chapter 1 skills) |
+| Bless the threshold | 1 | 10s | 22 | 1 salt line + 1 tallow candle → Consecrated salt |
+| Smoke the rooms | 3 | 12s | 30 | 1 smudge bundle + 1 tallow candle → *Blessing* (a 15-minute +10% speed buff to all Chapter 1 skills) |
 
 ---
 
@@ -120,17 +122,21 @@ The first ~6 deciphered pages follow a set order (the story and recipe unlocks).
 - **Build details** *(M1)*:
   - An emptied slot refills after **30 seconds** of game time, including offline.
   - Any request can be **turned away** at no cost, so a request you can't fill never blocks the board.
-  - Trust gates in `src/content/requests.ts`: the stable mark needs 2 trust, smoking out the loft 3, iron by the cradle 5.
+  - The village opens with the Offering stage, when every skill but Ritualism is already open. Trust-0 requests use early items only (nettle, ash, tallow candles, salt lines).
+  - Trust gates in `src/content/requests.ts`: the miller's cough and the stable mark need 2 trust, the loft and the sickroom 3, the wake candles 4, the cradle and the church door 5.
 - **Example requests in Chapter 1:**
 
 | Request | Needs | Pays |
 |---|---|---|
 | "Nettle soup for the widow Hana" | 10 nettle | 6 coin |
-| "Something for the miller's cough" | 5 chamomile + 2 yarrow | 12 coin |
+| "Salt across our doorstep" | 4 salt lines | 8 coin |
 | "Candles for my father's grave" | 3 tallow candles | 10 coin |
-| "A mark over the stable door, the cow won't milk" | 1 ash sigil | 15 coin |
-| "Smoke out whatever is in my loft" | 1 smudge bundle | 20 coin |
-| "Iron by the cradle" | 1 iron ward | 30 coin *(+ extra trust)* |
+| "Something for the miller's cough" (trust 2) | 5 chamomile + 2 yarrow | 12 coin |
+| "A mark over the stable door, the cow won't milk" (trust 2) | 1 ash sigil | 15 coin |
+| "Smoke out whatever is in my loft" (trust 3) | 1 smudge bundle | 20 coin |
+| "Candles for the wake" (trust 4) | 2 hearth candles | 35 coin |
+| "Iron by the cradle" (trust 5) | 1 iron ward | 30 coin *(+ extra trust)* |
+| "A ward for the church door" (trust 5) | 1 hearth ward | 50 coin |
 
 - **What coin buys in Chapter 1:**
 
@@ -147,7 +153,7 @@ The first ~6 deciphered pages follow a set order (the story and recipe unlocks).
 
 ## 5. Omen: Still Night *(the only omen in Chapter 1)*
 
-- **Drop:** about 1 in 400 actions (roughly one every 25 minutes of play), online or offline. The first drop is scripted around note 4.
+- **Drop:** about 1 in 400 actions (roughly one every 25 minutes of play), online or offline. The first one is a gift with the Words note.
 - **Storage:** an omen shelf in the sanctum. It holds 1 at the start and 3 after the upgrade.
 - **Release effect (15 minutes):**
   - +50% Scholarship and Ritualism speed.
@@ -186,17 +192,7 @@ There are three hidden recipes in Chapter 1. None unlock by level. You find them
 
 ## 8. The Major Rite: Kindling the Hearth-Circle
 
-**The recipe is fully listed** once note 8 appears:
-
-| Component | Qty | From |
-|---|---|---|
-| Hearth candle | 7 | Chandlery 14 |
-| Mugwort incense | 3 | Chandlery 10 |
-| Hearth ward | 1 | Sigilcraft 15 |
-| Grandmother's Litany (focus) | 1 | Scholarship 8 |
-| Consecrated salt | 3 | Ritualism (Bless the threshold) |
-| Bread and salt (offering) | 1 | Bread from the village + salt |
-| **Ritualism level** | 5 | — |
+**The rite needs its five parts placed in the Circle** (§2) and **Ritualism 5**. The parts stay in the Circle once placed, so nothing in the pantry can be used up by mistake.
 
 - **Performing it:** 30 minutes, and it keeps going offline. It can be primed.
 - A short illustrated log plays while it runs (the candles lit one by one, the circle waking, a voice that isn't grandmother's).
@@ -212,7 +208,7 @@ There are three hidden recipes in Chapter 1. None unlock by level. You find them
 - **Afterwards** the house goes back to work (through the fallback rule), and a bridge note closes the chapter.
 - **Build details** *(M4)*:
   - The Still Night bonus counts if the buff is active at any moment while the rite runs (released before or during it).
-  - Priming begins the rite the moment the last component exists, even offline.
+  - Priming begins the rite the moment everything is ready (the last part placed, or Ritualism reaching 5), even offline.
   - Janko ("assist me") gives +30% speed to whatever you do, and +20% more on Chandlery.
   - A 9th note bridges to Chapter 2.
   - Hana's double pay ends when the rite completes.
@@ -230,20 +226,37 @@ There are three hidden recipes in Chapter 1. None unlock by level. You find them
 ## 10. Pacing check (headless playthrough)
 
 [src/engine/playthrough.test.ts](../src/engine/playthrough.test.ts) plays Chapter 1 as an efficient player, on the real game engine and content.
-- It follows grandmother's notes, deciphers pages to learn recipes, fills village requests for coin, buys bread, makes every component and performs the Rite.
+- It follows grandmother's notes, makes each part and places it, spends talent points (Swift first), fills village requests for coin, buys bread and the omen shelf, then trains Ritualism and performs the rite.
 - Active play only: no offline time and no experiments.
-- It runs as part of `npm test`, so it fails if the chapter can't be finished, if a note soft-locks, or if the time leaves the 45–150 minute band. `npm run pacing` prints the timings.
-- It replaced the earlier Python sketch (`tools/ch1_sim.py`), whose copied numbers could drift from the game.
+- It runs as part of `npm test`. It fails if:
+  - the chapter can't be finished, or a note soft-locks
+  - a part needs an item from a skill that isn't open yet
+  - the rite begins outside **55–110 minutes**
+  - two skills open **less than 8 minutes apart** (after the Scavenging → Chandlery tutorial pair)
+  - a skill's stage takes **less than 8 or more than 20 minutes**. Ritualism's stage runs from the Offering note to the rite.
+- `npm run pacing` prints the time each stage begins.
 
-- **XP curve:** XP to the next level = 25 × 1.18^(level − 1). That's 473 XP to reach level 10 and 3,075 XP to reach level 20.
-- **Result** (5 seeds, measured in the M7 build): **89–91 minutes** of active play, which is about **60 minutes of preparation plus the 30-minute Rite**. That matches the earlier estimate.
-- **Real players** read notes, experiment and fill requests at their own pace, which likely makes the preparation 1.5–2× slower. **Estimate: about 1.5–2 hours to begin the Rite.** That's at the top of the 1–2h target. The Rite itself can run while the player is away.
+- **XP curve:** XP to the next level = **165 × 1.14^(level − 1)**. That's 165 XP for level 2, 2,650 XP to reach level 10, and 13,020 XP to reach level 20. It was 25 × 1.18^(level − 1): the early levels came five times faster, which is why several skills were at their third or fourth recipe within five minutes.
+- **Level speed:** each level makes its own skill 1% faster, compounding (level 20 ≈ 21% faster).
+- **Result** (5 seeds, first patch): the rite begins at **59–61 minutes**, and with the 30-minute rite the chapter takes about **90 minutes**, the same as before. Stage lengths for seed 1:
+
+| Stage | Begins | Length |
+|---|---|---|
+| Start (Scavenging) | 0.0 | 0.4 |
+| Light (Chandlery) | 0.4 | 13.7 |
+| Ward (Sigilcraft) | 14.1 | 11.0 |
+| Smoke (Herbalism) | 25.1 | 15.8 |
+| Words (Scholarship) | 40.9 | 9.9 |
+| Offering + Perform (Ritualism) | 50.8 | 9.5 |
+| Rite begins | 60.3 | 30 |
+
+- **Real players** read notes, experiment and fill requests at their own pace, which likely makes the preparation 1.5–2× slower: about 1.5–2 hours to begin the rite.
 
 **Things to tune in playtests:**
-- Scavenging caps out before the Rite. That's fine as motivation, but check that it doesn't feel like a wall.
-- The requirement of 7 hearth candles is the biggest block of time. Lower it if the middle of the session drags.
-- Burnt-page drop rate (35%). Scholarship must never stall the notes sequence.
-- Coin income vs. sanctum prices. The player should be able to afford 1–2 upgrades before the Rite.
+- **The first stage is a 25-second tutorial beat.** Scavenging and Chandlery arrive close together on purpose; every later skill is spaced.
+- **Smoke is the longest stage** (Chandlery 7 for mugwort incense). Lower the level if the middle drags.
+- **Burnt-page drop rate** (30%): the Words stage leans on it.
+- **Coin income vs. sanctum prices:** the village now opens late, so upgrades mostly land around the rite.
 
 ---
 
@@ -272,7 +285,7 @@ Everything after the Rite can be a "to be continued" screen.
   - Each note ends with a **Go** button that takes you to the task.
   - The tracker's current step shows what it needs as chips; a short chip offers to start what makes it.
   - An idle top bar shows the next task.
-  - Locked recipes collapse into one summary line per skill.
+  - Locked recipes collapse into one summary line per skill *(replaced in the first patch: only the next recipe shows)*.
 - **Feedback:**
   - item, level and coin floats
   - unlock toasts and "New" badges
@@ -280,3 +293,27 @@ Everything after the Rite can be a "to be continued" screen.
   - staggered Circle glows, "Closer!", the discovery burst
   - the framed room at the chapter end
 - **Pacing** (bot, 5 seeds): 89–91 minutes of active play, including the 30-minute Rite.
+
+---
+
+## 13. Talents and level speed *(first patch)*
+
+- **Points:** each skill earns 1 talent point every 3 levels, so 6 by the Chapter 1 cap of 20 (13 at 40). Points come from levels, so only what you spend is saved.
+- **Three branches per skill**, 3 ranks each:
+  - **Swift:** +5% speed per rank
+  - **Plenty:** 5% chance per rank of 1 extra of each sure output
+  - **Fortune:** 3% chance per rank of a critical, which doubles output and XP
+- **One keystone per skill**, opened by 3 points in any one branch (content in `src/content/talents.ts`):
+
+| Skill | Keystone | Effect |
+|---|---|---|
+| Scavenging | Keen eye | Chance finds are 50% more likely |
+| Chandlery | Long-burning | 10% of what you pour comes in pairs |
+| Sigilcraft | Steady hand | 15% of workings use no materials |
+| Herbalism | Dew-picked | Every 5th pick gives 1 extra |
+| Scholarship | Marginalia | Each page deciphered gives +1 insight toward a hidden recipe |
+| Ritualism | Devout | Minor rites give 25% more XP |
+
+- **Reset is free, at any time.**
+- **Where:** the talents panel sits under each skill's recipes on the House tab. A skill tile shows "+N" when it has points to spend.
+- **All rolls use the seeded RNG,** and only for bonuses the player has, so offline progress applies them the same way.

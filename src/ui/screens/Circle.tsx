@@ -5,7 +5,8 @@ import { attune, circleSlots, experiment, type ExperimentOutcome, type Result, t
 import { GRIMOIRE_IDS, isDiscovered, isSilhouetteVisible, progressOf } from "../../engine/grimoire";
 import type { GameState } from "../../engine/state";
 import { CircleRiteIcon } from "../art/icons";
-import { RitePanel } from "../components/RitePanel";
+import { KindlingPanel } from "../components/KindlingPanel";
+import { isFeatureOpen } from "../../engine/progress";
 import { itemName } from "../format";
 import { circleStep, outcomeHelp, recipeKnowledge } from "../guidance";
 import { Glows } from "./Grimoire";
@@ -55,15 +56,22 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
     setPlaced([]);
   };
 
+  const experiments = isFeatureOpen(state, "experiments");
   return (
     <div className="circle-screen">
       <div className="circle-rite">
-        <RitePanel state={state} act={act} />
+        <KindlingPanel state={state} act={act} />
       </div>
+      {!experiments && (
+        <p className="muted circle-later">Later, the Circle will answer smaller workings too.</p>
+      )}
+      {experiments && (
+      <>
       <section className="panel circle-panel" aria-labelledby="circle-heading">
         <div className="panel-title">
           <CircleRiteIcon size={18} />
-          <h2 id="circle-heading">The Circle</h2>
+          <h2 id="circle-heading">Experiments</h2>
+          <span className="panel-aside muted">Optional</span>
         </div>
 
         <ol className="circle-steps" aria-label="How to use the Circle">
@@ -218,6 +226,8 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
           </div>
         )}
       </section>
+      </>
+      )}
     </div>
   );
 }

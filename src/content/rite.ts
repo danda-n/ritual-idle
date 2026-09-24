@@ -3,28 +3,61 @@ import type { SkillId } from "./skills";
 
 const MIN = 60_000;
 
-// The Chapter 1 Major Rite (docs/CHAPTER1.md §8). The recipe is fully listed; it never fails.
+/**
+ * The Kindling's five parts, in the order grandmother's notes ask for them (docs/CHAPTER1.md §2).
+ * Each is made mostly from the recipes its stage teaches, plus one stretch item, and placed in the
+ * Circle once. `skill` is the skill that stage introduces.
+ */
+export const KINDLING_PARTS = {
+  light: {
+    name: "The Light",
+    skill: "chandlery",
+    items: { tallow_candle: 8, beeswax_candle: 3 },
+    placed: "Candles at the four quarters. The chalk under them remembers being warm.",
+  },
+  ward: {
+    name: "The Ward",
+    skill: "sigilcraft",
+    items: { salt_line: 12, ash_sigil: 4 },
+    placed: "Salt closes the ring. The draught along the floor stops.",
+  },
+  smoke: {
+    name: "The Smoke",
+    skill: "herbalism",
+    items: { smudge: 3, mugwort_incense: 1 },
+    placed: "Smoke settles in the circle and stays there, as if the room had walls inside it.",
+  },
+  words: {
+    name: "The Words",
+    skill: "scholarship",
+    items: { deciphered_page: 2, litany: 1 },
+    placed: "You lay the Litany open in the middle. The ink looks fresher than it did.",
+  },
+  offering: {
+    name: "The Offering",
+    skill: "ritualism",
+    items: { bread: 2, salt: 3, consecrated_salt: 6 },
+    placed: "Bread and salt at the circle's edge, the way she wrote it. Now it only needs waking.",
+  },
+} as const satisfies Record<string, { name: string; skill: SkillId; items: Partial<Record<ItemId, number>>; placed: string }>;
+
+export type PartId = keyof typeof KINDLING_PARTS;
+export const PART_IDS = Object.keys(KINDLING_PARTS) as PartId[];
+export const PART_DEFS: Record<PartId, { name: string; skill: SkillId; items: Partial<Record<ItemId, number>>; placed: string }> = KINDLING_PARTS;
+
+// The Chapter 1 Major Rite (docs/CHAPTER1.md §8). It needs every part placed; it never fails.
 export const HEARTH_RITE = {
   name: "Kindling of the Hearth-Circle",
   description: "Wake the circle grandmother drew in the floor. It has been waiting for you.",
-  items: {
-    hearth_candle: 7,
-    mugwort_incense: 3,
-    hearth_ward: 1,
-    litany: 1,
-    consecrated_salt: 3,
-    bread: 1,
-    salt: 1,
-  } as Partial<Record<ItemId, number>>,
   skills: { ritualism: 5 } as Partial<Record<SkillId, number>>,
   durationMs: 30 * MIN,
   /** Lines of the rite, revealed as it runs (fraction of the duration, text). */
   log: [
-    [0, "You set the bread and salt at the circle's edge, the way she wrote it."],
-    [0.12, "The first hearth candle takes the flame. Then the second. The room holds its breath."],
-    [0.3, "Mugwort smoke crawls along the chalk. It will not cross the ward."],
+    [0, "You kneel at the edge, by the bread and salt, and light the first candle."],
+    [0.12, "One by one the quarters take the flame. The room holds its breath."],
+    [0.3, "Mugwort smoke crawls along the chalk. It will not cross the salt."],
     [0.5, "You read the Litany aloud. Your voice sounds older than it is."],
-    [0.7, "The seventh candle. The circle is warm under your palms, then hot."],
+    [0.7, "The circle is warm under your palms, then hot."],
     [0.88, "A voice that is not grandmother's says your name, pleased, as if it had been waiting."],
   ] as const,
   finale: "The circle wakes. The cellar door, nailed shut for years, stands open.",

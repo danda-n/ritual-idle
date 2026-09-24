@@ -2,7 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { ACTION_DEFS, type ActionId } from "../../content/actions";
 import { ITEMS, type ItemId } from "../../content/items";
 import { SKILL_IDS, SKILLS, type SkillId } from "../../content/skills";
-import { inputsLastMs, outputPerHour, timeToCapMs, timeToNextLevelMs, xpPerHour } from "../../engine/estimates";
+import { inputsLastMs, outputPerHour, revealedRecipes, timeToCapMs, timeToNextLevelMs, xpPerHour } from "../../engine/estimates";
+import { NOTES } from "../../content/notes";
+import { PART_DEFS, type PartId } from "../../content/rite";
+import type { Result } from "../../engine/commands";
+import { pointsFree } from "../../engine/talents";
+import { TalentPanel } from "../components/TalentPanel";
+import { taskName } from "../tasks";
 import { actionDurationMs } from "../../engine/modifiers";
 import { isRecipeKnown, isSkillUnlocked } from "../../engine/progress";
 import { blockReason, skillLevel, type StopReason } from "../../engine/simulate";
@@ -15,7 +21,6 @@ import type { FxEvent } from "../fx";
 import { useRecentFx } from "../useFx";
 import { formatDuration, formatRate, formatStop } from "../format";
 
-const ACTION_IDS = Object.keys(ACTION_DEFS) as ActionId[];
 
 export function SkillNav({ state, skill, onSelect }: { state: GameState; skill: SkillId; onSelect: (s: SkillId) => void }) {
   const levelled = useLevelFlash(state);
@@ -26,7 +31,14 @@ export function SkillNav({ state, skill, onSelect }: { state: GameState; skill: 
         return (
           <button key={id} data-skill={id} className={`skill-tile ${id === skill ? "selected" : ""} ${levelled.has(id) ? "levelled" : ""}`} aria-current={id === skill ? "page" : undefined} onClick={() => onSelect(id)}>
             <SkillIcon skill={id} size={22} />
-            <span className="skill-tile-name">{SKILLS[id].name}</span>
+            <span className="skill-tile-name">
+              {SKILLS[id].name}
+              {pointsFree(state, id) > 0 && (
+                <span className="talent-badge num" title="Talent points to spend">
+                  +{pointsFree(state, id)}
+                </span>
+              )}
+            </span>
             <span className="skill-tile-level num">
               <span key={skillLevel(state, id)} className={levelled.has(id) ? "pop" : undefined}>
                 {skillLevel(state, id)}
@@ -38,24 +50,38 @@ export function SkillNav({ state, skill, onSelect }: { state: GameState; skill: 
           </button>
         );
       })}
+      <NextSkill state={state} />
     </nav>
+  );
+}
+
+/** One quiet tile for the next skill to arrive, and what brings it. */
+function NextSkill({ state }: { state: GameState }) {
+  const at = NOTES.findIndex((n, i) => i >= state.notesRevealed && n.unlocks.some((s) => !isSkillUnlocked(state, s)));
+  if (at < 1) return null;
+  const skill = NOTES[at]!.unlocks[0]!;
+  const before = NOTES[at - 1]!;
+  if (!("goal" in before)) return null;
+  const when = before.goal.kind === "place" ? `once ${PART_DEFS[before.goal.part as PartId].name.replace(/^The /, "the ")} is placed` : `after ${taskName(before.goal).toLowerCase()}`;
+  return (
+    <div className="skill-tile next-skill" data-skill={skill} aria-label={`Next skill: ${SKILLS[skill].name}, ${when}`}>
+      <SkillIcon skill={skill} size={22} />
+      <span className="skill-tile-name">{SKILLS[skill].name}</span>
+      <span className="next-skill-when">Next · {when}</span>
+    </div>
   );
 }
 
 const pickUnlocked = (e: FxEvent) => (e.kind === "unlocked" ? e.ids : []);
 
-export function SkillActions({ state, skill, onStart }: { state: GameState; skill: SkillId; onStart: (id: ActionId) => void }) {
+export function SkillActions({ state, skill, onStart, act }: { state: GameState; skill: SkillId; onStart: (id: ActionId) => void; act: (c: (s: GameState) => Result) => unknown }) {
   const fresh = useRecentFx(pickUnlocked, 5000);
   const level = skillLevel(state, skill);
   const toCap = timeToCapMs(state, skill);
-  // Show what can be done now, then only the next thing to unlock; sum up the rest in one line.
-  const all = ACTION_IDS.filter((id) => ACTION_DEFS[id].skill === skill);
-  const available = (id: ActionId) => isRecipeKnown(state, id) && ACTION_DEFS[id].level <= level;
-  const open = all.filter(available);
-  const locked = all.filter((id) => !available(id)).sort((a, b) => ACTION_DEFS[a].level - ACTION_DEFS[b].level);
-  const nextUp = locked[0];
-  const later = locked.slice(1);
-  const laterUnknown = later.filter((id) => !isRecipeKnown(state, id)).length;
+  // Only what can be done now, plus the single next recipe. Nothing further up shows.
+  const shown = revealedRecipes(state, skill);
+  const open = shown.filter((id) => ACTION_DEFS[id].level <= level);
+  const nextUp = shown.find((id) => ACTION_DEFS[id].level > level);
   return (
     <section className="skill-actions" aria-labelledby="skill-heading">
       <header className="skill-header" data-skill={skill}>
@@ -72,13 +98,8 @@ export function SkillActions({ state, skill, onStart }: { state: GameState; skil
           <ActionRow key={id} id={id} state={state} onStart={() => onStart(id)} fresh={fresh.has(id)} />
         ))}
         {nextUp && <ActionRow key={nextUp} id={nextUp} state={state} onStart={() => onStart(nextUp)} />}
-        {later.length > 0 && (
-          <p className="more-recipes muted">
-            {later.length} more {later.length === 1 ? "recipe" : "recipes"} · up to Lvl {Math.max(...later.map((id) => ACTION_DEFS[id].level))}
-            {laterUnknown > 0 && ` · ${laterUnknown} still in burnt pages`}
-          </p>
-        )}
       </div>
+      <TalentPanel state={state} skill={skill} act={act} />
     </section>
   );
 }

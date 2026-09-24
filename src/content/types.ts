@@ -40,10 +40,12 @@ export interface ActionDef<S extends string, I extends string> {
 export type GoalDef<A extends string> =
   | { kind: "complete"; action: A; count: number }
   | { kind: "requests"; count: number }
+  /** Place one of the Kindling's parts in the Circle. */
+  | { kind: "place"; part: string }
   | { kind: "rite" };
 
-/** Places (tabs) that open during the chapter. The House is always open. */
-export type Feature = "grimoire" | "village" | "circle";
+/** Places (tabs) that open during the chapter, plus experiments at the Circle. The House is always open. */
+export type Feature = "grimoire" | "village" | "circle" | "experiments";
 
 export interface NoteDef<S extends string, A extends string> {
   /** Grandmother's margin note, in her voice. */

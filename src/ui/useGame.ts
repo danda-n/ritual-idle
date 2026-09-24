@@ -14,7 +14,8 @@ import { rewind } from "../engine/devtools";
 import { OMENS } from "../content/omens";
 import { buffDuration, buffEffects, upgradeEffectFor } from "./effects";
 import { SHOP } from "../content/shop";
-import { HEARTH_RITE } from "../content/rite";
+import { HEARTH_RITE, PART_DEFS } from "../content/rite";
+import { POINT_EVERY } from "../content/talents";
 import { catchUp, type CatchUp } from "../engine/offline";
 import { clearLocal, loadLocal, saveLocal } from "../engine/save";
 import { advance, startAction, stopAction, type Report } from "../engine/simulate";
@@ -51,6 +52,12 @@ function celebrateCommand(before: GameState, after: GameState, toast: (t: Omit<T
   }
   const bought = after.upgrades.filter((u) => !before.upgrades.includes(u));
   if (bought.length > 0) toast(bought.map((u) => ({ title: `${SHOP[u].name} is up`, text: upgradeEffectFor(u) })));
+  const placed = after.kindling.filter((p) => !before.kindling.includes(p));
+  for (const p of placed) emitFx({ kind: "placed", part: p });
+  if (placed.length > 0) {
+    toast(placed.map((p) => ({ title: `${PART_DEFS[p].name} is in the Circle`, text: `${PART_DEFS[p].placed} (${after.kindling.length} of 5)` })));
+  }
+  if (after.rite.performing && !before.rite.performing) toast([{ title: "The rite begins", text: `The ${HEARTH_RITE.name} has begun. It takes 30 minutes.` }]);
 }
 
 /** "A fragment for the Dream pillow", noting when it unlocked a clearer hint. */
@@ -99,7 +106,7 @@ export function useGame() {
 
   // New notes and pages pop up while playing; after an absence they appear in the summary instead.
   const announce = useCallback(
-    (report: Partial<Pick<Report, "notesRevealed" | "pagesRead" | "omensFound" | "omensLost" | "fragments" | "curioStories" | "riteStarted" | "fellBackTo" | "itemsGained" | "levelUps">>) => {
+    (report: Partial<Pick<Report, "notesRevealed" | "pagesRead" | "omensFound" | "omensLost" | "fragments" | "curioStories" | "riteStarted" | "fellBackTo" | "itemsGained" | "levelUps" | "criticals">>) => {
       const notes = report.notesRevealed ?? [];
       if (notes.length > 0) setStory((q) => [...q, ...notes.map((note) => ({ note, at: Date.now() }))]);
 
@@ -108,14 +115,18 @@ export function useGame() {
       for (const [item, n] of (Object.entries(report.itemsGained ?? {}) as [ItemId, number][]).slice(0, 3)) {
         if (n > 0) emitFx({ kind: "float", text: `+${n} ${ITEMS[item].name}`, anchors: fromWork, tone: isRareDrop(item) ? "rare" : "item" });
       }
+      if (report.criticals) emitFx({ kind: "float", text: "Critical! ×2", anchors: fromWork, tone: "rare" });
       const levelToasts: Omit<Toast, "id">[] = [];
       for (const l of report.levelUps ?? []) {
         emitFx({ kind: "float", text: `Level ${l.to}`, anchors: [`.skill-tile[data-skill="${l.skill}"]`, ".working"], tone: "level" });
         const opened = unlockedByLevel(l.skill, l.from, l.to, (id) => isRecipeKnown(ref.current, id));
-        if (opened.length > 0) {
-          emitFx({ kind: "unlocked", ids: opened });
-          levelToasts.push({ title: `${SKILLS[l.skill].name} ${l.to}`, text: `New: ${opened.map((id) => ACTION_DEFS[id].name).join(", ")}` });
-        }
+        const points = Math.floor(l.to / POINT_EVERY) - Math.floor(l.from / POINT_EVERY);
+        const news = [
+          ...(opened.length > 0 ? [`New: ${opened.map((id) => ACTION_DEFS[id].name).join(", ")}`] : []),
+          ...(points > 0 ? [points > 1 ? `${points} talent points to spend` : "A talent point to spend"] : []),
+        ];
+        if (opened.length > 0) emitFx({ kind: "unlocked", ids: opened });
+        if (news.length > 0) levelToasts.push({ title: `${SKILLS[l.skill].name} ${l.to}`, text: news.join(" · ") });
       }
       const rareToasts = (Object.keys(report.itemsGained ?? {}) as ItemId[])
         .filter((item) => isRareDrop(item, 0.01))
@@ -216,7 +227,7 @@ export function useGame() {
       saveLocal(r.state); // choices are saved at once, not on the next autosave
       celebrateCommand(before, r.state, pushToasts);
       if (r.aside) pushToasts([{ title: "They tell you something", text: r.aside }]);
-      announce({ notesRevealed: r.notes, fragments: r.fragments });
+      announce({ notesRevealed: r.notes, fragments: r.fragments, omensFound: r.gifts });
       if (r.outcome?.kind === "discovered") setDiscovery(r.outcome.recipe);
       return r;
     },

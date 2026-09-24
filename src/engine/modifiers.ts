@@ -4,16 +4,21 @@ import { FOLLOWERS } from "../content/followers";
 import type { ItemId } from "../content/items";
 import { SHOP } from "../content/shop";
 import type { RequestDef, UpgradeEffect } from "../content/types";
+import type { SkillId } from "../content/skills";
 import { discoveredRewards } from "./grimoire";
 import type { GameState } from "./state";
+import { branchBonus, keystoneEffect } from "./talents";
+import { levelForXp } from "./xp";
 
 // Every bonus in the game is computed here, so balance lives in one place.
-// Sources: sanctum upgrades, timed buffs (released omens, minor rites), followers and
-// Grimoire rewards. `now` is the sim clock; it defaults to the last tick.
+// Sources: skill levels, talents, sanctum upgrades, timed buffs (released omens, minor rites),
+// followers and Grimoire rewards. `now` is the sim clock; it defaults to the last tick.
 
 const HOUR = 60 * 60 * 1000;
 export const BASE_OFFLINE_CAP_MS = 24 * HOUR;
 export const BASE_OMEN_CAPACITY = 1;
+/** Each level past 1 makes its skill's actions this much faster, compounding (1.01 = 1%). */
+export const LEVEL_SPEED = 1.01;
 
 function effects(state: GameState): UpgradeEffect[] {
   return state.upgrades.map((id) => SHOP[id].effect);
@@ -23,10 +28,18 @@ export function activeBuffs(state: GameState, now: number = state.lastTickAt) {
   return state.buffs.filter((b) => b.endsAt > now);
 }
 
-/** Speed multiplier for an action (1 = normal, 1.15 = 15% faster). Bonuses add up. */
+/** Speed from the skill's own level: 1% per level past 1, compounding. */
+export function levelSpeed(state: GameState, skill: SkillId): number {
+  return LEVEL_SPEED ** (levelForXp(state.skills[skill].xp, state.levelCap) - 1);
+}
+
+/**
+ * Speed multiplier for an action (1 = normal, 1.15 = 15% faster). Bonuses add up, then the
+ * skill's level speed multiplies the total.
+ */
 export function speedMultiplier(state: GameState, id: ActionId, now: number = state.lastTickAt): number {
   const skill = ACTION_DEFS[id].skill;
-  let bonus = 0;
+  let bonus = branchBonus(state, skill, "swift");
   for (const e of effects(state)) if (e.kind === "speed" && e.skill === skill) bonus += e.bonus;
   for (const b of activeBuffs(state, now)) {
     bonus += BUFF_DEFS[b.id].speed?.[skill] ?? 0;
@@ -36,7 +49,7 @@ export function speedMultiplier(state: GameState, id: ActionId, now: number = st
     const def = FOLLOWERS[f];
     bonus += def.assist + (def.trait.skill === skill ? def.trait.bonus : 0);
   }
-  return 1 + bonus;
+  return (1 + bonus) * levelSpeed(state, skill);
 }
 
 /** Time one repetition takes, after speed bonuses. */
@@ -44,21 +57,36 @@ export function actionDurationMs(state: GameState, id: ActionId, now: number = s
   return (ACTION_DEFS[id].seconds * 1000) / speedMultiplier(state, id, now);
 }
 
-/** Multiplier on an item's drop chance from active buffs (e.g. Still Night doubles burnt pages). */
-export function chanceMultiplier(state: GameState, item: ItemId, now: number = state.lastTickAt): number {
-  let mult = 1;
+/**
+ * Multiplier on an item's drop chance from active buffs (e.g. Still Night doubles burnt pages),
+ * and from the skill's Keen eye keystone when `skill` is given.
+ */
+export function chanceMultiplier(state: GameState, item: ItemId, now: number = state.lastTickAt, skill?: SkillId): number {
+  const keystone = skill ? keystoneEffect(state, skill) : null;
+  let mult = keystone?.kind === "find_chance" ? keystone.multiplier : 1;
   for (const b of activeBuffs(state, now)) {
     mult *= BUFF_DEFS[b.id].chanceMultiplier?.[item] ?? 1;
   }
   return mult;
 }
 
-/** Chance of one extra unit on each guaranteed output (e.g. the drying rack). */
+/** Chance of one extra unit on each guaranteed output (the drying rack, the Plenty talent). */
 export function extraYieldChance(state: GameState, id: ActionId): number {
   const skill = ACTION_DEFS[id].skill;
-  let chance = 0;
+  let chance = branchBonus(state, skill, "plenty");
   for (const e of effects(state)) if (e.kind === "extra_yield" && e.skill === skill) chance += e.chance;
   return chance;
+}
+
+/** Chance of a critical (double output and XP), from the Fortune talent. */
+export function criticalChance(state: GameState, id: ActionId): number {
+  return branchBonus(state, ACTION_DEFS[id].skill, "fortune");
+}
+
+/** Extra XP as a fraction (the Devout keystone). */
+export function xpBonus(state: GameState, id: ActionId): number {
+  const k = keystoneEffect(state, ACTION_DEFS[id].skill);
+  return k?.kind === "xp_bonus" ? k.bonus : 0;
 }
 
 export function offlineCapMs(state: GameState): number {

@@ -151,11 +151,11 @@ export function ItemLookupModal({ state, item, onClose }: { state: GameState; it
         </dd>
         <dt>Used for</dt>
         <dd>
-          {l.usedBy.length === 0 && l.inRite === 0 && l.wantedBy.length === 0 && l.inRecipes.length === 0 && !l.inUnfound && <span className="muted">Nothing you know of yet.</span>}
+          {l.usedBy.length === 0 && l.inKindling === 0 && l.wantedBy.length === 0 && l.inRecipes.length === 0 && !l.inUnfound && <span className="muted">Nothing you know of yet.</span>}
           {l.usedBy.map((id) => (
             <span key={id}>{actionLabel(id)}</span>
           ))}
-          {l.inRite > 0 && <span>The Kindling of the Hearth-Circle (×{l.inRite})</span>}
+          {l.inKindling > 0 && <span>The Kindling of the Hearth-Circle (×{l.inKindling})</span>}
           {l.wantedBy.map((who) => (
             <span key={who}>A request from {who}</span>
           ))}

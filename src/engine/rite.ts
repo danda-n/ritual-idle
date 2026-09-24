@@ -1,27 +1,26 @@
-import { HEARTH_RITE, SKILLED_RITUALIST } from "../content/rite";
-import type { ItemId } from "../content/items";
+import { HEARTH_RITE, PART_IDS, SKILLED_RITUALIST, type PartId } from "../content/rite";
 import type { SkillId } from "../content/skills";
 import { activeBuffs, riteQualitySteps } from "./modifiers";
 import { isRiteRevealed } from "./progress";
 import type { GameState } from "./state";
 import { levelForXp } from "./xp";
 
-// The Chapter 1 Major Rite. It takes the action slot for 30 minutes of sim time, runs offline,
+// The Chapter 1 Major Rite. Its parts are placed in the Circle one by one (see `placePart`);
+// once all are placed it takes the action slot for 30 minutes of sim time, runs offline,
 // and always succeeds; preparation only sets the outcome quality. Helpers mutate `state`.
 
 export interface Shortfall {
-  items: { item: ItemId; have: number; need: number }[];
+  /** Kindling parts not yet placed in the Circle. */
+  parts: PartId[];
   skills: { skill: SkillId; have: number; need: number }[];
 }
 
 export function riteShortfall(state: GameState): Shortfall {
-  const items = (Object.entries(HEARTH_RITE.items) as [ItemId, number][])
-    .map(([item, need]) => ({ item, have: state.inventory[item] ?? 0, need }))
-    .filter((x) => x.have < x.need);
+  const parts = PART_IDS.filter((p) => !state.kindling.includes(p));
   const skills = (Object.entries(HEARTH_RITE.skills) as [SkillId, number][])
     .map(([skill, need]) => ({ skill, have: levelForXp(state.skills[skill].xp, state.levelCap), need }))
     .filter((x) => x.have < x.need);
-  return { items, skills };
+  return { parts, skills };
 }
 
 export function canBeginRite(state: GameState): string | null {
@@ -29,17 +28,15 @@ export function canBeginRite(state: GameState): string | null {
   if (state.rite.completed) return "The circle is already awake.";
   if (state.rite.performing) return "The rite is already under way.";
   const s = riteShortfall(state);
-  if (s.items.length > 0 || s.skills.length > 0) return "Something the rite needs is still missing.";
+  if (s.parts.length > 0) return "Every part of the Kindling must be placed first.";
+  if (s.skills.length > 0) return "Your Ritualism isn't high enough yet.";
   return null;
 }
 
 const stillNightActive = (state: GameState, now: number) => activeBuffs(state, now).some((b) => b.id === "still_night");
 
-/** Consume the components and start the rite (it replaces whatever you were doing). */
+/** Start the rite (it replaces whatever you were doing). The parts are already in the Circle. */
 export function beginRite(state: GameState, now: number): void {
-  for (const [item, qty] of Object.entries(HEARTH_RITE.items) as [ItemId, number][]) {
-    state.inventory[item] = (state.inventory[item] ?? 0) - qty;
-  }
   state.active = null;
   state.rite.performing = { elapsedMs: 0, stillNight: stillNightActive(state, now) };
 }

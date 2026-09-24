@@ -6,7 +6,8 @@ import type { BuffId } from "../content/buffs";
 import { INSIGHT_GAIN } from "../content/grimoire";
 import { PAGES } from "../content/pages";
 import { addInsight, fragmentTarget, readCurio, type Fragment } from "./grimoire";
-import { actionDurationMs, chanceMultiplier, extraYieldChance } from "./modifiers";
+import { actionDurationMs, chanceMultiplier, criticalChance, extraYieldChance, xpBonus } from "./modifiers";
+import { keystoneEffect } from "./talents";
 import { applyBuff, giveNoteGifts, grantOmen, pruneBuffs } from "./omens";
 import { isRecipeKnown, isSkillUnlocked, pagesRead, revealNotes, type Note, type Page } from "./progress";
 import { nextRandom } from "./rng";
@@ -38,6 +39,8 @@ export interface Report {
   /** Insight toward hidden recipes (from pages past the story ones, and curios). */
   fragments: Fragment[];
   curioStories: string[];
+  /** Repetitions that came up critical (the Fortune talent). */
+  criticals: number;
   riteStarted: boolean;
   /** Time spent performing the rite. */
   riteMs: number;
@@ -49,7 +52,7 @@ export interface Report {
 }
 
 export function emptyReport(): Report {
-  return { elapsedMs: 0, actionsCompleted: 0, xpGained: {}, itemsGained: {}, itemsUsed: {}, levelUps: [], notesRevealed: [], pagesRead: [], omensFound: [], omensLost: 0, fragments: [], curioStories: [], riteStarted: false, riteMs: 0, riteCompleted: null, fellBackTo: [] };
+  return { elapsedMs: 0, actionsCompleted: 0, xpGained: {}, itemsGained: {}, itemsUsed: {}, levelUps: [], notesRevealed: [], pagesRead: [], omensFound: [], omensLost: 0, fragments: [], curioStories: [], criticals: 0, riteStarted: false, riteMs: 0, riteCompleted: null, fellBackTo: [] };
 }
 
 export function skillLevel(state: GameState, skill: SkillId): number {
@@ -91,6 +94,42 @@ export function stopAction(state: GameState): GameState {
 
 function add<K extends string>(bag: Partial<Record<K, number>>, key: K, n: number) {
   bag[key] = (bag[key] ?? 0) + n;
+}
+
+/** Steady hand (a keystone): a chance that this repetition uses no inputs. */
+function savesInputs(state: GameState, id: ActionId, roll: () => number): boolean {
+  const k = keystoneEffect(state, ACTION_DEFS[id].skill);
+  return k?.kind === "save_inputs" && Object.keys(ACTION_DEFS[id].inputs).length > 0 && roll() < k.chance;
+}
+
+/**
+ * Roll one repetition's outputs, with every yield bonus: drop chances (buffs, Keen eye), extra
+ * units on sure outputs (drying rack, Plenty), pairs (Long-burning), every nth (Dew-picked) and
+ * criticals (Fortune: double everything, XP included). Rolls happen only for bonuses the player
+ * has, so the random sequence is unchanged without them.
+ */
+export function rollOutputs(state: GameState, id: ActionId, now: number, roll: () => number): { items: Partial<Record<ItemId, number>>; critical: boolean } {
+  const def = ACTION_DEFS[id];
+  const extra = extraYieldChance(state, id);
+  const keystone = keystoneEffect(state, def.skill);
+  const crit = criticalChance(state, id);
+  const critical = crit > 0 && roll() < crit;
+  const pairs = keystone?.kind === "double_output" && roll() < keystone.chance;
+  const nth = keystone?.kind === "every_nth" && ((state.stats.completed[id] ?? 0) + 1) % keystone.n === 0;
+  const items: Partial<Record<ItemId, number>> = {};
+  for (const out of def.outputs) {
+    const sure = out.chance === undefined;
+    if (!sure && roll() >= Math.min(1, out.chance! * chanceMultiplier(state, out.item, now, def.skill))) continue;
+    let qty = out.qty;
+    if (sure) {
+      if (extra > 0 && roll() < extra) qty += 1;
+      if (pairs) qty *= 2;
+      if (nth) qty += 1;
+    }
+    if (critical) qty *= 2;
+    add(items, out.item, qty);
+  }
+  return { items, critical };
 }
 
 /**
@@ -177,30 +216,34 @@ export function advance(input: GameState, ms: number, opts: AdvanceOptions = {})
     }
 
     // Complete one repetition: consume inputs, roll outputs, grant XP.
-    for (const [item, qty] of Object.entries(def.inputs) as [ItemId, number][]) {
-      state.inventory[item] = (state.inventory[item] ?? 0) - qty;
-      add(report.itemsUsed, item, qty);
-    }
-    const extra = extraYieldChance(state, id);
     const now = clock();
-    for (const out of def.outputs) {
-      if (out.chance !== undefined && roll() >= Math.min(1, out.chance * chanceMultiplier(state, out.item, now))) continue;
-      // Yield bonuses (e.g. the drying rack) only apply to guaranteed outputs.
+    const saved = savesInputs(state, id, roll);
+    if (!saved) {
+      for (const [item, qty] of Object.entries(def.inputs) as [ItemId, number][]) {
+        state.inventory[item] = (state.inventory[item] ?? 0) - qty;
+        add(report.itemsUsed, item, qty);
+      }
+    }
+    const { items, critical } = rollOutputs(state, id, now, roll);
+    if (critical) report.criticals++;
+    for (const [item, qty] of Object.entries(items) as [ItemId, number][]) {
       // Curios go into the collection, not the pantry.
-      if (out.item === "curio") {
-        const { story, fragment } = readCurio(state);
-        report.curioStories.push(story);
-        if (fragment) report.fragments.push(fragment);
+      if (item === "curio") {
+        for (let i = 0; i < qty; i++) {
+          const { story, fragment } = readCurio(state);
+          report.curioStories.push(story);
+          if (fragment) report.fragments.push(fragment);
+        }
         continue;
       }
-      const qty = out.qty + (out.chance === undefined && extra > 0 && roll() < extra ? 1 : 0);
-      add(state.inventory, out.item, qty);
-      add(report.itemsGained, out.item, qty);
+      add(state.inventory, item, qty);
+      add(report.itemsGained, item, qty);
     }
     const skill = state.skills[def.skill];
     const before = levelForXp(skill.xp, state.levelCap);
     // XP past the chapter cap is not banked, so raising the cap never causes a sudden jump.
-    const newXp = Math.min(skill.xp + def.xp, xpForLevel(state.levelCap));
+    const xp = Math.round(def.xp * (1 + xpBonus(state, id)) * (critical ? 2 : 1));
+    const newXp = Math.min(skill.xp + xp, xpForLevel(state.levelCap));
     add(report.xpGained, def.skill, newXp - skill.xp);
     skill.xp = newXp;
     const after = levelForXp(skill.xp, state.levelCap);
@@ -223,6 +266,12 @@ export function advance(input: GameState, ms: number, opts: AdvanceOptions = {})
     // Past the story pages, each deciphered page carries a hint fragment.
     if (id === "decipher_page" && (state.stats.completed.decipher_page ?? 0) > PAGES.length) {
       const f = addInsight(state, fragmentTarget(state), INSIGHT_GAIN.page, "page");
+      if (f) report.fragments.push(f);
+    }
+    // Marginalia (the Scholarship keystone): every page deciphered carries a little insight.
+    const keystone = keystoneEffect(state, def.skill);
+    if (keystone?.kind === "insight" && id === "decipher_page") {
+      const f = addInsight(state, fragmentTarget(state), keystone.amount, "page");
       if (f) report.fragments.push(f);
     }
     const notes = revealNotes(state);

@@ -50,6 +50,8 @@ Chapter 1 has 3 hidden recipes and 2 secrets. Later chapters get about 3–5 hid
 
 The ritual circle in the sanctum is where experiments happen. **Experiments are instant.** They don't use your action slot, so the loop keeps running while you experiment.
 
+**When they open** *(first patch)*: the Circle tab opens at the start, but only for the Kindling's parts. Experiments open with their own side note (`EXPERIMENTS_NOTE` in `src/content/notes.ts`) when the first hint toward a hidden recipe arrives and the Grimoire is open. That's usually Widow Hana's request (it mentions the Dream pillow) or a page past the story pages. Until then the Grimoire's Next step says experiments open with grandmother's next note.
+
 ### 4.1 Attuned experiment (solving a hidden recipe)
 1. Open a silhouette in the Grimoire and choose **Attune the circle**.
 2. The circle shows as many slots as the recipe has ingredients (3 in Chapter 1, 3–4 later). Ingredient order never matters.
@@ -248,6 +250,7 @@ Every screen answers "what is this for, and what do I do next?". Gameplay, not l
   - Then *Belongs* (proven, or named by a hint), *Crossed out*, and *Still possible* (things held that aren't ruled out).
   - The hints come last, with one line on where Insight comes from.
 - **Circle:**
+  - The Kindling panel comes first (the chapter's parts). Experiments are a separate panel below it, marked optional.
   - A step strip (① choose what to work on → ② pick things → ③ place them), with the current step lit.
   - A "Working on" line showing the reward and what's known.
   - A plain explanation under every result, honest that the glow is a count ("2 of 3 right, but not which. Swap one thing at a time…").

@@ -31,9 +31,9 @@ describe("content", () => {
 
 describe("xp curve", () => {
   it("matches the Chapter 1 design numbers", () => {
-    expect(xpToNext(1)).toBe(25);
-    expect(xpForLevel(10)).toBe(473);
-    expect(xpForLevel(20)).toBe(3075);
+    expect(xpToNext(1)).toBe(165);
+    expect(xpForLevel(10)).toBe(2650);
+    expect(xpForLevel(20)).toBe(13020);
   });
 
   it("respects the level cap", () => {
@@ -90,7 +90,9 @@ describe("offline catch-up", () => {
     const s = startAction(newGame(T0, 1), "pick_nettle");
     const short = catchUp(s, T0 + HOUR);
     expect(short.capped).toBe(false);
-    expect(short.report.actionsCompleted).toBe(1200);
+    // 1200 at 3s each, and a few more as Herbalism levels speed it up.
+    expect(short.report.actionsCompleted).toBeGreaterThan(1200);
+    expect(short.report.actionsCompleted).toBeLessThan(1400);
 
     const long = catchUp(s, T0 + 48 * HOUR);
     expect(long.capped).toBe(true);

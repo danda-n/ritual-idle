@@ -101,8 +101,26 @@ Item names go through `ItemChip` (`src/ui/components/ItemLookup.tsx`), so any it
 - Circle: glows light one by one, "Closer!" appears when a try beats your best, and discovery gives a spark ring and a blooming rosette.
 - Everything uses transform, opacity and box-shadow only, and all of it stops under reduced motion.
 
+## First patch: the Kindling and talents
+- **The Kindling panel** (`components/KindlingPanel.tsx`) is vellum and sits at the top of the Circle tab.
+  - A **rosette of five petals**, one per part. A petal is dashed until its part is placed, then filled in its skill's colour, with a bloom as it lands. While the rite runs the heart lights and the ring drifts.
+  - **Part rows:**
+    - Placed: a tick, and the one-line "placed" text.
+    - Open: skill-coloured border, item chips with have/need, and a Place button (gold only when ready).
+    - Later: the name and "Later · brings <skill>".
+  - Once all five are placed, a **Wake it** block: the Ritualism level, Begin, "begin by itself", and the outcome with a "Why" toggle.
+- **The tracker** shows the current part's items as chips. Its button is **Place in the Circle** (gold) once ready, and **Go** otherwise, which opens the stage's new skill.
+- **Skill list:** only unlocked skills, plus one dashed **Next** tile that names the next skill and what brings it. A tile shows a "+N" badge in its skill colour when it has talent points.
+- **Talents panel** (`components/TalentPanel.tsx`) sits under a skill's recipes.
+  - Three branch cards with rank pips, the current effect in plain numbers and a "+1 rank" button.
+  - Below them, the keystone row: dashed until it can be taken, solid in the skill colour once open or taken.
+  - The header says "N points to spend" or "Next point at level N", with a free Reset.
+
 ## Words (one per thing)
 - **the Circle**: the place (lowercase "circle" only inside lore text)
+- **the Kindling**: the chapter's rite; its five **parts** are *placed* in the Circle
+- **experiments**: optional guesses at the Circle (hidden recipes and secrets)
+- **talents**: per-skill choices bought with **talent points**
 - **recipe**: a craftable action
 - **hidden recipe**: a Grimoire entry found by hints
 - **secret**: found with no hints

@@ -1,14 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { ACTIONS, ACTION_DEFS } from "../content/actions";
+import { ACTION_DEFS } from "../content/actions";
 import { BUFFS } from "../content/buffs";
 import { NOTES } from "../content/notes";
 import { OMENS } from "../content/omens";
-import { releaseOmen } from "./commands";
+import { placePart, releaseOmen } from "./commands";
+import { PART_DEFS, type PartId } from "../content/rite";
 import { rewind } from "./devtools";
 import { actionDurationMs, chanceMultiplier } from "./modifiers";
 import { catchUp } from "./offline";
 import { deserialize } from "./save";
 import { advance, startAction } from "./simulate";
+import { xpForLevel } from "./xp";
 import { newGame, type GameState } from "./state";
 
 const T0 = 1_000_000;
@@ -48,13 +50,15 @@ describe("omen drops", () => {
 
   it("the note that opens Scholarship gives the first Still Night", () => {
     const giftNote = NOTES.findIndex((n) => "gift" in n);
+    expect(NOTES[giftNote]!.unlocks).toEqual(["scholarship"]);
     const prev = NOTES[giftNote - 1]!;
-    if (!("goal" in prev) || prev.goal.kind !== "complete") throw new Error("expected an action goal");
-    const s: GameState = { ...newGame(T0, 11), notesRevealed: giftNote, inventory: { tallow: 99 } };
-    const done = { ...s, stats: { ...s.stats, completed: { [prev.goal.action]: prev.goal.count - 1 } } };
-    const { state, report } = advance(startAction(done, prev.goal.action), ACTION_DEFS[prev.goal.action].seconds * 1000);
-    expect(report.omensFound).toContain("still_night");
-    expect(state.omens.still_night).toBe(1);
+    if (!("goal" in prev) || prev.goal.kind !== "place") throw new Error("expected a place goal");
+    const part = prev.goal.part as PartId;
+    const s: GameState = { ...newGame(T0, 11), notesRevealed: giftNote, inventory: { ...PART_DEFS[part].items } };
+    const r = placePart(s, part);
+    if (!r.ok) throw new Error(r.reason);
+    expect(r.gifts).toEqual(["still_night"]);
+    expect(r.state.omens.still_night).toBe(1);
   });
 });
 
@@ -95,16 +99,17 @@ describe("releasing Still Night", () => {
 });
 
 describe("Blessing (Smoke the rooms)", () => {
-  const withSmudge = () => open({ inventory: { smudge: 10, tallow_candle: 10 }, skills: { ...newGame().skills, ritualism: { xp: 200 } } });
+  const withSmudge = () => open({ inventory: { smudge: 10, tallow_candle: 10 }, skills: { ...newGame().skills, ritualism: { xp: xpForLevel(3) } } });
 
   it("applies a 15-minute speed buff instead of producing an item", () => {
-    const { state } = advance(startAction(withSmudge(), "smoke_rooms"), ACTIONS.smoke_rooms.seconds * 1000);
-    expect(state.buffs).toEqual([{ id: "blessing", endsAt: T0 + 12_000 + 15 * MIN }]);
+    const took = actionDurationMs(withSmudge(), "smoke_rooms"); // a little under 12s at Ritualism 3
+    const { state } = advance(startAction(withSmudge(), "smoke_rooms"), took);
+    expect(state.buffs).toEqual([{ id: "blessing", endsAt: T0 + took + 15 * MIN }]);
     expect(actionDurationMs(state, "pick_nettle")).toBeCloseTo(3000 / 1.1);
   });
 
   it("refreshes rather than stacks when repeated", () => {
-    const { state } = advance(startAction(withSmudge(), "smoke_rooms"), 3 * ACTIONS.smoke_rooms.seconds * 1000);
+    const { state } = advance(startAction(withSmudge(), "smoke_rooms"), 3 * actionDurationMs(withSmudge(), "smoke_rooms"));
     expect(state.buffs).toHaveLength(1);
     expect(state.buffs[0]!.endsAt).toBeLessThanOrEqual(state.lastTickAt + BUFFS.blessing.durationMs);
   });

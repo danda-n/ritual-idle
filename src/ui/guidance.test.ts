@@ -12,14 +12,14 @@ const okay = (r: Result) => {
 };
 function open(extra: Partial<GameState> = {}): GameState {
   const b = newGame(1, 1);
-  const s = { ...b, notesRevealed: NOTES.length, stats: { ...b.stats, completed: { decipher_page: PAGES.length } }, ...extra };
+  const s = { ...b, notesRevealed: NOTES.length, experimentsOpen: true, stats: { ...b.stats, completed: { decipher_page: PAGES.length } }, ...extra };
   addInsight(s, "dream_pillow", 3, "page");
   return s;
 }
 
 describe("Grimoire guidance", () => {
-  it("before the Circle opens, says so", () => {
-    expect(recipeGuide({ ...open(), notesRevealed: 4 }, "dream_pillow").action).toBeNull();
+  it("before experiments open, says so", () => {
+    expect(recipeGuide({ ...open(), experimentsOpen: false }, "dream_pillow").action).toBeNull();
   });
 
   it("first step: try anything at the Circle", () => {

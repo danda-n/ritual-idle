@@ -37,8 +37,8 @@ export interface Guide {
 export function recipeGuide(state: GameState, id: GrimoireId): Guide {
   const k = recipeKnowledge(state, id);
   const left = k.size - k.belongs.length;
-  if (!isFeatureOpen(state, "circle")) {
-    return { headline: "The Circle opens later in the chapter", detail: "That's where you test guesses. Until then, collect hints: they sharpen on their own.", action: null };
+  if (!isFeatureOpen(state, "experiments")) {
+    return { headline: "Experiments open with grandmother's next note", detail: "That's where you test guesses at the Circle. Until then, collect hints: they sharpen on their own.", action: null };
   }
   if (left === 0) {
     return { headline: `You know all ${k.size}: make it at the Circle`, detail: "Place exactly these in the Circle to discover it.", action: "Make it at the Circle" };

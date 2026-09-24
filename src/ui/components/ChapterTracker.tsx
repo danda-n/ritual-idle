@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { ACTION_DEFS } from "../../content/actions";
+import { HEARTH_RITE, PART_DEFS, type PartId } from "../../content/rite";
 import type { ItemId } from "../../content/items";
 import { SKILLS } from "../../content/skills";
 import { goalProgress } from "../../engine/progress";
+import { canPlace, placePart, type Result } from "../../engine/commands";
 import { skillLevel } from "../../engine/simulate";
 import type { GameState } from "../../engine/state";
 import { CircleRiteIcon } from "../art/icons";
@@ -14,7 +16,7 @@ import { ItemChip } from "./ItemLookup";
  * The chapter as a checklist: done steps, the current task with what it needs (as chips,
  * so a short one offers to start what makes it) and a Go button, and one "???" ahead.
  */
-export function ChapterTracker({ state, onGo }: { state: GameState; onGo: (p: Place) => void }) {
+export function ChapterTracker({ state, onGo, act }: { state: GameState; onGo: (p: Place) => void; act: (c: (s: GameState) => Result) => unknown }) {
   const current = STEPS.findIndex((s) => s.index === state.notesRevealed - 1);
   const done = state.rite.completed ? STEPS.length : current < 0 ? STEPS.length : current;
   // A step just finished: draw its tick and surge the bar.
@@ -54,8 +56,14 @@ export function ChapterTracker({ state, onGo }: { state: GameState; onGo: (p: Pl
           if (i === done && !state.rite.completed) {
             const p = goalProgress(state, s.note);
             const action = goal.kind === "complete" ? ACTION_DEFS[goal.action] : null;
-            const inputs = action ? (Object.entries(action.inputs) as [ItemId, number][]) : [];
-            const lowLevel = action && skillLevel(state, action.skill) < action.level;
+            // A part lists its items; an action its inputs. Chips show have/need.
+            const inputs = (goal.kind === "place" ? Object.entries(PART_DEFS[goal.part as PartId].items) : action ? Object.entries(action.inputs) : []) as [ItemId, number][];
+            const needLevel =
+              action && skillLevel(state, action.skill) < action.level
+                ? { skill: action.skill, level: action.level }
+                : goal.kind === "rite" && skillLevel(state, "ritualism") < HEARTH_RITE.skills.ritualism!
+                  ? { skill: "ritualism" as const, level: HEARTH_RITE.skills.ritualism! }
+                  : null;
             return (
               <li key={i} className="step current">
                 <span className="step-mark" aria-hidden="true">▶</span>
@@ -69,11 +77,11 @@ export function ChapterTracker({ state, onGo }: { state: GameState; onGo: (p: Pl
                     )}
                   </div>
                   {p && p.target > 1 && <Bar thin value={p.done / p.target} label="Task progress" />}
-                  {(inputs.length > 0 || lowLevel) && (
+                  {(inputs.length > 0 || needLevel) && (
                     <div className="step-needs">
-                      {lowLevel && action && (
+                      {needLevel && (
                         <span className="chip short">
-                          {SKILLS[action.skill].name} {action.level}
+                          {SKILLS[needLevel.skill].name} {needLevel.level}
                         </span>
                       )}
                       {inputs.map(([item, qty]) => (
@@ -82,9 +90,15 @@ export function ChapterTracker({ state, onGo }: { state: GameState; onGo: (p: Pl
                     </div>
                   )}
                   {"hint" in s.note && <p className="step-hint">{s.note.hint}</p>}
-                  <button className="btn btn-ghost step-go" onClick={() => onGo(taskPlace(goal))}>
-                    Go
-                  </button>
+                  {goal.kind === "place" && canPlace(state, goal.part as PartId) === null ? (
+                    <button className="btn btn-primary step-go" onClick={() => act((st) => placePart(st, goal.part as PartId))}>
+                      Place in the Circle
+                    </button>
+                  ) : (
+                    <button className="btn btn-ghost step-go" onClick={() => onGo(taskPlace(goal))}>
+                      Go
+                    </button>
+                  )}
                 </div>
               </li>
             );

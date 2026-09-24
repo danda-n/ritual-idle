@@ -1,13 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { NOTES } from "../content/notes";
 import { PAGES } from "../content/pages";
-import { HEARTH_RITE, QUALITIES } from "../content/rite";
-import type { ItemId } from "../content/items";
-import { beginRite, dismissEnding, primeRite, releaseOmen, type Result } from "./commands";
+import { HEARTH_RITE, PART_DEFS, PART_IDS, QUALITIES } from "../content/rite";
+import { beginRite, dismissEnding, placePart, primeRite, releaseOmen, type Result } from "./commands";
 import { progressOf } from "./grimoire";
 import { actionDurationMs, requestCoin } from "./modifiers";
 import { catchUp } from "./offline";
-import { currentNote, isRiteRevealed } from "./progress";
+import { currentNote, isFeatureOpen, isRiteRevealed, isSkillUnlocked } from "./progress";
 import { REQUESTS } from "../content/requests";
 import { riteLog, riteQuality, riteShortfall } from "./rite";
 import { deserialize } from "./save";
@@ -25,7 +24,7 @@ function ready(extra: Partial<GameState> = {}): GameState {
     ...base,
     notesRevealed: RITE_NOTE + 1,
     stats: { ...base.stats, completed: { decipher_page: PAGES.length } },
-    inventory: { ...(HEARTH_RITE.items as Record<string, number>) },
+    kindling: [...PART_IDS],
     skills: { ...base.skills, ritualism: { xp: xpForLevel(5) } },
     ...extra,
   };
@@ -42,20 +41,53 @@ describe("requirements", () => {
     expect(isRiteRevealed({ ...ready(), notesRevealed: RITE_NOTE })).toBe(false);
   });
 
-  it("lists exactly what is missing", () => {
-    const s = ready({ inventory: { hearth_candle: 5 }, skills: { ...newGame().skills } });
+  it("lists exactly what is missing: unplaced parts and levels", () => {
+    const s = ready({ kindling: ["light", "ward"], skills: { ...newGame().skills } });
     const short = riteShortfall(s);
-    expect(short.items.find((x) => x.item === "hearth_candle")).toEqual({ item: "hearth_candle", have: 5, need: 7 });
+    expect(short.parts).toEqual(["smoke", "words", "offering"]);
     expect(short.skills).toEqual([{ skill: "ritualism", have: 1, need: 5 }]);
     expect(beginRite(s).ok).toBe(false);
+    expect(beginRite(ready({ kindling: ["light"] })).ok).toBe(false);
+  });
+});
+
+describe("placing parts", () => {
+  const early = () => ({ ...ready(), kindling: [], notesRevealed: 2 });
+
+  it("uses the part's items and keeps it in the Circle", () => {
+    const s = { ...early(), inventory: { tallow_candle: 10, beeswax_candle: 3 } };
+    const placed = okay(placePart(s, "light"));
+    expect(placed.kindling).toEqual(["light"]);
+    expect(placed.inventory).toEqual({ tallow_candle: 10 - PART_DEFS.light.items.tallow_candle!, beeswax_candle: 0 });
+  });
+
+  it("refuses when short, or when already placed", () => {
+    const s = { ...early(), inventory: { tallow_candle: 10 } };
+    const r = placePart(s, "light");
+    expect(!r.ok && r.reason).toMatch(/isn't ready/);
+    const full = { ...early(), inventory: { tallow_candle: 20, beeswax_candle: 6 } };
+    const once = okay(placePart(full, "light"));
+    expect(placePart(once, "light").ok).toBe(false);
+  });
+
+  it("completes the stage's note and brings the next skill", () => {
+    const s = { ...early(), inventory: { tallow_candle: 8, beeswax_candle: 3 } };
+    const r = placePart(s, "light");
+    expect(r.ok && r.notes).toEqual([NOTES[2]]);
+    expect(okay(r).notesRevealed).toBe(3);
+  });
+
+  it("needs the Circle to be open", () => {
+    const closed = { ...newGame(T0, 1), notesRevealed: 0, inventory: { tallow_candle: 8, beeswax_candle: 3 } };
+    expect(placePart(closed, "light").ok).toBe(false);
   });
 });
 
 describe("performing", () => {
-  it("consumes the components and takes the action slot", () => {
-    const s = okay(beginRite(startAction(ready(), "pick_nettle")));
+  it("takes the action slot; the parts already sit in the Circle", () => {
+    const s = okay(beginRite(startAction(ready({ inventory: { salt: 4 } }), "pick_nettle")));
     expect(s.active).toBeNull();
-    for (const [item, qty] of Object.entries(HEARTH_RITE.items) as [ItemId, number][]) expect(s.inventory[item]).toBe(0 * qty);
+    expect(s.inventory).toEqual({ salt: 4 });
     expect(blockReason(s, "pick_nettle")).toEqual({ kind: "rite_in_progress" });
   });
 
@@ -81,7 +113,7 @@ describe("performing", () => {
 
   it("cannot be performed twice", () => {
     const { state } = advance(okay(beginRite(ready())), 30 * MIN);
-    expect(beginRite({ ...state, inventory: ready().inventory }).ok).toBe(false);
+    expect(beginRite(state).ok).toBe(false);
   });
 });
 
@@ -106,17 +138,23 @@ describe("quality", () => {
 });
 
 describe("priming", () => {
-  it("begins by itself the moment the last component is made", () => {
-    const inv = { ...ready().inventory, consecrated_salt: 2, salt_line: 1, tallow_candle: 1 };
-    const s = okay(primeRite(startAction(ready({ inventory: inv }), "bless_threshold"), true));
+  // One bless short of Ritualism 5.
+  const almost = () => ready({ inventory: { salt_line: 1, tallow_candle: 1 }, skills: { ...newGame().skills, ritualism: { xp: xpForLevel(5) - 1 } } });
+
+  it("begins by itself the moment Ritualism reaches the level", () => {
+    const s = okay(primeRite(startAction(almost(), "bless_threshold"), true));
     const { state, report } = advance(s, 10_000 + 1000);
     expect(report.riteStarted).toBe(true);
     expect(state.rite.performing).not.toBeNull();
   });
 
+  it("begins by itself when the last part is placed", () => {
+    const s = okay(primeRite(ready({ kindling: PART_IDS.filter((p) => p !== "offering"), inventory: { ...PART_DEFS.offering.items } }), true));
+    expect(okay(placePart(s, "offering")).rite.performing).not.toBeNull();
+  });
+
   it("does nothing while unprimed", () => {
-    const inv = { ...ready().inventory, consecrated_salt: 2, salt_line: 1, tallow_candle: 1 };
-    const { state } = advance(startAction(ready({ inventory: inv }), "bless_threshold"), 11_000);
+    const { state } = advance(startAction(almost(), "bless_threshold"), 11_000);
     expect(state.rite.performing).toBeNull();
   });
 });
@@ -125,7 +163,7 @@ describe("after the chapter", () => {
   const done = () => advance(okay(beginRite(ready())), 30 * MIN).state;
 
   it("Janko speeds up whatever you're doing, more on Chandlery", () => {
-    const s = done();
+    const s = done(); // Herbalism and Chandlery are still level 1 here
     expect(actionDurationMs(s, "pick_nettle")).toBeCloseTo(3000 / 1.3);
     expect(actionDurationMs(s, "tallow_candle")).toBeCloseTo(3000 / 1.5);
   });
@@ -143,6 +181,43 @@ describe("after the chapter", () => {
   it("rite state round-trips", () => {
     const s = advance(okay(beginRite(ready())), 5 * MIN).state;
     expect(deserialize(JSON.stringify(s)).rite).toEqual(s.rite);
+  });
+});
+
+describe("save v5", () => {
+  const v4 = (extra: Partial<GameState>) => JSON.stringify({ ...newGame(T0, 9), version: 4, kindling: undefined, kept: undefined, experimentsOpen: undefined, talents: undefined, ...extra });
+
+  it("a finished chapter counts every part as placed", () => {
+    const loaded = deserialize(v4({ notesRevealed: 9, rite: { primed: false, performing: null, completed: { quality: 2, endingSeen: true } } }));
+    expect(loaded.kindling).toEqual(PART_IDS);
+    expect(loaded.notesRevealed).toBe(NOTES.length);
+    expect(loaded.experimentsOpen).toBe(true);
+  });
+
+  it("a rite under way counts every part as placed and keeps running", () => {
+    const loaded = deserialize(v4({ notesRevealed: 8, rite: { primed: false, performing: { elapsedMs: 60_000, stillNight: false }, completed: null } }));
+    expect(loaded.kindling).toEqual(PART_IDS);
+    expect(currentNote(loaded)).toBe(NOTES[RITE_NOTE]);
+    expect(advance(loaded, 30 * MIN).state.rite.completed).not.toBeNull();
+  });
+
+  it("mid-chapter keeps every skill and place, and starts the Kindling at the Light", () => {
+    // Old note 5 was Sigilcraft: Scavenging, Chandlery, Herbalism, Scholarship and Sigilcraft were open, and the Grimoire.
+    const loaded = deserialize(v4({ notesRevealed: 5, inventory: { tallow_candle: 9, beeswax_candle: 3 } }));
+    expect(loaded.kindling).toEqual([]);
+    expect(loaded.kept.skills.sort()).toEqual(["chandlery", "herbalism", "scavenging", "scholarship", "sigilcraft"]);
+    expect(isFeatureOpen(loaded, "grimoire")).toBe(true);
+    expect(isSkillUnlocked(loaded, "ritualism")).toBe(false);
+    expect(currentNote(loaded)).toBe(NOTES[1]);
+    // What they already made can go straight in.
+    expect(placePart(loaded, "light").ok).toBe(true);
+  });
+
+  it("a brand-new v4 game starts the new chapter from the top", () => {
+    const loaded = deserialize(v4({ notesRevealed: 1 }));
+    expect(loaded.notesRevealed).toBe(1);
+    expect(loaded.kept.skills).toEqual(["scavenging"]);
+    expect(isFeatureOpen(loaded, "circle")).toBe(true);
   });
 });
 

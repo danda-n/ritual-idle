@@ -4,12 +4,15 @@ import type { FollowerId } from "../content/followers";
 import type { GrimoireId } from "../content/grimoire";
 import type { ItemId } from "../content/items";
 import type { OmenId } from "../content/omens";
+import type { PartId } from "../content/rite";
+import type { BranchId } from "../content/talents";
+import type { Feature } from "../content/types";
 import type { RequestId } from "../content/requests";
 import type { UpgradeId } from "../content/shop";
 import { SKILL_IDS, type SkillId } from "../content/skills";
 import { randomSeed } from "./rng";
 
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 
 export interface ActiveAction {
   id: ActionId;
@@ -50,6 +53,14 @@ export interface GameState {
   /** The silhouette the circle is attuned to, or null for free experiments. */
   attunedTo: GrimoireId | null;
   settings: Settings;
+  /** The Kindling's parts placed in the Circle so far. */
+  kindling: PartId[];
+  /** Experiments at the Circle open with the first hint toward a hidden recipe. */
+  experimentsOpen: boolean;
+  /** Talent ranks spent per skill. Points come from levels, so only spending is stored. */
+  talents: Partial<Record<SkillId, Talents>>;
+  /** Skills and places an older save's notes had opened, kept so nothing earned is taken away. */
+  kept: { skills: SkillId[]; features: Feature[] };
   rite: RiteState;
   followers: FollowerId[];
   /** The last gathering action that ran; the default fallback. */
@@ -98,6 +109,11 @@ export interface Settings {
   seenTabs: string[];
 }
 
+export interface Talents {
+  ranks: Partial<Record<BranchId, number>>;
+  keystone: boolean;
+}
+
 export interface ActiveBuff {
   id: BuffId;
   endsAt: number;
@@ -123,6 +139,10 @@ export function newGame(now: number = Date.now(), seed: number = randomSeed()): 
     attunedTo: null,
     settings: { grimoireAssist: false, fallback: "last_gathering", reducedMotion: false, toastSeconds: 8, seenTabs: ["house"] },
     lastGathering: null,
+    kindling: [],
+    experimentsOpen: false,
+    talents: {},
+    kept: { skills: [], features: [] },
     rite: { primed: false, performing: null, completed: null },
     followers: [],
     stats: { completed: {}, requestsFilled: 0, omensSeen: 0, curiosRead: 0 },

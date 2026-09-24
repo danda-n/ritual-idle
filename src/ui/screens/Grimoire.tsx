@@ -4,6 +4,7 @@ import { PAGES } from "../../content/pages";
 import { attune, type Result } from "../../engine/commands";
 import { GRIMOIRE_IDS, hintTier, isDiscovered, isSilhouetteVisible, nextHintAt, plainNamesShown, progressOf } from "../../engine/grimoire";
 import { pagesRead, revealedNotes } from "../../engine/progress";
+import { EXPERIMENTS_NOTE } from "../../content/notes";
 import type { GameState } from "../../engine/state";
 import { BookIcon, CircleRiteIcon, ScrollIcon } from "../art/icons";
 import { Bar } from "../components/Bar";
@@ -105,7 +106,7 @@ export function Grimoire({ state, act, onAttuned }: { state: GameState; act: Act
               <h2>Grandmother's notes</h2>
             </div>
             <ol className="journal">
-              {revealedNotes(state).map((n) => (
+              {[...revealedNotes(state), ...(state.experimentsOpen ? [EXPERIMENTS_NOTE] : [])].map((n) => (
                 <li key={n.text} className="note-quote">
                   {n.text}
                 </li>

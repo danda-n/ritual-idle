@@ -11,13 +11,14 @@ import { catchUp } from "./offline";
 import { deserialize } from "./save";
 import { advance, startAction } from "./simulate";
 import { newGame, type GameState } from "./state";
+import { xpForLevel } from "./xp";
 
 const T0 = 1_000_000;
 const HOUR = 60 * 60 * 1000;
 
 function open(extra: Partial<GameState> = {}): GameState {
   const base = newGame(T0, 5);
-  return { ...base, notesRevealed: NOTES.length, stats: { ...base.stats, completed: { decipher_page: PAGES.length } }, ...extra };
+  return { ...base, notesRevealed: NOTES.length, experimentsOpen: true, stats: { ...base.stats, completed: { decipher_page: PAGES.length } }, ...extra };
 }
 
 function okay(r: Result): Success {
@@ -83,7 +84,7 @@ describe("fragments", () => {
   });
 
   it("curios are read automatically and carry a fragment", () => {
-    const s = open({ skills: { ...newGame().skills, scavenging: { xp: 5000 } } });
+    const s = open({ skills: { ...newGame().skills, scavenging: { xp: xpForLevel(20) } } });
     const { state, report } = advance(startAction(s, "open_chest"), 5000 * 1000);
     expect(report.curioStories.length).toBeGreaterThan(0);
     expect(state.stats.curiosRead).toBe(report.curioStories.length);
@@ -141,9 +142,10 @@ describe("attuned experiments", () => {
     expect(experiment(s, ["mugwort", "rags", "glass"]).ok).toBe(false);
   });
 
-  it("needs the circle to be open", () => {
-    const s = { ...attuned(), notesRevealed: 3 };
+  it("needs experiments to be open", () => {
+    const s = { ...attuned(), experimentsOpen: false };
     expect(experiment(s, ["mugwort", "chamomile", "rags"]).ok).toBe(false);
+    expect(attune(s, "dream_pillow").ok).toBe(false);
   });
 });
 
@@ -174,8 +176,10 @@ describe("rewards", () => {
     const s = discover(startAction(open(), "pick_nettle"), "dream_pillow");
     expect(offlineBonus(s)).toBeCloseTo(0.1);
     const away = catchUp(s, T0 + HOUR);
+    const plain = catchUp(startAction(open(), "pick_nettle"), T0 + HOUR);
     expect(away.report.elapsedMs).toBe(HOUR);
-    expect(Math.abs(away.report.actionsCompleted - 1320)).toBeLessThanOrEqual(1); // 1200 × 1.1, give or take float rounding
+    // About 10% more done than without the pillow (level speed-ups apply to both).
+    expect(away.report.actionsCompleted / plain.report.actionsCompleted).toBeCloseTo(1.1, 1);
     expect(away.state.lastTickAt).toBe(T0 + HOUR);
   });
 

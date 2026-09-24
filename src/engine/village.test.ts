@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { NOTES } from "../content/notes";
+import { ACTION_DEFS } from "../content/actions";
+import { PART_DEFS } from "../content/rite";
 import { REFILL_MS, REQUESTS } from "../content/requests";
 import { buy, canBuy, declineRequest, fillRequest } from "./commands";
 import { actionDurationMs, offlineCapMs } from "./modifiers";
 import { catchUp } from "./offline";
-import { currentNote, isFeatureOpen } from "./progress";
+import { isFeatureOpen } from "./progress";
 import { deserialize } from "./save";
 import { advance, startAction } from "./simulate";
 import { newGame, type GameState } from "./state";
@@ -73,13 +75,15 @@ describe("village board", () => {
     expect(eligibleRequests(trusted)).toContain("iron_cradle");
   });
 
-  it("completes the village note's goal", () => {
-    const base = villageOpen();
-    const needs = REQUESTS[base.board[0]!.request!].needs as Record<string, number>;
-    const r = fillRequest({ ...base, inventory: { ...needs } }, 0);
-    if (!r.ok) throw new Error(r.reason);
-    expect(r.notes).toEqual([NOTES[VILLAGE_NOTE + 1]]);
-    expect(currentNote(r.state)).toBe(NOTES[VILLAGE_NOTE + 1]);
+  it("opens with the Offering, whose bread the village sells", () => {
+    const note = NOTES[VILLAGE_NOTE]!;
+    expect("goal" in note && note.goal).toEqual({ kind: "place", part: "offering" });
+    expect(PART_DEFS.offering.items.bread).toBeGreaterThan(0);
+    // Every request the board opens with can be made from skills open by then.
+    const open = new Set(NOTES.slice(0, VILLAGE_NOTE + 1).flatMap((n) => [...n.unlocks]));
+    for (const r of Object.values(REQUESTS).filter((r) => r.minTrust === 0)) {
+      for (const item of Object.keys(r.needs)) expect(Object.values(ACTION_DEFS).some((a) => open.has(a.skill) && a.outputs.some((o) => o.item === item)), item).toBe(true);
+    }
   });
 });
 
@@ -112,10 +116,11 @@ describe("upgrade effects", () => {
   });
 
   it("drying rack adds about 10% to Herbalism yield", () => {
-    const s = { ...villageOpen(), notesRevealed: NOTES.length, upgrades: ["drying_rack" as const] };
-    const { state } = advance(startAction(s, "pick_nettle"), 3000 * 2000);
-    expect(state.inventory.nettle).toBeGreaterThan(2150);
-    expect(state.inventory.nettle).toBeLessThan(2250);
+    const s = { ...villageOpen(), notesRevealed: NOTES.length };
+    const plain = advance(startAction(s, "pick_nettle"), 3000 * 2000).state.inventory.nettle!;
+    const racked = advance(startAction({ ...s, upgrades: ["drying_rack" as const] }, "pick_nettle"), 3000 * 2000).state.inventory.nettle!;
+    expect(racked / plain).toBeGreaterThan(1.07);
+    expect(racked / plain).toBeLessThan(1.13);
   });
 
   it("mended shutters raise the offline cap to 36 hours", () => {
@@ -131,13 +136,17 @@ describe("save migration to v3", () => {
     const v2 = { ...newGame(T0, 3), version: 2, notesRevealed: 6, offlineCapMs: 24 * HOUR } as Partial<GameState>;
     delete v2.stats;
     const loaded = deserialize(JSON.stringify(v2));
-    expect(loaded.notesRevealed).toBe(7);
+    // Old note 7 (after the shift) had opened the village and the Circle, and Ritualism; v5 keeps them.
+    expect(loaded.kept.features).toEqual(["grimoire", "village", "circle"]);
+    expect(loaded.kept.skills).toContain("ritualism");
     expect(loaded.stats.requestsFilled).toBe(0);
     expect("offlineCapMs" in loaded).toBe(false);
   });
 
   it("leaves early v2 saves alone", () => {
     const v2 = { ...newGame(T0, 3), version: 2, notesRevealed: 3 };
-    expect(deserialize(JSON.stringify(v2)).notesRevealed).toBe(3);
+    const loaded = deserialize(JSON.stringify(v2));
+    expect(loaded.kept.skills.sort()).toEqual(["chandlery", "herbalism", "scavenging"]);
+    expect(loaded.kept.features).toEqual([]);
   });
 });

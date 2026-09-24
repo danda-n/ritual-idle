@@ -1,11 +1,11 @@
 import { ACTION_DEFS, type ActionId } from "../content/actions";
-import { HEARTH_RITE } from "../content/rite";
+import { PART_DEFS, PART_IDS } from "../content/rite";
 import { REQUESTS } from "../content/requests";
 import { SHOP } from "../content/shop";
 import { GRIMOIRE_DEFS } from "../content/grimoire";
 import type { ItemId } from "../content/items";
 import type { SkillId } from "../content/skills";
-import { actionDurationMs, chanceMultiplier, extraYieldChance } from "./modifiers";
+import { actionDurationMs, chanceMultiplier, criticalChance, extraYieldChance } from "./modifiers";
 import { isDiscovered } from "./grimoire";
 import { isRecipeKnown, isSkillUnlocked } from "./progress";
 import { skillLevel } from "./simulate";
@@ -22,17 +22,44 @@ export function repsPerHour(state: GameState, id: ActionId): number {
 }
 
 export function xpPerHour(state: GameState, id: ActionId): number {
-  return repsPerHour(state, id) * ACTION_DEFS[id].xp;
+  return repsPerHour(state, id) * ACTION_DEFS[id].xp * (1 + criticalChance(state, id));
 }
 
-/** Expected output per hour, counting drop chances and yield bonuses. */
+/** True if every input comes from a skill that's open (so nothing it needs is out of reach). */
+function inputsInReach(state: GameState, id: ActionId): boolean {
+  return (Object.keys(ACTION_DEFS[id].inputs) as ItemId[]).every((item) => {
+    const skill = producingSkill(item);
+    return skill === null || isSkillUnlocked(state, skill);
+  });
+}
+
+/**
+ * Recipes the player can see in a skill: everything reached, plus the single next one.
+ * Recipes further up stay out of sight until they're next, and so does anything needing an
+ * ingredient from a skill that hasn't opened yet.
+ */
+export function revealedRecipes(state: GameState, skill: SkillId): ActionId[] {
+  if (!isSkillUnlocked(state, skill)) return [];
+  const level = skillLevel(state, skill);
+  const known = ACTION_IDS.filter((id) => ACTION_DEFS[id].skill === skill && isRecipeKnown(state, id) && inputsInReach(state, id)).sort((a, b) => ACTION_DEFS[a].level - ACTION_DEFS[b].level);
+  const next = known.find((id) => ACTION_DEFS[id].level > level);
+  return known.filter((id) => ACTION_DEFS[id].level <= level || id === next);
+}
+
+export function isRecipeRevealed(state: GameState, id: ActionId): boolean {
+  return revealedRecipes(state, ACTION_DEFS[id].skill).includes(id);
+}
+
+/** Expected output per hour, counting drop chances and yield bonuses (keystones aside). */
 export function outputPerHour(state: GameState, id: ActionId): { item: ItemId; perHour: number }[] {
   const reps = repsPerHour(state, id);
   const extra = extraYieldChance(state, id);
+  const crit = 1 + criticalChance(state, id);
+  const skill = ACTION_DEFS[id].skill;
   return ACTION_DEFS[id].outputs.map((o) => {
-    const chance = o.chance === undefined ? 1 : Math.min(1, o.chance * chanceMultiplier(state, o.item));
+    const chance = o.chance === undefined ? 1 : Math.min(1, o.chance * chanceMultiplier(state, o.item, state.lastTickAt, skill));
     const qty = o.qty + (o.chance === undefined ? extra : 0);
-    return { item: o.item, perHour: reps * chance * qty };
+    return { item: o.item, perHour: reps * chance * qty * crit };
   });
 }
 
@@ -76,7 +103,8 @@ export interface ItemLookup {
   madeBy: ActionId[];
   usedBy: ActionId[];
   sold: boolean;
-  inRite: number;
+  /** How many the Kindling's unplaced parts still ask for. */
+  inKindling: number;
   /** Village requests that ask for it (by who is asking). */
   wantedBy: string[];
   /** Discovered grimoire recipes that use it. */
@@ -86,12 +114,12 @@ export interface ItemLookup {
 }
 
 export function lookupItem(state: GameState, item: ItemId): ItemLookup {
-  const visible = (id: ActionId) => isSkillUnlocked(state, ACTION_DEFS[id].skill) && isRecipeKnown(state, id);
+  const visible = (id: ActionId) => isRecipeRevealed(state, id);
   return {
     madeBy: ACTION_IDS.filter((id) => visible(id) && ACTION_DEFS[id].outputs.some((o) => o.item === item)),
     usedBy: ACTION_IDS.filter((id) => visible(id) && item in ACTION_DEFS[id].inputs),
     sold: Object.values(SHOP).some((e) => e.kind === "item" && e.item === item),
-    inRite: (HEARTH_RITE.items[item] ?? 0),
+    inKindling: PART_IDS.filter((p) => !state.kindling.includes(p)).reduce((n, p) => n + (PART_DEFS[p].items[item] ?? 0), 0),
     wantedBy: Object.values(REQUESTS).filter((r) => item in r.needs && r.minTrust <= state.trust).map((r) => r.from),
     inRecipes: (Object.keys(GRIMOIRE_DEFS) as (keyof typeof GRIMOIRE_DEFS)[])
       .filter((id) => isDiscovered(state, id) && (GRIMOIRE_DEFS[id].ingredients as string[]).includes(item))

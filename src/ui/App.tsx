@@ -81,12 +81,12 @@ export function App() {
             <div className="house">
               <Sanctum state={state} />
               <SkillNav state={state} skill={skill} onSelect={setSkill} />
-              <SkillActions state={state} skill={skill} onStart={game.start} />
+              <SkillActions state={state} skill={skill} onStart={game.start} act={game.act} />
             </div>
           )}
         </div>
         <aside className="side">
-          <ChapterTracker state={state} onGo={goTo} />
+          <ChapterTracker state={state} onGo={goTo} act={game.act} />
           <OmenShelf state={state} act={game.act} />
           <Inventory state={state} />
         </aside>

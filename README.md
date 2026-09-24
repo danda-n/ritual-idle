@@ -20,8 +20,9 @@ Then open the URL it prints.
 ## Status: the Chapter 1 vertical slice is complete
 
 From the cold house to the Kindling of the Hearth-Circle:
-- **Grandmother's notes** guide the first half hour and unlock the six skills one by one. Deciphered burnt pages teach recipes.
-- **Timed actions** with XP, level caps and rates. An item lookup on every item name; a pantry grouped by where things come from.
+- **The staged Kindling:** the chapter's rite is built in five parts, placed in the Circle one by one. Each stage's note from grandmother brings the one new skill it needs. Deciphered burnt pages teach extra recipes.
+- **Skill talents:** a point every 3 levels, three branches (Swift / Plenty / Fortune) and a keystone per skill, with free reset. Each level also makes its skill 1% faster.
+- **Timed actions** with XP, level caps and rates. Each skill shows only what you've reached plus the next recipe. An item lookup on every item name; a pantry grouped by where things come from.
 - **The village:**
   - a request board with trust
   - a shop
@@ -41,6 +42,6 @@ From the cold house to the Kindling of the Hearth-Circle:
 - **The living sanctum:** a code-drawn woodcut scene that changes as you progress.
 - **Settings:** fallback, Grimoire assist, reduced motion, message duration.
 
-Dev builds have a **Dev tools** panel at the bottom of the page (time skip, give items, next note, +5 levels, +fragment) for playtesting.
+Dev builds have a **Dev tools** panel at the bottom of the page (time skip, give items, next note, items for the next part, +5 levels, +fragment) for playtesting.
 
 Design docs: [CONCEPT](docs/CONCEPT.md), [CHAPTER1](docs/CHAPTER1.md), [GRIMOIRE](docs/GRIMOIRE.md), [DESIGN](docs/DESIGN.md), [RESEARCH](docs/RESEARCH.md).

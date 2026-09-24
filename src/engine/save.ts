@@ -1,6 +1,9 @@
 import { ITEMS } from "../content/items";
 import { NOTES } from "../content/notes";
 import { PAGES } from "../content/pages";
+import { PART_IDS } from "../content/rite";
+import { SKILL_IDS } from "../content/skills";
+import type { Feature } from "../content/types";
 import { SAVE_VERSION, newGame, type GameState } from "./state";
 
 const STORAGE_KEY = "ritual-idle.save";
@@ -32,6 +35,8 @@ export function deserialize(json: string): GameState {
     },
     settings: { ...base.settings, ...data.settings },
     rite: { ...base.rite, ...data.rite },
+    kept: { ...base.kept, ...data.kept },
+    talents: { ...data.talents },
     version: SAVE_VERSION,
   };
   // Fields that no longer exist (the offline cap is now derived from upgrades).
@@ -51,7 +56,45 @@ export function deserialize(json: string): GameState {
     if (state.rite.completed && state.rite.completed.quality === 1) state.rite.completed = { ...state.rite.completed, quality: 0 };
     delete state.inventory.curio;
   }
+  if (data.version < 5) upgradeToStagedKindling(state);
   return state;
+}
+
+// v4 and older had a different chapter: 9 notes that handed out skills on a timer, and a rite that
+// used items straight from the pantry. v5 builds the Kindling in five parts, one stage per note.
+const OLD_NOTES = [
+  { unlocks: ["scavenging"], opens: [] },
+  { unlocks: ["chandlery"], opens: [] },
+  { unlocks: ["herbalism"], opens: [] },
+  { unlocks: ["scholarship"], opens: ["grimoire"] },
+  { unlocks: ["sigilcraft"], opens: [] },
+  { unlocks: [], opens: ["village"] },
+  { unlocks: ["ritualism"], opens: ["circle"] },
+  { unlocks: [], opens: [] },
+  { unlocks: [], opens: [] },
+] as const;
+
+function upgradeToStagedKindling(state: GameState): void {
+  const riteNote = NOTES.findIndex((n) => "goal" in n && n.goal.kind === "rite");
+  if (state.rite.completed || state.rite.performing) {
+    // The rite already used its components: every part counts as placed.
+    state.kindling = [...PART_IDS];
+    state.notesRevealed = state.rite.completed ? NOTES.length : riteNote + 1;
+    state.experimentsOpen = true;
+    return;
+  }
+  // Mid-chapter: keep every skill and place the old notes had opened, then pick up the new chapter
+  // at the first part not yet placed (the Light). Items already made can be placed at once.
+  const old = OLD_NOTES.slice(0, state.notesRevealed);
+  state.kept = {
+    skills: SKILL_IDS.filter((id) => old.some((n) => (n.unlocks as readonly string[]).includes(id))),
+    features: (["grimoire", "village", "circle"] as Feature[]).filter((f) => old.some((n) => (n.opens as readonly string[]).includes(f))),
+  };
+  state.kindling = [];
+  // Anyone past the first old note has done the new first step's work too.
+  state.notesRevealed = state.notesRevealed > 1 ? 2 : 1;
+  // Someone who had already reached the Circle had seen their first experiments.
+  state.experimentsOpen = state.kept.features.includes("circle");
 }
 
 // Export strings are base64 so they survive being pasted into chats and forums.

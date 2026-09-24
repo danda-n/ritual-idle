@@ -551,3 +551,18 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
 - **The Dream pillow** is +10% speed while away. It used to add extra simulated time, which pushed timers into the future.
 - **After the rite,** the house resumes work through the fallback rule.
 - **Inputs are checked again when a repetition finishes,** so nothing is ever made for free.
+
+### First patch: the staged Kindling (after the first playtest)
+- **The playtest problem:** tier 3–4 of several skills within 5 minutes, then a long quiet stretch before a big rite that needed things the player hadn't unlocked.
+- **The chapter's spine is the Kindling, built in five parts:** Light, Ward, Smoke, Words, Offering, then performing it. It's visible from the first minute on the Circle tab. Each part is placed in the Circle once, and the rosette lights one petal per part.
+- **One new skill per stage**, only when that stage needs it: Scavenging, then Chandlery, Sigilcraft, Herbalism, Scholarship, Ritualism. Skills are about 10–15 minutes apart; the pacing test fails if two open within 8 minutes (after the tutorial pair).
+- **Parts are mostly early-tier plus one stretch item.** Deeper recipes feed the village, trust, upgrades, hidden recipes and Chapter II.
+- **Within a skill,** only what you've reached plus the next recipe shows. A recipe stays hidden while one of its ingredients comes from a skill that isn't open yet.
+- **Experiments come mid-chapter,** introduced by their own note when the first hint arrives. They're optional, with the Dream pillow as the stated goal.
+- **Levels speed up their skill:** +1% per level, compounding.
+- **Talents:**
+  - 1 point every 3 levels.
+  - Three shared branches (Swift / Plenty / Fortune, 3 ranks each) and a skill-specific keystone after 3 points in one branch.
+  - Resetting is free.
+- **The XP curve is slower early:** 165 × 1.14^(level − 1) instead of 25 × 1.18^(level − 1). The chapter's length stays about 90 minutes.
+- **Old saves:** skills and places an older save had opened stay open (`kept` in the save). The chapter resumes at the first part not yet placed, and a finished chapter counts every part as placed.

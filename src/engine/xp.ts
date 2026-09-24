@@ -1,7 +1,7 @@
 // XP curve from docs/CHAPTER1.md §10: XP to next level = 25 × 1.18^(level − 1).
 
-export const XP_BASE = 25;
-export const XP_GROWTH = 1.18;
+export const XP_BASE = 165;
+export const XP_GROWTH = 1.14;
 export const MAX_LEVEL = 99;
 
 export function xpToNext(level: number): number {

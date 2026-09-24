@@ -16,7 +16,17 @@ export function NoteModal({ note, onClose, onGo }: { note: Note; onClose: () => 
         </ul>
       )}
       {"hint" in note && <p className="note-hint">{note.hint}</p>}
-      {"goal" in note ? (
+      {"opens" in note && (note.opens as readonly string[]).includes("experiments") ? (
+        <button
+          className="btn btn-primary"
+          onClick={() => {
+            onGo({ tab: "circle" });
+            onClose();
+          }}
+        >
+          Go: the Circle
+        </button>
+      ) : "goal" in note ? (
         <button
           className="btn btn-primary"
           onClick={() => {

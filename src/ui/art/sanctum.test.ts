@@ -16,7 +16,8 @@ describe("the sanctum follows real progress", () => {
     expect(sanctumView(withDone(base(), { tallow_candle: 1 })).lit).toBe(true);
     const warded = sanctumView(withDone(base(), { tallow_candle: 1, salt_line: 1 }));
     expect(describeSanctum(warded)).toMatch(/salt/);
-    expect(sanctumView(withDone(base(), { bless_threshold: 1 })).circleAwake).toBe(true);
+    expect(sanctumView({ ...base(), kindling: ["light"] }).circleAwake).toBe(false);
+    expect(sanctumView({ ...base(), kindling: ["light", "ward"] }).circleAwake).toBe(true);
   });
 
   it("opens the cellar and seats Janko after the rite", () => {

@@ -3,19 +3,22 @@ import { ACTION_DEFS, type ActionId } from "../content/actions";
 import type { ItemId } from "../content/items";
 import { NOTES } from "../content/notes";
 import { REQUESTS } from "../content/requests";
-import { HEARTH_RITE } from "../content/rite";
+import { HEARTH_RITE, PART_DEFS, type PartId } from "../content/rite";
+import { BRANCHES } from "../content/talents";
 import { SHOP } from "../content/shop";
 import type { SkillId } from "../content/skills";
-import { beginRite, buy, declineRequest, fillRequest, setSetting, type Result } from "./commands";
+import { beginRite, buy, declineRequest, fillRequest, placePart, setSetting, spendTalent, type Result } from "./commands";
 import { actionDurationMs } from "./modifiers";
 import { currentNote, isRecipeKnown, isSkillUnlocked } from "./progress";
 import { advance, blockReason, skillLevel, startAction } from "./simulate";
 import { newGame, type GameState } from "./state";
+import { keystoneOpen, pointsFree, rankOf } from "./talents";
+import { SKILL_IDS } from "../content/skills";
 
 // A scripted player that finishes Chapter 1 using only the real engine and commands:
-// follow grandmother's notes, decipher pages to learn recipes, fill requests for coin,
-// buy bread, make the rite's components and perform it. Active play only (no offline).
-// It's the pacing check for Chapter 1 (docs/CHAPTER1.md §10).
+// follow grandmother's notes, make each Kindling part and place it, spend talent points,
+// fill requests for coin, buy bread and an upgrade, then perform the rite. Active play only
+// (no offline). It's the pacing check for Chapter 1 (docs/CHAPTER1.md §10).
 
 const ACTION_IDS = Object.keys(ACTION_DEFS) as ActionId[];
 const MAX_STEPS = 200_000;
@@ -24,6 +27,8 @@ class Bot {
   state: GameState;
   activeMs = 0;
   steps = 0;
+  /** Active time (ms) at which each note appeared, by note index. */
+  noteAt: number[] = [0];
 
   constructor(seed: number) {
     this.state = this.must(setSetting(newGame(0, seed), "fallback", "stop"));
@@ -45,12 +50,26 @@ class Bot {
     const ms = actionDurationMs(s, id);
     this.state = advance(s, ms).state;
     this.activeMs += ms;
+    this.after();
   }
 
   wait(ms: number) {
     this.guard();
     this.state = advance(this.state, ms).state;
     this.activeMs += ms;
+    this.after();
+  }
+
+  /** Note the time of new notes, and spend any talent points. */
+  after() {
+    while (this.noteAt.length < this.state.notesRevealed) this.noteAt.push(this.activeMs);
+    for (const skill of SKILL_IDS) {
+      while (isSkillUnlocked(this.state, skill) && pointsFree(this.state, skill) > 0) {
+        // Swift first, then the keystone, then Plenty and Fortune.
+        const branch = rankOf(this.state, skill, "swift") < BRANCHES.swift.maxRank ? "swift" : !this.state.talents[skill]?.keystone && keystoneOpen(this.state, skill) ? null : rankOf(this.state, skill, "plenty") < BRANCHES.plenty.maxRank ? "plenty" : "fortune";
+        this.state = this.must(spendTalent(this.state, skill, branch));
+      }
+    }
   }
 
   producer(item: ItemId): ActionId {
@@ -129,24 +148,36 @@ class Bot {
     if (!("goal" in note)) return false;
     const goal = note.goal;
     if (goal.kind === "rite") return false;
-    if (goal.kind === "requests") this.fillOne();
+    if (goal.kind === "place") this.place(goal.part);
     else this.run(goal.action);
     return true;
   }
 
-  performRite() {
-    for (const [item, qty] of Object.entries(HEARTH_RITE.items) as [ItemId, number][]) this.ensure(item, qty);
-    for (const [skill, level] of Object.entries(HEARTH_RITE.skills) as [SkillId, number][]) this.train(skill, level);
-    // Making later components can use up earlier ones (salt), so top up until it can begin.
-    let r = beginRite(this.state);
-    while (!r.ok) {
-      for (const [item, qty] of Object.entries(HEARTH_RITE.items) as [ItemId, number][]) this.ensure(item, qty);
-      r = beginRite(this.state);
+  /** Make a Kindling part's items and place it. Making later items can use up earlier ones (salt), so top up. */
+  place(part: PartId) {
+    const items = Object.entries(PART_DEFS[part].items) as [ItemId, number][];
+    // Every item a part needs must come from a skill that's already open (the complaint this fixes).
+    for (const [item] of items) {
+      if (item !== "bread" && !isSkillUnlocked(this.state, ACTION_DEFS[this.producer(item)].skill)) throw new Error(`${part} needs ${item}, from a skill not yet open`);
+    }
+    // A player spends coin on the house once the village opens.
+    if (part === "offering") this.buyUpgrade();
+    while (!items.every(([item, qty]) => (this.state.inventory[item] ?? 0) >= qty)) {
+      for (const [item, qty] of items) this.ensure(item, qty);
       this.guard();
     }
-    this.state = r.state;
+    this.state = this.must(placePart(this.state, part));
+    this.after();
+  }
+
+  performRite() {
+    for (const [skill, level] of Object.entries(HEARTH_RITE.skills) as [SkillId, number][]) this.train(skill, level);
+    this.riteAt = this.activeMs;
+    this.state = this.must(beginRite(this.state));
     this.wait(HEARTH_RITE.durationMs);
   }
+
+  riteAt = 0;
 
   /** Like a real player, spend some request coin on the house before the rite. */
   buyUpgrade() {
@@ -156,10 +187,15 @@ class Bot {
 
   play() {
     while (this.followNote());
-    this.buyUpgrade();
     this.performRite();
     return this;
   }
+}
+
+const MIN = 60_000;
+/** When each skill first opened (active minutes), in the order they opened. */
+function skillTimes(bot: Bot): { skill: SkillId; at: number }[] {
+  return bot.noteAt.flatMap((at, i) => (NOTES[i]!.unlocks as readonly SkillId[]).map((skill) => ({ skill, at: at / MIN })));
 }
 
 describe("Chapter 1 playthrough", () => {
@@ -177,12 +213,38 @@ describe("Chapter 1 playthrough", () => {
     }
   });
 
-  it("takes an efficient player ~60 min of preparation plus the 30-min rite (band 45–150 min)", () => {
-    const minutes = runs.map((b) => Math.round(b.activeMs / 60_000));
-    console.log(`Chapter 1 active time by seed: ${minutes.join(", ")} min (rite included)`);
+  it("reaches the rite in 55–110 min of active play, then 30 min for the rite", () => {
+    const minutes = runs.map((b) => Math.round(b.riteAt / MIN));
+    console.log(`Chapter 1 rite begins at: ${minutes.join(", ")} min (then 30 min for the rite)`);
+    const bot = runs[0]!;
+    const names = ["Start", ...Object.values(PART_DEFS).map((p) => p.name.replace("The ", "")), "Perform"];
+    console.log(`Stages (seed 1): ${bot.noteAt.slice(0, names.length).map((at, i) => `${names[i]} ${(at / MIN).toFixed(1)}`).join(" · ")} · rite ${(bot.riteAt / MIN).toFixed(1)} min`);
     for (const m of minutes) {
-      expect(m).toBeGreaterThanOrEqual(45);
-      expect(m).toBeLessThanOrEqual(150);
+      expect(m).toBeGreaterThanOrEqual(55);
+      expect(m).toBeLessThanOrEqual(110);
+    }
+  });
+
+  it("spreads the skills out: after the first candle, no two skills open within 8 minutes", () => {
+    for (const bot of runs) {
+      const times = skillTimes(bot);
+      expect(times.map((t) => t.skill)).toEqual(["scavenging", "chandlery", "sigilcraft", "herbalism", "scholarship", "ritualism"]);
+      // Scavenging and Chandlery are the tutorial pair; from there on, one skill per stage.
+      for (let i = 2; i < times.length; i++) expect(times[i]!.at - times[i - 1]!.at).toBeGreaterThanOrEqual(8);
+    }
+  });
+
+  it("each skill's stage takes 8–20 minutes", () => {
+    for (const bot of runs) {
+      // Light, Ward, Smoke and Words run note to note. Ritualism's stage is the Offering plus
+      // Perform (which brings no new skill), so it runs from the Offering note to the rite.
+      const starts = bot.noteAt.slice(1, 6);
+      const ends = [...bot.noteAt.slice(2, 6), bot.riteAt];
+      for (let i = 0; i < 5; i++) {
+        const m = (ends[i]! - starts[i]!) / MIN;
+        expect(m, `stage ${i + 1}`).toBeGreaterThanOrEqual(8);
+        expect(m, `stage ${i + 1}`).toBeLessThanOrEqual(20);
+      }
     }
   });
 });

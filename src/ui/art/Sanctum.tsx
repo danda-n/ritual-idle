@@ -34,7 +34,8 @@ export function sanctumView(state: GameState): SanctumView {
     lit: done("tallow_candle"),
     salted: done("salt_line"),
     ironed: done("iron_ward"),
-    circleAwake: done("bless_threshold") || state.rite.completed !== null,
+    // The salt closes the ring: the circle in the floor wakes when the Ward is placed.
+    circleAwake: state.kindling.includes("ward") || state.rite.completed !== null,
     cellarOpen: state.rite.completed !== null,
     performing: state.rite.performing !== null,
     rack: has("drying_rack"),

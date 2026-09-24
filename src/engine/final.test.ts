@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { HEARTH_RITE } from "../content/rite";
+import { PART_IDS } from "../content/rite";
 import { NOTES } from "../content/notes";
 import { PAGES } from "../content/pages";
 import { attune, beginRite, experiment, fillRequest, releaseOmen, setSetting, type Result } from "./commands";
@@ -28,7 +28,10 @@ function everything(): GameState {
     upgrades: ["omen_shelf", "reading_lamp"],
     omens: { still_night: 2 },
     stats: { ...base.stats, completed: { decipher_page: PAGES.length + 1, tallow_candle: 3 }, requestsFilled: 3 },
-    inventory: { ...(HEARTH_RITE.items as Record<string, number>), nettle: 12, salt: 5, ash: 5, rags: 3 },
+    kindling: [...PART_IDS],
+    experimentsOpen: true,
+    talents: { chandlery: { ranks: { swift: 1 }, keystone: false } },
+    inventory: { nettle: 12, salt: 5, ash: 5, rags: 3 },
     skills: { ...base.skills, ritualism: { xp: 2000 } },
   };
   refillBoard(s, T0);
@@ -50,7 +53,7 @@ describe("saves", () => {
 
   it("load from every older version and keep playing", () => {
     const current = everything();
-    for (const version of [1, 2, 3]) {
+    for (const version of [1, 2, 3, 4]) {
       const old = { ...current, version } as Partial<GameState>;
       if (version < 3) {
         delete old.board;
@@ -64,7 +67,7 @@ describe("saves", () => {
       }
       const loaded = deserialize(JSON.stringify(old));
       expect(loaded.version).toBe(SAVE_VERSION);
-      expect(SAVE_VERSION).toBe(4);
+      expect(SAVE_VERSION).toBe(5);
       expect(() => catchUp(loaded, T0 + HOUR)).not.toThrow();
     }
   });
@@ -85,7 +88,7 @@ describe("performance", () => {
       followers: ["janko"],
       inventory: { tallow: 500 },
     };
-    s = advance(startAction(s, "sweep_hearth"), 3000).state; // so the fallback has somewhere to go
+    s = advance(startAction(s, "search_pantry"), 3000).state; // so the fallback has somewhere to go
     s = startAction(s, "tallow_candle");
     const t = performance.now();
     const { report } = catchUp(s, T0 + 3000 + 40 * HOUR);

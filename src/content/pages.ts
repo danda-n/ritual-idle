@@ -6,19 +6,14 @@ import type { PageDef } from "./types";
 // stay unknown until their page is read.
 export const PAGES = [
   {
-    title: "Of candles and smoke",
-    text: "Chamomile to soothe, yarrow to cut. Bind them tight and burn them slow; the smoke goes where you cannot.",
-    unlocks: ["smudge_bundle"],
-  },
-  {
     title: "Of the iron at the door",
     text: "Cold iron and salt. Whatever walks the lane at night will not cross a nail it cannot count.",
     unlocks: ["iron_ward"],
   },
   {
-    title: "Of the dream-herb",
-    text: "Mugwort, dried on the hearth and burned with its ash. Breathe it before sleep and you will remember what you see.",
-    unlocks: ["mugwort_incense"],
+    title: "Of chalk",
+    text: "Chalk from my chest, salt from the pantry. Draw the line once and never twice; a line drawn twice is a door.",
+    unlocks: ["chalk_segment"],
   },
   {
     title: "Of the Kupala herb",
@@ -29,6 +24,11 @@ export const PAGES = [
     title: "Of the hearth's guard",
     text: "Chalk the circle in two halves, nail it with iron, and seal it with the Kupala herb. Then it is a door, not a hole.",
     unlocks: ["hearth_ward"],
+  },
+  {
+    title: "Of juniper",
+    text: "Juniper for the sickroom and the grave. Burn it with ash, and the fever forgets which house it came to.",
+    unlocks: ["juniper_incense"],
   },
   {
     title: "The black page",

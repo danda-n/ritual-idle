@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ITEMS, type ItemId } from "../../content/items";
 import { NOTES } from "../../content/notes";
+import { PART_DEFS, PART_IDS } from "../../content/rite";
 import { addInsight, fragmentTarget } from "../../engine/grimoire";
 import type { GameState } from "../../engine/state";
 import { SKILL_IDS } from "../../content/skills";
@@ -41,6 +42,18 @@ export function DevPanel({ dev }: { dev: { skip: (ms: number) => void; mutate: (
         </button>
         <button className="btn btn-ghost" onClick={() => dev.mutate((s) => ({ ...s, notesRevealed: Math.min(s.notesRevealed + 1, NOTES.length) }))}>
           Next note
+        </button>
+        <button
+          className="btn btn-ghost"
+          onClick={() =>
+            dev.mutate((s) => {
+              const part = PART_IDS.find((p) => !s.kindling.includes(p));
+              if (part) for (const [item, qty] of Object.entries(PART_DEFS[part].items)) s.inventory[item as ItemId] = (s.inventory[item as ItemId] ?? 0) + (qty ?? 0);
+              return s;
+            })
+          }
+        >
+          Items for next part
         </button>
         <button
           className="btn btn-ghost"

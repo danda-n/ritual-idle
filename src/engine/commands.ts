@@ -6,7 +6,12 @@ import { OMENS, type OmenId } from "../content/omens";
 import { addInsight, deduce, GRIMOIRE_IDS, glowCount, isDiscovered, isSilhouetteVisible, markDiscovered, matches, progressOf, type Fragment } from "./grimoire";
 import { requestCoin, trustMultiplier } from "./modifiers";
 import { applyBuff, giveNoteGifts } from "./omens";
-import { beginRite as startRite, canBeginRite } from "./rite";
+import { beginIfPrimed, beginRite as startRite, canBeginRite } from "./rite";
+import { PART_DEFS, type PartId } from "../content/rite";
+import type { SkillId } from "../content/skills";
+import type { BranchId } from "../content/talents";
+import { canSpend, talentsOf } from "./talents";
+import { isSkillUnlocked } from "./progress";
 import { isFeatureOpen, revealNotes, type Note } from "./progress";
 import type { GameState, Settings } from "./state";
 import { xpForLevel } from "./xp";
@@ -29,6 +34,8 @@ export interface Success {
   /** A villager's aside when a request is filled. */
   aside?: string;
   outcome?: ExperimentOutcome;
+  /** Omens given by notes this command revealed. */
+  gifts?: OmenId[];
 }
 
 export type Result = Success | { ok: false; reason: string };
@@ -55,11 +62,12 @@ export function fillRequest(input: GameState, slotIndex: number): Result {
   state.trust += req.trust * trustMultiplier(state);
   state.stats.requestsFilled++;
   emptySlot(state, slotIndex, state.lastTickAt);
-  const notes = revealNotes(state);
-  giveNoteGifts(state, notes);
   const mention: { recipe: string; aside: string } | undefined = "mentions" in req ? req.mentions : undefined;
   const fragment = mention ? addInsight(state, mention.recipe as GrimoireId, INSIGHT_GAIN.request, "request") : null;
-  return ok(state, notes, { fragments: fragment ? [fragment] : [], aside: fragment ? mention?.aside : undefined });
+  // After the insight, so a first hint can open experiments.
+  const notes = revealNotes(state);
+  const gifts = giveNoteGifts(state, notes);
+  return ok(state, notes, { fragments: fragment ? [fragment] : [], aside: fragment ? mention?.aside : undefined, gifts });
 }
 
 /** Turn a request away. No penalty; someone else knocks after the usual wait. */
@@ -104,6 +112,7 @@ export function releaseOmen(input: GameState, id: OmenId): Result {
 
 /** Attune the circle to a visible, unsolved silhouette, or pass null for free experiments. */
 export function attune(input: GameState, id: GrimoireId | null): Result {
+  if (!isFeatureOpen(input, "experiments")) return no("Experiments open later.");
   if (id !== null && (!isSilhouetteVisible(input, id) || isDiscovered(input, id))) return no("The circle can't find that shape yet.");
   return ok({ ...input, attunedTo: id });
 }
@@ -122,7 +131,7 @@ export function circleSlots(state: GameState): number {
  * recipe or secret answers, with a flicker when two items match a secret.
  */
 export function experiment(input: GameState, items: ItemId[]): Result {
-  if (!isFeatureOpen(input, "circle")) return no("The circle is still cold.");
+  if (!isFeatureOpen(input, "experiments")) return no("Experiments open later.");
   const attuned = input.attunedTo;
   const need = circleSlots(input);
   if (items.length !== need) return no(`The Circle takes ${need} things.`);
@@ -168,6 +177,51 @@ export function setMark(input: GameState, id: GrimoireId, item: ItemId, mark: "s
 
 export function setSetting<K extends keyof Settings>(input: GameState, key: K, value: Settings[K]): Result {
   return ok({ ...input, settings: { ...input.settings, [key]: value } });
+}
+
+// The Kindling
+
+/** Why this part can't be placed yet, or null if it can. */
+export function canPlace(state: GameState, part: PartId): string | null {
+  if (!isFeatureOpen(state, "circle")) return "The Circle isn't open yet.";
+  if (state.kindling.includes(part)) return "Already in the Circle.";
+  if (!hasItems(state, PART_DEFS[part].items)) return `${PART_DEFS[part].name} isn't ready yet.`;
+  return null;
+}
+
+/** Place one of the Kindling's parts in the Circle: its items are used, and it stays there. */
+export function placePart(input: GameState, part: PartId): Result {
+  const reason = canPlace(input, part);
+  if (reason) return no(reason);
+  const state = structuredClone(input);
+  for (const [item, qty] of Object.entries(PART_DEFS[part].items) as [ItemId, number][]) state.inventory[item] = (state.inventory[item] ?? 0) - qty;
+  state.kindling.push(part);
+  const notes = revealNotes(state);
+  const gifts = giveNoteGifts(state, notes);
+  beginIfPrimed(state, state.lastTickAt);
+  return ok(state, notes, { gifts });
+}
+
+// Talents
+
+/** Spend a talent point on a branch rank, or on the keystone (`branch` null). */
+export function spendTalent(input: GameState, skill: SkillId, branch: BranchId | null): Result {
+  if (!isSkillUnlocked(input, skill)) return no("That skill isn't open yet.");
+  const reason = canSpend(input, skill, branch);
+  if (reason) return no(reason);
+  const state = structuredClone(input);
+  const t = structuredClone(talentsOf(state, skill));
+  if (branch === null) t.keystone = true;
+  else t.ranks[branch] = (t.ranks[branch] ?? 0) + 1;
+  state.talents[skill] = t;
+  return ok(state);
+}
+
+/** Take back every talent point in a skill. Free, any time. */
+export function resetTalents(input: GameState, skill: SkillId): Result {
+  const state = structuredClone(input);
+  delete state.talents[skill];
+  return ok(state);
 }
 
 // The Major Rite

@@ -19,7 +19,7 @@ export const REQUESTS = {
     needs: { chamomile: 5, yarrow: 2 },
     coin: 12,
     trust: 1,
-    minTrust: 0,
+    minTrust: 2,
   },
   lye_ash: {
     from: "The soapmaker",
@@ -34,6 +34,14 @@ export const REQUESTS = {
     text: "Candles for my father's grave. He never liked the dark.",
     needs: { tallow_candle: 3 },
     coin: 10,
+    trust: 1,
+    minTrust: 0,
+  },
+  doorstep_salt: {
+    from: "The ferryman's wife",
+    text: "Salt across our doorstep. He says he hears someone wading behind him on the way home.",
+    needs: { salt_line: 4 },
+    coin: 8,
     trust: 1,
     minTrust: 0,
   },
@@ -70,6 +78,22 @@ export const REQUESTS = {
     trust: 2,
     minTrust: 5,
     mentions: { recipe: "threshold_nail", aside: "My mother said the witch kept a nail under her own door, and a yellow flower with it." },
+  },
+  wake_candles: {
+    from: "The Dvorak family",
+    text: "Candles for the wake. Good ones. Grandfather should find his way.",
+    needs: { hearth_candle: 2 },
+    coin: 35,
+    trust: 2,
+    minTrust: 4,
+  },
+  church_ward: {
+    from: "The sexton",
+    text: "A ward for the church door. Don't tell the priest who made it.",
+    needs: { hearth_ward: 1 },
+    coin: 50,
+    trust: 2,
+    minTrust: 5,
   },
 } as const satisfies Record<string, RequestDef<ItemId>>;
 

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { HEARTH_RITE } from "../content/rite";
+import { PART_DEFS, PART_IDS, type PartId } from "../content/rite";
 import { NOTES } from "../content/notes";
 import { PAGES } from "../content/pages";
-import { beginRite, fillRequest, type Result } from "./commands";
+import { beginRite, fillRequest, placePart, type Result } from "./commands";
 import { catchUp } from "./offline";
 import { advance, startAction } from "./simulate";
 import { newGame, type GameState } from "./state";
@@ -36,32 +36,35 @@ describe("inputs used mid-repetition", () => {
 describe("after the rite", () => {
   it("the house goes back to work (the fallback), also offline", () => {
     let s = open({
-      inventory: { ...(HEARTH_RITE.items as Record<string, number>) },
+      kindling: [...PART_IDS],
       skills: { ...newGame().skills, ritualism: { xp: xpForLevel(5) } },
     });
-    s = advance(startAction(s, "sweep_hearth"), 3000).state; // remember a gathering action
+    s = advance(startAction(s, "search_pantry"), 3000).state; // remember a gathering action
     s = okay(beginRite(s));
     const { state, report } = catchUp(s, s.lastTickAt + 60 * MIN);
     expect(state.rite.completed).not.toBeNull();
-    expect(state.active?.id).toBe("sweep_hearth");
+    expect(state.active?.id).toBe("search_pantry");
     expect(report.actionsCompleted).toBeGreaterThan(500);
   });
 });
 
 describe("omens and curios", () => {
   it("the scripted Still Night lands even on a full shelf", () => {
+    // The gift comes with the note after the part before it is placed.
     const giftNote = NOTES.findIndex((n) => "gift" in n);
     const prev = NOTES[giftNote - 1]!;
-    if (!("goal" in prev) || prev.goal.kind !== "complete") throw new Error("expected an action goal");
+    if (!("goal" in prev) || prev.goal.kind !== "place") throw new Error("expected a place goal");
+    const part = prev.goal.part as PartId;
     const b = newGame(T0, 11);
-    const s: GameState = { ...b, notesRevealed: giftNote, omens: { still_night: 1 }, inventory: { tallow: 99, salt: 9 }, stats: { ...b.stats, completed: { [prev.goal.action]: prev.goal.count - 1 } } };
-    const { state, report } = advance(startAction(s, prev.goal.action), 6000);
-    expect(report.omensFound).toContain("still_night");
+    const s: GameState = { ...b, notesRevealed: giftNote, omens: { still_night: 1 }, inventory: { ...PART_DEFS[part].items } };
+    const r = placePart(s, part);
+    const state = okay(r);
+    expect(r.ok && r.gifts).toContain("still_night");
     expect(state.omens.still_night).toBe(2);
   });
 
   it("curios go to the collection, not the pantry", () => {
-    const s = open({ skills: { ...newGame().skills, scavenging: { xp: 5000 } } });
+    const s = open({ skills: { ...newGame().skills, scavenging: { xp: xpForLevel(20) } } });
     const { state, report } = advance(startAction(s, "open_chest"), 5000 * 1000);
     expect(report.curioStories.length).toBeGreaterThan(0);
     expect(state.inventory.curio ?? 0).toBe(0);
