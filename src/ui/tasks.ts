@@ -3,7 +3,8 @@ import { NOTES } from "../content/notes";
 import { HEARTH_RITE, PART_DEFS, type PartId } from "../content/rite";
 import { SKILLS } from "../content/skills";
 import type { GoalDef } from "../content/types";
-import type { Note } from "../engine/progress";
+import type { Note, Step } from "../engine/progress";
+import { ITEMS, type ItemId } from "../content/items";
 import type { GameState } from "../engine/state";
 
 // Chapter steps, derived from grandmother's notes: each note with a goal is one step.
@@ -76,4 +77,38 @@ export function partState(state: GameState, part: PartId): "placed" | "open" | "
   if (state.kindling.includes(part)) return "placed";
   const at = NOTES.findIndex((n) => "goal" in n && n.goal.kind === "place" && n.goal.part === part);
   return at >= 0 && at < state.notesRevealed ? "open" : "later";
+}
+
+/** Where a step is done, for its Go button. */
+export function stepPlace(step: Step, state: GameState): Place {
+  const g = step.goal;
+  switch (g.kind) {
+    case "complete":
+      return { tab: "house", skill: ACTION_DEFS[g.action].skill };
+    case "level":
+      return { tab: "house", skill: g.skill };
+    case "tended":
+      return { tab: "house", skill: state.active ? ACTION_DEFS[state.active.id].skill : "scavenging" };
+    case "requests":
+      return { tab: "village" };
+    case "place":
+      return { tab: "circle" };
+  }
+}
+
+/** A step's reward in plain words ("+2 tallow", "+40 Chandlery XP"), or "" if none. */
+export function rewardText(step: Step): string {
+  const r = step.reward;
+  if (!r) return "";
+  const out: string[] = [];
+  if (r.xp) out.push(`+${r.xp.amount} ${SKILLS[r.xp.skill].name} XP`);
+  for (const [item, qty] of Object.entries(r.items ?? {})) out.push(`+${qty} ${ITEMS[item as ItemId].name.toLowerCase()}`);
+  return out.join(", ");
+}
+
+/** A note's steps, which are done, and the first one still open. */
+export function stepsOf(state: GameState, note: Note): { steps: readonly Step[]; done: (s: Step) => boolean; current: Step | null } {
+  const steps = ("steps" in note ? note.steps : []) as readonly Step[];
+  const done = (s: Step) => state.stepsDone.includes(s.id);
+  return { steps, done, current: steps.find((s) => !done(s)) ?? null };
 }

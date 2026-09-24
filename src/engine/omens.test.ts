@@ -12,16 +12,17 @@ import { deserialize } from "./save";
 import { advance, startAction } from "./simulate";
 import { xpForLevel } from "./xp";
 import { newGame, type GameState } from "./state";
+import type { SkillId } from "../content/skills";
 
 const T0 = 1_000_000;
 const MIN = 60_000;
 
 function open(extra: Partial<GameState> = {}): GameState {
-  return { ...newGame(T0, 11), notesRevealed: NOTES.length, stats: { completed: { decipher_page: 6 }, requestsFilled: 1, omensSeen: 0, curiosRead: 0 }, ...extra };
+  return { ...newGame(T0, 11), notesRevealed: NOTES.length, stats: { completed: { decipher_page: 6 }, requestsFilled: 1, omensSeen: 0, curiosRead: 0, tended: 0 }, ...extra };
 }
 
-function released(s: GameState): GameState {
-  const r = releaseOmen(s, "still_night");
+function released(s: GameState, skill: SkillId = "scholarship"): GameState {
+  const r = releaseOmen(s, "still_night", skill);
   if (!r.ok) throw new Error(r.reason);
   return r.state;
 }
@@ -63,24 +64,33 @@ describe("omen drops", () => {
 });
 
 describe("releasing Still Night", () => {
-  it("speeds Scholarship and Ritualism by 50% for 15 minutes", () => {
-    const s = released(open({ omens: { still_night: 1 } }));
+  it("blesses the chosen skill: +50% speed for 15 minutes, that skill only", () => {
+    const s = released(open({ omens: { still_night: 1 } }), "herbalism");
+    const nettle = ACTION_DEFS.pick_nettle.seconds * 1000;
     expect(s.omens.still_night).toBe(0);
-    expect(actionDurationMs(s, "decipher_page")).toBeCloseTo(6000 / 1.5);
-    expect(actionDurationMs(s, "bless_threshold")).toBeCloseTo(10000 / 1.5);
-    expect(actionDurationMs(s, "pick_nettle")).toBe(3000);
-    expect(actionDurationMs(s, "decipher_page", T0 + 15 * MIN)).toBe(6000);
+    expect(actionDurationMs(s, "pick_nettle")).toBeCloseTo(nettle / 1.5);
+    expect(actionDurationMs(s, "tallow_candle")).toBe(ACTION_DEFS.tallow_candle.seconds * 1000);
+    expect(actionDurationMs(s, "pick_nettle", T0 + 15 * MIN)).toBe(nettle);
   });
 
-  it("doubles the burnt-page chance", () => {
-    const s = released(open({ omens: { still_night: 1 } }));
-    expect(chanceMultiplier(s, "burnt_page")).toBe(2);
-    expect(chanceMultiplier(s, "rags")).toBe(1);
+  it("doubles chance finds in the chosen skill only", () => {
+    const s = released(open({ omens: { still_night: 1 } }), "scavenging");
+    expect(chanceMultiplier(s, "burnt_page", s.lastTickAt, "scavenging")).toBe(2);
+    expect(chanceMultiplier(s, "burnt_page", s.lastTickAt, "herbalism")).toBe(1);
   });
 
-  it("stacks duration when released twice", () => {
+  it("must bless an open skill", () => {
+    const s = { ...open({ omens: { still_night: 1 } }), notesRevealed: 1 };
+    expect(releaseOmen(s, "still_night").ok).toBe(false);
+    expect(releaseOmen(s, "still_night", "herbalism").ok).toBe(false);
+    expect(releaseOmen(s, "still_night", "scavenging").ok).toBe(true);
+  });
+
+  it("stacks duration when released twice on one skill; another skill runs alongside", () => {
     const s = released(released(open({ omens: { still_night: 2 } })));
-    expect(s.buffs).toEqual([{ id: "still_night", endsAt: T0 + 30 * MIN }]);
+    expect(s.buffs).toEqual([{ id: "still_night", endsAt: T0 + 30 * MIN, skill: "scholarship" }]);
+    const two = released(released(open({ omens: { still_night: 2 } }), "herbalism"), "chandlery");
+    expect(two.buffs.map((b) => b.skill)).toEqual(["herbalism", "chandlery"]);
   });
 
   it("refuses with an empty shelf", () => {
@@ -105,7 +115,7 @@ describe("Blessing (Smoke the rooms)", () => {
     const took = actionDurationMs(withSmudge(), "smoke_rooms"); // a little under 12s at Ritualism 3
     const { state } = advance(startAction(withSmudge(), "smoke_rooms"), took);
     expect(state.buffs).toEqual([{ id: "blessing", endsAt: T0 + took + 15 * MIN }]);
-    expect(actionDurationMs(state, "pick_nettle")).toBeCloseTo(3000 / 1.1);
+    expect(actionDurationMs(state, "pick_nettle")).toBeCloseTo((ACTION_DEFS.pick_nettle.seconds * 1000) / 1.1);
   });
 
   it("refreshes rather than stacks when repeated", () => {
@@ -116,6 +126,11 @@ describe("Blessing (Smoke the rooms)", () => {
 });
 
 describe("saves", () => {
+  it("an old Still Night (no chosen skill) blesses the skill that was running", () => {
+    const old = { ...startAction(open(), "pick_nettle"), version: 5, buffs: [{ id: "still_night", endsAt: T0 + MIN }] };
+    expect(deserialize(JSON.stringify(old)).buffs).toEqual([{ id: "still_night", endsAt: T0 + MIN, skill: "herbalism" }]);
+  });
+
   it("drop items that no longer exist", () => {
     const old = { ...newGame(T0, 11), inventory: { ash: 3, blessing: 2 } };
     expect(deserialize(JSON.stringify(old)).inventory).toEqual({ ash: 3 });

@@ -1,3 +1,4 @@
+import { taskName } from "../tasks";
 import { ACTION_DEFS } from "../../content/actions";
 import type { ItemId } from "../../content/items";
 import { OMENS } from "../../content/omens";
@@ -36,10 +37,15 @@ export function AwaySummary({ away, onClose }: { away: CatchUp; onClose: () => v
           </ul>
         </>
       )}
+      {report.stepsDone.length > 0 && (
+        <p>
+          Steps done: {report.stepsDone.map((st) => st.label).join(" · ")}
+        </p>
+      )}
       {report.notesRevealed.map((n) => (
-        <blockquote key={n.text} className="note-quote">
-          {n.text}
-        </blockquote>
+        <p key={n.text}>
+          <strong>New: {"goal" in n ? taskName(n.goal) : "opens" in n ? "Experiments at the Circle" : "the chapter is done"}</strong>
+        </p>
       ))}
       {report.pagesRead.map((p) => (
         <p key={p.title}>
@@ -53,11 +59,7 @@ export function AwaySummary({ away, onClose }: { away: CatchUp; onClose: () => v
           <strong>The {HEARTH_RITE.name} is complete</strong> ({QUALITIES[report.riteCompleted]}).
         </p>
       )}
-      {report.curioStories.map((text, i) => (
-        <p key={`c${i}`} className="text-2">
-          A curio, read: <em>{text}</em>
-        </p>
-      ))}
+      {report.curioStories.length > 0 && <p className="text-2">{report.curioStories.length === 1 ? "A curio" : `${report.curioStories.length} curios`} found. Read them in the Grimoire.</p>}
       {report.fragments.length > 0 && (
         <p>
           {report.fragments.length === 1 ? "A hint fragment" : `${report.fragments.length} hint fragments`} went into the Grimoire.

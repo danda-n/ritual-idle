@@ -1,3 +1,4 @@
+import { ACTION_DEFS } from "../content/actions";
 import { ITEMS } from "../content/items";
 import { NOTES } from "../content/notes";
 import { PAGES } from "../content/pages";
@@ -32,10 +33,12 @@ export function deserialize(json: string): GameState {
       requestsFilled: data.stats?.requestsFilled ?? 0,
       omensSeen: data.stats?.omensSeen ?? 0,
       curiosRead: data.stats?.curiosRead ?? 0,
+      tended: data.stats?.tended ?? 0,
     },
     settings: { ...base.settings, ...data.settings },
     rite: { ...base.rite, ...data.rite },
     kept: { ...base.kept, ...data.kept },
+    tend: { ...base.tend, ...data.tend },
     talents: { ...data.talents },
     version: SAVE_VERSION,
   };
@@ -57,6 +60,13 @@ export function deserialize(json: string): GameState {
     delete state.inventory.curio;
   }
   if (data.version < 5) upgradeToStagedKindling(state);
+  if (data.version < 6) {
+    // v6 added stage steps: every step of a stage already passed counts as done (no rewards).
+    state.stepsDone = NOTES.slice(0, state.notesRevealed - 1).flatMap((n) => ("steps" in n ? n.steps.map((st) => st.id) : []));
+    // Still Night used to bless Scholarship and Ritualism; now it blesses one chosen skill.
+    const running = state.active ? ACTION_DEFS[state.active.id].skill : "scholarship";
+    state.buffs = state.buffs.map((b) => (b.id === "still_night" && !b.skill ? { ...b, skill: running } : b));
+  }
   return state;
 }
 

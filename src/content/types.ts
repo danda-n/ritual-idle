@@ -47,9 +47,31 @@ export type GoalDef<A extends string> =
 /** Places (tabs) that open during the chapter, plus experiments at the Circle. The House is always open. */
 export type Feature = "grimoire" | "village" | "circle" | "experiments";
 
+/** A small step inside a stage. Checked against lifetime counts and levels, so it never un-completes. */
+export type StepGoal<S extends string, A extends string> =
+  | { kind: "complete"; action: A; count: number }
+  | { kind: "level"; skill: S; level: number }
+  /** Repetitions finished while tended. */
+  | { kind: "tended"; count: number }
+  | { kind: "requests"; count: number }
+  | { kind: "place"; part: string };
+
+export interface StepDef<S extends string, A extends string> {
+  /** Unique across all notes (it's saved). */
+  id: string;
+  label: string;
+  goal: StepGoal<S, A>;
+  /** Something small, aimed at the next step. */
+  reward?: { xp?: { skill: S; amount: number }; items?: Record<string, number> };
+}
+
 export interface NoteDef<S extends string, A extends string> {
-  /** Grandmother's margin note, in her voice. */
+  /** Grandmother's margin note, in her voice (shown in full in the Grimoire journal). */
   text: string;
+  /** One short line of hers for the task card. */
+  quote?: string;
+  /** Small steps toward the goal, each with a reward. Any order; the first unclaimed one is "current". */
+  steps?: StepDef<S, A>[];
   /** Plain-language pointer so nobody needs a wiki. */
   hint?: string;
   /** Skills that become available when this note appears. */
@@ -100,6 +122,8 @@ export interface BuffDef<S extends string, I extends string> {
   speed?: Partial<Record<S, number>>;
   /** Multiplies the drop chance of these items (2 = twice as likely). */
   chanceMultiplier?: Partial<Record<I, number>>;
+  /** For a buff that blesses one skill chosen on release: its speed bonus and chance-find multiplier. */
+  blessSkill?: { speed: number; chanceMultiplier: number };
 }
 
 export interface OmenDef<B extends string> {

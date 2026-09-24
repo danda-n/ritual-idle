@@ -10,9 +10,12 @@ import { beginIfPrimed, beginRite as startRite, canBeginRite } from "./rite";
 import { PART_DEFS, type PartId } from "../content/rite";
 import type { SkillId } from "../content/skills";
 import type { BranchId } from "../content/talents";
-import { canSpend, talentsOf } from "./talents";
+import { canSpend, talentsOf, tendMeterMs } from "./talents";
+import { TEND } from "../content/talents";
+import { ACTION_DEFS } from "../content/actions";
+import { BUFF_DEFS } from "../content/buffs";
 import { isSkillUnlocked } from "./progress";
-import { isFeatureOpen, revealNotes, type Note } from "./progress";
+import { isFeatureOpen, revealNotes, type Note, type Step } from "./progress";
 import type { GameState, Settings } from "./state";
 import { xpForLevel } from "./xp";
 import { emptySlot, refillBoard } from "./village";
@@ -36,6 +39,8 @@ export interface Success {
   outcome?: ExperimentOutcome;
   /** Omens given by notes this command revealed. */
   gifts?: OmenId[];
+  /** Stage steps this command completed. */
+  steps?: Step[];
 }
 
 export type Result = Success | { ok: false; reason: string };
@@ -65,9 +70,10 @@ export function fillRequest(input: GameState, slotIndex: number): Result {
   const mention: { recipe: string; aside: string } | undefined = "mentions" in req ? req.mentions : undefined;
   const fragment = mention ? addInsight(state, mention.recipe as GrimoireId, INSIGHT_GAIN.request, "request") : null;
   // After the insight, so a first hint can open experiments.
-  const notes = revealNotes(state);
+  const steps: Step[] = [];
+  const notes = revealNotes(state, steps);
   const gifts = giveNoteGifts(state, notes);
-  return ok(state, notes, { fragments: fragment ? [fragment] : [], aside: fragment ? mention?.aside : undefined, gifts });
+  return ok(state, notes, { fragments: fragment ? [fragment] : [], aside: fragment ? mention?.aside : undefined, gifts, steps });
 }
 
 /** Turn a request away. No penalty; someone else knocks after the usual wait. */
@@ -98,12 +104,17 @@ export function buy(input: GameState, id: ShopId): Result {
   return ok(state);
 }
 
-/** Release a stored omen: its buff starts now, or lengthens if it's already running. */
-export function releaseOmen(input: GameState, id: OmenId): Result {
+/**
+ * Release a stored omen: its buff starts now, or lengthens if it's already running.
+ * Omens that bless one skill (Still Night) need `skill`, an open one.
+ */
+export function releaseOmen(input: GameState, id: OmenId, skill?: SkillId): Result {
   if ((input.omens[id] ?? 0) < 1) return no("There's no such omen on the shelf.");
+  const blesses = BUFF_DEFS[OMENS[id].buff].blessSkill !== undefined;
+  if (blesses && (!skill || !isSkillUnlocked(input, skill))) return no("Choose an open skill to bless.");
   const state = structuredClone(input);
   state.omens[id] = (state.omens[id] ?? 0) - 1;
-  applyBuff(state, OMENS[id].buff, state.lastTickAt, true);
+  applyBuff(state, OMENS[id].buff, state.lastTickAt, true, blesses ? skill : undefined);
   if (state.rite.performing && OMENS[id].buff === "still_night") state.rite.performing.stillNight = true;
   return ok(state);
 }
@@ -196,10 +207,22 @@ export function placePart(input: GameState, part: PartId): Result {
   const state = structuredClone(input);
   for (const [item, qty] of Object.entries(PART_DEFS[part].items) as [ItemId, number][]) state.inventory[item] = (state.inventory[item] ?? 0) - qty;
   state.kindling.push(part);
-  const notes = revealNotes(state);
+  const steps: Step[] = [];
+  const notes = revealNotes(state, steps);
   const gifts = giveNoteGifts(state, notes);
   beginIfPrimed(state, state.lastTickAt);
-  return ok(state, notes, { gifts });
+  return ok(state, notes, { gifts, steps });
+}
+
+// Tending
+
+/** Tend the running action: the meter refills. Never required; it rewards being present. */
+export function tend(input: GameState): Result {
+  if (!input.active || input.rite.performing) return no("Start something first.");
+  const now = input.lastTickAt;
+  if (now - input.tend.lastAt < TEND.minGapMs) return no("Easy, it's lit.");
+  const skill = ACTION_DEFS[input.active.id].skill;
+  return ok({ ...input, tend: { ...input.tend, endsAt: now + tendMeterMs(input, skill), lastAt: now } });
 }
 
 // Talents

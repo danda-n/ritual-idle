@@ -12,9 +12,15 @@ import { formatDuration } from "./format";
 const pct = (n: number) => `+${Math.round(n * 100)}%`;
 const skillName = (s: string) => SKILLS[s as SkillId]?.name ?? s;
 
-export function buffEffects(id: BuffId): string[] {
+/** What a buff does, in plain words. For a skill blessing, `skill` names the blessed skill. */
+export function buffEffects(id: BuffId, skill?: SkillId): string[] {
   const def = BUFF_DEFS[id];
   const out: string[] = [];
+  if (def.blessSkill) {
+    const b = def.blessSkill;
+    if (skill) out.push(`${pct(b.speed)} ${skillName(skill)} speed`, `${skillName(skill)} chance finds ×${b.chanceMultiplier}`);
+    else out.push(`${pct(b.speed)} speed to one skill you choose`, `Chance finds ×${b.chanceMultiplier} in that skill`);
+  }
   const speed = Object.entries(def.speed ?? {}) as [SkillId, number][];
   if (speed.length === SKILL_IDS.length && new Set(speed.map(([, v]) => v)).size === 1) out.push(`${pct(speed[0]![1])} speed, all skills`);
   // The Major Rite has a fixed length, so Ritualism speed only helps minor rites.

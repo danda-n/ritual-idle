@@ -11,8 +11,10 @@ import { formatClock } from "../format";
 import { buffEffects } from "../effects";
 import { TimedBar } from "./Bar";
 import { useCountUp } from "../useFx";
+import { TendControl } from "./TendControl";
+import { SKILLS } from "../../content/skills";
 
-export function TopBar({ state, onStop, stopNote, onSettings, onGo }: { state: GameState; onStop: () => void; stopNote?: string; onSettings: () => void; onGo: (p: Place) => void }) {
+export function TopBar({ state, onStop, stopNote, onSettings, onGo, onTend }: { state: GameState; onStop: () => void; stopNote?: string; onSettings: () => void; onGo: (p: Place) => void; onTend: () => void }) {
   return (
     <header className="topbar">
       <div className="brand">
@@ -20,9 +22,11 @@ export function TopBar({ state, onStop, stopNote, onSettings, onGo }: { state: G
         <h1 className="brand-title">Ritual Idle</h1>
       </div>
       <Working state={state} onStop={onStop} stopNote={stopNote} onGo={onGo} />
+      {state.active && !state.rite.performing && <TendControl state={state} onTend={onTend} />}
       {activeBuffs(state).map((b) => (
-        <span key={b.id} className="chip accent buff-chip" title={buffEffects(b.id).join(" · ")}>
-          {BUFFS[b.id].name} <span className="num">{formatClock(b.endsAt - state.lastTickAt)}</span>
+        <span key={`${b.id}:${b.skill ?? ""}`} className="chip accent buff-chip" title={buffEffects(b.id, b.skill).join(" · ")}>
+          {BUFFS[b.id].name}
+          {b.skill && ` · ${SKILLS[b.skill].name}`} <span className="num">{formatClock(b.endsAt - state.lastTickAt)}</span>
         </span>
       ))}
       {isFeatureOpen(state, "village") && (

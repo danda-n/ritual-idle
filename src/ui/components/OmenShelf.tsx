@@ -1,4 +1,9 @@
-import { BUFFS } from "../../content/buffs";
+import { useState } from "react";
+import { ACTION_DEFS } from "../../content/actions";
+import { BUFF_DEFS, BUFFS } from "../../content/buffs";
+import { SKILL_IDS, SKILLS, type SkillId } from "../../content/skills";
+import { isSkillUnlocked } from "../../engine/progress";
+import { SkillIcon } from "../art/icons";
 import { OMENS, type OmenId } from "../../content/omens";
 import { releaseOmen, type Result } from "../../engine/commands";
 import { activeBuffs, omenCapacity } from "../../engine/modifiers";
@@ -12,7 +17,11 @@ const OMEN_IDS = Object.keys(OMENS) as OmenId[];
 
 /** Shown once the first omen has appeared. */
 export function OmenShelf({ state, act }: { state: GameState; act: (c: (s: GameState) => Result) => unknown }) {
+  const [choosing, setChoosing] = useState<OmenId | null>(null);
   const buffs = activeBuffs(state);
+  // Skills you can bless, the one you're running first.
+  const running = state.active ? ACTION_DEFS[state.active.id].skill : null;
+  const open = SKILL_IDS.filter((id) => isSkillUnlocked(state, id)).sort((a, b) => (a === running ? -1 : b === running ? 1 : 0));
   if (state.stats.omensSeen === 0 && buffs.length === 0) return null;
   const capacity = omenCapacity(state);
   const stored = storedOmens(state);
@@ -41,18 +50,41 @@ export function OmenShelf({ state, act }: { state: GameState; act: (c: (s: GameS
               ))}
             </ul>
           </div>
-          <button className="btn btn-primary" onClick={() => act((s) => releaseOmen(s, id))}>
-            Release · {buffDuration(OMENS[id].buff)}
-          </button>
+          {BUFF_DEFS[OMENS[id].buff].blessSkill && choosing === id ? (
+            <div className="bless-pick" role="group" aria-label="Bless which skill?">
+              <span className="muted">Bless which work?</span>
+              {open.map((skill: SkillId) => (
+                <button
+                  key={skill}
+                  data-skill={skill}
+                  className="btn btn-ghost bless-skill"
+                  onClick={() => {
+                    act((s) => releaseOmen(s, id, skill));
+                    setChoosing(null);
+                  }}
+                >
+                  <SkillIcon skill={skill} size={14} /> {SKILLS[skill].name}
+                  {skill === running && <span className="muted"> · now</span>}
+                </button>
+              ))}
+              <button className="btn btn-ghost" onClick={() => setChoosing(null)}>
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button className="btn btn-primary" onClick={() => (BUFF_DEFS[OMENS[id].buff].blessSkill ? setChoosing(id) : act((s) => releaseOmen(s, id)))}>
+              Release · {buffDuration(OMENS[id].buff)}
+            </button>
+          )}
         </div>
       ))}
       {buffs.length > 0 && (
         <ul className="ledger buff-list" aria-label="Active effects">
           {buffs.map((b) => (
-            <li key={b.id} className="buff-row">
+            <li key={`${b.id}:${b.skill ?? ""}`} className="buff-row">
               <span>
                 <strong>{BUFFS[b.id].name}</strong>
-                <span className="effects-inline">{buffEffects(b.id).join(" · ")}</span>
+                <span className="effects-inline">{buffEffects(b.id, b.skill).join(" · ")}</span>
               </span>
               <span className="num">{formatClock(b.endsAt - state.lastTickAt)}</span>
             </li>

@@ -116,11 +116,28 @@ Item names go through `ItemChip` (`src/ui/components/ItemLookup.tsx`), so any it
   - Below them, the keystone row: dashed until it can be taken, solid in the skill colour once open or taken.
   - The header says "N points to spend" or "Next point at level N", with a free Reset.
 
+## Second patch: task cards, Tend, no layout shift
+- **Task card** (`components/TaskCard.tsx`, replacing the note modal):
+  - The title is "New: <task>", followed by what opened (chips) and the steps. The current step is bold with ▶; done steps get ✓. Each step's reward sits on the right in candle gold.
+  - Then the part's needs as chips, and a primary **Go: <current step>** button.
+  - Grandmother's `quote` comes last, in small muted italics.
+- **The tracker's current step** shows "step k of n", a thin bar, the current step with its reward, and the needs chips. There's no hint paragraph.
+- **Tend** (`components/TendControl.tsx`):
+  - A small candle-gold outline button plus a thin ember→gold meter that drains on the compositor (`.bar-fill.drain`, like `TimedBar` in reverse).
+  - It appears in the running row's control column (compact) and the top bar (with "+50% · bonus N% (streak N)"; the text hides below 1200px). Space tends.
+  - The meter keeps draining under reduced motion, because it carries information.
+- **No layout shift:**
+  - Action rows keep one height. The rates line always takes a single line (ellipsis, full text in the tooltip) and hover only reveals it (`visibility`/`opacity`).
+  - The control column has a fixed minimum height, whether it holds Start or the bar and Tend.
+- **The omen picker:** Release asks "Bless which work?" with a skill-coloured button per open skill, the running one first (marked "now"). Buff chips name the blessed skill.
+
 ## Words (one per thing)
 - **the Circle**: the place (lowercase "circle" only inside lore text)
 - **the Kindling**: the chapter's rite; its five **parts** are *placed* in the Circle
 - **experiments**: optional guesses at the Circle (hidden recipes and secrets)
 - **talents**: per-skill choices bought with **talent points**
+- **Tend**: the hands-on bonus (the button, the meter, the streak)
+- **steps**: the small tasks inside a stage
 - **recipe**: a craftable action
 - **hidden recipe**: a Grimoire entry found by hints
 - **secret**: found with no hints

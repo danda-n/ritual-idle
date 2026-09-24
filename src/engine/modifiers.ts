@@ -7,7 +7,8 @@ import type { RequestDef, UpgradeEffect } from "../content/types";
 import type { SkillId } from "../content/skills";
 import { discoveredRewards } from "./grimoire";
 import type { GameState } from "./state";
-import { branchBonus, keystoneEffect } from "./talents";
+import { branchBonus, isTended, keystoneEffect } from "./talents";
+import { TEND } from "../content/talents";
 import { levelForXp } from "./xp";
 
 // Every bonus in the game is computed here, so balance lives in one place.
@@ -40,9 +41,12 @@ export function levelSpeed(state: GameState, skill: SkillId): number {
 export function speedMultiplier(state: GameState, id: ActionId, now: number = state.lastTickAt): number {
   const skill = ACTION_DEFS[id].skill;
   let bonus = branchBonus(state, skill, "swift");
+  // Tending: the lit meter speeds up whatever is running.
+  if (state.active?.id === id && isTended(state, now)) bonus += TEND.speed;
   for (const e of effects(state)) if (e.kind === "speed" && e.skill === skill) bonus += e.bonus;
   for (const b of activeBuffs(state, now)) {
     bonus += BUFF_DEFS[b.id].speed?.[skill] ?? 0;
+    if (b.skill === skill) bonus += BUFF_DEFS[b.id].blessSkill?.speed ?? 0;
   }
   // Followers "assist me": they help with whatever you're doing.
   for (const f of state.followers) {
@@ -66,6 +70,8 @@ export function chanceMultiplier(state: GameState, item: ItemId, now: number = s
   let mult = keystone?.kind === "find_chance" ? keystone.multiplier : 1;
   for (const b of activeBuffs(state, now)) {
     mult *= BUFF_DEFS[b.id].chanceMultiplier?.[item] ?? 1;
+    // A blessed skill's chance finds (Still Night): only with the skill known.
+    if (skill && b.skill === skill) mult *= BUFF_DEFS[b.id].blessSkill?.chanceMultiplier ?? 1;
   }
   return mult;
 }

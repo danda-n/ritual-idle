@@ -1,6 +1,7 @@
 import { BUFFS, type BuffId } from "../content/buffs";
 import { OMENS, type OmenId } from "../content/omens";
 import { omenCapacity } from "./modifiers";
+import type { SkillId } from "../content/skills";
 import type { Note } from "./progress";
 import type { GameState } from "./state";
 
@@ -25,12 +26,14 @@ export function grantOmen(state: GameState, id: OmenId, promised = false): boole
  * Start or lengthen a buff. `stack` adds the full duration on top of any time left
  * (released omens are scarce); otherwise it just refreshes (repeatable minor rites).
  */
-export function applyBuff(state: GameState, id: BuffId, now: number, stack: boolean): void {
+export function applyBuff(state: GameState, id: BuffId, now: number, stack: boolean, skill?: SkillId): void {
   const duration = BUFFS[id].durationMs;
-  const existing = state.buffs.find((b) => b.id === id && b.endsAt > now);
+  // A blessing on another skill is its own buff, running side by side.
+  const same = (b: { id: BuffId; skill?: SkillId }) => b.id === id && b.skill === skill;
+  const existing = state.buffs.find((b) => same(b) && b.endsAt > now);
   if (!existing) {
-    state.buffs = state.buffs.filter((b) => b.id !== id);
-    state.buffs.push({ id, endsAt: now + duration });
+    state.buffs = state.buffs.filter((b) => !same(b));
+    state.buffs.push(skill ? { id, endsAt: now + duration, skill } : { id, endsAt: now + duration });
   } else {
     existing.endsAt = stack ? existing.endsAt + duration : Math.max(existing.endsAt, now + duration);
   }

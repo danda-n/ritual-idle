@@ -3,7 +3,8 @@ import { EXPERIMENTS_NOTE, NOTES } from "../content/notes";
 import type { PartId } from "../content/rite";
 import { PAGES } from "../content/pages";
 import type { SkillId } from "../content/skills";
-import type { Feature, GoalDef } from "../content/types";
+import type { Feature, GoalDef, StepDef } from "../content/types";
+import { xpForLevel, levelForXp } from "./xp";
 import { GRIMOIRE_IDS, isSilhouetteVisible } from "./grimoire";
 import type { GameState } from "./state";
 
@@ -61,17 +62,64 @@ export function isRecipeKnown(state: GameState, id: ActionId): boolean {
   return page === null || pagesRead(state).includes(page);
 }
 
+export type Step = StepDef<SkillId, ActionId>;
+
+/** The current stage's steps (empty for notes without them). */
+export function currentSteps(state: GameState): readonly Step[] {
+  const note = currentNote(state);
+  return "steps" in note ? (note.steps as readonly Step[]) : [];
+}
+
+export function isStepMet(state: GameState, step: Step): boolean {
+  const g = step.goal;
+  switch (g.kind) {
+    case "complete":
+      return completedCount(state, g.action) >= g.count;
+    case "level":
+      return levelForXp(state.skills[g.skill].xp, state.levelCap) >= g.level;
+    case "tended":
+      return state.stats.tended >= g.count;
+    case "requests":
+      return state.stats.requestsFilled >= g.count;
+    case "place":
+      return state.kindling.includes(g.part as PartId);
+  }
+}
+
+/**
+ * Claim every met step of the current stage and give its reward. Mutates `state`; returns the
+ * steps claimed. Steps can be met in any order.
+ */
+export function claimSteps(state: GameState): Step[] {
+  const claimed: Step[] = [];
+  for (const step of currentSteps(state)) {
+    if (state.stepsDone.includes(step.id) || !isStepMet(state, step)) continue;
+    state.stepsDone.push(step.id);
+    const r = step.reward;
+    if (r?.xp) {
+      const skill = state.skills[r.xp.skill];
+      skill.xp = Math.min(skill.xp + r.xp.amount, xpForLevel(state.levelCap));
+    }
+    for (const [item, qty] of Object.entries(r?.items ?? {})) state.inventory[item as keyof GameState["inventory"]] = (state.inventory[item as keyof GameState["inventory"]] ?? 0) + qty;
+    claimed.push(step);
+  }
+  return claimed;
+}
+
 /**
  * Reveal every note whose predecessor's goal is now met, and the Experiments note once its time
- * has come. Mutates `state` (callers pass a private copy); returns the new notes.
+ * has come. Steps of each stage are claimed first (into `claimed`, if given).
+ * Mutates `state` (callers pass a private copy); returns the new notes.
  */
-export function revealNotes(state: GameState): Note[] {
+export function revealNotes(state: GameState, claimed: Step[] = []): Note[] {
   const revealed: Note[] = [];
+  claimed.push(...claimSteps(state));
   while (state.notesRevealed < NOTES.length) {
     const progress = goalProgress(state, currentNote(state));
     if (!progress || progress.done < progress.target) break;
     state.notesRevealed++;
     revealed.push(currentNote(state));
+    claimed.push(...claimSteps(state));
   }
   if (experimentsDue(state)) {
     state.experimentsOpen = true;

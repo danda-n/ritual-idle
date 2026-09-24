@@ -259,8 +259,10 @@ input[type="checkbox"] { accent-color: var(--color-accent); width: 16px; height:
 .ledger li.arrived { animation: arrived 1.2s var(--ease-out); }
 @keyframes arrived { 0% { background: rgb(232 176 78 / 0.28); } 100% { background: transparent; } }
 /* Rates only where they matter: the running row, or a row you hover or focus */
-.action-row:not(.running) .rates { display: none; }
-.action-row:not(.running):hover .rates, .action-row:not(.running):focus-within .rates { display: block; }
+/* The rates line always takes its space; hover only reveals it, so rows never change height. */
+.action-row .rates { display: block; min-height: 1.4em; }
+.action-row:not(.running) .rates { visibility: hidden; opacity: 0; transition: opacity var(--dur-fast) var(--ease-out); }
+.action-row:not(.running):hover .rates, .action-row:not(.running):focus-within .rates { visibility: visible; opacity: 1; }
 .insight-sources { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-1); }
 .insight-sources li { font-size: var(--text-xs); color: var(--color-muted); border: 1px solid var(--color-border-soft); border-radius: 999px; padding: 0 var(--space-2); }
 .rite-summary { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--color-text-2); font-size: var(--text-sm); }
@@ -349,7 +351,7 @@ input[type="checkbox"] { accent-color: var(--color-accent); width: 16px; height:
 .talents.has-points { border-color: color-mix(in srgb, var(--skill) 60%, transparent); }
 .talent-intro { font-size: var(--text-sm); }
 .talent-reset, .talent-add { min-height: 26px; padding: 0 var(--space-3); font-size: var(--text-xs); }
-.branches { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); }
+.branches { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }
 .branch { display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border-soft); border-radius: var(--radius-md); }
 .branch.is-taken { border-color: color-mix(in srgb, var(--skill) 55%, transparent); }
 .branch-head { display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); }
@@ -371,3 +373,40 @@ input[type="checkbox"] { accent-color: var(--color-accent); width: 16px; height:
 .next-skill { opacity: 0.75; border-style: dashed; cursor: default; }
 .next-skill.skill-tile[data-skill] { border-left-style: dashed; }
 .next-skill-when { grid-column: 1 / -1; font-size: var(--text-xs); color: var(--color-muted); }
+
+/* ---------- Tending: a flame meter that drains, and a Tend button ---------- */
+.tend { display: inline-flex; align-items: center; gap: var(--space-2); }
+.tend-btn { min-height: 26px; padding: 0 var(--space-3); font-size: var(--text-xs); color: var(--folk-candle); border-color: rgb(232 176 78 / 0.45); }
+.tend.is-lit .tend-btn { background: rgb(232 176 78 / 0.14); }
+.tend-btn:active { transform: scale(0.96); }
+.tend-bar { width: 72px; }
+.tend-bar .bar-fill { background: linear-gradient(90deg, var(--ember-600), var(--folk-candle)); }
+.tend-info { font-size: var(--text-xs); white-space: nowrap; }
+.topbar .tend { flex-shrink: 0; }
+.tend.compact { width: 100%; }
+.tend.compact .tend-bar { flex: 1; width: auto; }
+/* The control column keeps one height whether it shows Start, or the bar and Tend. */
+.action-control { min-height: 60px; flex-direction: column; justify-content: center; align-items: stretch; gap: var(--space-1); }
+.action-control .btn:disabled { min-height: 38px; }
+.bless-pick { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); }
+.bless-skill { min-height: 28px; padding: 0 var(--space-2); font-size: var(--text-xs); color: var(--skill); border-color: color-mix(in srgb, var(--skill) 55%, transparent); display: inline-flex; gap: 4px; align-items: center; }
+.bless-skill svg { color: var(--skill); }
+
+/* ---------- Task card (a new chapter step, task first) ---------- */
+.task-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.task-steps li { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: var(--space-2); align-items: baseline; font-size: var(--text-sm); color: var(--color-text-2); }
+.task-steps li.is-current { color: var(--color-text); font-weight: 600; }
+.task-steps li.is-current .task-step-mark { color: var(--color-accent); }
+.task-steps li.is-done { color: var(--color-muted); }
+.task-steps li.is-done .task-step-mark { color: var(--color-accent-deep); }
+.task-reward { font-size: var(--text-xs); color: var(--folk-candle); white-space: nowrap; font-weight: 400; }
+.task-needs { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); font-size: var(--text-sm); }
+.task-quote { font-style: italic; font-size: var(--text-xs); color: var(--color-muted); }
+.step-now { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: baseline; font-size: var(--text-sm); color: var(--color-text); }
+.action-control .tend-btn { width: auto; flex-shrink: 0; }
+/* One line only, so a row is the same height running or not; the full text is in the tooltip. */
+.action-row .rates { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+@media (max-width: 1200px) {
+  .topbar .tend-info { display: none; }
+  .topbar .tend-bar { width: 44px; }
+}

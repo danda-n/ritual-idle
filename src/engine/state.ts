@@ -12,7 +12,7 @@ import type { UpgradeId } from "../content/shop";
 import { SKILL_IDS, type SkillId } from "../content/skills";
 import { randomSeed } from "./rng";
 
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
 
 export interface ActiveAction {
   id: ActionId;
@@ -59,6 +59,10 @@ export interface GameState {
   experimentsOpen: boolean;
   /** Talent ranks spent per skill. Points come from levels, so only spending is stored. */
   talents: Partial<Record<SkillId, Talents>>;
+  /** Stage steps already claimed (their rewards given). */
+  stepsDone: string[];
+  /** The Tend meter (sim clock): lit until `endsAt`; `streak` counts tended repetitions in a row. */
+  tend: { endsAt: number; streak: number; lastAt: number };
   /** Skills and places an older save's notes had opened, kept so nothing earned is taken away. */
   kept: { skills: SkillId[]; features: Feature[] };
   rite: RiteState;
@@ -71,6 +75,8 @@ export interface GameState {
     requestsFilled: number;
     omensSeen: number;
     curiosRead: number;
+    /** Repetitions finished while tended. */
+    tended: number;
   };
 }
 
@@ -117,6 +123,8 @@ export interface Talents {
 export interface ActiveBuff {
   id: BuffId;
   endsAt: number;
+  /** For buffs that bless one chosen skill (Still Night). */
+  skill?: SkillId;
 }
 
 export function newGame(now: number = Date.now(), seed: number = randomSeed()): GameState {
@@ -142,9 +150,11 @@ export function newGame(now: number = Date.now(), seed: number = randomSeed()): 
     kindling: [],
     experimentsOpen: false,
     talents: {},
+    stepsDone: [],
+    tend: { endsAt: 0, streak: 0, lastAt: 0 },
     kept: { skills: [], features: [] },
     rite: { primed: false, performing: null, completed: null },
     followers: [],
-    stats: { completed: {}, requestsFilled: 0, omensSeen: 0, curiosRead: 0 },
+    stats: { completed: {}, requestsFilled: 0, omensSeen: 0, curiosRead: 0, tended: 0 },
   };
 }

@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ACTION_DEFS, type ActionId } from "../content/actions";
-import { GRIMOIRE_DEFS, type GrimoireId } from "../content/grimoire";
-import type { Result, Success } from "../engine/commands";
+import { CURIO_STORIES, GRIMOIRE_DEFS, type GrimoireId } from "../content/grimoire";
+import { tend as tendCommand, type Result, type Success } from "../engine/commands";
 import { nextHintAt, progressOf, type Fragment } from "../engine/grimoire";
 import { NOTES } from "../content/notes";
 import { ITEMS, type ItemId } from "../content/items";
 import { SKILLS } from "../content/skills";
 import { isRecipeKnown } from "../engine/progress";
 import { emitFx } from "./fx";
-import { isRareDrop, unlockedByLevel } from "./tasks";
+import { isRareDrop, rewardText, unlockedByLevel } from "./tasks";
 import type { Note } from "../engine/progress";
 import { rewind } from "../engine/devtools";
 import { OMENS } from "../content/omens";
@@ -55,7 +55,7 @@ function celebrateCommand(before: GameState, after: GameState, toast: (t: Omit<T
   const placed = after.kindling.filter((p) => !before.kindling.includes(p));
   for (const p of placed) emitFx({ kind: "placed", part: p });
   if (placed.length > 0) {
-    toast(placed.map((p) => ({ title: `${PART_DEFS[p].name} is in the Circle`, text: `${PART_DEFS[p].placed} (${after.kindling.length} of 5)` })));
+    toast(placed.map((p) => ({ title: `${PART_DEFS[p].name} is placed · ${after.kindling.length} of 5`, text: "" })));
   }
   if (after.rite.performing && !before.rite.performing) toast([{ title: "The rite begins", text: `The ${HEARTH_RITE.name} has begun. It takes 30 minutes.` }]);
 }
@@ -106,7 +106,7 @@ export function useGame() {
 
   // New notes and pages pop up while playing; after an absence they appear in the summary instead.
   const announce = useCallback(
-    (report: Partial<Pick<Report, "notesRevealed" | "pagesRead" | "omensFound" | "omensLost" | "fragments" | "curioStories" | "riteStarted" | "fellBackTo" | "itemsGained" | "levelUps" | "criticals">>) => {
+    (report: Partial<Pick<Report, "notesRevealed" | "pagesRead" | "omensFound" | "omensLost" | "fragments" | "curioStories" | "riteStarted" | "fellBackTo" | "itemsGained" | "levelUps" | "criticals" | "stepsDone" | "tendFinds">>) => {
       const notes = report.notesRevealed ?? [];
       if (notes.length > 0) setStory((q) => [...q, ...notes.map((note) => ({ note, at: Date.now() }))]);
 
@@ -116,6 +116,10 @@ export function useGame() {
         if (n > 0) emitFx({ kind: "float", text: `+${n} ${ITEMS[item].name}`, anchors: fromWork, tone: isRareDrop(item) ? "rare" : "item" });
       }
       if (report.criticals) emitFx({ kind: "float", text: "Critical! ×2", anchors: fromWork, tone: "rare" });
+      if (report.tendFinds) emitFx({ kind: "float", text: "Bonus find!", anchors: fromWork, tone: "good" });
+      // Placing a part has its own toast; other steps say what they gave.
+      const stepToasts = (report.stepsDone ?? []).filter((st) => st.goal.kind !== "place").map((st) => ({ title: `Step done: ${st.label}`, text: rewardText(st) }));
+      for (const st of report.stepsDone ?? []) if (rewardText(st)) emitFx({ kind: "float", text: rewardText(st), anchors: [".tracker .step.current", ".tracker"], tone: "good" });
       const levelToasts: Omit<Toast, "id">[] = [];
       for (const l of report.levelUps ?? []) {
         emitFx({ kind: "float", text: `Level ${l.to}`, anchors: [`.skill-tile[data-skill="${l.skill}"]`, ".working"], tone: "level" });
@@ -132,11 +136,12 @@ export function useGame() {
         .filter((item) => isRareDrop(item, 0.01))
         .map((item) => ({ title: `Rare find: ${ITEMS[item].name}`, text: "" }));
       pushToasts([
+        ...stepToasts,
         ...levelToasts,
         ...rareToasts,
         ...(report.fellBackTo ?? []).slice(0, 1).map((id) => ({ title: "Back to gathering", text: `Out of an ingredient, so you went back to ${ACTION_DEFS[id].name.toLowerCase()}.` })),
         ...(report.riteStarted ? [{ title: "The rite begins", text: `Everything was ready. The ${HEARTH_RITE.name} has begun.` }] : []),
-        ...(report.curioStories ?? []).map((text) => ({ title: "A curio, read", text })),
+        ...(report.curioStories ?? []).map(() => ({ title: `Curio found (${ref.current.stats.curiosRead}/${CURIO_STORIES.length})`, text: "Read it in the Grimoire." })),
         // Insight from the player's own attempts only toasts when it opens a clearer hint.
         ...(report.fragments ?? []).flatMap((f) => {
           const t = fragmentToast(ref.current, f);
@@ -199,6 +204,12 @@ export function useGame() {
 
   const stop = useCallback(() => commit(stopAction(ref.current)), [commit]);
 
+  /** Tend the running work. Quiet: a too-quick second click just does nothing. */
+  const tendNow = useCallback(() => {
+    const r = tendCommand(ref.current);
+    if (r.ok) commit(r.state);
+  }, [commit]);
+
   const load = useCallback((loaded: GameState) => {
     const result = catchUp(loaded, Date.now());
     commit(result.state);
@@ -227,7 +238,7 @@ export function useGame() {
       saveLocal(r.state); // choices are saved at once, not on the next autosave
       celebrateCommand(before, r.state, pushToasts);
       if (r.aside) pushToasts([{ title: "They tell you something", text: r.aside }]);
-      announce({ notesRevealed: r.notes, fragments: r.fragments, omensFound: r.gifts });
+      announce({ notesRevealed: r.notes, fragments: r.fragments, omensFound: r.gifts, stepsDone: r.steps });
       if (r.outcome?.kind === "discovered") setDiscovery(r.outcome.recipe);
       return r;
     },
@@ -246,5 +257,5 @@ export function useGame() {
   const dismissDiscovery = useCallback(() => setDiscovery(null), []);
   const dismissStory = useCallback(() => setStory((q) => q.slice(1)), []);
 
-  return { state, away, dismissAway, discovery, dismissDiscovery, story: story[0] && Date.now() - story[0].at >= STORY_DELAY_MS ? story[0].note : null, dismissStory, lastStop, toasts, dismissToast, start, stop, act, load, reset, dev };
+  return { state, tend: tendNow, away, dismissAway, discovery, dismissDiscovery, story: story[0] && Date.now() - story[0].at >= STORY_DELAY_MS ? story[0].note : null, dismissStory, lastStop, toasts, dismissToast, start, stop, act, load, reset, dev };
 }

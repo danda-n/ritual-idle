@@ -1,13 +1,22 @@
 import type { SkillId } from "./skills";
 
-// Skill talents (docs/CHAPTER1.md §13). Every skill has the same three branches, 3 ranks each,
+// Skill talents (docs/CHAPTER1.md §13). Every skill has the same four branches, 3 ranks each,
 // plus one keystone of its own that opens after 3 points in any one branch.
 // A point arrives every POINT_EVERY levels. Resetting is free.
 
 export const POINT_EVERY = 3;
 export const KEYSTONE_NEEDS = 3;
 
+/**
+ * Tending: a hands-on bonus. Clicking Tend lights a meter that drains over `meterMs`. While it's
+ * lit the running action is `speed` faster, and each tended repetition in a row adds `streakPerRep`
+ * to a bonus-find chance (1 extra of the main output), up to `streakCap`. It's never required.
+ * Each rank of the Tending talent adds `rankMeterMs` and `rankStreak`.
+ */
+export const TEND = { meterMs: 15_000, speed: 0.5, streakPerRep: 0.02, streakCap: 0.2, rankMeterMs: 5_000, rankStreak: 0.01, minGapMs: 250 } as const;
+
 export const BRANCHES = {
+  tending: { name: "Tending", maxRank: 3, perRank: 1, effect: "tending" },
   swift: { name: "Swift", maxRank: 3, perRank: 0.05, effect: "speed" },
   plenty: { name: "Plenty", maxRank: 3, perRank: 0.05, effect: "extra_output" },
   fortune: { name: "Fortune", maxRank: 3, perRank: 0.03, effect: "critical" },
@@ -20,6 +29,8 @@ export const BRANCH_IDS = Object.keys(BRANCHES) as BranchId[];
 export function branchText(id: BranchId, rank: number): string {
   const pct = Math.round(BRANCHES[id].perRank * rank * 100);
   switch (id) {
+    case "tending":
+      return `Tend lasts +${(TEND.rankMeterMs / 1000) * rank}s, +${Math.round(TEND.rankStreak * 100) * rank}% bonus chance per tended repetition`;
     case "swift":
       return `+${pct}% speed`;
     case "plenty":

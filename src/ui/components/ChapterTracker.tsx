@@ -8,7 +8,7 @@ import { canPlace, placePart, type Result } from "../../engine/commands";
 import { skillLevel } from "../../engine/simulate";
 import type { GameState } from "../../engine/state";
 import { CircleRiteIcon } from "../art/icons";
-import { STEPS, taskName, taskPlace, type Place } from "../tasks";
+import { rewardText, stepPlace, stepsOf, STEPS, taskName, taskPlace, type Place } from "../tasks";
 import { Bar } from "./Bar";
 import { ItemChip } from "./ItemLookup";
 
@@ -64,19 +64,34 @@ export function ChapterTracker({ state, onGo, act }: { state: GameState; onGo: (
                 : goal.kind === "rite" && skillLevel(state, "ritualism") < HEARTH_RITE.skills.ritualism!
                   ? { skill: "ritualism" as const, level: HEARTH_RITE.skills.ritualism! }
                   : null;
+            const { steps, done: stepDone, current: now } = stepsOf(state, s.note);
+            const doneCount = steps.filter(stepDone).length;
             return (
               <li key={i} className="step current">
                 <span className="step-mark" aria-hidden="true">▶</span>
                 <div className="step-body">
                   <div className="step-head">
                     <strong>{taskName(goal)}</strong>
-                    {p && p.target > 1 && (
-                      <span className="num">
-                        {p.done}/{p.target}
+                    {steps.length > 0 ? (
+                      <span className="num muted">
+                        step {Math.min(doneCount + 1, steps.length)} of {steps.length}
                       </span>
+                    ) : (
+                      p &&
+                      p.target > 1 && (
+                        <span className="num">
+                          {p.done}/{p.target}
+                        </span>
+                      )
                     )}
                   </div>
-                  {p && p.target > 1 && <Bar thin value={p.done / p.target} label="Task progress" />}
+                  {steps.length > 0 ? <Bar thin value={doneCount / steps.length} label="Steps done" /> : p && p.target > 1 && <Bar thin value={p.done / p.target} label="Task progress" />}
+                  {now && (
+                    <div className="step-now">
+                      <span>{now.label}</span>
+                      {rewardText(now) && <span className="task-reward num">{rewardText(now)}</span>}
+                    </div>
+                  )}
                   {(inputs.length > 0 || needLevel) && (
                     <div className="step-needs">
                       {needLevel && (
@@ -89,13 +104,13 @@ export function ChapterTracker({ state, onGo, act }: { state: GameState; onGo: (
                       ))}
                     </div>
                   )}
-                  {"hint" in s.note && <p className="step-hint">{s.note.hint}</p>}
+                  {steps.length === 0 && "hint" in s.note && <p className="step-hint">{s.note.hint}</p>}
                   {goal.kind === "place" && canPlace(state, goal.part as PartId) === null ? (
                     <button className="btn btn-primary step-go" onClick={() => act((st) => placePart(st, goal.part as PartId))}>
                       Place in the Circle
                     </button>
                   ) : (
-                    <button className="btn btn-ghost step-go" onClick={() => onGo(taskPlace(goal))}>
+                    <button className="btn btn-ghost step-go" onClick={() => onGo(now ? stepPlace(now, state) : taskPlace(goal))}>
                       Go
                     </button>
                   )}

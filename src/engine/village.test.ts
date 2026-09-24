@@ -53,7 +53,7 @@ describe("village board", () => {
     const s = expectOk(fillRequest({ ...base, inventory: { ...needs } }, 0));
     expect(s.coin).toBe(REQUESTS[id].coin);
     expect(s.trust).toBe(REQUESTS[id].trust);
-    expect(Object.values(s.inventory).every((n) => n === 0)).toBe(true);
+    for (const item of Object.keys(needs)) expect(s.inventory[item as keyof typeof s.inventory]).toBe(0);
     expect(s.board[0]).toEqual({ request: null, refillAt: T0 + REFILL_MS });
   });
 
@@ -110,9 +110,9 @@ describe("shop", () => {
 describe("upgrade effects", () => {
   it("reading lamp speeds up Scholarship by 15%", () => {
     const s = villageOpen();
-    expect(actionDurationMs(s, "decipher_page")).toBe(6000);
-    expect(actionDurationMs({ ...s, upgrades: ["reading_lamp"] }, "decipher_page")).toBeCloseTo(6000 / 1.15);
-    expect(actionDurationMs({ ...s, upgrades: ["reading_lamp"] }, "pick_nettle")).toBe(3000);
+    expect(actionDurationMs(s, "decipher_page")).toBe(4000);
+    expect(actionDurationMs({ ...s, upgrades: ["reading_lamp"] }, "decipher_page")).toBeCloseTo(4000 / 1.15);
+    expect(actionDurationMs({ ...s, upgrades: ["reading_lamp"] }, "pick_nettle")).toBe(2000);
   });
 
   it("drying rack adds about 10% to Herbalism yield", () => {

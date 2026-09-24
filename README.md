@@ -21,13 +21,15 @@ Then open the URL it prints.
 
 From the cold house to the Kindling of the Hearth-Circle:
 - **The staged Kindling:** the chapter's rite is built in five parts, placed in the Circle one by one. Each stage's note from grandmother brings the one new skill it needs. Deciphered burnt pages teach extra recipes.
-- **Skill talents:** a point every 3 levels, three branches (Swift / Plenty / Fortune) and a keystone per skill, with free reset. Each level also makes its skill 1% faster.
+- **Small steps** inside every stage, each with a small reward, shown task-first (grandmother gets one line).
+- **Tending:** click Tend (or press Space) for +50% speed while its meter burns, and a growing bonus-find streak. Optional.
+- **Skill talents:** a point every 3 levels, four branches (Tending / Swift / Plenty / Fortune) and a keystone per skill, with free reset. Each level also makes its skill 1% faster.
 - **Timed actions** with XP, level caps and rates. Each skill shows only what you've reached plus the next recipe. An item lookup on every item name; a pantry grouped by where things come from.
 - **The village:**
   - a request board with trust
   - a shop
   - four sanctum upgrades
-- **The Still Night omen**, the omen shelf, and timed buffs.
+- **The Still Night omen** (bless a skill you choose), the omen shelf, and timed buffs.
 - **The Grimoire and circle:**
   - three hidden recipes with escalating hints
   - two secrets

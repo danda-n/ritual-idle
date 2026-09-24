@@ -1,5 +1,5 @@
 import type { SkillId } from "../content/skills";
-import { BRANCHES, BRANCH_IDS, KEYSTONE_NEEDS, KEYSTONES, POINT_EVERY, type BranchId, type KeystoneEffect } from "../content/talents";
+import { BRANCHES, BRANCH_IDS, KEYSTONE_NEEDS, KEYSTONES, POINT_EVERY, TEND, type BranchId, type KeystoneEffect } from "../content/talents";
 import type { GameState, Talents } from "./state";
 import { levelForXp } from "./xp";
 
@@ -53,4 +53,21 @@ export function canSpend(state: GameState, skill: SkillId, branch: BranchId | nu
   }
   if (rankOf(state, skill, branch) >= BRANCHES[branch].maxRank) return "That branch is full.";
   return null;
+}
+
+// Tending (the hands-on bonus). The meter lives on the sim clock, like buffs.
+
+/** How long one Tend keeps the meter lit, for this skill. */
+export function tendMeterMs(state: GameState, skill: SkillId): number {
+  return TEND.meterMs + TEND.rankMeterMs * rankOf(state, skill, "tending");
+}
+
+export function isTended(state: GameState, now: number = state.lastTickAt): boolean {
+  return now < state.tend.endsAt;
+}
+
+/** Chance of a bonus find on the next tended repetition, from the streak so far. */
+export function tendBonusChance(state: GameState, skill: SkillId): number {
+  const perRep = TEND.streakPerRep + TEND.rankStreak * rankOf(state, skill, "tending");
+  return Math.min(TEND.streakCap, state.tend.streak * perRep);
 }

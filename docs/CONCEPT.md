@@ -566,3 +566,14 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
   - Resetting is free.
 - **The XP curve is slower early:** 165 × 1.14^(level − 1) instead of 25 × 1.18^(level − 1). The chapter's length stays about 90 minutes.
 - **Old saves:** skills and places an older save had opened stay open (`kept` in the save). The chapter resumes at the first part not yet placed, and a finished chapter counts every part as placed.
+
+### Second patch: hands-on start, a useful omen, task-first notes
+- **Changes a logged decision** (Q8: "active play = decisions only"). Active play is now decisions **plus optional tending**:
+  - Clicking **Tend** lights a draining meter: +50% speed while lit, and a streak that grows a bonus-find chance (up to 20%).
+  - A fourth talent branch, **Tending**, improves it.
+  - It's never required. The pacing test plays idle, so the chapter is ~90 minutes without it.
+- **Small steps inside every stage,** each a minute or two with a small reward, so there's always a concrete next click.
+- **A faster start:** tier-1 recipes take 2 seconds, and the first levels are eased (levels 2–4 in about 30–60 seconds each). The XP base rose to keep the chapter's length.
+- **Still Night blesses a skill you choose** on release: +50% speed and chance finds ×2 for 15 minutes. It used to bless Scholarship and Ritualism, which rarely mattered.
+- **Notes are task-first.** A new stage shows its steps, rewards, needs and a Go button; grandmother gets one line, and the full note lives in the Grimoire journal. Toasts say what you got; story stays in the rite log, curios and pages.
+- **Rows never change height on hover:** the rates line always takes its space and is only revealed.

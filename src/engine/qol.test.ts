@@ -61,8 +61,8 @@ describe("fallback when work stops", () => {
 describe("estimates", () => {
   it("rates follow action time and bonuses", () => {
     const s = open();
-    expect(repsPerHour(s, "pick_nettle")).toBe(1200);
-    expect(xpPerHour(s, "pick_nettle")).toBe(6000);
+    expect(repsPerHour(s, "pick_nettle")).toBe(1800);
+    expect(xpPerHour(s, "pick_nettle")).toBe(7200);
     expect(outputPerHour(s, "sweep_hearth")).toEqual([
       { item: "ash", perHour: 1200 },
       { item: "charcoal", perHour: 120 },
@@ -71,9 +71,9 @@ describe("estimates", () => {
 
   it("knows how long inputs last and when the next level comes", () => {
     const s = open({ inventory: { tallow: 7 } });
-    expect(inputsLastMs(s, "tallow_candle")).toBe(3 * 3000);
+    expect(inputsLastMs(s, "tallow_candle")).toBe(3 * 2000);
     expect(inputsLastMs(s, "pick_nettle")).toBeNull();
-    expect(timeToNextLevelMs(s, "pick_nettle")).toBe(33 * 3000); // 165 xp at 5 per nettle
+    expect(timeToNextLevelMs(s, "pick_nettle")).toBe(22 * 2000); // 85 xp at 4 per nettle
   });
 
   it("picks the best action for time-to-cap", () => {
@@ -115,10 +115,10 @@ describe("recipe reveal", () => {
   });
 
   it("hides recipes that need an ingredient from a skill not open yet", () => {
-    // Chandlery 6 before Herbalism: smudge (nettle) and mugwort incense wait for the Smoke.
+    // Chandlery 6 before Herbalism: smudge (nettle), mugwort incense and hearth candles wait for the Smoke.
     const s = { ...open(), notesRevealed: 3, skills: { ...open().skills, chandlery: { xp: xpForLevel(6) } } };
     expect(revealedRecipes(s, "chandlery")).toEqual(["tallow_candle", "beeswax_candle"]);
-    expect(revealedRecipes({ ...s, notesRevealed: 4 }, "chandlery")).toEqual(["tallow_candle", "beeswax_candle", "smudge_bundle", "mugwort_incense"]);
+    expect(revealedRecipes({ ...s, notesRevealed: 4 }, "chandlery")).toEqual(["tallow_candle", "beeswax_candle", "smudge_bundle", "mugwort_incense", "hearth_candle"]);
   });
 
   it("skips recipes still in burnt pages", () => {

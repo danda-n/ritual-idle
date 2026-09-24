@@ -132,7 +132,7 @@ describe("quality", () => {
 
   it("counts Still Night released while the rite runs", () => {
     const s = okay(beginRite(ready({ omens: { still_night: 1 } })));
-    const released = okay(releaseOmen(s, "still_night"));
+    const released = okay(releaseOmen(s, "still_night", "scavenging"));
     expect(advance(released, 30 * MIN).state.rite.completed?.quality).toBe(1); // Fine
   });
 });
@@ -164,8 +164,8 @@ describe("after the chapter", () => {
 
   it("Janko speeds up whatever you're doing, more on Chandlery", () => {
     const s = done(); // Herbalism and Chandlery are still level 1 here
-    expect(actionDurationMs(s, "pick_nettle")).toBeCloseTo(3000 / 1.3);
-    expect(actionDurationMs(s, "tallow_candle")).toBeCloseTo(3000 / 1.5);
+    expect(actionDurationMs(s, "pick_nettle")).toBeCloseTo(2000 / 1.3);
+    expect(actionDurationMs(s, "tallow_candle")).toBeCloseTo(2000 / 1.5);
   });
 
   it("Hana's double pay ends with the chapter", () => {

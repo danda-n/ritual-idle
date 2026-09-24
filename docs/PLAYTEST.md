@@ -22,6 +22,12 @@
 - **Did any talent choice feel meaningful,** or did you just pick Swift?
 - **Which stage dragged?** (The Smoke stage is the longest by design.)
 
+## Second patch: questions
+- **Did the first 10 minutes feel hands-on?** Was there always a next click?
+- **Did you use Tend?** When did you stop, and why?
+- **Which skill did you bless with Still Night,** and did it feel worth it?
+- **Did you read grandmother's lines,** or only the steps?
+
 ## Write down
 - **The first moment you didn't know what to do**, and where you were.
 - **The best moment.**

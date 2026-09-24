@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { ACTION_DEFS } from "../content/actions";
 import { GRIMOIRE, INSIGHT, type GrimoireId } from "../content/grimoire";
 import { ITEMS, type ItemId } from "../content/items";
 import { NOTES } from "../content/notes";
@@ -78,7 +79,7 @@ describe("fragments", () => {
 
   it("pages past the story ones carry fragments", () => {
     const s = open({ inventory: { burnt_page: 5, tallow_candle: 5 } });
-    const { state, report } = advance(startAction(s, "decipher_page"), 3 * 6000);
+    const { state, report } = advance(startAction(s, "decipher_page"), 3 * ACTION_DEFS.decipher_page.seconds * 1000);
     expect(report.fragments.map((f) => f.recipe)).toEqual(["dream_pillow", "hearth_mark", "threshold_nail"]);
     for (const id of ["dream_pillow", "hearth_mark", "threshold_nail"] as const) expect(progressOf(state, id).insight).toBe(3);
   });

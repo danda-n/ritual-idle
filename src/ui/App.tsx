@@ -13,7 +13,7 @@ import { ChapterEnd } from "./components/ChapterEnd";
 import { DiscoveryModal } from "./components/DiscoveryModal";
 import { Inventory } from "./components/Inventory";
 import { ChapterTracker } from "./components/ChapterTracker";
-import { NoteModal } from "./components/NoteModal";
+import { TaskCard } from "./components/TaskCard";
 import { OmenShelf } from "./components/OmenShelf";
 import { ChipContext } from "./chipContext";
 import { ItemLookupModal } from "./components/ItemLookup";
@@ -48,6 +48,19 @@ export function App() {
   useEffect(() => {
     document.documentElement.dataset.motion = state.settings.reducedMotion ? "reduced" : "";
   }, [state.settings.reducedMotion]);
+  // Space tends the running work, unless you're typing or on a button/field.
+  const { tend } = game;
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code !== "Space" || e.repeat) return;
+      const t = e.target as HTMLElement | null;
+      if (t && t.closest("input, textarea, select, button, [contenteditable], [role=dialog]")) return;
+      e.preventDefault();
+      tend();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [tend]);
   const [skill, setSkill] = useState<SkillId>(state.active ? ACTION_DEFS[state.active.id].skill : "scavenging");
   /** Take the player to where a task is done. */
   const goTo = (p: Place) => {
@@ -68,7 +81,7 @@ export function App() {
       <a className="skip-link" href="#main">
         Skip to main content
       </a>
-      <TopBar state={state} onStop={game.stop} stopNote={game.lastStop && formatStop(game.lastStop.reason)} onSettings={() => setSettingsOpen(true)} onGo={goTo} />
+      <TopBar state={state} onStop={game.stop} stopNote={game.lastStop && formatStop(game.lastStop.reason)} onSettings={() => setSettingsOpen(true)} onGo={goTo} onTend={game.tend} />
       <EmbroideryBand className="band" />
       <Tabs tabs={tabs} value={tab} onChange={setTab} label="Places" />
 
@@ -81,7 +94,7 @@ export function App() {
             <div className="house">
               <Sanctum state={state} />
               <SkillNav state={state} skill={skill} onSelect={setSkill} />
-              <SkillActions state={state} skill={skill} onStart={game.start} act={game.act} />
+              <SkillActions state={state} skill={skill} onStart={game.start} act={game.act} onTend={game.tend} />
             </div>
           )}
         </div>
@@ -106,7 +119,7 @@ export function App() {
         <ChapterEnd state={state} onClose={() => game.act(dismissEnding)} />
       )}
       {game.story && !game.away && !game.discovery && (!state.rite.completed || state.rite.completed.endingSeen) && (
-        <NoteModal note={game.story} onClose={game.dismissStory} onGo={goTo} />
+        <TaskCard note={game.story} state={state} onClose={game.dismissStory} onGo={goTo} />
       )}
       {lookup && <ItemLookupModal state={state} item={lookup} onClose={() => setLookup(null)} />}
       {settingsOpen && (

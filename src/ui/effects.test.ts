@@ -3,7 +3,8 @@ import { buffDuration, buffEffects, followerEffects, upgradeEffectFor } from "./
 
 describe("effects are stated plainly, from the data", () => {
   it("Still Night", () => {
-    expect(buffEffects("still_night")).toEqual(["+50% Scholarship speed", "+50% Ritualism speed (minor rites)", "Burnt pages ×2 as likely"]);
+    expect(buffEffects("still_night")).toEqual(["+50% speed to one skill you choose", "Chance finds ×2 in that skill"]);
+    expect(buffEffects("still_night", "herbalism")).toEqual(["+50% Herbalism speed", "Herbalism chance finds ×2"]);
     expect(buffDuration("still_night")).toBe("15m");
   });
   it("Blessing collapses to all skills", () => {

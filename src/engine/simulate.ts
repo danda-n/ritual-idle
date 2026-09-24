@@ -7,9 +7,9 @@ import { INSIGHT_GAIN } from "../content/grimoire";
 import { PAGES } from "../content/pages";
 import { addInsight, fragmentTarget, readCurio, type Fragment } from "./grimoire";
 import { actionDurationMs, chanceMultiplier, criticalChance, extraYieldChance, xpBonus } from "./modifiers";
-import { keystoneEffect } from "./talents";
+import { isTended, keystoneEffect, tendBonusChance } from "./talents";
 import { applyBuff, giveNoteGifts, grantOmen, pruneBuffs } from "./omens";
-import { isRecipeKnown, isSkillUnlocked, pagesRead, revealNotes, type Note, type Page } from "./progress";
+import { isRecipeKnown, isSkillUnlocked, pagesRead, revealNotes, type Note, type Page, type Step } from "./progress";
 import { nextRandom } from "./rng";
 import type { GameState } from "./state";
 import { beginIfPrimed, stepRite } from "./rite";
@@ -48,11 +48,15 @@ export interface Report {
   riteCompleted: number | null;
   /** Actions switched to by the fallback rule when work stopped. */
   fellBackTo: ActionId[];
+  /** Stage steps claimed (rewards given). */
+  stepsDone: Step[];
+  /** Bonus finds from tending. */
+  tendFinds: number;
   stopped?: { action: ActionId; reason: StopReason };
 }
 
 export function emptyReport(): Report {
-  return { elapsedMs: 0, actionsCompleted: 0, xpGained: {}, itemsGained: {}, itemsUsed: {}, levelUps: [], notesRevealed: [], pagesRead: [], omensFound: [], omensLost: 0, fragments: [], curioStories: [], criticals: 0, riteStarted: false, riteMs: 0, riteCompleted: null, fellBackTo: [] };
+  return { elapsedMs: 0, actionsCompleted: 0, xpGained: {}, itemsGained: {}, itemsUsed: {}, levelUps: [], notesRevealed: [], pagesRead: [], omensFound: [], omensLost: 0, fragments: [], curioStories: [], criticals: 0, riteStarted: false, riteMs: 0, riteCompleted: null, fellBackTo: [], stepsDone: [], tendFinds: 0 };
 }
 
 export function skillLevel(state: GameState, skill: SkillId): number {
@@ -84,8 +88,10 @@ export function fallbackFor(state: GameState, stopped: ActionId | null): ActionI
   return target;
 }
 
+/** Switching to another action ends the Tend streak (the meter itself keeps burning). */
 export function startAction(state: GameState, id: ActionId): GameState {
-  return { ...state, active: { id, elapsedMs: 0 } };
+  const tend = state.active?.id === id ? state.tend : { ...state.tend, streak: 0 };
+  return { ...state, active: { id, elapsedMs: 0 }, tend };
 }
 
 export function stopAction(state: GameState): GameState {
@@ -169,7 +175,7 @@ export function advance(input: GameState, ms: number, opts: AdvanceOptions = {})
       report.riteMs += used;
       if (completedQuality !== null) {
         report.riteCompleted = completedQuality;
-        report.notesRevealed.push(...revealNotes(state));
+        report.notesRevealed.push(...revealNotes(state, report.stepsDone));
         // The house keeps working: go back to the fallback action.
         const next = fallbackFor(state, null);
         if (next) {
@@ -195,7 +201,17 @@ export function advance(input: GameState, ms: number, opts: AdvanceOptions = {})
       if (ACTION_DEFS[id].skill === "herbalism" || ACTION_DEFS[id].skill === "scavenging") state.lastGathering = id;
     }
 
-    const needed = actionDurationMs(state, id, clock()) / awaySpeed - active.elapsedMs;
+    const duration = actionDurationMs(state, id, clock()) / awaySpeed;
+    const needed = duration - active.elapsedMs;
+    // The Tend meter runs out partway through: carry the progress over at the slower speed.
+    const tendLeft = state.tend.endsAt - clock();
+    if (tendLeft > 0 && tendLeft < needed && remaining >= tendLeft) {
+      const fraction = (active.elapsedMs + tendLeft) / duration;
+      remaining -= tendLeft;
+      active.elapsedMs = fraction * (actionDurationMs(state, id, clock()) / awaySpeed);
+      state.tend.streak = 0;
+      continue;
+    }
     if (remaining < needed) {
       active.elapsedMs += remaining;
       remaining = 0;
@@ -225,6 +241,17 @@ export function advance(input: GameState, ms: number, opts: AdvanceOptions = {})
       }
     }
     const { items, critical } = rollOutputs(state, id, now, roll);
+    // Tending: a tended repetition may bring a bonus find, and the streak grows.
+    if (isTended(state, now)) {
+      const chance = tendBonusChance(state, def.skill);
+      const main = def.outputs[0];
+      if (main && chance > 0 && roll() < chance) {
+        items[main.item] = (items[main.item] ?? 0) + 1;
+        report.tendFinds++;
+      }
+      state.tend.streak++;
+      state.stats.tended++;
+    } else state.tend.streak = 0;
     if (critical) report.criticals++;
     for (const [item, qty] of Object.entries(items) as [ItemId, number][]) {
       // Curios go into the collection, not the pantry.
@@ -274,7 +301,7 @@ export function advance(input: GameState, ms: number, opts: AdvanceOptions = {})
       const f = addInsight(state, fragmentTarget(state), keystone.amount, "page");
       if (f) report.fragments.push(f);
     }
-    const notes = revealNotes(state);
+    const notes = revealNotes(state, report.stepsDone);
     report.notesRevealed.push(...notes);
     report.omensFound.push(...giveNoteGifts(state, notes));
     refillBoard(state, clock());

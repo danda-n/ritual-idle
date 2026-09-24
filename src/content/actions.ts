@@ -8,7 +8,7 @@ type Action = ActionDef<SkillId, ItemId>;
 // src/engine/playthrough.test.ts checks the chapter is still finishable and on pace.
 export const ACTIONS = {
   // Herbalism
-  pick_nettle: { name: "Pick nettle", skill: "herbalism", level: 1, seconds: 3, xp: 5, inputs: {}, outputs: [{ item: "nettle", qty: 1 }] },
+  pick_nettle: { name: "Pick nettle", skill: "herbalism", level: 1, seconds: 2, xp: 4, inputs: {}, outputs: [{ item: "nettle", qty: 1 }] },
   pick_chamomile: { name: "Pick chamomile", skill: "herbalism", level: 2, seconds: 3, xp: 7, inputs: {}, outputs: [{ item: "chamomile", qty: 1 }] },
   pick_yarrow: { name: "Pick yarrow", skill: "herbalism", level: 7, seconds: 4, xp: 10, inputs: {}, outputs: [{ item: "yarrow", qty: 1 }] },
   pick_mugwort: { name: "Pick mugwort", skill: "herbalism", level: 4, seconds: 4, xp: 13, inputs: {}, outputs: [{ item: "mugwort", qty: 1 }] },
@@ -21,7 +21,7 @@ export const ACTIONS = {
     outputs: [{ item: "ash", qty: 1 }, { item: "charcoal", qty: 1, chance: 0.1 }],
   },
   search_pantry: {
-    name: "Search the pantry", skill: "scavenging", level: 1, seconds: 3, xp: 6, inputs: {},
+    name: "Search the pantry", skill: "scavenging", level: 1, seconds: 2, xp: 4, inputs: {},
     outputs: [{ item: "tallow", qty: 1 }, { item: "salt", qty: 1, chance: 0.5 }],
   },
   search_attic: {
@@ -33,7 +33,7 @@ export const ACTIONS = {
       { item: "curio", qty: 1, chance: 0.005 },
     ],
   },
-  rob_hives: { name: "Rob the old hives", skill: "scavenging", level: 5, seconds: 4, xp: 12, inputs: {}, outputs: [{ item: "beeswax", qty: 1 }] },
+  rob_hives: { name: "Rob the old hives", skill: "scavenging", level: 4, seconds: 4, xp: 12, inputs: {}, outputs: [{ item: "beeswax", qty: 1 }] },
   sift_midden: {
     name: "Sift the village midden", skill: "scavenging", level: 12, seconds: 5, xp: 16, inputs: {},
     outputs: [{ item: "iron_nail", qty: 1 }, { item: "rags", qty: 1, chance: 0.3 }],
@@ -44,15 +44,15 @@ export const ACTIONS = {
   },
 
   // Chandlery
-  tallow_candle: { name: "Tallow candle", skill: "chandlery", level: 1, seconds: 3, xp: 6, inputs: { tallow: 2 }, outputs: [{ item: "tallow_candle", qty: 1 }] },
+  tallow_candle: { name: "Tallow candle", skill: "chandlery", level: 1, seconds: 2, xp: 4, inputs: { tallow: 2 }, outputs: [{ item: "tallow_candle", qty: 1 }] },
   smudge_bundle: { name: "Smudge bundle", skill: "chandlery", level: 5, seconds: 4, xp: 9, inputs: { nettle: 2, chamomile: 1 }, outputs: [{ item: "smudge", qty: 1 }] },
   beeswax_candle: { name: "Beeswax candle", skill: "chandlery", level: 4, seconds: 4, xp: 12, inputs: { beeswax: 2 }, outputs: [{ item: "beeswax_candle", qty: 1 }] },
-  mugwort_incense: { name: "Mugwort incense", skill: "chandlery", level: 7, seconds: 5, xp: 15, inputs: { mugwort: 2, ash: 1 }, outputs: [{ item: "mugwort_incense", qty: 1 }] },
+  mugwort_incense: { name: "Mugwort incense", skill: "chandlery", level: 6, seconds: 5, xp: 15, inputs: { mugwort: 2, ash: 1 }, outputs: [{ item: "mugwort_incense", qty: 1 }] },
   hearth_candle: { name: "Hearth candle", skill: "chandlery", level: 12, seconds: 5, xp: 19, inputs: { beeswax: 2, stjohns: 1 }, outputs: [{ item: "hearth_candle", qty: 1 }] },
   juniper_incense: { name: "Juniper incense", skill: "chandlery", level: 16, seconds: 6, xp: 23, inputs: { juniper: 2, ash: 1 }, outputs: [{ item: "juniper_incense", qty: 1 }] },
 
   // Sigilcraft
-  salt_line: { name: "Salt line", skill: "sigilcraft", level: 1, seconds: 3, xp: 6, inputs: { salt: 1 }, outputs: [{ item: "salt_line", qty: 1 }] },
+  salt_line: { name: "Salt line", skill: "sigilcraft", level: 1, seconds: 2, xp: 4, inputs: { salt: 1 }, outputs: [{ item: "salt_line", qty: 1 }] },
   ash_sigil: { name: "Ash sigil", skill: "sigilcraft", level: 5, seconds: 4, xp: 9, inputs: { ash: 2, salt: 1 }, outputs: [{ item: "ash_sigil", qty: 1 }] },
   iron_ward: { name: "Iron ward", skill: "sigilcraft", level: 8, seconds: 4, xp: 12, inputs: { iron_nail: 2, salt: 1 }, outputs: [{ item: "iron_ward", qty: 1 }] },
   chalk_segment: { name: "Chalk segment", skill: "sigilcraft", level: 12, seconds: 5, xp: 16, inputs: { chalk: 1, salt: 1 }, outputs: [{ item: "chalk_segment", qty: 1 }] },
@@ -63,7 +63,7 @@ export const ACTIONS = {
 
   // Scholarship
   decipher_page: {
-    name: "Decipher a burnt page", skill: "scholarship", level: 1, seconds: 6, xp: 14,
+    name: "Decipher a burnt page", skill: "scholarship", level: 1, seconds: 4, xp: 10,
     inputs: { burnt_page: 1, tallow_candle: 1 }, outputs: [{ item: "deciphered_page", qty: 1 }],
   },
   copy_litany: {
@@ -73,7 +73,7 @@ export const ACTIONS = {
 
   // Ritualism (minor rites)
   bless_threshold: {
-    name: "Bless the threshold", skill: "ritualism", level: 1, seconds: 10, xp: 22,
+    name: "Bless the threshold", skill: "ritualism", level: 1, seconds: 7, xp: 16,
     inputs: { salt_line: 1, tallow_candle: 1 }, outputs: [{ item: "consecrated_salt", qty: 1 }],
   },
   smoke_rooms: {

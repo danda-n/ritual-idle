@@ -40,7 +40,7 @@ export function TalentPanel({ state, skill, act }: { state: GameState; skill: Sk
         </span>
       </div>
       {points === 0 ? (
-        <p className="muted talent-intro">A talent point every {POINT_EVERY} levels. Spend it on speed, more output, or lucky doubles. You can reset any time for free.</p>
+        <p className="muted talent-intro">A talent point every {POINT_EVERY} levels. Spend it on tending, speed, more output or lucky doubles. Reset any time for free.</p>
       ) : (
         <>
           <div className="branches">

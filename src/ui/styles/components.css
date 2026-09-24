@@ -65,6 +65,8 @@ p { margin: 0; }
 /* Steady fills run on the compositor from scaleX(0) to scaleX(1); a negative delay starts them mid-way. */
 .bar-fill.timed { transform: scaleX(0); animation-name: bar-fill; animation-timing-function: linear; animation-fill-mode: forwards; }
 @keyframes bar-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.bar-fill.drain { transform: scaleX(0); animation-name: bar-drain; animation-timing-function: linear; animation-fill-mode: forwards; }
+@keyframes bar-drain { from { transform: scaleX(1); } to { transform: scaleX(0); } }
 .bar.thin { height: 4px; }
 
 /* Chips / tags */

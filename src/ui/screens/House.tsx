@@ -8,6 +8,7 @@ import { PART_DEFS, type PartId } from "../../content/rite";
 import type { Result } from "../../engine/commands";
 import { pointsFree } from "../../engine/talents";
 import { TalentPanel } from "../components/TalentPanel";
+import { TendControl } from "../components/TendControl";
 import { taskName } from "../tasks";
 import { actionDurationMs } from "../../engine/modifiers";
 import { isRecipeKnown, isSkillUnlocked } from "../../engine/progress";
@@ -74,7 +75,7 @@ function NextSkill({ state }: { state: GameState }) {
 
 const pickUnlocked = (e: FxEvent) => (e.kind === "unlocked" ? e.ids : []);
 
-export function SkillActions({ state, skill, onStart, act }: { state: GameState; skill: SkillId; onStart: (id: ActionId) => void; act: (c: (s: GameState) => Result) => unknown }) {
+export function SkillActions({ state, skill, onStart, act, onTend }: { state: GameState; skill: SkillId; onStart: (id: ActionId) => void; act: (c: (s: GameState) => Result) => unknown; onTend: () => void }) {
   const fresh = useRecentFx(pickUnlocked, 5000);
   const level = skillLevel(state, skill);
   const toCap = timeToCapMs(state, skill);
@@ -95,16 +96,16 @@ export function SkillActions({ state, skill, onStart, act }: { state: GameState;
       </header>
       <div className="action-list">
         {open.map((id) => (
-          <ActionRow key={id} id={id} state={state} onStart={() => onStart(id)} fresh={fresh.has(id)} />
+          <ActionRow key={id} id={id} state={state} onStart={() => onStart(id)} fresh={fresh.has(id)} onTend={onTend} />
         ))}
-        {nextUp && <ActionRow key={nextUp} id={nextUp} state={state} onStart={() => onStart(nextUp)} />}
+        {nextUp && <ActionRow key={nextUp} id={nextUp} state={state} onStart={() => onStart(nextUp)} onTend={onTend} />}
       </div>
       <TalentPanel state={state} skill={skill} act={act} />
     </section>
   );
 }
 
-function ActionRow({ id, state, onStart, fresh }: { id: ActionId; state: GameState; onStart: () => void; fresh?: boolean }) {
+function ActionRow({ id, state, onStart, fresh, onTend }: { id: ActionId; state: GameState; onStart: () => void; fresh?: boolean; onTend: () => void }) {
   const def = ACTION_DEFS[id];
   if (!isRecipeKnown(state, id)) {
     return (
@@ -147,12 +148,15 @@ function ActionRow({ id, state, onStart, fresh }: { id: ActionId; state: GameSta
       </div>
       <div className="action-control">
         {running ? (
-          <TimedBar
-            key={`${id}:${state.stats.completed[id] ?? 0}:${Math.round(actionDurationMs(state, id))}`}
-            elapsedMs={state.active!.elapsedMs}
-            durationMs={actionDurationMs(state, id)}
-            label={`${def.name} progress`}
-          />
+          <>
+            <TimedBar
+              key={`${id}:${state.stats.completed[id] ?? 0}:${Math.round(actionDurationMs(state, id))}`}
+              elapsedMs={state.active!.elapsedMs}
+              durationMs={actionDurationMs(state, id)}
+              label={`${def.name} progress`}
+            />
+            <TendControl state={state} onTend={onTend} compact />
+          </>
         ) : (
           <button className="btn btn-primary" onClick={onStart} disabled={blocked !== null} title={blocked ? formatStop(blocked) : undefined}>
             {startLabel(state, id, blocked)}
@@ -168,12 +172,17 @@ function Rates({ state, id, running }: { state: GameState; id: ActionId; running
   const main = outputPerHour(state, id)[0];
   const last = inputsLastMs(state, id);
   const next = timeToNextLevelMs(state, id);
+  const text = [
+    main && `${formatRate(main.perHour)} ${ITEMS[main.item].name.toLowerCase()}/h`,
+    `${formatRate(xpPerHour(state, id))} xp/h`,
+    running && next !== null && `next level in ${formatDuration(next)}`,
+    running && last !== null && `inputs last ${formatDuration(last)}`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
   return (
-    <span className="rates muted num">
-      {main && `${formatRate(main.perHour)} ${ITEMS[main.item].name.toLowerCase()}/h · `}
-      {formatRate(xpPerHour(state, id))} xp/h
-      {running && last !== null && ` · inputs last ${formatDuration(last)}`}
-      {running && next !== null && ` · next level in ${formatDuration(next)}`}
+    <span className="rates muted num" title={text}>
+      {text}
     </span>
   );
 }

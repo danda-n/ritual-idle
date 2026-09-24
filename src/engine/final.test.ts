@@ -38,7 +38,7 @@ function everything(): GameState {
   addInsight(s, "dream_pillow", 6, "page");
   s = okay(attune(s, "dream_pillow"));
   s = okay(experiment(s, ["salt", "ash", "nettle"]));
-  s = okay(releaseOmen(s, "still_night"));
+  s = okay(releaseOmen(s, "still_night", "scavenging"));
   s = okay(setSetting(s, "grimoireAssist", true));
   s = okay(beginRite(s));
   return advance(s, 5 * 60_000).state;
@@ -53,7 +53,7 @@ describe("saves", () => {
 
   it("load from every older version and keep playing", () => {
     const current = everything();
-    for (const version of [1, 2, 3, 4]) {
+    for (const version of [1, 2, 3, 4, 5]) {
       const old = { ...current, version } as Partial<GameState>;
       if (version < 3) {
         delete old.board;
@@ -67,7 +67,7 @@ describe("saves", () => {
       }
       const loaded = deserialize(JSON.stringify(old));
       expect(loaded.version).toBe(SAVE_VERSION);
-      expect(SAVE_VERSION).toBe(5);
+      expect(SAVE_VERSION).toBe(6);
       expect(() => catchUp(loaded, T0 + HOUR)).not.toThrow();
     }
   });
