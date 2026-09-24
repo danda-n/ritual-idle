@@ -15,5 +15,14 @@ export function formatDuration(ms: number): string {
 }
 
 export function formatStop(reason: StopReason): string {
-  return reason.kind === "missing_input" ? `Out of ${itemName(reason.item).toLowerCase()}` : `Needs level ${reason.level}`;
+  switch (reason.kind) {
+    case "missing_input":
+      return `Out of ${itemName(reason.item).toLowerCase()}`;
+    case "level_too_low":
+      return `Needs level ${reason.level}`;
+    case "recipe_unknown":
+      return "Recipe not yet deciphered";
+    case "skill_locked":
+      return "Not yet";
+  }
 }

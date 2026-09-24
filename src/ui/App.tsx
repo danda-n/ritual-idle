@@ -3,12 +3,13 @@ import { ACTION_DEFS, type ActionId } from "../content/actions";
 import type { ItemId } from "../content/items";
 import { SKILL_IDS, SKILLS, type SkillId } from "../content/skills";
 import type { CatchUp } from "../engine/offline";
+import { currentNote, goalProgress, isRecipeKnown, isSkillUnlocked, pagesRead, revealedNotes } from "../engine/progress";
 import { exportSave, importSave } from "../engine/save";
 import { blockReason, skillLevel } from "../engine/simulate";
 import type { GameState } from "../engine/state";
 import { levelProgress } from "../engine/xp";
 import { formatDuration, formatStop, itemName } from "./format";
-import { useGame } from "./useGame";
+import { useGame, type Toast } from "./useGame";
 
 const ACTION_IDS = Object.keys(ACTION_DEFS) as ActionId[];
 
@@ -25,7 +26,7 @@ export function App() {
       </header>
 
       <nav className="skills" aria-label="Skills">
-        {SKILL_IDS.map((id) => (
+        {SKILL_IDS.filter((id) => isSkillUnlocked(state, id)).map((id) => (
           <button key={id} className={`skill ${id === skill ? "selected" : ""}`} onClick={() => setSkill(id)}>
             <span className="skill-name">{SKILLS[id].name}</span>
             <span className="skill-level">
@@ -43,15 +44,19 @@ export function App() {
         ))}
       </main>
 
-      <aside className="inventory">
-        <h2>Pantry &amp; shelves</h2>
-        <Inventory state={state} />
+      <aside className="side">
+        <Notes state={state} />
+        <section>
+          <h2>Pantry &amp; shelves</h2>
+          <Inventory state={state} />
+        </section>
       </aside>
 
       <footer className="footer">
         <SaveTools state={state} onLoad={game.load} onReset={game.reset} />
       </footer>
 
+      <Toasts toasts={game.toasts} onDismiss={game.dismissToast} />
       {game.away && <AwaySummary away={game.away} onClose={game.dismissAway} />}
     </div>
   );
@@ -79,6 +84,17 @@ function ActiveBar({ state, onStop, stopNote }: { state: GameState; onStop: () =
 
 function ActionRow({ id, state, onStart }: { id: ActionId; state: GameState; onStart: () => void }) {
   const def = ACTION_DEFS[id];
+  if (!isRecipeKnown(state, id)) {
+    return (
+      <div className="action unknown">
+        <div className="action-main">
+          <strong>Unknown recipe</strong>
+          <span className="muted">Lvl {def.level}</span>
+        </div>
+        <div className="action-io muted">Somewhere in grandmother's burnt pages. Decipher more of them.</div>
+      </div>
+    );
+  }
   const blocked = blockReason(state, id);
   const locked = blocked?.kind === "level_too_low";
   const running = state.active?.id === id;
@@ -117,6 +133,60 @@ function ActionRow({ id, state, onStart }: { id: ActionId; state: GameState; onS
           {locked ? `Level ${def.level}` : "Start"}
         </button>
       )}
+    </div>
+  );
+}
+
+function Notes({ state }: { state: GameState }) {
+  const note = currentNote(state);
+  const progress = goalProgress(state, note);
+  const older = revealedNotes(state).slice(0, -1).reverse();
+  const pages = pagesRead(state);
+  return (
+    <section className="notes">
+      <h2>Grandmother's notes</h2>
+      <blockquote>{note.text}</blockquote>
+      {"hint" in note && <p className="muted hint">{note.hint}</p>}
+      {progress && (
+        <div className="goal">
+          <Bar value={progress.done / progress.target} />
+          <span className="muted">
+            {progress.done}/{progress.target}
+          </span>
+        </div>
+      )}
+      {older.length > 0 && (
+        <details>
+          <summary>Earlier notes ({older.length})</summary>
+          {older.map((n) => (
+            <blockquote key={n.text} className="old">{n.text}</blockquote>
+          ))}
+        </details>
+      )}
+      {pages.length > 0 && (
+        <details>
+          <summary>Deciphered pages ({pages.length})</summary>
+          {pages.map((p) => (
+            <div key={p.title} className="page">
+              <strong>{p.title}</strong>
+              <p>{p.text}</p>
+            </div>
+          ))}
+        </details>
+      )}
+    </section>
+  );
+}
+
+function Toasts({ toasts, onDismiss }: { toasts: Toast[]; onDismiss: (id: number) => void }) {
+  return (
+    <div className="toasts" aria-live="polite">
+      {toasts.map((t) => (
+        <button key={t.id} className="toast" onClick={() => onDismiss(t.id)}>
+          <strong>{t.title}</strong>
+          <span>{t.text}</span>
+        </button>
+      ))}
     </div>
   );
 }
@@ -166,6 +236,12 @@ function AwaySummary({ away, onClose }: { away: CatchUp; onClose: () => void }) 
             </ul>
           </>
         )}
+        {report.notesRevealed.map((n) => (
+          <blockquote key={n.text}>{n.text}</blockquote>
+        ))}
+        {report.pagesRead.map((p) => (
+          <p key={p.title}>Page deciphered: <strong>{p.title}</strong></p>
+        ))}
         {report.stopped && <p className="warn">Work stopped: {formatStop(report.stopped.reason)}.</p>}
         <button onClick={onClose}>Back to the house</button>
       </div>

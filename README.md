@@ -13,4 +13,4 @@ Then open the URL it prints. `npm test` runs the engine tests.
 
 ## Status
 
-The core loop works: 6 Chapter 1 skills, timed actions, XP and level caps, inventory, offline progress (24h cap) with a "while you were away" summary, autosave, and export/import. The rest of the Chapter 1 vertical slice is listed in [docs/CHAPTER1.md §11](docs/CHAPTER1.md).
+The core loop works: grandmother's notes unlock the 6 Chapter 1 skills one by one, deciphered pages unlock recipes, timed actions, XP and level caps, inventory, offline progress (24h cap) with a "while you were away" summary, autosave, and export/import. The rest of the Chapter 1 vertical slice is listed in [docs/CHAPTER1.md §11](docs/CHAPTER1.md).

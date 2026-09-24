@@ -48,6 +48,8 @@ Skills unlock through **margin notes** from the half-burnt grimoire. Each note i
 
 The first **Still Night** omen drop is scripted around note 4, so the player learns to store and release omens early.
 
+**Build status:** notes 1–5, 7 and 8 are implemented in `src/content/notes.ts` (with a plain hint line under each note). Note 6 goes in when the village board is built. Until then, the Sigilcraft note leads straight to the Ritualism note. Burnt pages are in `src/content/pages.ts`: pages 1–5 each teach one 📜 recipe, and page 6 is the black-page teaser.
+
 ---
 
 ## 3. Skills and actions

@@ -5,8 +5,16 @@ import { SKILLS } from "../content/skills";
 import { catchUp } from "./offline";
 import { exportSave, importSave } from "./save";
 import { advance, blockReason, skillLevel, startAction } from "./simulate";
-import { newGame } from "./state";
+import { NOTES } from "../content/notes";
+import { PAGES } from "../content/pages";
+import { newGame as freshGame, type GameState } from "./state";
 import { levelForXp, xpForLevel, xpToNext } from "./xp";
+
+/** A game past the Chapter 1 onboarding: every skill and recipe open. */
+function newGame(now: number, seed: number): GameState {
+  const s = freshGame(now, seed);
+  return { ...s, notesRevealed: NOTES.length, stats: { completed: { decipher_page: PAGES.length } } };
+}
 
 const T0 = 1_000_000;
 const HOUR = 60 * 60 * 1000;

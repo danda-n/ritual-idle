@@ -1,3 +1,5 @@
+import { NOTES } from "../content/notes";
+import { PAGES } from "../content/pages";
 import { SAVE_VERSION, newGame, type GameState } from "./state";
 
 const STORAGE_KEY = "ritual-idle.save";
@@ -15,13 +17,20 @@ export function deserialize(json: string): GameState {
   if (data.version > SAVE_VERSION) throw new Error("This save is from a newer version of the game.");
   // Fill in anything missing from older saves (new skills, new fields).
   const base = newGame(data.lastTickAt ?? Date.now(), data.rngSeed);
-  return {
+  const state: GameState = {
     ...base,
     ...data,
     skills: { ...base.skills, ...data.skills },
     inventory: { ...data.inventory },
+    stats: { completed: { ...data.stats?.completed } },
     version: SAVE_VERSION,
   };
+  if (data.version < 2) {
+    // v1 predates notes and pages: open everything so no earned progress gets locked away.
+    state.notesRevealed = NOTES.length;
+    state.stats.completed.decipher_page = Math.max(state.stats.completed.decipher_page ?? 0, PAGES.length);
+  }
+  return state;
 }
 
 // Export strings are base64 so they survive being pasted into chats and forums.

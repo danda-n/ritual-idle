@@ -1,11 +1,16 @@
 import { ACTION_DEFS, type ActionId } from "../content/actions";
 import type { ItemId } from "../content/items";
 import type { SkillId } from "../content/skills";
+import { isRecipeKnown, isSkillUnlocked, pagesRead, revealNotes, type Note, type Page } from "./progress";
 import { nextRandom } from "./rng";
 import type { GameState } from "./state";
 import { levelForXp, xpForLevel } from "./xp";
 
-export type StopReason = { kind: "missing_input"; item: ItemId } | { kind: "level_too_low"; level: number };
+export type StopReason =
+  | { kind: "skill_locked" }
+  | { kind: "recipe_unknown" }
+  | { kind: "level_too_low"; level: number }
+  | { kind: "missing_input"; item: ItemId };
 
 /** What happened during an `advance` call — drives the "while you were away" summary. */
 export interface Report {
@@ -15,11 +20,13 @@ export interface Report {
   itemsGained: Partial<Record<ItemId, number>>;
   itemsUsed: Partial<Record<ItemId, number>>;
   levelUps: { skill: SkillId; from: number; to: number }[];
+  notesRevealed: Note[];
+  pagesRead: Page[];
   stopped?: { action: ActionId; reason: StopReason };
 }
 
 export function emptyReport(): Report {
-  return { elapsedMs: 0, actionsCompleted: 0, xpGained: {}, itemsGained: {}, itemsUsed: {}, levelUps: [] };
+  return { elapsedMs: 0, actionsCompleted: 0, xpGained: {}, itemsGained: {}, itemsUsed: {}, levelUps: [], notesRevealed: [], pagesRead: [] };
 }
 
 export function skillLevel(state: GameState, skill: SkillId): number {
@@ -29,6 +36,8 @@ export function skillLevel(state: GameState, skill: SkillId): number {
 /** Why the action can't run right now, or null if it can. */
 export function blockReason(state: GameState, id: ActionId): StopReason | null {
   const def = ACTION_DEFS[id];
+  if (!isSkillUnlocked(state, def.skill)) return { kind: "skill_locked" };
+  if (!isRecipeKnown(state, id)) return { kind: "recipe_unknown" };
   if (skillLevel(state, def.skill) < def.level) return { kind: "level_too_low", level: def.level };
   for (const [item, qty] of Object.entries(def.inputs) as [ItemId, number][]) {
     if ((state.inventory[item] ?? 0) < qty) return { kind: "missing_input", item };
@@ -110,6 +119,11 @@ export function advance(input: GameState, ms: number): { state: GameState; repor
       else report.levelUps.push({ skill: def.skill, from: before, to: after });
     }
     report.actionsCompleted++;
+
+    const pagesBefore = pagesRead(state).length;
+    add(state.stats.completed, id, 1);
+    report.pagesRead.push(...pagesRead(state).slice(pagesBefore));
+    report.notesRevealed.push(...revealNotes(state));
   }
 
   state.lastTickAt = input.lastTickAt + ms;

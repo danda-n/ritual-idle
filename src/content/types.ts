@@ -32,3 +32,23 @@ export interface ActionDef<S extends string, I extends string> {
   inputs: Partial<Record<I, number>>;
   outputs: OutputDef<I>[];
 }
+
+export type GoalDef<A extends string> = { kind: "complete"; action: A; count: number };
+
+export interface NoteDef<S extends string, A extends string> {
+  /** Grandmother's margin note, in her voice. */
+  text: string;
+  /** Plain-language pointer so nobody needs a wiki. */
+  hint?: string;
+  /** Skills that become available when this note appears. */
+  unlocks: S[];
+  /** Completing the goal reveals the next note. The last note may have none. */
+  goal?: GoalDef<A>;
+}
+
+export interface PageDef<A extends string> {
+  title: string;
+  text: string;
+  /** Recipes this page teaches. */
+  unlocks: A[];
+}
