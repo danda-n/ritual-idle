@@ -6,6 +6,7 @@ import type { GameState } from "../../engine/state";
 import { CoinIcon, HouseIcon } from "../art/icons";
 import { ItemChip } from "../components/ItemLookup";
 import { itemName } from "../format";
+import { upgradeEffect } from "../effects";
 
 type Act = (command: (s: GameState) => Result) => unknown;
 const SHOP_IDS = Object.keys(SHOP) as ShopId[];
@@ -51,7 +52,7 @@ export function Village({ state, act }: { state: GameState; act: Act }) {
                 <div>
                   <strong>{entry.name}</strong>
                   {entry.kind === "upgrade" && <span className="chip">For the house</span>}
-                  <p className="muted">{entry.description}</p>
+                  <p className={entry.kind === "upgrade" ? "effect-line" : "muted"}>{entry.kind === "upgrade" ? upgradeEffect(entry.effect) : entry.description}</p>
                 </div>
                 {owned ? (
                   <span className="chip accent">Done</span>

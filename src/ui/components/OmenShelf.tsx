@@ -6,6 +6,7 @@ import { storedOmens } from "../../engine/omens";
 import type { GameState } from "../../engine/state";
 import { MoonIcon } from "../art/icons";
 import { formatClock } from "../format";
+import { buffDuration, buffEffects } from "../effects";
 
 const OMEN_IDS = Object.keys(OMENS) as OmenId[];
 
@@ -24,7 +25,7 @@ export function OmenShelf({ state, act }: { state: GameState; act: (c: (s: GameS
           {stored}/{capacity}
         </span>
       </div>
-      {stored === 0 && <p className="muted">Empty. Omens come to those who keep working.</p>}
+      {stored === 0 && <p className="muted">Empty. Omens drop now and then from any work (about 1 in 400 actions).</p>}
       {OMEN_IDS.filter((id) => (state.omens[id] ?? 0) > 0).map((id) => (
         <div key={id} className="omen">
           <div className="omen-jars" aria-hidden="true">
@@ -34,18 +35,26 @@ export function OmenShelf({ state, act }: { state: GameState; act: (c: (s: GameS
           </div>
           <div>
             <h3>{OMENS[id].name}</h3>
-            <p className="muted">{OMENS[id].description}</p>
+            <ul className="effects">
+              {buffEffects(OMENS[id].buff).map((e) => (
+                <li key={e}>{e}</li>
+              ))}
+            </ul>
+            <p className="flavour">{OMENS[id].description}</p>
           </div>
           <button className="btn btn-primary" onClick={() => act((s) => releaseOmen(s, id))}>
-            Release
+            Release · {buffDuration(OMENS[id].buff)}
           </button>
         </div>
       ))}
       {buffs.length > 0 && (
         <ul className="ledger buff-list" aria-label="Active effects">
           {buffs.map((b) => (
-            <li key={b.id}>
-              <span title={BUFFS[b.id].description}>{BUFFS[b.id].name}</span>
+            <li key={b.id} className="buff-row">
+              <span>
+                <strong>{BUFFS[b.id].name}</strong>
+                <span className="effects-inline">{buffEffects(b.id).join(" · ")}</span>
+              </span>
               <span className="num">{formatClock(b.endsAt - state.lastTickAt)}</span>
             </li>
           ))}

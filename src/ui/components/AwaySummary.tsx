@@ -6,6 +6,7 @@ import { SKILLS } from "../../content/skills";
 import type { CatchUp } from "../../engine/offline";
 import { formatDuration, formatStop, itemName } from "../format";
 import { Modal } from "./Modal";
+import { buffEffects } from "../effects";
 
 export function AwaySummary({ away, onClose }: { away: CatchUp; onClose: () => void }) {
   const { report } = away;
@@ -64,7 +65,7 @@ export function AwaySummary({ away, onClose }: { away: CatchUp; onClose: () => v
       )}
       {report.omensFound.map((o, i) => (
         <p key={i}>
-          An omen appeared: <strong>{OMENS[o].name}</strong>. It waits on the shelf.
+          An omen appeared: <strong>{OMENS[o].name}</strong> ({buffEffects(OMENS[o].buff).join(", ")}). It waits on the shelf.
         </p>
       ))}
       {report.omensLost > 0 && <p className="muted">{report.omensLost === 1 ? "An omen" : `${report.omensLost} omens`} passed unseen; the shelf was full.</p>}

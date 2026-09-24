@@ -5,7 +5,7 @@ import type { SkillId } from "./skills";
 export const FOLLOWERS = {
   janko: {
     name: "Janko",
-    description: "A village orphan who says he heard the circle wake from across the valley. He sleeps by the hearth and asks a great many questions.",
+    description: "A village orphan who heard the circle wake. He sleeps by the hearth.",
     rank: "Initiate",
     /** Speed bonus to your current action. */
     assist: 0.3,

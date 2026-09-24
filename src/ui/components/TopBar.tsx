@@ -7,6 +7,7 @@ import type { GameState } from "../../engine/state";
 import { CircleRiteIcon, CoinIcon, CogIcon, SkillIcon } from "../art/icons";
 import { Rosette } from "../art/ornaments";
 import { formatClock } from "../format";
+import { buffEffects } from "../effects";
 import { TimedBar } from "./Bar";
 
 export function TopBar({ state, onStop, stopNote, onSettings }: { state: GameState; onStop: () => void; stopNote?: string; onSettings: () => void }) {
@@ -18,7 +19,7 @@ export function TopBar({ state, onStop, stopNote, onSettings }: { state: GameSta
       </div>
       <Working state={state} onStop={onStop} stopNote={stopNote} />
       {activeBuffs(state).map((b) => (
-        <span key={b.id} className="chip accent buff-chip" title={BUFFS[b.id].description}>
+        <span key={b.id} className="chip accent buff-chip" title={buffEffects(b.id).join(" · ")}>
           {BUFFS[b.id].name} <span className="num">{formatClock(b.endsAt - state.lastTickAt)}</span>
         </span>
       ))}

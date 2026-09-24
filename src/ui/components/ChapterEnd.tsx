@@ -3,6 +3,7 @@ import { HEARTH_RITE, QUALITIES } from "../../content/rite";
 import type { GameState } from "../../engine/state";
 import { EmbroideryBand, Rosette } from "../art/ornaments";
 import { Modal } from "./Modal";
+import { followerEffects } from "../effects";
 
 export function ChapterEnd({ state, onClose }: { state: GameState; onClose: () => void }) {
   const quality = state.rite.completed!.quality;
@@ -23,7 +24,7 @@ export function ChapterEnd({ state, onClose }: { state: GameState; onClose: () =
         </li>
         <li>
           <span>A follower: {janko.name}</span>
-          <span>+{janko.assist * 100}% to whatever you do</span>
+          <span>{followerEffects("janko").join(" · ")}</span>
         </li>
         <li>
           <span>The cellar</span>

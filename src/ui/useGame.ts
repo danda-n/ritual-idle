@@ -5,6 +5,7 @@ import type { Result, Success } from "../engine/commands";
 import { nextHintAt, progressOf, type Fragment } from "../engine/grimoire";
 import { rewind } from "../engine/devtools";
 import { OMENS } from "../content/omens";
+import { buffDuration, buffEffects } from "./effects";
 import { HEARTH_RITE } from "../content/rite";
 import { catchUp, type CatchUp } from "../engine/offline";
 import { clearLocal, loadLocal, saveLocal } from "../engine/save";
@@ -83,7 +84,7 @@ export function useGame() {
         }),
         ...(report.notesRevealed ?? []).map((n) => ({ title: "A new note in the margin", text: n.text })),
         ...(report.pagesRead ?? []).map((p) => ({ title: `Page deciphered: ${p.title}`, text: p.text })),
-        ...(report.omensFound ?? []).map((o) => ({ title: `An omen: ${OMENS[o].name}`, text: "It waits on the shelf until you release it." })),
+        ...(report.omensFound ?? []).map((o) => ({ title: `An omen: ${OMENS[o].name}`, text: `On the shelf. Release for ${buffDuration(OMENS[o].buff)}: ${buffEffects(OMENS[o].buff).join(", ")}.` })),
         ...(report.omensLost ? [{ title: "An omen passed unseen", text: "The shelf was full. A bigger shelf would hold more." }] : []),
       ]),
     [pushToasts],
