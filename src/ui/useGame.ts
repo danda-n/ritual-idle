@@ -115,6 +115,8 @@ export function useGame() {
   }, [commit]);
 
   const dismissToast = useCallback((id: number) => setToasts((t) => t.filter((x) => x.id !== id)), []);
+  // Stable identity so dialogs don't re-run their focus handling on every tick.
+  const dismissAway = useCallback(() => setAway(null), []);
 
-  return { state, away, dismissAway: () => setAway(null), lastStop, toasts, dismissToast, start, stop, load, reset };
+  return { state, away, dismissAway, lastStop, toasts, dismissToast, start, stop, load, reset };
 }

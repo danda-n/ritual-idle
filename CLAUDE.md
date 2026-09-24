@@ -8,6 +8,7 @@ The designer is not a programmer. Explain technical choices plainly, and keep ga
 - `docs/CHAPTER1.md`: Chapter 1 content: actions, items, notes, village, omen, Rite
 - `docs/GRIMOIRE.md`: discovery and hint model
 - `docs/RESEARCH.md`: market and community research behind the decisions
+- `docs/DESIGN.md`: design system (tokens, type, components, art rules). Follow it for every UI change
 - `tools/ch1_sim.py`: Chapter 1 pacing simulation (`python3 tools/ch1_sim.py`)
 
 If code and docs disagree, ask which should change. Never silently diverge from a logged decision.
@@ -22,7 +23,7 @@ Vite + React + TypeScript, Vitest. Electron (Steam) and PixiJS (sanctum scene) c
 ## Layout
 - `src/content/`: **game data only** (skills, items, actions). Balance and naming changes go here. Keep `docs/CHAPTER1.md` and `tools/ch1_sim.py` in sync when numbers change.
 - `src/engine/`: pure game logic, with no React or DOM (except guarded localStorage in `save.ts`). `advance(state, ms)` is the single simulation step; offline progress is the same function run over the time away, capped.
-- `src/ui/`: React components. `useGame` owns the tick loop, autosave and commands.
+- `src/ui/`: React. `useGame` owns the tick loop, autosave and commands. `screens/` are the tabbed places, `components/` are shared pieces, `art/` holds code-drawn SVG icons and ornaments, and `styles/` has tokens, components and layout.
 
 ## Rules
 - Engine functions are pure and deterministic: randomness comes from `state.rngSeed` via `engine/rng.ts`, never `Math.random()` inside the simulation.

@@ -1,0 +1,106 @@
+/* Ritual Idle design tokens.
+   Folk-art / woodcut direction (docs/CONCEPT.md §9): bone, ink black, ember red, candle gold.
+   One candlelit theme. Contrast checked: every text token is >= 4.5:1 on every surface. */
+
+:root {
+  /* Palette (raw) */
+  --ink-950: #120e0b;
+  --ink-900: #1c1611;
+  --ink-800: #271f18;
+  --ink-700: #33291f;
+  --ink-600: #4a3b2f;
+  --bone-100: #efe6d6;
+  --bone-300: #c9bba3;
+  --bone-500: #a39580;
+  --gold-400: #e0ad4a;
+  --gold-600: #b3842c;
+  --ember-300: #e57a62;
+  --ember-600: #9e3524;
+
+  /* Semantic colour */
+  --color-bg: var(--ink-950);
+  --color-surface: var(--ink-900);
+  --color-raised: var(--ink-800);
+  --color-sunken: var(--ink-950);
+  --color-border: var(--ink-600);
+  --color-border-soft: var(--ink-700);
+  --color-text: var(--bone-100);
+  --color-text-2: var(--bone-300);
+  --color-muted: var(--bone-500);
+  --color-accent: var(--gold-400);
+  --color-accent-deep: var(--gold-600);
+  --color-on-accent: var(--ink-950);
+  --color-danger: var(--ember-600);
+  --color-on-danger: var(--bone-100);
+  --color-warn-text: var(--ember-300);
+  --color-focus: var(--gold-400);
+  --color-scrim: rgb(8 6 4 / 0.72);
+
+  /* Typography */
+  --font-title: "IM Fell English SC", "Alegreya SC", Georgia, serif;
+  --font-display: "Alegreya SC", Georgia, serif;
+  --font-body: "Alegreya", Georgia, "Iowan Old Style", serif;
+  --text-xs: 13px;
+  --text-sm: 14px;
+  --text-md: 16px;
+  --text-lg: 18px;
+  --text-xl: 22px;
+  --text-2xl: 28px;
+  --leading-tight: 1.25;
+  --leading-body: 1.5;
+
+  /* Space (4px rhythm, dense) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* Shape: woodcut blocks are square-ish, so radii stay small */
+  --radius-sm: 3px;
+  --radius-md: 5px;
+  --radius-lg: 8px;
+  --border-w: 1px;
+
+  /* Elevation (warm, low) */
+  --shadow-1: 0 1px 0 rgb(0 0 0 / 0.4);
+  --shadow-2: 0 6px 18px rgb(0 0 0 / 0.45);
+  --glow-candle: 0 0 0 1px var(--gold-600), 0 0 14px rgb(224 173 74 / 0.18);
+
+  /* Icons */
+  --icon-sm: 16px;
+  --icon-md: 20px;
+  --icon-lg: 28px;
+
+  /* Motion */
+  --dur-fast: 120ms;
+  --dur-med: 220ms;
+  --dur-slow: 420ms;
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-in: cubic-bezier(0.6, 0, 0.8, 0.3);
+
+  /* Layers */
+  --z-base: 0;
+  --z-sticky: 10;
+  --z-toast: 40;
+  --z-modal: 100;
+
+  color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur-med: 0ms;
+    --dur-slow: 0ms;
+  }
+}
+
+/* The in-game "reduced motion" setting (M5) sets this attribute on <html>. */
+:root[data-motion="reduced"] {
+  --dur-fast: 0ms;
+  --dur-med: 0ms;
+  --dur-slow: 0ms;
+}
