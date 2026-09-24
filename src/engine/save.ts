@@ -1,3 +1,4 @@
+import { ITEMS } from "../content/items";
 import { NOTES } from "../content/notes";
 import { PAGES } from "../content/pages";
 import { SAVE_VERSION, newGame, type GameState } from "./state";
@@ -21,8 +22,13 @@ export function deserialize(json: string): GameState {
     ...base,
     ...data,
     skills: { ...base.skills, ...data.skills },
-    inventory: { ...data.inventory },
-    stats: { completed: { ...data.stats?.completed }, requestsFilled: data.stats?.requestsFilled ?? 0 },
+    // Drop items that no longer exist (e.g. the old "blessing" item, now a buff).
+    inventory: Object.fromEntries(Object.entries(data.inventory ?? {}).filter(([id]) => id in ITEMS)),
+    stats: {
+      completed: { ...data.stats?.completed },
+      requestsFilled: data.stats?.requestsFilled ?? 0,
+      omensSeen: data.stats?.omensSeen ?? 0,
+    },
     version: SAVE_VERSION,
   };
   // Fields that no longer exist (the offline cap is now derived from upgrades).

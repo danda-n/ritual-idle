@@ -78,7 +78,7 @@ export const ACTIONS = {
   },
   smoke_rooms: {
     name: "Smoke the rooms", skill: "ritualism", level: 4, seconds: 12, xp: 35,
-    inputs: { smudge: 1, tallow_candle: 1 }, outputs: [{ item: "blessing", qty: 1 }],
+    inputs: { smudge: 1, tallow_candle: 1 }, outputs: [], buff: "blessing",
   },
 } as const satisfies Record<string, Action>;
 

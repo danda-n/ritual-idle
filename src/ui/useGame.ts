@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { ActionId } from "../content/actions";
 import type { Result } from "../engine/commands";
 import { rewind } from "../engine/devtools";
+import { OMENS } from "../content/omens";
 import { catchUp, type CatchUp } from "../engine/offline";
 import { clearLocal, loadLocal, saveLocal } from "../engine/save";
 import { advance, startAction, stopAction, type Report } from "../engine/simulate";
@@ -54,10 +55,12 @@ export function useGame() {
 
   // New notes and pages pop up while playing; after an absence they appear in the summary instead.
   const announce = useCallback(
-    (report: Pick<Report, "notesRevealed" | "pagesRead">) =>
+    (report: Partial<Pick<Report, "notesRevealed" | "pagesRead" | "omensFound" | "omensLost">>) =>
       pushToasts([
-        ...report.notesRevealed.map((n) => ({ title: "A new note in the margin", text: n.text })),
-        ...report.pagesRead.map((p) => ({ title: `Page deciphered: ${p.title}`, text: p.text })),
+        ...(report.notesRevealed ?? []).map((n) => ({ title: "A new note in the margin", text: n.text })),
+        ...(report.pagesRead ?? []).map((p) => ({ title: `Page deciphered: ${p.title}`, text: p.text })),
+        ...(report.omensFound ?? []).map((o) => ({ title: `An omen: ${OMENS[o].name}`, text: "It waits on the shelf until you release it." })),
+        ...(report.omensLost ? [{ title: "An omen passed unseen", text: "The shelf was full. A bigger shelf would hold more." }] : []),
       ]),
     [pushToasts],
   );
@@ -131,7 +134,7 @@ export function useGame() {
         return false;
       }
       commit(r.state);
-      announce({ notesRevealed: r.notes, pagesRead: [] });
+      announce({ notesRevealed: r.notes });
       return true;
     },
     [commit, announce, pushToasts],

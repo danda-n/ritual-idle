@@ -1,4 +1,5 @@
 import type { ItemId } from "../../content/items";
+import { OMENS } from "../../content/omens";
 import { SKILLS } from "../../content/skills";
 import type { CatchUp } from "../../engine/offline";
 import { formatDuration, formatStop, itemName } from "../format";
@@ -42,6 +43,12 @@ export function AwaySummary({ away, onClose }: { away: CatchUp; onClose: () => v
           Page deciphered: <strong>{p.title}</strong>
         </p>
       ))}
+      {report.omensFound.map((o, i) => (
+        <p key={i}>
+          An omen appeared: <strong>{OMENS[o].name}</strong>. It waits on the shelf.
+        </p>
+      ))}
+      {report.omensLost > 0 && <p className="muted">{report.omensLost === 1 ? "An omen" : `${report.omensLost} omens`} passed unseen; the shelf was full.</p>}
       {report.stopped && <p className="warn">Work stopped: {formatStop(report.stopped.reason)}.</p>}
       <button className="btn btn-primary" onClick={onClose}>
         Back to the house

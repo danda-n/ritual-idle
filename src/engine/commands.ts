@@ -1,6 +1,8 @@
 import { REQUESTS } from "../content/requests";
 import { SHOP, type ShopId, type UpgradeId } from "../content/shop";
 import type { ItemId } from "../content/items";
+import { OMENS, type OmenId } from "../content/omens";
+import { applyBuff, giveNoteGifts } from "./omens";
 import { isFeatureOpen, revealNotes, type Note } from "./progress";
 import type { GameState } from "./state";
 import { emptySlot, refillBoard } from "./village";
@@ -32,7 +34,9 @@ export function fillRequest(input: GameState, slotIndex: number): Result {
   state.trust += req.trust;
   state.stats.requestsFilled++;
   emptySlot(state, slotIndex, state.lastTickAt);
-  return ok(state, revealNotes(state));
+  const notes = revealNotes(state);
+  giveNoteGifts(state, notes);
+  return ok(state, notes);
 }
 
 /** Turn a request away. No penalty; someone else knocks after the usual wait. */
@@ -60,5 +64,14 @@ export function buy(input: GameState, id: ShopId): Result {
   if (entry.kind === "item") state.inventory[entry.item] = (state.inventory[entry.item] ?? 0) + entry.qty;
   else state.upgrades.push(id as UpgradeId);
   refillBoard(state, state.lastTickAt);
+  return ok(state);
+}
+
+/** Release a stored omen: its buff starts now, or lengthens if it's already running. */
+export function releaseOmen(input: GameState, id: OmenId): Result {
+  if ((input.omens[id] ?? 0) < 1) return no("There's no such omen on the shelf.");
+  const state = structuredClone(input);
+  state.omens[id] = (state.omens[id] ?? 0) - 1;
+  applyBuff(state, OMENS[id].buff, state.lastTickAt, true);
   return ok(state);
 }

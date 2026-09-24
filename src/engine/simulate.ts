@@ -1,7 +1,10 @@
 import { ACTION_DEFS, type ActionId } from "../content/actions";
 import type { ItemId } from "../content/items";
 import type { SkillId } from "../content/skills";
-import { actionDurationMs, extraYieldChance } from "./modifiers";
+import { OMENS, type OmenId } from "../content/omens";
+import type { BuffId } from "../content/buffs";
+import { actionDurationMs, chanceMultiplier, extraYieldChance } from "./modifiers";
+import { applyBuff, giveNoteGifts, grantOmen, pruneBuffs } from "./omens";
 import { isRecipeKnown, isSkillUnlocked, pagesRead, revealNotes, type Note, type Page } from "./progress";
 import { nextRandom } from "./rng";
 import type { GameState } from "./state";
@@ -24,11 +27,14 @@ export interface Report {
   levelUps: { skill: SkillId; from: number; to: number }[];
   notesRevealed: Note[];
   pagesRead: Page[];
+  omensFound: OmenId[];
+  /** Omens that appeared while the shelf was full. */
+  omensLost: number;
   stopped?: { action: ActionId; reason: StopReason };
 }
 
 export function emptyReport(): Report {
-  return { elapsedMs: 0, actionsCompleted: 0, xpGained: {}, itemsGained: {}, itemsUsed: {}, levelUps: [], notesRevealed: [], pagesRead: [] };
+  return { elapsedMs: 0, actionsCompleted: 0, xpGained: {}, itemsGained: {}, itemsUsed: {}, levelUps: [], notesRevealed: [], pagesRead: [], omensFound: [], omensLost: 0 };
 }
 
 export function skillLevel(state: GameState, skill: SkillId): number {
@@ -90,7 +96,7 @@ export function advance(input: GameState, ms: number): { state: GameState; repor
       }
     }
 
-    const needed = actionDurationMs(state, id) - state.active.elapsedMs;
+    const needed = actionDurationMs(state, id, clock()) - state.active.elapsedMs;
     if (remaining < needed) {
       state.active.elapsedMs += remaining;
       remaining = 0;
@@ -105,8 +111,9 @@ export function advance(input: GameState, ms: number): { state: GameState; repor
       add(report.itemsUsed, item, qty);
     }
     const extra = extraYieldChance(state, id);
+    const now = clock();
     for (const out of def.outputs) {
-      if (out.chance !== undefined && roll() >= out.chance) continue;
+      if (out.chance !== undefined && roll() >= Math.min(1, out.chance * chanceMultiplier(state, out.item, now))) continue;
       // Yield bonuses (e.g. the drying rack) only apply to guaranteed outputs.
       const qty = out.qty + (out.chance === undefined && extra > 0 && roll() < extra ? 1 : 0);
       add(state.inventory, out.item, qty);
@@ -125,15 +132,24 @@ export function advance(input: GameState, ms: number): { state: GameState; repor
       else report.levelUps.push({ skill: def.skill, from: before, to: after });
     }
     report.actionsCompleted++;
+    if (def.buff) applyBuff(state, def.buff as BuffId, now, false);
+    for (const omen of Object.keys(OMENS) as OmenId[]) {
+      if (roll() >= OMENS[omen].dropChance) continue;
+      if (grantOmen(state, omen)) report.omensFound.push(omen);
+      else report.omensLost++;
+    }
 
     const pagesBefore = pagesRead(state).length;
     add(state.stats.completed, id, 1);
     report.pagesRead.push(...pagesRead(state).slice(pagesBefore));
-    report.notesRevealed.push(...revealNotes(state));
+    const notes = revealNotes(state);
+    report.notesRevealed.push(...notes);
+    report.omensFound.push(...giveNoteGifts(state, notes));
     refillBoard(state, clock());
   }
 
   state.lastTickAt = input.lastTickAt + ms;
   refillBoard(state, state.lastTickAt);
+  pruneBuffs(state, state.lastTickAt);
   return { state, report };
 }

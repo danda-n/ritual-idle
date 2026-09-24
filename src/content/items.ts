@@ -40,7 +40,6 @@ export const ITEMS = {
   bread: { name: "Bread", description: "For the offering of bread and salt." },
   // Ritualism
   consecrated_salt: { name: "Consecrated salt" },
-  blessing: { name: "Blessing" },
 } as const satisfies Record<string, ItemDef>;
 
 export type ItemId = keyof typeof ITEMS;

@@ -28,6 +28,7 @@ export const NOTES = [
     hint: "Burnt pages turn up in the attic (Scavenging 5). Decipher them with a tallow candle (Scholarship).",
     unlocks: ["scholarship"],
     opens: ["grimoire"],
+    gift: "still_night",
     goal: { kind: "complete", action: "decipher_page", count: 1 },
   },
   {

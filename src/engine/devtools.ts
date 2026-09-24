@@ -9,5 +9,6 @@ export function rewind(input: GameState, ms: number): GameState {
   const state = structuredClone(input);
   state.lastTickAt -= ms;
   for (const slot of state.board) slot.refillAt -= ms;
+  for (const buff of state.buffs) buff.endsAt -= ms;
   return state;
 }

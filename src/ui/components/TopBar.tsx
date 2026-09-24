@@ -1,9 +1,11 @@
 import { ACTION_DEFS } from "../../content/actions";
-import { actionDurationMs } from "../../engine/modifiers";
+import { BUFFS } from "../../content/buffs";
+import { actionDurationMs, activeBuffs } from "../../engine/modifiers";
 import { isFeatureOpen } from "../../engine/progress";
 import type { GameState } from "../../engine/state";
 import { CoinIcon, SkillIcon } from "../art/icons";
 import { Rosette } from "../art/ornaments";
+import { formatClock } from "../format";
 import { Bar } from "./Bar";
 
 export function TopBar({ state, onStop, stopNote }: { state: GameState; onStop: () => void; stopNote?: string }) {
@@ -14,6 +16,11 @@ export function TopBar({ state, onStop, stopNote }: { state: GameState; onStop: 
         <h1 className="brand-title">Ritual Idle</h1>
       </div>
       <Working state={state} onStop={onStop} stopNote={stopNote} />
+      {activeBuffs(state).map((b) => (
+        <span key={b.id} className="chip accent buff-chip" title={BUFFS[b.id].description}>
+          {BUFFS[b.id].name} <span className="num">{formatClock(b.endsAt - state.lastTickAt)}</span>
+        </span>
+      ))}
       {isFeatureOpen(state, "village") && (
         <div className="purse" aria-label={`${state.coin} coin`}>
           <CoinIcon size={18} />

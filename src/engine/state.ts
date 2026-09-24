@@ -1,5 +1,7 @@
 import type { ActionId } from "../content/actions";
+import type { BuffId } from "../content/buffs";
 import type { ItemId } from "../content/items";
+import type { OmenId } from "../content/omens";
 import type { RequestId } from "../content/requests";
 import type { UpgradeId } from "../content/shop";
 import { SKILL_IDS, type SkillId } from "../content/skills";
@@ -37,11 +39,21 @@ export interface GameState {
   /** Empty until the village opens; then always BOARD_SLOTS long. */
   board: BoardSlot[];
   upgrades: UpgradeId[];
+  /** Omens waiting on the shelf. */
+  omens: Partial<Record<OmenId, number>>;
+  /** Active timed effects, ending at a time on the sim clock. */
+  buffs: ActiveBuff[];
   stats: {
     /** Lifetime completions per action. Drives note goals and which burnt pages have been read. */
     completed: Partial<Record<ActionId, number>>;
     requestsFilled: number;
+    omensSeen: number;
   };
+}
+
+export interface ActiveBuff {
+  id: BuffId;
+  endsAt: number;
 }
 
 export function newGame(now: number = Date.now(), seed: number = randomSeed()): GameState {
@@ -58,6 +70,8 @@ export function newGame(now: number = Date.now(), seed: number = randomSeed()): 
     trust: 0,
     board: [],
     upgrades: [],
-    stats: { completed: {}, requestsFilled: 0 },
+    omens: {},
+    buffs: [],
+    stats: { completed: {}, requestsFilled: 0, omensSeen: 0 },
   };
 }

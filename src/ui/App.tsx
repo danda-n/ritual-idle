@@ -8,6 +8,7 @@ import { AwaySummary } from "./components/AwaySummary";
 import { DevPanel } from "./components/DevPanel";
 import { Inventory } from "./components/Inventory";
 import { Notes } from "./components/Notes";
+import { OmenShelf } from "./components/OmenShelf";
 import { SaveTools } from "./components/SaveTools";
 import { Tabs, type TabDef } from "./components/Tabs";
 import { Toasts } from "./components/Toasts";
@@ -53,6 +54,7 @@ export function App() {
         </div>
         <aside className="side">
           <Notes state={state} />
+          <OmenShelf state={state} act={game.act} />
           <Inventory state={state} />
         </aside>
       </div>

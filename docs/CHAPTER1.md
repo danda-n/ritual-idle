@@ -154,6 +154,10 @@ The first ~6 deciphered pages follow a set order (the story and recipe unlocks).
   - Burnt pages drop twice as often.
 - **During the Rite:** releasing Still Night while the Rite runs raises its outcome quality by one step (see §8).
 - **Its lesson:** whether to spend it now for speed or save it for the Rite is the first real decision about omens.
+- **Build details** *(M2)*:
+  - Releasing a second Still Night while one is running *adds* 15 minutes.
+  - An omen that drops when the shelf is full passes unseen, and the player is told why.
+  - *Smoke the rooms* now applies the Blessing as a buff. It refreshes rather than stacks, so repeating the rite can't pile up bonus time.
 
 ---
 

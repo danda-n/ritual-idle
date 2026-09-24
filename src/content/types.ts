@@ -31,6 +31,8 @@ export interface ActionDef<S extends string, I extends string> {
   xp: number;
   inputs: Partial<Record<I, number>>;
   outputs: OutputDef<I>[];
+  /** A buff applied each time the action completes (refreshes, never stacks). */
+  buff?: string;
 }
 
 export type GoalDef<A extends string> =
@@ -49,6 +51,8 @@ export interface NoteDef<S extends string, A extends string> {
   unlocks: S[];
   /** Places that open when this note appears. */
   opens?: Feature[];
+  /** An omen given when this note appears (the scripted first Still Night). */
+  gift?: string;
   /** Completing the goal reveals the next note. The last note may have none. */
   goal?: GoalDef<A>;
 }
@@ -80,3 +84,22 @@ export type UpgradeEffect =
 export type ShopEntry<I extends string> =
   | { kind: "item"; name: string; description: string; cost: number; item: I; qty: number }
   | { kind: "upgrade"; name: string; description: string; cost: number; effect: UpgradeEffect };
+
+export interface BuffDef<S extends string, I extends string> {
+  name: string;
+  description: string;
+  durationMs: number;
+  /** Speed bonus per skill (0.5 = 50% faster). */
+  speed?: Partial<Record<S, number>>;
+  /** Multiplies the drop chance of these items (2 = twice as likely). */
+  chanceMultiplier?: Partial<Record<I, number>>;
+}
+
+export interface OmenDef<B extends string> {
+  name: string;
+  description: string;
+  /** Chance per completed action that this omen appears. */
+  dropChance: number;
+  /** The buff it gives when released. */
+  buff: B;
+}
