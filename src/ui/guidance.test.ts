@@ -49,7 +49,8 @@ describe("Circle guidance", () => {
     expect(circleStep(false, true, 0, 3)).toBe(1);
     expect(circleStep(true, true, 1, 3)).toBe(2);
     expect(circleStep(true, true, 3, 3)).toBe(3);
-    expect(circleStep(false, false, 2, 3)).toBe(3);
+    expect(circleStep(false, false, 3, 3)).toBe(3);
+    expect(circleStep(false, false, 2, 3)).toBe(2);
   });
 
   it("explains results", () => {

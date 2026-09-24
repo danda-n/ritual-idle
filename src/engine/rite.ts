@@ -1,4 +1,4 @@
-import { BASE_QUALITY, HEARTH_RITE, QUALITIES, SKILLED_RITUALIST } from "../content/rite";
+import { HEARTH_RITE, SKILLED_RITUALIST } from "../content/rite";
 import type { ItemId } from "../content/items";
 import type { SkillId } from "../content/skills";
 import { activeBuffs, riteQualitySteps } from "./modifiers";
@@ -51,20 +51,19 @@ export function beginIfPrimed(state: GameState, now: number): boolean {
   return true;
 }
 
-/** Quality index into QUALITIES for the rite as it stands. */
-export function riteQuality(state: GameState, stillNight: boolean): number {
-  let q = BASE_QUALITY + riteQualitySteps(state);
-  if (stillNight) q++;
-  if (levelForXp(state.skills.ritualism.xp, state.levelCap) >= SKILLED_RITUALIST) q++;
-  return Math.min(q, QUALITIES.length - 1);
-}
-
+/** The three things that make the rite better, and whether each is met. */
 export function riteFactors(state: GameState, stillNight: boolean) {
   return [
     { label: "Still Night active during the rite", met: stillNight },
     { label: "The Hearth mark is discovered", met: riteQualitySteps(state) > 0 },
     { label: `Ritualism ${SKILLED_RITUALIST} or higher`, met: levelForXp(state.skills.ritualism.xp, state.levelCap) >= SKILLED_RITUALIST },
   ];
+}
+
+/** Quality index into QUALITIES: 0 factors → Sound, 1–2 → Fine, all 3 → Resplendent. */
+export function riteQuality(state: GameState, stillNight: boolean): number {
+  const met = riteFactors(state, stillNight).filter((f) => f.met).length;
+  return met === 0 ? 0 : met < 3 ? 1 : 2;
 }
 
 /**

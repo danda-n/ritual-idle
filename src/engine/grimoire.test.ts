@@ -155,9 +155,10 @@ describe("free experiments", () => {
   });
 
   it("flicker when two items match a secret, and say nothing otherwise", () => {
-    const s = open({ inventory: plenty(["nettle", "salt", "ash", "rags"]) });
+    const s = open({ inventory: plenty(["nettle", "salt", "ash", "rags", "glass"]) });
     expect(okay(experiment(s, ["nettle", "salt", "ash"])).outcome).toEqual({ kind: "almost" });
-    expect(okay(experiment(s, ["rags", "ash"])).outcome).toEqual({ kind: "nothing" });
+    expect(okay(experiment(s, ["rags", "ash", "glass"])).outcome).toEqual({ kind: "nothing" });
+    expect(experiment(s, ["rags", "ash"]).ok).toBe(false); // free experiments take exactly 3
   });
 
   it("also find hidden recipes on an exact match", () => {

@@ -9,7 +9,7 @@ import type { UpgradeId } from "../content/shop";
 import { SKILL_IDS, type SkillId } from "../content/skills";
 import { randomSeed } from "./rng";
 
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 
 export interface ActiveAction {
   id: ActionId;

@@ -108,9 +108,12 @@ export function attune(input: GameState, id: GrimoireId | null): Result {
   return ok({ ...input, attunedTo: id });
 }
 
+/** How many things a free experiment takes: the size of the chapter's secrets (3 in Chapter 1). */
+export const FREE_SLOTS = Math.max(...Object.values(GRIMOIRE_DEFS).filter((g) => g.kind === "secret").map((g) => g.ingredients.length));
+
 /** How many items the circle takes right now. */
 export function circleSlots(state: GameState): number {
-  return state.attunedTo ? GRIMOIRE_DEFS[state.attunedTo].ingredients.length : 3;
+  return state.attunedTo ? GRIMOIRE_DEFS[state.attunedTo].ingredients.length : FREE_SLOTS;
 }
 
 /**
@@ -121,9 +124,8 @@ export function circleSlots(state: GameState): number {
 export function experiment(input: GameState, items: ItemId[]): Result {
   if (!isFeatureOpen(input, "circle")) return no("The circle is still cold.");
   const attuned = input.attunedTo;
-  const need = attuned ? GRIMOIRE_DEFS[attuned].ingredients.length : null;
-  if (need !== null && items.length !== need) return no(`The circle wants ${need} things.`);
-  if (need === null && (items.length < 2 || items.length > 3)) return no("Place two or three things in the circle.");
+  const need = circleSlots(input);
+  if (items.length !== need) return no(`The Circle takes ${need} things.`);
   if (new Set(items).size !== items.length) return no("Each thing can go in the circle only once.");
   if (!items.every((i) => (input.inventory[i] ?? 0) >= 1)) return no("You don't have all of those.");
 
@@ -146,7 +148,7 @@ export function experiment(input: GameState, items: ItemId[]): Result {
     const f = addInsight(state, attuned, INSIGHT_GAIN.failedAttempt, "attempt");
     return ok(state, [], { outcome: { kind: "glow", recipe: attuned, glows, of: items.length }, fragments: f ? [f] : [] });
   }
-  const almost = items.length === 3 && GRIMOIRE_IDS.some((id) => GRIMOIRE_DEFS[id].kind === "secret" && !isDiscovered(state, id) && glowCount(id, items) === 2);
+  const almost = GRIMOIRE_IDS.some((id) => GRIMOIRE_DEFS[id].kind === "secret" && !isDiscovered(state, id) && glowCount(id, items) === 2);
   return ok(state, [], { outcome: almost ? { kind: "almost" } : { kind: "nothing" } });
 }
 

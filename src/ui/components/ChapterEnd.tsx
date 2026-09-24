@@ -19,8 +19,8 @@ export function ChapterEnd({ state, onClose }: { state: GameState; onClose: () =
       </p>
       <ul className="ledger">
         <li>
-          <span>Every skill can now reach</span>
-          <span className="num">level {HEARTH_RITE.rewards.levelCap}</span>
+          <span>Skill caps</span>
+          <span className="num">rise to {HEARTH_RITE.rewards.levelCap} (for Chapter II)</span>
         </li>
         <li>
           <span>A follower: {janko.name}</span>
@@ -32,16 +32,16 @@ export function ChapterEnd({ state, onClose }: { state: GameState; onClose: () =
         </li>
         {quality === QUALITIES.length - 1 && (
           <li>
-            <span>{HEARTH_RITE.resplendentCosmetic}</span>
-            <span />
+            <span>Resplendent</span>
+            <span>an embroidered circle cloth</span>
           </li>
         )}
       </ul>
-      <p className="text-2">{janko.description}</p>
       <p className="note-quote">{HEARTH_RITE.rewards.lore}</p>
+      {quality === QUALITIES.length - 1 && <p className="note-quote">{HEARTH_RITE.resplendentLore}</p>}
       <EmbroideryBand className="band" />
       <p className="muted">
-        <strong>To be continued: Chapter II · Grave.</strong> Keep playing: the house, the village and the Grimoire are still yours.
+        <strong>Chapter II · Grave</strong> comes in a later build.
       </p>
       <button className="btn btn-primary" onClick={onClose}>
         Back to the house

@@ -75,7 +75,7 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
         </div>
 
         <ol className="circle-steps" aria-label="How to use the Circle">
-          {["Choose what to work on", attuned ? `Pick ${slots} things below` : "Pick 2 or 3 things below", "Place them in the circle"].map((label, i) => (
+          {["Choose what to work on", `Pick ${slots} things below`, "Place them in the circle"].map((label, i) => (
             <li key={label} className={step === i + 1 ? "current" : step > i + 1 ? "done" : ""} aria-current={step === i + 1 ? "step" : undefined}>
               <span className="circle-step-num">{i + 1}</span> {label}
             </li>
@@ -116,7 +116,7 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
           <p className="muted circle-help">
             {choices.length > 0
               ? "Pick a recipe above to get a glow count for each try. Free experiments only answer an exact match."
-              : "Secrets have no hints: only an exact set of 2 or 3 things answers. Recipes to work on appear once you find hints."}
+              : "Secrets have no hints: only the exact set of 3 answers."}
           </p>
         )}
         <p className="muted circle-cost">Each try uses one of each thing placed.</p>
@@ -174,7 +174,7 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
         )}
 
         <div className="row">
-          <button className="btn btn-primary" disabled={placed.length < (attuned ? slots : 2)} onClick={run}>
+          <button className="btn btn-primary" disabled={placed.length < slots} onClick={run}>
             Place in the circle
           </button>
           {placed.length > 0 && (

@@ -65,9 +65,9 @@ describe("performing", () => {
     expect(riteLog(mid).length).toBeGreaterThan(1);
     expect(mid.rite.completed).toBeNull();
     const { state, report } = catchUp(s, T0 + 31 * MIN);
-    expect(report.riteCompleted).toBe(1);
+    expect(report.riteCompleted).toBe(0); // Sound: no factors met
     expect(report.riteMs).toBe(30 * MIN);
-    expect(state.rite.completed?.quality).toBe(1);
+    expect(state.rite.completed?.quality).toBe(0);
     expect(riteLog(state)).toHaveLength(HEARTH_RITE.log.length + 1);
   });
 
@@ -86,22 +86,22 @@ describe("performing", () => {
 });
 
 describe("quality", () => {
-  it("is Sound by default and never fails", () => {
+  it("is Sound with no factors, and never fails", () => {
     expect(QUALITIES[riteQuality(ready(), false)]).toBe("Sound");
   });
 
-  it("each factor raises it, capped at Resplendent", () => {
-    const withMark = ready({ grimoire: { hearth_mark: { ...progressOf(ready(), "hearth_mark"), discovered: true } } });
-    expect(QUALITIES[riteQuality(withMark, false)]).toBe("Resplendent");
-    expect(QUALITIES[riteQuality(ready(), true)]).toBe("Resplendent");
-    const skilled = ready({ skills: { ...newGame().skills, ritualism: { xp: xpForLevel(10) } } });
-    expect(QUALITIES[riteQuality(skilled, true)]).toBe("Resplendent");
+  it("one or two factors make it Fine; all three make it Resplendent", () => {
+    const mark = { hearth_mark: { ...progressOf(ready(), "hearth_mark"), discovered: true } };
+    const skilled = { ...newGame().skills, ritualism: { xp: xpForLevel(10) } };
+    expect(QUALITIES[riteQuality(ready({ grimoire: mark }), false)]).toBe("Fine");
+    expect(QUALITIES[riteQuality(ready({ grimoire: mark }), true)]).toBe("Fine");
+    expect(QUALITIES[riteQuality(ready({ grimoire: mark, skills: skilled }), true)]).toBe("Resplendent");
   });
 
   it("counts Still Night released while the rite runs", () => {
     const s = okay(beginRite(ready({ omens: { still_night: 1 } })));
     const released = okay(releaseOmen(s, "still_night"));
-    expect(advance(released, 30 * MIN).state.rite.completed?.quality).toBe(2);
+    expect(advance(released, 30 * MIN).state.rite.completed?.quality).toBe(1); // Fine
   });
 });
 
@@ -143,5 +143,16 @@ describe("after the chapter", () => {
   it("rite state round-trips", () => {
     const s = advance(okay(beginRite(ready())), 5 * MIN).state;
     expect(deserialize(JSON.stringify(s)).rite).toEqual(s.rite);
+  });
+});
+
+describe("save v4", () => {
+  it("renames old qualities and drops curio items", () => {
+    const old = { ...newGame(T0, 9), version: 3, inventory: { curio: 2, ash: 1 }, rite: { primed: false, performing: null, completed: { quality: 1, endingSeen: true } } };
+    const loaded = deserialize(JSON.stringify(old));
+    expect(QUALITIES[loaded.rite.completed!.quality]).toBe("Sound");
+    expect(loaded.inventory).toEqual({ ash: 1 });
+    const res = { ...old, rite: { ...old.rite, completed: { quality: 2, endingSeen: true } } };
+    expect(QUALITIES[deserialize(JSON.stringify(res)).rite.completed!.quality]).toBe("Resplendent");
   });
 });

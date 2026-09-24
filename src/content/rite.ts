@@ -33,12 +33,16 @@ export const HEARTH_RITE = {
     follower: "janko",
     lore: "Under the floor, the circle goes deeper than the house. Grandmother's notes stop here, mid-sentence.",
   },
+  /** Extra lore for a Resplendent rite. */
+  resplendentLore: "In the cellar dark, a second circle, older than hers, answers the first.",
   resplendentCosmetic: "An embroidered circle cloth, red on bone, appears on the table.",
 } as const;
 
-/** Outcome quality, worst to best. The Rite always succeeds. */
-export const QUALITIES = ["Faltering", "Sound", "Resplendent"] as const;
+/**
+ * Outcome quality, by how many of the three preparation factors were met.
+ * 0 → Sound, 1–2 → Fine, all 3 → Resplendent. The rite always succeeds.
+ */
+export const QUALITIES = ["Sound", "Fine", "Resplendent"] as const;
 export type Quality = (typeof QUALITIES)[number];
-export const BASE_QUALITY = 1;
 /** Ritualism level that makes the rite one step better. */
 export const SKILLED_RITUALIST = 10;

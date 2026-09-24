@@ -3,7 +3,7 @@ import { ITEM_CATEGORIES, ITEMS } from "../content/items";
 import { NOTES } from "../content/notes";
 import { PAGES } from "../content/pages";
 import { setSetting, type Result } from "./commands";
-import { bestXpAction, inputsLastMs, lookupItem, outputPerHour, producerAction, producingSkill, repsPerHour, timeToCapMs, timeToNextLevelMs, xpPerHour } from "./estimates";
+import { bestXpAction, inputsLastMs, lookupItem, nextTrustAt, outputPerHour, producerAction, producingSkill, repsPerHour, timeToCapMs, timeToNextLevelMs, xpPerHour } from "./estimates";
 import { catchUp } from "./offline";
 import { deserialize } from "./save";
 import { advance, blockReason, fallbackFor, startAction } from "./simulate";
@@ -126,5 +126,18 @@ describe("producers (for item chips)", () => {
     expect(producerAction(levelled, "tallow", (id) => blockReason(levelled, id) === null)).toBe("search_pantry");
     const early = { ...open(), notesRevealed: 1 };
     expect(producerAction(early, "nettle", () => true)).toBeNull(); // Herbalism not unlocked yet
+  });
+});
+
+describe("lookup teases and trust", () => {
+  it("says when an unfound recipe uses an item, without naming it", () => {
+    expect(lookupItem(open(), "glass").inUnfound).toBe(true);
+    expect(lookupItem(open(), "juniper").inUnfound).toBe(false);
+  });
+
+  it("knows when better requests start, and hides gated ones", () => {
+    expect(nextTrustAt(open({ trust: 0 }))).toBe(2);
+    expect(nextTrustAt(open({ trust: 5 }))).toBeNull();
+    expect(lookupItem(open({ trust: 0 }), "iron_ward").wantedBy).toEqual([]);
   });
 });

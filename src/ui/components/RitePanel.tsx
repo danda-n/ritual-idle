@@ -17,6 +17,7 @@ export function RitePanel({ state, act }: { state: GameState; act: (c: (s: GameS
   const stillNight = performing?.stillNight ?? activeBuffs(state).some((b) => b.id === "still_night");
   const quality = completed ? completed.quality : riteQuality(state, stillNight);
   const short = riteShortfall(state);
+  const metCount = riteFactors(state, stillNight).filter((f) => f.met).length;
   const reason = canBeginRite(state);
 
   return (
@@ -63,7 +64,9 @@ export function RitePanel({ state, act }: { state: GameState; act: (c: (s: GameS
               );
             })}
           </ul>
-          <h3>What makes it better</h3>
+          <h3>
+            What makes it better · <span className="num">{metCount}</span> of 3 → {QUALITIES[quality]}
+          </h3>
           <ul className="factors">
             {riteFactors(state, stillNight).map((f) => (
               <li key={f.label} className={f.met ? "met" : ""}>
@@ -71,7 +74,7 @@ export function RitePanel({ state, act }: { state: GameState; act: (c: (s: GameS
               </li>
             ))}
           </ul>
-          <p className="muted">It never fails. Better preparation makes a better outcome; a weaker one still wakes the circle.</p>
+          <p className="muted">It never fails. 0 = Sound · 1–2 = Fine · all 3 = Resplendent.</p>
           <div className="row">
             <button className="btn btn-primary" disabled={reason !== null} title={reason ?? undefined} onClick={() => act(beginRite)}>
               Begin the rite

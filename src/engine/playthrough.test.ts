@@ -107,8 +107,9 @@ class Bot {
     const makeable = (id: keyof typeof REQUESTS) =>
       (Object.keys(REQUESTS[id].needs) as ItemId[]).every((item) => {
         if (item === "bread") return false;
+        // Only requests it can make at its current levels (a real player wouldn't grind for one).
         const p = ACTION_IDS.find((a) => ACTION_DEFS[a].outputs.some((o) => o.item === item));
-        return p !== undefined && isSkillUnlocked(this.state, ACTION_DEFS[p].skill);
+        return p !== undefined && isSkillUnlocked(this.state, ACTION_DEFS[p].skill) && ACTION_DEFS[p].level <= skillLevel(this.state, ACTION_DEFS[p].skill);
       });
     const slot = this.state.board.findIndex((b) => b.request && makeable(b.request));
     if (slot < 0) {

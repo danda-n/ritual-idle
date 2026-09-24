@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { GRIMOIRE_DEFS, INSIGHT, type GrimoireId } from "../../content/grimoire";
+import { CURIO_STORIES, GRIMOIRE_DEFS, INSIGHT, type GrimoireId } from "../../content/grimoire";
 import { PAGES } from "../../content/pages";
 import { attune, type Result } from "../../engine/commands";
 import { GRIMOIRE_IDS, hintTier, isDiscovered, isSilhouetteVisible, nextHintAt, plainNamesShown, progressOf } from "../../engine/grimoire";
@@ -12,11 +12,12 @@ import { itemName } from "../format";
 import { insightLine, recipeGuide, recipeKnowledge } from "../guidance";
 
 type Act = (command: (s: GameState) => Result) => unknown;
-type Selection = { kind: "recipe"; id: GrimoireId } | { kind: "notes" } | { kind: "pages" } | { kind: "secrets" } | { kind: "forbidden" };
+type Selection = { kind: "recipe"; id: GrimoireId } | { kind: "notes" } | { kind: "pages" } | { kind: "curios" } | { kind: "secrets" } | { kind: "forbidden" };
 
 export function Grimoire({ state, act, onAttuned }: { state: GameState; act: Act; onAttuned: () => void }) {
   const silhouettes = GRIMOIRE_IDS.filter((id) => GRIMOIRE_DEFS[id].kind === "hidden" && isSilhouetteVisible(state, id) && !isDiscovered(state, id));
   const discovered = GRIMOIRE_IDS.filter((id) => isDiscovered(state, id));
+  const secretsTotal = GRIMOIRE_IDS.filter((id) => GRIMOIRE_DEFS[id].kind === "secret").length;
   const secretsLeft = GRIMOIRE_IDS.filter((id) => GRIMOIRE_DEFS[id].kind === "secret" && !isDiscovered(state, id)).length;
   const blackPageRead = pagesRead(state).length >= PAGES.length;
   const [sel, setSel] = useState<Selection>(silhouettes[0] ? { kind: "recipe", id: silhouettes[0] } : { kind: "pages" });
@@ -67,7 +68,8 @@ export function Grimoire({ state, act, onAttuned }: { state: GameState; act: Act
         <ul>
           {item({ kind: "notes" }, `Grandmother's notes (${state.notesRevealed})`)}
           {item({ kind: "pages" }, `Deciphered pages (${pagesRead(state).length})`)}
-          {item({ kind: "secrets" }, "Unwritten things")}
+          {item({ kind: "curios" }, `Curios (${Math.min(state.stats.curiosRead, CURIO_STORIES.length)}/${CURIO_STORIES.length})`)}
+          {item({ kind: "secrets" }, "Secrets")}
           {blackPageRead && item({ kind: "forbidden" }, "The black page")}
         </ul>
       </nav>
@@ -75,6 +77,25 @@ export function Grimoire({ state, act, onAttuned }: { state: GameState; act: Act
       <section className="panel paper grimoire-page" aria-live="polite">
         {sel.kind === "recipe" && (isDiscovered(state, sel.id) ? <DiscoveredPage id={sel.id} /> : <SilhouettePage state={state} id={sel.id} act={act} onAttuned={onAttuned} />)}
         {sel.kind === "pages" && <PagesPage state={state} />}
+        {sel.kind === "curios" && (
+          <>
+            <div className="panel-title">
+              <ScrollIcon size={18} />
+              <h2>Curios</h2>
+              <span className="muted panel-aside num">
+                {Math.min(state.stats.curiosRead, CURIO_STORIES.length)}/{CURIO_STORIES.length}
+              </span>
+            </div>
+            <p className="muted">Rare finds from the attic (0.5%) and grandmother's chest (1%). Each one also adds 3 insight to a hidden recipe.</p>
+            <ol className="curios">
+              {CURIO_STORIES.map((story, i) => (
+                <li key={i} className={i < state.stats.curiosRead ? "found" : "missing"}>
+                  {i < state.stats.curiosRead ? story : "Not found yet"}
+                </li>
+              ))}
+            </ol>
+          </>
+        )}
         {sel.kind === "notes" && (
           <>
             <div className="panel-title">
@@ -94,13 +115,12 @@ export function Grimoire({ state, act, onAttuned }: { state: GameState; act: Act
           <>
             <div className="panel-title">
               <BookIcon size={18} />
-              <h2>Unwritten things</h2>
+              <h2>Secrets</h2>
+              <span className="muted panel-aside num">
+                {secretsTotal - secretsLeft}/{secretsTotal}
+              </span>
             </div>
-            <p className="note-quote">Some things the book does not know it holds.</p>
-            <p className="muted">
-              {secretsLeft > 0 ? `${secretsLeft} secret${secretsLeft === 1 ? "" : "s"} in this chapter, with no hints at all.` : "You have found every secret in this chapter."} They
-              answer only to free experiments at the circle.
-            </p>
+            <p>{secretsLeft > 0 ? `${secretsLeft} left to find. No hints: set the Circle to Free experiment and try sets of 3.` : "You found every secret in this chapter."}</p>
           </>
         )}
         {sel.kind === "forbidden" && (

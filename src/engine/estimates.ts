@@ -81,6 +81,8 @@ export interface ItemLookup {
   wantedBy: string[];
   /** Discovered grimoire recipes that use it. */
   inRecipes: string[];
+  /** True if a hidden recipe or secret not yet found uses it (a tease, not a spoiler). */
+  inUnfound: boolean;
 }
 
 export function lookupItem(state: GameState, item: ItemId): ItemLookup {
@@ -90,11 +92,20 @@ export function lookupItem(state: GameState, item: ItemId): ItemLookup {
     usedBy: ACTION_IDS.filter((id) => visible(id) && item in ACTION_DEFS[id].inputs),
     sold: Object.values(SHOP).some((e) => e.kind === "item" && e.item === item),
     inRite: (HEARTH_RITE.items[item] ?? 0),
-    wantedBy: Object.values(REQUESTS).filter((r) => item in r.needs).map((r) => r.from),
+    wantedBy: Object.values(REQUESTS).filter((r) => item in r.needs && r.minTrust <= state.trust).map((r) => r.from),
     inRecipes: (Object.keys(GRIMOIRE_DEFS) as (keyof typeof GRIMOIRE_DEFS)[])
       .filter((id) => isDiscovered(state, id) && (GRIMOIRE_DEFS[id].ingredients as string[]).includes(item))
       .map((id) => GRIMOIRE_DEFS[id].name),
+    inUnfound: (Object.keys(GRIMOIRE_DEFS) as (keyof typeof GRIMOIRE_DEFS)[]).some(
+      (id) => !isDiscovered(state, id) && (GRIMOIRE_DEFS[id].ingredients as string[]).includes(item),
+    ),
   };
+}
+
+/** The trust at which the next, better requests start knocking, or null if none are left. */
+export function nextTrustAt(state: GameState): number | null {
+  const gates = Object.values(REQUESTS).map((r) => r.minTrust).filter((t) => t > state.trust);
+  return gates.length > 0 ? Math.min(...gates) : null;
 }
 
 /** The skill that makes an item (its first producing action), or null for bought/found things. */

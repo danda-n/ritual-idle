@@ -151,7 +151,7 @@ export function ItemLookupModal({ state, item, onClose }: { state: GameState; it
         </dd>
         <dt>Used for</dt>
         <dd>
-          {l.usedBy.length === 0 && l.inRite === 0 && l.wantedBy.length === 0 && l.inRecipes.length === 0 && <span className="muted">Nothing you know of yet.</span>}
+          {l.usedBy.length === 0 && l.inRite === 0 && l.wantedBy.length === 0 && l.inRecipes.length === 0 && !l.inUnfound && <span className="muted">Nothing you know of yet.</span>}
           {l.usedBy.map((id) => (
             <span key={id}>{actionLabel(id)}</span>
           ))}
@@ -162,6 +162,7 @@ export function ItemLookupModal({ state, item, onClose }: { state: GameState; it
           {l.inRecipes.map((name) => (
             <span key={name}>{name} (Grimoire)</span>
           ))}
+          {l.inUnfound && <span className="tease">Something you haven't found yet</span>}
         </dd>
       </dl>
       <button className="btn btn-primary" onClick={onClose}>

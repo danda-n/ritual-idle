@@ -69,7 +69,7 @@ export type CircleStep = 1 | 2 | 3;
 /** Which step the player is on: 1 choose what to work on, 2 pick things, 3 place them. */
 export function circleStep(attuned: boolean, hasSilhouettes: boolean, placed: number, slots: number): CircleStep {
   if (!attuned && hasSilhouettes && placed === 0) return 1;
-  return placed >= (attuned ? slots : 2) ? 3 : 2;
+  return placed >= slots ? 3 : 2;
 }
 
 /** What an experiment's result means, and what to do next. */
@@ -84,6 +84,6 @@ export function outcomeHelp(o: ExperimentOutcome): string {
     case "almost":
       return "Two of those match a secret. Swap the third.";
     case "nothing":
-      return "No secret matches that set. Secrets need an exact set of 2 or 3 things.";
+      return "No secret matches that set. A secret answers only its exact 3.";
   }
 }

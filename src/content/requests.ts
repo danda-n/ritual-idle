@@ -21,6 +21,14 @@ export const REQUESTS = {
     trust: 1,
     minTrust: 0,
   },
+  lye_ash: {
+    from: "The soapmaker",
+    text: "Ash for the lye. The kettle's been cold a week.",
+    needs: { ash: 15 },
+    coin: 5,
+    trust: 1,
+    minTrust: 0,
+  },
   grave_candles: {
     from: "Old Tomas",
     text: "Candles for my father's grave. He never liked the dark.",
@@ -44,6 +52,14 @@ export const REQUESTS = {
     needs: { smudge: 1 },
     coin: 20,
     trust: 1,
+    minTrust: 3,
+  },
+  sickroom_smoke: {
+    from: "The sexton's wife",
+    text: "Juniper smoke for the sickroom. The fever won't break.",
+    needs: { juniper_incense: 1 },
+    coin: 25,
+    trust: 2,
     minTrust: 3,
   },
   iron_cradle: {

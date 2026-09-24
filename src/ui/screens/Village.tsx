@@ -4,7 +4,7 @@ import { ITEMS, type ItemId } from "../../content/items";
 import { REQUESTS } from "../../content/requests";
 import { SHOP, type ShopId, type UpgradeId } from "../../content/shop";
 import { buy, canBuy, declineRequest, fillRequest, hasItems, type Result } from "../../engine/commands";
-import { lookupItem } from "../../engine/estimates";
+import { lookupItem, nextTrustAt } from "../../engine/estimates";
 import { requestCoin, trustMultiplier } from "../../engine/modifiers";
 import type { GameState } from "../../engine/state";
 import { CandleIcon, CoinIcon, HouseIcon, LeafIcon, MoonIcon } from "../art/icons";
@@ -21,7 +21,10 @@ export function Village({ state, act }: { state: GameState; act: Act }) {
         <div className="panel-title">
           <HouseIcon size={18} />
           <h2 id="board-heading">Knocks at the door</h2>
-          <span className="muted panel-aside num">Trust {Math.floor(state.trust)}</span>
+          <span className="muted panel-aside num" title="Trust grows with every request you help with. Higher trust brings better-paying requests.">
+            Trust {Math.floor(state.trust)}
+            {nextTrustAt(state) !== null && ` · better requests at ${nextTrustAt(state)}`}
+          </span>
         </div>
         <div className="request-grid">
           {state.board.map((slot, i) =>

@@ -45,6 +45,12 @@ export function deserialize(json: string): GameState {
     // v3 inserted the village note as note 6; saves past it shift up by one.
     state.notesRevealed = Math.min(state.notesRevealed + 1, NOTES.length);
   }
+  if (data.version < 4) {
+    // v4 renamed rite quality (Faltering/Sound/Resplendent → Sound/Fine/Resplendent): old Sound (1)
+    // becomes Sound (0); an earned Resplendent (2) stays. Curios became a collection, not an item.
+    if (state.rite.completed && state.rite.completed.quality === 1) state.rite.completed = { ...state.rite.completed, quality: 0 };
+    delete state.inventory.curio;
+  }
   return state;
 }
 
