@@ -1,4 +1,4 @@
-# Design System (v0.1)
+# Design System (v0.2)
 
 The folk-art / woodcut direction from [CONCEPT.md §9](CONCEPT.md): one candlelit dark theme, drawn entirely in code (there is no bitmap art yet).
 
@@ -61,3 +61,25 @@ Item names go through `ItemChip` (`src/ui/components/ItemLookup.tsx`), so any it
 - **Progress bars keep filling under reduced motion**, because they carry information. Everything decorative stops.
 - **The circle fills with feeling:** the glow and inner ring brighten, the marker dots light in order, the outer ring's drift speeds up, items settle into their slots, and the circle flares when it answers. Transform and opacity only.
 - **Modifier classes are prefixed** (`is-glow`, `is-discovered`…) so a state can never collide with a component class. That collision is what squashed the circle's result line into a 10px dot.
+
+## v0.2: ink & paper, folk colours (`src/ui/styles/identity.css`)
+- **Two materials.**
+  - The **room** is dark wood with a faint grain. Controls and lists sit on carved-wood panels.
+  - **Paper** is for what you read or act on: the chapter tracker, Grimoire pages, the rite recipe, village notices and every dialog. It's bone paper printed in ink, with a double rule inside the edge.
+  - Paper works by re-mapping the semantic tokens inside `.paper` / `.modal`, so any component placed on paper prints correctly with no special cases.
+- **Folk colour per skill** (`data-skill` sets `--skill`):
+  - Herbalism: moss
+  - Scavenging: cornflower
+  - Chandlery: candle gold
+  - Sigilcraft: poppy
+  - Scholarship: lilac-indigo
+  - Ritualism: plum
+
+  They're used on tile stripes, icons, XP bars, output chips, Start outlines, and the running row's glow. All are ≥ 5:1 on the dark surfaces.
+- **Hierarchy:** the running action is the brightest thing on the House screen. Start buttons are quiet skill-coloured outlines until hovered, and the primary gold is kept for one decision at a time.
+- **Structure:**
+  - The top bar is its own dark band.
+  - Tabs are ribbons with a stitched top; the active one is paper.
+  - Section titles carry a red cross-stitch underline.
+- **Feedback:** rows lift on hover, the running row breathes, skill tiles flash on level-up, and pantry counts bump when they change. All are transform/opacity/box-shadow, and all stop under reduced motion.
+- **Writing rule:** effects lead, in plain numbers generated from the data (`src/ui/effects.ts`). Flavour is one short line at most.

@@ -59,7 +59,7 @@ function Working({ state, onStop, stopNote }: { state: GameState; onStop: () => 
   const duration = actionDurationMs(state, state.active.id);
   const left = Math.max(0, (duration - state.active.elapsedMs) / 1000);
   return (
-    <div className="working" role="status">
+    <div className="working" role="status" data-skill={def.skill}>
       <SkillIcon skill={def.skill} size={20} />
       <span className="working-name">{def.name}</span>
       <TimedBar

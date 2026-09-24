@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { ACTION_DEFS, type ActionId } from "../../content/actions";
 import { ITEMS, type ItemId } from "../../content/items";
 import { SKILL_IDS, SKILLS, type SkillId } from "../../content/skills";
@@ -15,16 +16,19 @@ import { formatDuration, formatRate, formatStop } from "../format";
 const ACTION_IDS = Object.keys(ACTION_DEFS) as ActionId[];
 
 export function SkillNav({ state, skill, onSelect }: { state: GameState; skill: SkillId; onSelect: (s: SkillId) => void }) {
+  const levelled = useLevelFlash(state);
   return (
     <nav className="skill-nav" aria-label="Skills">
       {SKILL_IDS.filter((id) => isSkillUnlocked(state, id)).map((id) => {
         const running = state.active && ACTION_DEFS[state.active.id].skill === id;
         return (
-          <button key={id} className={`skill-tile ${id === skill ? "selected" : ""}`} aria-current={id === skill ? "page" : undefined} onClick={() => onSelect(id)}>
+          <button key={id} data-skill={id} className={`skill-tile ${id === skill ? "selected" : ""} ${levelled.has(id) ? "levelled" : ""}`} aria-current={id === skill ? "page" : undefined} onClick={() => onSelect(id)}>
             <SkillIcon skill={id} size={22} />
             <span className="skill-tile-name">{SKILLS[id].name}</span>
             <span className="skill-tile-level num">
-              {skillLevel(state, id)}
+              <span key={skillLevel(state, id)} className={levelled.has(id) ? "pop" : undefined}>
+                {skillLevel(state, id)}
+              </span>
               <span className="muted">/{state.levelCap}</span>
             </span>
             <Bar thin value={levelProgress(state.skills[id].xp, state.levelCap)} label={`${SKILLS[id].name} level progress`} />
@@ -41,7 +45,7 @@ export function SkillActions({ state, skill, onStart }: { state: GameState; skil
   const toCap = timeToCapMs(state, skill);
   return (
     <section className="skill-actions" aria-labelledby="skill-heading">
-      <header className="skill-header">
+      <header className="skill-header" data-skill={skill}>
         <SkillIcon skill={skill} size={28} />
         <div>
           <h2 id="skill-heading">{SKILLS[skill].name}</h2>
@@ -79,7 +83,7 @@ function ActionRow({ id, state, onStart }: { id: ActionId; state: GameState; onS
   const inputs = Object.entries(def.inputs) as [ItemId, number][];
 
   return (
-    <div className={`action-row ${locked ? "locked" : ""} ${running ? "running" : ""}`}>
+    <div data-skill={def.skill} className={`action-row ${locked ? "locked" : ""} ${running ? "running" : ""}`}>
       <div className="action-name">
         <strong>{def.name}</strong>
         <span className="muted num">
@@ -136,4 +140,22 @@ function Rates({ state, id, running }: { state: GameState; id: ActionId; running
       {running && next !== null && ` · next level in ${formatDuration(next)}`}
     </span>
   );
+}
+
+/** Skills whose level just went up, for a brief flash on their tile. */
+function useLevelFlash(state: GameState): Set<SkillId> {
+  const prev = useRef<Partial<Record<SkillId, number>>>({});
+  const [flash, setFlash] = useState<Set<SkillId>>(new Set());
+  const levels = SKILL_IDS.map((id) => skillLevel(state, id)).join(",");
+  useEffect(() => {
+    const up = SKILL_IDS.filter((id) => prev.current[id] !== undefined && skillLevel(state, id) > prev.current[id]!);
+    for (const id of SKILL_IDS) prev.current[id] = skillLevel(state, id);
+    if (up.length === 0) return;
+    setFlash(new Set(up));
+    const t = setTimeout(() => setFlash(new Set()), 900);
+    return () => clearTimeout(t);
+    // Only re-check when some level changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [levels]);
+  return flash;
 }

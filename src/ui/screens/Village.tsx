@@ -75,7 +75,7 @@ function RequestCard({ state, index, act }: { state: GameState; index: number; a
   const needs = Object.entries(req.needs) as [ItemId, number][];
   const ready = hasItems(state, req.needs);
   return (
-    <article className={`request-card ${ready ? "ready" : ""}`}>
+    <article className={`request-card paper ${ready ? "ready" : ""}`}>
       <h3>{req.from}</h3>
       <p className="note-quote">{req.text}</p>
       <div className="action-io">

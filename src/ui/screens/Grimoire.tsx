@@ -60,7 +60,7 @@ export function Grimoire({ state, act, onAttuned }: { state: GameState; act: Act
         </ul>
       </nav>
 
-      <section className="panel grimoire-page" aria-live="polite">
+      <section className="panel paper grimoire-page" aria-live="polite">
         {sel.kind === "recipe" && (isDiscovered(state, sel.id) ? <DiscoveredPage id={sel.id} /> : <SilhouettePage state={state} id={sel.id} act={act} onAttuned={onAttuned} />)}
         {sel.kind === "pages" && <PagesPage state={state} />}
         {sel.kind === "notes" && (

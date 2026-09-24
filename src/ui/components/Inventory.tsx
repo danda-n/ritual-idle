@@ -51,7 +51,9 @@ export function Inventory({ state }: { state: GameState }) {
                     .map(([item, n]) => (
                       <li key={item}>
                         <ItemChip item={item} className="plain" />
-                        <span className="num">{n}</span>
+                        <span key={n} className="num pop">
+                          {n}
+                        </span>
                       </li>
                     ))}
                 </ul>

@@ -20,7 +20,7 @@ export function RitePanel({ state, act }: { state: GameState; act: (c: (s: GameS
   const reason = canBeginRite(state);
 
   return (
-    <section className={`panel rite-panel ${performing ? "performing" : ""} ${completed ? "done" : ""}`} aria-labelledby="rite-heading">
+    <section className={`panel paper rite-panel ${performing ? "performing" : ""} ${completed ? "done" : ""}`} aria-labelledby="rite-heading">
       <div className="panel-title">
         <CircleRiteIcon size={20} />
         <h2 id="rite-heading">{HEARTH_RITE.name}</h2>
