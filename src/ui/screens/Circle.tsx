@@ -12,21 +12,6 @@ import { Glows } from "./Grimoire";
 
 type Act = (command: (s: GameState) => Result) => Success | null;
 
-const GLOW_LINES = ["The chalk stays cold.", "The circle stirs once.", "The circle stirs twice."];
-
-function outcomeLine(o: ExperimentOutcome): string {
-  switch (o.kind) {
-    case "discovered":
-      return "The circle drinks it in.";
-    case "glow":
-      return GLOW_LINES[o.glows] ?? "The circle stirs.";
-    case "almost":
-      return "Something almost answered.";
-    case "nothing":
-      return "Nothing answers.";
-  }
-}
-
 export function Circle({ state, act }: { state: GameState; act: Act }) {
   const slots = circleSlots(state);
   const [placed, setPlaced] = useState<ItemId[]>([]);
@@ -71,11 +56,11 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
       <section className="panel circle-panel" aria-labelledby="circle-heading">
         <div className="panel-title">
           <CircleRiteIcon size={18} />
-          <h2 id="circle-heading">The circle</h2>
+          <h2 id="circle-heading">The Circle</h2>
         </div>
 
         <ol className="circle-steps" aria-label="How to use the Circle">
-          {["Choose what to work on", `Pick ${slots} things below`, "Place them in the circle"].map((label, i) => (
+          {["Choose what to work on", `Pick ${slots} things below`, "Place them in the Circle"].map((label, i) => (
             <li key={label} className={step === i + 1 ? "current" : step > i + 1 ? "done" : ""} aria-current={step === i + 1 ? "step" : undefined}>
               <span className="circle-step-num">{i + 1}</span> {label}
             </li>
@@ -83,7 +68,7 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
         </ol>
 
         <label className="field-label" htmlFor="attune">
-          Working on
+          Hidden recipe
         </label>
         <select
           id="attune"
@@ -113,13 +98,8 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
             </p>
           </div>
         ) : (
-          <p className="muted circle-help">
-            {choices.length > 0
-              ? "Pick a recipe above to get a glow count for each try. Free experiments only answer an exact match."
-              : "Secrets have no hints: only the exact set of 3 answers."}
-          </p>
+          <p className="muted circle-help">No glow count here: only a secret's exact 3 answers.</p>
         )}
-        <p className="muted circle-cost">Each try uses one of each thing placed.</p>
 
         <div
           className={`ring ${placed.length > 0 ? "is-filling" : ""} ${fill === 1 ? "is-full" : ""} ${last?.kind === "discovered" ? "is-answered" : ""}`}
@@ -168,14 +148,13 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
         {last && (
           <div className={`outcome is-${last.kind}`} role="status">
             {last.kind === "glow" && <Glows glows={last.glows} of={last.of} />}
-            <p className="note-quote">{outcomeLine(last)}</p>
             <p className="outcome-help">{outcomeHelp(last)}</p>
           </div>
         )}
 
         <div className="row">
           <button className="btn btn-primary" disabled={placed.length < slots} onClick={run}>
-            Place in the circle
+            Place in the Circle · uses 1 of each
           </button>
           {placed.length > 0 && (
             <button className="btn btn-ghost" onClick={() => setPlaced([])}>

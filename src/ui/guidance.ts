@@ -1,7 +1,7 @@
 import { GRIMOIRE_DEFS, INSIGHT_GAIN, type GrimoireId } from "../content/grimoire";
 import type { ItemId } from "../content/items";
 import type { ExperimentOutcome } from "../engine/commands";
-import { nextHintAt, plainNamesShown, progressOf } from "../engine/grimoire";
+import { plainNamesShown, progressOf } from "../engine/grimoire";
 import { isFeatureOpen } from "../engine/progress";
 import type { GameState } from "../engine/state";
 
@@ -57,12 +57,13 @@ export function recipeGuide(state: GameState, id: GrimoireId): Guide {
   };
 }
 
-export function insightLine(state: GameState, id: GrimoireId): string {
-  const insight = progressOf(state, id).insight;
-  const next = nextHintAt(id, insight);
-  const sources = `wrong tries +${INSIGHT_GAIN.failedAttempt}, burnt pages +${INSIGHT_GAIN.page}, curios +${INSIGHT_GAIN.curio}, some villagers +${INSIGHT_GAIN.request}`;
-  return next ? `Clearer hint at ${next} insight (you have ${insight}). Insight comes from ${sources}.` : "Every hint is showing.";
-}
+/** Where insight comes from, as short labels. */
+export const INSIGHT_SOURCES = [
+  `Wrong try +${INSIGHT_GAIN.failedAttempt}`,
+  `Burnt page +${INSIGHT_GAIN.page}`,
+  `Curio +${INSIGHT_GAIN.curio}`,
+  `Some villagers +${INSIGHT_GAIN.request}`,
+];
 
 export type CircleStep = 1 | 2 | 3;
 

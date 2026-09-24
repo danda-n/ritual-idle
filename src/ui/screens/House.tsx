@@ -58,8 +58,7 @@ export function SkillActions({ state, skill, onStart }: { state: GameState; skil
         <div>
           <h2 id="skill-heading">{SKILLS[skill].name}</h2>
           <p className="muted num">
-            Level {level} of {state.levelCap}
-            {toCap !== null ? ` · about ${formatDuration(toCap)} to the cap` : " · at the cap for now"}
+            {toCap !== null ? `About ${formatDuration(toCap)} to level ${state.levelCap}` : `At level ${state.levelCap}, the cap for now`}
           </p>
         </div>
       </header>

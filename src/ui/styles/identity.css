@@ -256,3 +256,14 @@ input[type="checkbox"] { accent-color: var(--color-accent); width: 16px; height:
 .step-go { align-self: flex-start; min-height: 26px; padding: 0 var(--space-3); font-size: var(--text-xs); }
 .note-hint { font-size: var(--text-sm); color: var(--color-text-2); }
 .more-recipes { font-size: var(--text-xs); padding: var(--space-1) var(--space-4); border: 1px dashed #3a2d22; border-radius: var(--radius-md); }
+.ledger li.arrived { animation: arrived 1.2s var(--ease-out); }
+@keyframes arrived { 0% { background: rgb(232 176 78 / 0.28); } 100% { background: transparent; } }
+/* Rates only where they matter: the running row, or a row you hover or focus */
+.action-row:not(.running) .rates { display: none; }
+.action-row:not(.running):hover .rates, .action-row:not(.running):focus-within .rates { display: block; }
+.insight-sources { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.insight-sources li { font-size: var(--text-xs); color: var(--color-muted); border: 1px solid var(--color-border-soft); border-radius: 999px; padding: 0 var(--space-2); }
+.rite-summary { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--color-text-2); font-size: var(--text-sm); }
+.rite-toggle { min-height: 24px; padding: 0 var(--space-2); font-size: var(--text-xs); }
+.rite-panel.is-ready { animation: rite-ready 2.4s ease-in-out infinite; }
+@keyframes rite-ready { 50% { box-shadow: 0 0 0 1px var(--folk-candle), 0 0 34px rgb(232 176 78 / 0.35); } }

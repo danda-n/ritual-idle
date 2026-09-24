@@ -9,7 +9,7 @@ import { BookIcon, CircleRiteIcon, ScrollIcon } from "../art/icons";
 import { Bar } from "../components/Bar";
 import { ItemChip } from "../components/ItemLookup";
 import { itemName } from "../format";
-import { insightLine, recipeGuide, recipeKnowledge } from "../guidance";
+import { INSIGHT_SOURCES, recipeGuide, recipeKnowledge } from "../guidance";
 
 type Act = (command: (s: GameState) => Result) => unknown;
 type Selection = { kind: "recipe"; id: GrimoireId } | { kind: "notes" } | { kind: "pages" } | { kind: "curios" } | { kind: "secrets" } | { kind: "forbidden" };
@@ -36,6 +36,7 @@ export function Grimoire({ state, act, onAttuned }: { state: GameState; act: Act
 
   return (
     <div className="grimoire">
+      {discovered.length === 0 && (
       <ol className="how-strip" aria-label="How the Grimoire works">
         <li>
           <strong>1 · Collect hints</strong> Burnt pages, curios and villagers reveal hidden recipes here.
@@ -47,8 +48,9 @@ export function Grimoire({ state, act, onAttuned }: { state: GameState; act: Act
           <strong>3 · Discover</strong> The right set makes it. Its bonus is yours for good.
         </li>
       </ol>
+      )}
       <nav className="panel grimoire-index" aria-label="Grimoire contents">
-        <h3>Silhouettes</h3>
+        <h3>Hidden recipes</h3>
         {silhouettes.length === 0 ? (
           <p className="muted">No shapes yet. Hints turn up in burnt pages, curios, and what the village remembers.</p>
         ) : (
@@ -205,17 +207,23 @@ function SilhouettePage({ state, id, act, onAttuned }: { state: GameState; id: G
       </div>
       <div className={`hint ${tier === "riddle" ? "locked" : ""}`}>
         <span className="hint-num">II</span>
-        {tier === "riddle" ? <p className="muted">Where each thing comes from, at {INSIGHT.category} insight.</p> : <p>{def.hints?.category.join(" · ")}</p>}
+        {tier === "riddle" ? <p className="muted">at {INSIGHT.category} insight</p> : <p>{def.hints?.category.join(" · ")}</p>}
       </div>
       <div className={`hint ${names.length === 0 ? "locked" : ""}`}>
         <span className="hint-num">III</span>
-        {names.length === 0 ? <p className="muted">Names one thing outright, at {INSIGHT.plain} insight.</p> : <p>{names.map(itemName).join(", ")}.</p>}
+        {names.length === 0 ? <p className="muted">at {INSIGHT.plain} insight</p> : <p>{names.map(itemName).join(", ")}.</p>}
       </div>
       <div className="goal">
         <Bar value={next ? p.insight / next : 1} label="Insight toward the next hint" />
         <span className="muted num">{next ? `${p.insight}/${next}` : p.insight}</span>
       </div>
-      <p className="muted insight-line">{insightLine(state, id)}</p>
+      {next && (
+        <ul className="insight-sources" aria-label="Where insight comes from">
+          {INSIGHT_SOURCES.map((x) => (
+            <li key={x}>{x}</li>
+          ))}
+        </ul>
+      )}
 
       {p.attempts.length > 0 && (
         <details className="attempts">

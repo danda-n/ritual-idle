@@ -40,7 +40,6 @@ export function OmenShelf({ state, act }: { state: GameState; act: (c: (s: GameS
                 <li key={e}>{e}</li>
               ))}
             </ul>
-            <p className="flavour">{OMENS[id].description}</p>
           </div>
           <button className="btn btn-primary" onClick={() => act((s) => releaseOmen(s, id))}>
             Release · {buffDuration(OMENS[id].buff)}

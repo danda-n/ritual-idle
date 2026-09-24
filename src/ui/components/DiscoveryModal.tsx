@@ -11,7 +11,6 @@ export function DiscoveryModal({ id, onClose }: { id: GrimoireId; onClose: () =>
       </div>
       <p className="effect-line big">{def.rewardText}</p>
       <p className="note-quote">{def.reveal}</p>
-      <p className="muted">Written into the Grimoire. It stays found, whatever comes.</p>
       <button className="btn btn-primary" onClick={onClose}>
         Close the book
       </button>

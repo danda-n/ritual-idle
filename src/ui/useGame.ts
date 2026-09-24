@@ -90,7 +90,7 @@ export function useGame() {
         }),
         ...(report.pagesRead ?? []).map((p) => ({
           title: `Page deciphered: ${p.title}`,
-          text: p.unlocks.length > 0 ? `New recipe: ${p.unlocks.map((a) => ACTION_DEFS[a].name).join(", ")}.` : "No recipe on this one. It's in the Grimoire.",
+          text: p.unlocks.length > 0 ? `New recipe: ${p.unlocks.map((a) => ACTION_DEFS[a].name).join(", ")}.` : "Added to the Grimoire.",
         })),
         ...(report.omensFound ?? []).map((o) => ({ title: `An omen: ${OMENS[o].name}`, text: `On the shelf. Release for ${buffDuration(OMENS[o].buff)}: ${buffEffects(OMENS[o].buff).join(", ")}.` })),
         ...(report.omensLost ? [{ title: "An omen passed unseen", text: "The shelf was full. A bigger shelf would hold more." }] : []),
@@ -165,7 +165,7 @@ export function useGame() {
     (command: (s: GameState) => Result): Success | null => {
       const r = command(ref.current);
       if (!r.ok) {
-        pushToasts([{ title: "Not yet", text: r.reason }]);
+        pushToasts([{ title: r.reason, text: "" }]);
         return null;
       }
       commit(r.state);

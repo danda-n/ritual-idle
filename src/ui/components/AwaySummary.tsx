@@ -18,7 +18,7 @@ export function AwaySummary({ away, onClose }: { away: CatchUp; onClose: () => v
         {away.capped && ` The house kept working for ${formatDuration(report.elapsedMs)}, the limit for now.`}
       </p>
       {report.actionsCompleted === 0 && report.riteMs === 0 ? (
-        <p>Nothing stirred. Leave something running next time.</p>
+        <p className="muted">Nothing was running.</p>
       ) : report.actionsCompleted === 0 ? null : (
         <>
           {report.levelUps.map((l) => (
@@ -46,7 +46,7 @@ export function AwaySummary({ away, onClose }: { away: CatchUp; onClose: () => v
           Page deciphered: <strong>{p.title}</strong>
         </p>
       ))}
-      {report.riteStarted && <p>The circle was ready, so the {HEARTH_RITE.name} began by itself.</p>}
+      {report.riteStarted && <p>Everything was ready, so the {HEARTH_RITE.name} began by itself.</p>}
       {report.riteMs > 0 && report.riteCompleted === null && <p>The {HEARTH_RITE.name} went on without you ({formatDuration(report.riteMs)}).</p>}
       {report.riteCompleted !== null && (
         <p>

@@ -32,7 +32,6 @@ export function Village({ state, act }: { state: GameState; act: Act }) {
               <RequestCard key={i} state={state} index={i} act={act} />
             ) : (
               <div key={i} className="request-card empty">
-                <p className="muted">The lane is quiet.</p>
                 <p className="muted num">Someone will knock in {Math.max(0, Math.ceil((slot.refillAt - state.lastTickAt) / 1000))}s.</p>
               </div>
             ),
@@ -60,9 +59,6 @@ function Shop({ state, act }: { state: GameState; act: Act }) {
       <div className="panel-title">
         <CoinIcon size={18} />
         <h2 id="shop-heading">The village shop</h2>
-        <span className="panel-aside purse-small num">
-          <CoinIcon size={14} /> {Math.floor(state.coin)}
-        </span>
       </div>
 
       <h3 className="shop-group">Provisions</h3>
@@ -153,7 +149,7 @@ function RequestCard({ state, index, act }: { state: GameState; index: number; a
         Pays {requestCoin(state, req)} coin · +{+(req.trust * trustMultiplier(state)).toFixed(1)} trust
       </p>
       <div className="row">
-        <button className="btn btn-primary" disabled={!ready} onClick={() => act((s) => fillRequest(s, index))}>
+        <button className={`btn ${ready ? "btn-primary" : "btn-ghost"}`} disabled={!ready} onClick={() => act((s) => fillRequest(s, index))}>
           Help them
         </button>
         <button className="btn btn-ghost" onClick={() => act((s) => declineRequest(s, index))}>

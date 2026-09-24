@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { HEARTH_RITE, QUALITIES } from "../../content/rite";
 import { SKILLS } from "../../content/skills";
 import { beginRite, primeRite, type Result } from "../../engine/commands";
@@ -12,6 +13,7 @@ import { ItemChip } from "./ItemLookup";
 import { TimedBar } from "./Bar";
 
 export function RitePanel({ state, act }: { state: GameState; act: (c: (s: GameState) => Result) => unknown }) {
+  const [open, setOpen] = useState(false);
   if (!isRiteRevealed(state)) return null;
   const { performing, completed } = state.rite;
   const stillNight = performing?.stillNight ?? activeBuffs(state).some((b) => b.id === "still_night");
@@ -19,19 +21,29 @@ export function RitePanel({ state, act }: { state: GameState; act: (c: (s: GameS
   const short = riteShortfall(state);
   const metCount = riteFactors(state, stillNight).filter((f) => f.met).length;
   const reason = canBeginRite(state);
+  const total = Object.keys(HEARTH_RITE.items).length + Object.keys(HEARTH_RITE.skills).length;
+  const readyCount = total - short.items.length - short.skills.length;
+  const allReady = readyCount === total;
+  // Collapsed to one line until it matters: everything ready, running, done, or opened by the player.
+  const expanded = open || allReady || !!performing || !!completed;
 
   return (
-    <section className={`panel paper rite-panel ${performing ? "performing" : ""} ${completed ? "done" : ""}`} aria-labelledby="rite-heading">
+    <section className={`panel paper rite-panel ${performing ? "performing" : ""} ${completed ? "done" : ""} ${allReady && !performing && !completed ? "is-ready" : ""}`} aria-labelledby="rite-heading">
       <div className="panel-title">
         <CircleRiteIcon size={20} />
         <h2 id="rite-heading">{HEARTH_RITE.name}</h2>
-        <span className={`chip panel-aside ${quality > 1 ? "accent" : ""}`}>
+        <span className="panel-aside rite-summary num">
+          {!completed && !performing && `${readyCount}/${total} ready · `}
           {completed ? "Performed" : "Outcome"}: {QUALITIES[quality]}
+          {!allReady && !performing && !completed && (
+            <button className="btn btn-ghost rite-toggle" aria-expanded={expanded} onClick={() => setOpen((o) => !o)}>
+              {expanded ? "Hide" : "View"}
+            </button>
+          )}
         </span>
       </div>
-      <p className="note-quote">{HEARTH_RITE.description}</p>
 
-      {!performing && !completed && (
+      {expanded && !performing && !completed && (
         <>
           <h3>What it needs</h3>
           <ul className="ledger rite-needs">
@@ -93,7 +105,6 @@ export function RitePanel({ state, act }: { state: GameState; act: (c: (s: GameS
             <span className="muted num">{formatClock(HEARTH_RITE.durationMs - performing.elapsedMs)}</span>
           </div>
           <RiteLog lines={riteLog(state)} />
-          <p className="muted">The rite keeps going if you close the game.</p>
         </>
       )}
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ITEM_CATEGORIES, ITEM_DEFS, type ItemCategory, type ItemId } from "../../content/items";
 import type { GameState } from "../../engine/state";
 import { CATEGORY_ICONS, LanternIcon } from "../art/icons";
@@ -11,6 +11,12 @@ export function Inventory({ state }: { state: GameState }) {
   const items = (Object.entries(state.inventory) as [ItemId, number][]).filter(([, n]) => n > 0);
   const present = CATEGORY_IDS.filter((c) => items.some(([id]) => ITEM_DEFS[id].category === c));
   const shown = present.filter((c) => filter === "all" || filter === c);
+  // Only a newly arrived item gets a moment of attention; ticking counts stay calm.
+  const seen = useRef<Set<ItemId> | null>(null);
+  const isNew = (id: ItemId) => seen.current !== null && !seen.current.has(id);
+  useEffect(() => {
+    seen.current = new Set(items.map(([id]) => id));
+  });
 
   return (
     <section className="panel" aria-labelledby="inventory-heading">
@@ -49,11 +55,9 @@ export function Inventory({ state }: { state: GameState }) {
                   {items
                     .filter(([id]) => ITEM_DEFS[id].category === c)
                     .map(([item, n]) => (
-                      <li key={item}>
+                      <li key={item} className={isNew(item) ? "arrived" : undefined}>
                         <ItemChip item={item} plain />
-                        <span key={n} className="num pop">
-                          {n}
-                        </span>
+                        <span className="num">{n}</span>
                       </li>
                     ))}
                 </ul>
