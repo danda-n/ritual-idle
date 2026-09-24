@@ -2,7 +2,8 @@ import { ACTION_DEFS } from "../../content/actions";
 import { BUFFS } from "../../content/buffs";
 import { HEARTH_RITE } from "../../content/rite";
 import { actionDurationMs, activeBuffs } from "../../engine/modifiers";
-import { isFeatureOpen } from "../../engine/progress";
+import { currentNote, isFeatureOpen } from "../../engine/progress";
+import { taskName, taskPlace, type Place } from "../tasks";
 import type { GameState } from "../../engine/state";
 import { CircleRiteIcon, CoinIcon, CogIcon, SkillIcon } from "../art/icons";
 import { Rosette } from "../art/ornaments";
@@ -10,14 +11,14 @@ import { formatClock } from "../format";
 import { buffEffects } from "../effects";
 import { TimedBar } from "./Bar";
 
-export function TopBar({ state, onStop, stopNote, onSettings }: { state: GameState; onStop: () => void; stopNote?: string; onSettings: () => void }) {
+export function TopBar({ state, onStop, stopNote, onSettings, onGo }: { state: GameState; onStop: () => void; stopNote?: string; onSettings: () => void; onGo: (p: Place) => void }) {
   return (
     <header className="topbar">
       <div className="brand">
         <Rosette size={26} className="brand-rosette" />
         <h1 className="brand-title">Ritual Idle</h1>
       </div>
-      <Working state={state} onStop={onStop} stopNote={stopNote} />
+      <Working state={state} onStop={onStop} stopNote={stopNote} onGo={onGo} />
       {activeBuffs(state).map((b) => (
         <span key={b.id} className="chip accent buff-chip" title={buffEffects(b.id).join(" · ")}>
           {BUFFS[b.id].name} <span className="num">{formatClock(b.endsAt - state.lastTickAt)}</span>
@@ -36,7 +37,7 @@ export function TopBar({ state, onStop, stopNote, onSettings }: { state: GameSta
   );
 }
 
-function Working({ state, onStop, stopNote }: { state: GameState; onStop: () => void; stopNote?: string }) {
+function Working({ state, onStop, stopNote, onGo }: { state: GameState; onStop: () => void; stopNote?: string; onGo: (p: Place) => void }) {
   const rite = state.rite.performing;
   if (rite) {
     return (
@@ -49,9 +50,23 @@ function Working({ state, onStop, stopNote }: { state: GameState; onStop: () => 
     );
   }
   if (!state.active) {
+    // Idle: say what to do next instead of just "idle".
+    const note = currentNote(state);
+    const goal = "goal" in note && !state.rite.completed ? note.goal : null;
     return (
       <div className="working idle" role="status">
-        {stopNote ? <span className="warn">Stopped: {stopNote}.</span> : <span className="muted">Idle. Choose something to do.</span>}
+        {stopNote && <span className="warn">Stopped: {stopNote}.</span>}
+        {goal ? (
+          <>
+            <span className="muted">Next:</span>
+            <span className="working-name">{taskName(goal)}</span>
+            <button className="btn btn-ghost" onClick={() => onGo(taskPlace(goal))}>
+              Go
+            </button>
+          </>
+        ) : (
+          !stopNote && <span className="muted">Nothing running. Pick something to do.</span>
+        )}
       </div>
     );
   }

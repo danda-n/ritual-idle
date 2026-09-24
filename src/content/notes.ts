@@ -13,7 +13,7 @@ export const NOTES = [
   },
   {
     text: "Light is the first ward. Nothing that listens at the window likes a candle.",
-    hint: "Tallow is in the pantry. Pour it into candles (Chandlery).",
+    hint: "Get tallow with Search the pantry (Scavenging 2), then pour candles (Chandlery).",
     unlocks: ["chandlery"],
     goal: { kind: "complete", action: "tallow_candle", count: 3 },
   },
@@ -25,7 +25,7 @@ export const NOTES = [
   },
   {
     text: "My pages burned. Read what's left by candlelight, and don't hurry them.",
-    hint: "Burnt pages turn up in the attic (Scavenging 5). Decipher them with a tallow candle (Scholarship).",
+    hint: "Burnt pages come from Search the attic (Scavenging 5). Deciphering one uses a tallow candle.",
     unlocks: ["scholarship"],
     opens: ["grimoire"],
     gift: "still_night",
@@ -33,7 +33,7 @@ export const NOTES = [
   },
   {
     text: "Salt keeps what is inside, inside. And what is outside, out.",
-    hint: "Lay salt lines (Sigilcraft). The pantry has salt.",
+    hint: "Lay salt lines (Sigilcraft). Salt comes from Search the pantry.",
     unlocks: ["sigilcraft"],
     goal: { kind: "complete", action: "salt_line", count: 3 },
   },
@@ -59,7 +59,7 @@ export const NOTES = [
   },
   {
     text: "Rest now, child. The house will keep working, and so will the boy.",
-    hint: "Janko helps with whatever you're doing. Chapter II begins in a later build.",
+    hint: "Janko speeds up whatever you do. Chapter II comes in a later build.",
     unlocks: [],
   },
 ] as const satisfies readonly NoteDef<SkillId, ActionId>[];

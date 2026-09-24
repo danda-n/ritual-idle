@@ -32,3 +32,17 @@ export function noteUnlocks(note: Note): string[] {
   if ("gift" in note) out.push("An omen for the shelf: Still Night");
   return out;
 }
+
+export type Place = { tab: "house"; skill: keyof typeof SKILLS } | { tab: "village" } | { tab: "circle" };
+
+/** Where a task is done, so a "Go" button can take the player there. */
+export function taskPlace(goal: GoalDef<ActionId>): Place {
+  switch (goal.kind) {
+    case "complete":
+      return { tab: "house", skill: ACTION_DEFS[goal.action].skill };
+    case "requests":
+      return { tab: "village" };
+    case "rite":
+      return { tab: "circle" };
+  }
+}

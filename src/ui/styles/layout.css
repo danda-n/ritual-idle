@@ -261,7 +261,7 @@
 
 /* The living sanctum */
 .sanctum { grid-column: 1 / -1; margin: 0; border: var(--border-w) solid var(--color-border-soft); border-radius: var(--radius-md); overflow: hidden; background: var(--color-sunken); box-shadow: var(--shadow-1); }
-.sanctum svg { display: block; width: 100%; height: clamp(150px, 20vw, 240px); }
+.sanctum svg { display: block; width: 100%; height: clamp(130px, 15vw, 190px); }
 .sanctum-caption { font-style: italic; font-size: var(--text-sm); color: var(--color-text-2); padding: var(--space-2) var(--space-3); border-top: var(--border-w) solid var(--color-border-soft); }
 .sanctum .flame { transform-box: fill-box; transform-origin: 50% 100%; animation: flicker 1.8s ease-in-out infinite; }
 .sanctum .flame:nth-of-type(2n) { animation-duration: 2.3s; }

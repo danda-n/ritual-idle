@@ -16,10 +16,10 @@ export function Inventory({ state }: { state: GameState }) {
     <section className="panel" aria-labelledby="inventory-heading">
       <div className="panel-title">
         <LanternIcon size={18} />
-        <h2 id="inventory-heading">Pantry &amp; shelves</h2>
+        <h2 id="inventory-heading">Shelves</h2>
       </div>
       {items.length === 0 ? (
-        <p className="muted">Empty. The house is cold.</p>
+        <p className="muted">Nothing yet.</p>
       ) : (
         <>
           {present.length > 1 && (

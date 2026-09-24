@@ -43,6 +43,14 @@ export function SkillNav({ state, skill, onSelect }: { state: GameState; skill: 
 export function SkillActions({ state, skill, onStart }: { state: GameState; skill: SkillId; onStart: (id: ActionId) => void }) {
   const level = skillLevel(state, skill);
   const toCap = timeToCapMs(state, skill);
+  // Show what can be done now, then only the next thing to unlock; sum up the rest in one line.
+  const all = ACTION_IDS.filter((id) => ACTION_DEFS[id].skill === skill);
+  const available = (id: ActionId) => isRecipeKnown(state, id) && ACTION_DEFS[id].level <= level;
+  const open = all.filter(available);
+  const locked = all.filter((id) => !available(id)).sort((a, b) => ACTION_DEFS[a].level - ACTION_DEFS[b].level);
+  const nextUp = locked[0];
+  const later = locked.slice(1);
+  const laterUnknown = later.filter((id) => !isRecipeKnown(state, id)).length;
   return (
     <section className="skill-actions" aria-labelledby="skill-heading">
       <header className="skill-header" data-skill={skill}>
@@ -56,9 +64,16 @@ export function SkillActions({ state, skill, onStart }: { state: GameState; skil
         </div>
       </header>
       <div className="action-list">
-        {ACTION_IDS.filter((id) => ACTION_DEFS[id].skill === skill).map((id) => (
+        {open.map((id) => (
           <ActionRow key={id} id={id} state={state} onStart={() => onStart(id)} />
         ))}
+        {nextUp && <ActionRow key={nextUp} id={nextUp} state={state} onStart={() => onStart(nextUp)} />}
+        {later.length > 0 && (
+          <p className="more-recipes muted">
+            {later.length} more {later.length === 1 ? "recipe" : "recipes"} · up to Lvl {Math.max(...later.map((id) => ACTION_DEFS[id].level))}
+            {laterUnknown > 0 && ` · ${laterUnknown} still in burnt pages`}
+          </p>
+        )}
       </div>
     </section>
   );
@@ -73,7 +88,7 @@ function ActionRow({ id, state, onStart }: { id: ActionId; state: GameState; onS
           <strong>Unknown recipe</strong>
           <span className="muted num">Lvl {def.level}</span>
         </div>
-        <p className="action-io muted">Somewhere in grandmother's burnt pages. Decipher more of them.</p>
+        <p className="action-io muted">Learned from a burnt page (Scholarship).</p>
       </div>
     );
   }

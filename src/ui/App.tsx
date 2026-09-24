@@ -26,6 +26,7 @@ import { SkillActions, SkillNav } from "./screens/House";
 import { Circle } from "./screens/Circle";
 import { Grimoire } from "./screens/Grimoire";
 import { Village } from "./screens/Village";
+import type { Place } from "./tasks";
 import { useGame } from "./useGame";
 
 type TabId = "house" | "grimoire" | "village" | "circle";
@@ -47,6 +48,11 @@ export function App() {
     document.documentElement.dataset.motion = state.settings.reducedMotion ? "reduced" : "";
   }, [state.settings.reducedMotion]);
   const [skill, setSkill] = useState<SkillId>(state.active ? ACTION_DEFS[state.active.id].skill : "scavenging");
+  /** Take the player to where a task is done. */
+  const goTo = (p: Place) => {
+    setTab(p.tab);
+    if (p.tab === "house") setSkill(p.skill);
+  };
 
   // Tabs appear as grandmother's notes open them; each shows a dot until first visited.
   const tabs: TabDef<TabId>[] = [{ id: "house", label: "House", icon: <HouseIcon size={18} /> }];
@@ -61,7 +67,7 @@ export function App() {
       <a className="skip-link" href="#main">
         Skip to main content
       </a>
-      <TopBar state={state} onStop={game.stop} stopNote={game.lastStop && formatStop(game.lastStop.reason)} onSettings={() => setSettingsOpen(true)} />
+      <TopBar state={state} onStop={game.stop} stopNote={game.lastStop && formatStop(game.lastStop.reason)} onSettings={() => setSettingsOpen(true)} onGo={goTo} />
       <EmbroideryBand className="band" />
       <Tabs tabs={tabs} value={tab} onChange={setTab} label="Places" />
 
@@ -79,7 +85,7 @@ export function App() {
           )}
         </div>
         <aside className="side">
-          <ChapterTracker state={state} />
+          <ChapterTracker state={state} onGo={goTo} />
           <OmenShelf state={state} act={game.act} />
           <Inventory state={state} />
         </aside>
@@ -98,7 +104,7 @@ export function App() {
         <ChapterEnd state={state} onClose={() => game.act(dismissEnding)} />
       )}
       {game.story && !game.away && !game.discovery && (!state.rite.completed || state.rite.completed.endingSeen) && (
-        <NoteModal note={game.story} onClose={game.dismissStory} />
+        <NoteModal note={game.story} onClose={game.dismissStory} onGo={goTo} />
       )}
       {lookup && <ItemLookupModal state={state} item={lookup} onClose={() => setLookup(null)} />}
       {settingsOpen && (

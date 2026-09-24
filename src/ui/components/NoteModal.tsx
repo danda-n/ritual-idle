@@ -1,13 +1,13 @@
 import type { Note } from "../../engine/progress";
-import { noteUnlocks, taskName } from "../tasks";
+import { noteUnlocks, taskName, taskPlace, type Place } from "../tasks";
 import { Modal } from "./Modal";
 
-/** A story beat: grandmother's note appears once, with exactly what it opened and the next task. */
-export function NoteModal({ note, onClose }: { note: Note; onClose: () => void }) {
+/** A story beat: grandmother's note, what it opened, and a button straight to the next task. */
+export function NoteModal({ note, onClose, onGo }: { note: Note; onClose: () => void; onGo: (p: Place) => void }) {
   const unlocks = noteUnlocks(note);
   return (
     <Modal title="A note in the margin" onClose={onClose}>
-      <blockquote className="note-quote paper-quote">{note.text}</blockquote>
+      <blockquote className="note-quote">{note.text}</blockquote>
       {unlocks.length > 0 && (
         <ul className="effects">
           {unlocks.map((u) => (
@@ -15,14 +15,22 @@ export function NoteModal({ note, onClose }: { note: Note; onClose: () => void }
           ))}
         </ul>
       )}
-      {"goal" in note && (
-        <p className="effect-line">
-          Next: {taskName(note.goal)}
-        </p>
+      {"hint" in note && <p className="note-hint">{note.hint}</p>}
+      {"goal" in note ? (
+        <button
+          className="btn btn-primary"
+          onClick={() => {
+            onGo(taskPlace(note.goal));
+            onClose();
+          }}
+        >
+          Go: {taskName(note.goal)}
+        </button>
+      ) : (
+        <button className="btn btn-primary" onClick={onClose}>
+          Continue
+        </button>
       )}
-      <button className="btn btn-primary" onClick={onClose}>
-        Continue
-      </button>
     </Modal>
   );
 }

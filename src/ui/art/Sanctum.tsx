@@ -246,7 +246,7 @@ export function Sanctum({ state }: { state: GameState }) {
         {/* Darkness before the first candle */}
         {!v.lit && <rect width="800" height="260" fill="var(--ink-950)" opacity="0.45" />}
       </svg>
-      <figcaption className="sanctum-caption">{label}</figcaption>
+      <figcaption className="sr-only">{label}</figcaption>
     </figure>
   );
 }

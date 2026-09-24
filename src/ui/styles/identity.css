@@ -252,3 +252,7 @@ input[type="checkbox"] { accent-color: var(--color-accent); width: 16px; height:
 .curios li.found { font-style: italic; color: var(--color-text); }
 .curios li.missing { color: var(--color-muted); letter-spacing: 0.04em; }
 .tease { color: var(--folk-candle); font-style: italic; }
+.step-needs { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.step-go { align-self: flex-start; min-height: 26px; padding: 0 var(--space-3); font-size: var(--text-xs); }
+.note-hint { font-size: var(--text-sm); color: var(--color-text-2); }
+.more-recipes { font-size: var(--text-xs); padding: var(--space-1) var(--space-4); border: 1px dashed #3a2d22; border-radius: var(--radius-md); }
