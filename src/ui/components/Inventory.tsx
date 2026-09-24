@@ -50,7 +50,7 @@ export function Inventory({ state }: { state: GameState }) {
                     .filter(([id]) => ITEM_DEFS[id].category === c)
                     .map(([item, n]) => (
                       <li key={item}>
-                        <ItemChip item={item} className="plain" />
+                        <ItemChip item={item} plain />
                         <span key={n} className="num pop">
                           {n}
                         </span>

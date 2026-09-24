@@ -96,3 +96,15 @@ export function lookupItem(state: GameState, item: ItemId): ItemLookup {
       .map((id) => GRIMOIRE_DEFS[id].name),
   };
 }
+
+/** The skill that makes an item (its first producing action), or null for bought/found things. */
+export function producingSkill(item: ItemId): SkillId | null {
+  const id = ACTION_IDS.find((a) => ACTION_DEFS[a].outputs.some((o) => o.item === item));
+  return id ? ACTION_DEFS[id].skill : null;
+}
+
+/** An action the player knows that makes this item, preferring one that can run right now. */
+export function producerAction(state: GameState, item: ItemId, canRun: (id: ActionId) => boolean): ActionId | null {
+  const known = ACTION_IDS.filter((a) => ACTION_DEFS[a].outputs.some((o) => o.item === item) && isSkillUnlocked(state, ACTION_DEFS[a].skill) && isRecipeKnown(state, a));
+  return known.find(canRun) ?? known[0] ?? null;
+}

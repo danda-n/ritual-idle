@@ -3,10 +3,10 @@ import { ITEM_CATEGORIES, ITEMS } from "../content/items";
 import { NOTES } from "../content/notes";
 import { PAGES } from "../content/pages";
 import { setSetting, type Result } from "./commands";
-import { bestXpAction, inputsLastMs, lookupItem, outputPerHour, repsPerHour, timeToCapMs, timeToNextLevelMs, xpPerHour } from "./estimates";
+import { bestXpAction, inputsLastMs, lookupItem, outputPerHour, producerAction, producingSkill, repsPerHour, timeToCapMs, timeToNextLevelMs, xpPerHour } from "./estimates";
 import { catchUp } from "./offline";
 import { deserialize } from "./save";
-import { advance, fallbackFor, startAction } from "./simulate";
+import { advance, blockReason, fallbackFor, startAction } from "./simulate";
 import { newGame, type GameState } from "./state";
 
 const T0 = 1_000_000;
@@ -107,5 +107,24 @@ describe("settings", () => {
     const old = { ...newGame(T0, 21), settings: { grimoireAssist: true } };
     const loaded = deserialize(JSON.stringify(old));
     expect(loaded.settings).toEqual({ ...newGame().settings, grimoireAssist: true });
+  });
+});
+
+describe("producers (for item chips)", () => {
+  it("knows which skill makes an item", () => {
+    expect(producingSkill("tallow")).toBe("scavenging");
+    expect(producingSkill("tallow_candle")).toBe("chandlery");
+    expect(producingSkill("bread")).toBeNull();
+  });
+
+  it("offers an action that can run, and only ones the player knows", () => {
+    const s = open();
+    // The pantry needs Scavenging 2: still offered, so the menu can say why it can't start yet.
+    expect(producerAction(s, "tallow", (id) => blockReason(s, id) === null)).toBe("search_pantry");
+    expect(blockReason(s, "search_pantry")).toEqual({ kind: "level_too_low", level: 2 });
+    const levelled = { ...s, skills: { ...s.skills, scavenging: { xp: 100 } } };
+    expect(producerAction(levelled, "tallow", (id) => blockReason(levelled, id) === null)).toBe("search_pantry");
+    const early = { ...open(), notesRevealed: 1 };
+    expect(producerAction(early, "nettle", () => true)).toBeNull(); // Herbalism not unlocked yet
   });
 });

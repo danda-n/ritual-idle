@@ -88,3 +88,8 @@ Item names go through `ItemChip` (`src/ui/components/ItemLookup.tsx`), so any it
   - *Provisions* (repeatable) say what you get, what it's for and how many you hold.
   - *For the house* (one-time) shows an icon and the effect in the helped skill's colour.
   - Buttons read "Buy · N" (an outline) when you can afford it, "Need N more" when you can't, and "✓ In the house" once owned.
+- **Item chips** (`ItemChip`):
+  - Always coloured and marked with the icon of the skill that *makes* the item, wherever they appear. Tallow is cornflower (Scavenging) even inside a Chandlery row. Bought items (bread) stay bone.
+  - Inputs show have/need. **Enough** has a solid border and a quiet count. **Short** has a dashed border and a warning pill.
+  - Clicking a short chip opens a small menu. It offers to start the action that makes the item, or says why it can't start yet, and has "Look up".
+  - Disabled Start buttons say what's missing ("Needs 2 beeswax", "Level 8").

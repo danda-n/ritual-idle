@@ -5,7 +5,7 @@ import { SKILL_IDS, SKILLS, type SkillId } from "../../content/skills";
 import { inputsLastMs, outputPerHour, timeToCapMs, timeToNextLevelMs, xpPerHour } from "../../engine/estimates";
 import { actionDurationMs } from "../../engine/modifiers";
 import { isRecipeKnown, isSkillUnlocked } from "../../engine/progress";
-import { blockReason, skillLevel } from "../../engine/simulate";
+import { blockReason, skillLevel, type StopReason } from "../../engine/simulate";
 import type { GameState } from "../../engine/state";
 import { levelProgress } from "../../engine/xp";
 import { SkillIcon } from "../art/icons";
@@ -92,9 +92,7 @@ function ActionRow({ id, state, onStart }: { id: ActionId; state: GameState; onS
       </div>
       <div className="action-io">
         {inputs.map(([item, qty]) => (
-          <ItemChip key={item} item={item} className={(state.inventory[item] ?? 0) < qty ? "short" : ""}>
-            <span className="num">{qty}</span> {ITEMS[item].name}
-          </ItemChip>
+          <ItemChip key={item} item={item} need={qty} />
         ))}
         {inputs.length > 0 && (
           <span className="io-arrow" aria-label="makes">
@@ -102,10 +100,7 @@ function ActionRow({ id, state, onStart }: { id: ActionId; state: GameState; onS
           </span>
         )}
         {def.outputs.map((o) => (
-          <ItemChip key={o.item} item={o.item} className="accent">
-            <span className="num">{o.qty}</span> {ITEMS[o.item].name}
-            {o.chance !== undefined && <span className="muted num"> {Math.round(o.chance * 1000) / 10}%</span>}
-          </ItemChip>
+          <ItemChip key={o.item} item={o.item} qty={o.qty} chance={o.chance} />
         ))}
         {!locked && <Rates state={state} id={id} running={running} />}
       </div>
@@ -119,7 +114,7 @@ function ActionRow({ id, state, onStart }: { id: ActionId; state: GameState; onS
           />
         ) : (
           <button className="btn btn-primary" onClick={onStart} disabled={blocked !== null} title={blocked ? formatStop(blocked) : undefined}>
-            {locked ? `Level ${def.level}` : "Start"}
+            {startLabel(state, id, blocked)}
           </button>
         )}
       </div>
@@ -158,4 +153,21 @@ function useLevelFlash(state: GameState): Set<SkillId> {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [levels]);
   return flash;
+}
+
+/** A Start button that says what's missing when it can't start ("Needs 2 beeswax"). */
+function startLabel(state: GameState, id: ActionId, blocked: StopReason | null): string {
+  if (!blocked) return "Start";
+  switch (blocked.kind) {
+    case "level_too_low":
+      return `Level ${blocked.level}`;
+    case "missing_input": {
+      const need = ACTION_DEFS[id].inputs[blocked.item] ?? 0;
+      return `Needs ${need - (state.inventory[blocked.item] ?? 0)} ${ITEMS[blocked.item].name.toLowerCase()}`;
+    }
+    case "rite_in_progress":
+      return "Rite under way";
+    default:
+      return formatStop(blocked);
+  }
 }

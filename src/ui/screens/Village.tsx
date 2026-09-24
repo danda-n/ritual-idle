@@ -8,7 +8,6 @@ import { lookupItem } from "../../engine/estimates";
 import type { GameState } from "../../engine/state";
 import { CandleIcon, CoinIcon, HouseIcon, LeafIcon, MoonIcon } from "../art/icons";
 import { ItemChip } from "../components/ItemLookup";
-import { itemName } from "../format";
 import { upgradeEffect } from "../effects";
 
 type Act = (command: (s: GameState) => Result) => unknown;
@@ -143,12 +142,7 @@ function RequestCard({ state, index, act }: { state: GameState; index: number; a
       <p className="note-quote">{req.text}</p>
       <div className="action-io">
         {needs.map(([item, qty]) => (
-          <ItemChip key={item} item={item} className={(state.inventory[item] ?? 0) < qty ? "short" : "accent"}>
-            <span className="num">
-              {Math.min(state.inventory[item] ?? 0, qty)}/{qty}
-            </span>{" "}
-            {itemName(item)}
-          </ItemChip>
+          <ItemChip key={item} item={item} need={qty} />
         ))}
       </div>
       <p className="muted num">

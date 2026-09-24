@@ -40,7 +40,7 @@ export function RitePanel({ state, act }: { state: GameState; act: (c: (s: GameS
                 <li key={item} className={have >= need ? "met" : ""}>
                   <span>
                     <span aria-hidden="true">{have >= need ? "✓ " : "· "}</span>
-                    <ItemChip item={item} className="plain" />
+                    <ItemChip item={item} plain />
                   </span>
                   <span className="num">
                     {Math.min(have, need)}/{need}

@@ -15,7 +15,7 @@ import { Inventory } from "./components/Inventory";
 import { ChapterTracker } from "./components/ChapterTracker";
 import { NoteModal } from "./components/NoteModal";
 import { OmenShelf } from "./components/OmenShelf";
-import { ItemLookupModal, LookupContext } from "./components/ItemLookup";
+import { ChipContext, ItemLookupModal } from "./components/ItemLookup";
 import { SettingsModal } from "./components/SettingsModal";
 import { Tabs, type TabDef } from "./components/Tabs";
 import { Toasts } from "./components/Toasts";
@@ -55,7 +55,7 @@ export function App() {
   if (isFeatureOpen(state, "circle")) place("circle", "Circle", <CircleRiteIcon size={18} />);
 
   return (
-    <LookupContext.Provider value={setLookup}>
+    <ChipContext.Provider value={{ state, lookup: setLookup, start: game.start }}>
     <div className="app">
       <a className="skip-link" href="#main">
         Skip to main content
@@ -104,6 +104,6 @@ export function App() {
         <SettingsModal state={state} act={game.act} onLoad={game.load} onReset={game.reset} onClose={() => setSettingsOpen(false)} />
       )}
     </div>
-    </LookupContext.Provider>
+    </ChipContext.Provider>
   );
 }

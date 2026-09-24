@@ -148,8 +148,6 @@ body {
 /* ---------- Dark panels read as carved wood ---------- */
 .panel:not(.paper) { background: linear-gradient(180deg, #211913, #1a140f); border-color: #33271e; }
 .side .panel:not(.paper) h2, .village .panel:not(.paper) h2, .circle-screen .panel:not(.paper) h2 { color: var(--bone-100); }
-.action-row[data-skill] .chip.accent { color: var(--skill); border-color: color-mix(in srgb, var(--skill) 55%, transparent); }
-.action-row[data-skill] .chip.accent:hover { background: color-mix(in srgb, var(--skill) 12%, transparent); }
 /* Start buttons are quiet outlines in the skill colour; the running row is what stands out. */
 .action-row[data-skill] .btn-primary:not(:disabled) { background: transparent; color: var(--skill); border: 1px solid color-mix(in srgb, var(--skill) 60%, transparent); }
 .action-row[data-skill] .btn-primary:not(:disabled):hover { background: var(--skill); color: var(--ink-950); border-color: var(--skill); }
@@ -172,3 +170,50 @@ input[type="checkbox"] { accent-color: var(--color-accent); width: 16px; height:
 .shop-row.owned .shop-icon { background: color-mix(in srgb, var(--skill, var(--folk-candle)) 22%, transparent); }
 .shop-row.owned strong { color: var(--color-text-2); }
 .purse-small { color: var(--folk-candle); font-family: var(--font-display); }
+
+/* ---------- Item chips: coloured and marked by the skill that makes the item ---------- */
+.item-chip-wrap { position: relative; display: inline-flex; }
+.chip.item-chip { gap: 4px; }
+.chip.item-chip svg { flex-shrink: 0; }
+.chip.item-chip[data-skill] { color: var(--skill); border-color: color-mix(in srgb, var(--skill) 50%, transparent); }
+.chip.item-chip[data-skill]:hover { color: var(--skill); border-color: var(--skill); background: color-mix(in srgb, var(--skill) 12%, transparent); }
+.chip.item-chip:not([data-skill]) { color: var(--bone-100); }
+/* Enough: solid border and a quiet count. Short: dashed border and a warning pill. */
+.chip.item-chip.enough { border-style: solid; }
+.chip.item-chip.short { border-style: dashed; border-color: color-mix(in srgb, var(--skill, var(--bone-500)) 65%, transparent); cursor: pointer; }
+.chip.item-chip .count { margin-left: 2px; padding: 0 5px; border-radius: 999px; font-size: 11px; line-height: 16px; }
+.chip.item-chip .count-quiet { color: var(--color-muted); }
+.chip.item-chip .count-short { background: #6a2a1d; color: #ffe1d8; }
+.chip.item-chip .chip-chance { color: var(--color-muted); }
+.chip.item-chip.plain { gap: 5px; color: var(--color-text); }
+.chip.item-chip.plain svg { color: var(--skill, var(--color-muted)); }
+
+/* The small menu a short chip opens */
+.chip-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: var(--z-toast);
+  width: max-content;
+  min-width: 220px;
+  max-width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: linear-gradient(180deg, #3b2d20, #2d2218);
+  border: 1px solid #8a6a3a;
+  border-radius: var(--radius-md);
+  box-shadow: 0 12px 28px rgb(0 0 0 / 0.55);
+  animation: toast-in var(--dur-med) var(--ease-out);
+}
+.chip-menu-title { font-family: var(--font-display); font-size: var(--text-xs); letter-spacing: 0.04em; color: #ffb8a6; }
+.chip-menu-note { font-size: var(--text-xs); }
+.chip-menu .btn { justify-content: flex-start; width: 100%; font-size: var(--text-xs); }
+.chip-menu-go[data-skill]:not(:disabled) { background: transparent; color: var(--skill); border: 1px solid color-mix(in srgb, var(--skill) 60%, transparent); }
+.chip-menu-go[data-skill]:not(:disabled):hover { background: var(--skill); color: var(--ink-950); }
+.chip-menu-go:disabled { white-space: normal; text-align: left; line-height: 1.3; padding: var(--space-1) var(--space-2); }
+/* A disabled Start that explains itself can run to two lines */
+.action-control .btn:disabled { white-space: normal; line-height: 1.2; font-size: var(--text-xs); padding: var(--space-1) var(--space-2); text-align: center; }
+.chip.item-chip.plain, .chip.item-chip.plain[data-skill], .chip.item-chip.plain[data-skill]:hover { border-color: transparent; background: transparent; color: var(--color-text); }
+.chip.item-chip.plain:hover { text-decoration: underline; text-underline-offset: 3px; }
