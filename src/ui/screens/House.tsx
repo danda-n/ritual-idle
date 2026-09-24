@@ -81,10 +81,10 @@ export function SkillActions({ state, skill, onStart, act, onTend }: { state: Ga
   const fresh = useRecentFx(pickUnlocked, 5000);
   const level = skillLevel(state, skill);
   const toCap = timeToCapMs(state, skill);
-  // Only what can be done now, plus the single next recipe. Nothing further up shows.
+  // Only what can be done now, plus what comes at the next level. Nothing further up shows.
   const shown = revealedRecipes(state, skill);
   const open = shown.filter((id) => ACTION_DEFS[id].level <= level);
-  const nextUp = shown.find((id) => ACTION_DEFS[id].level > level);
+  const nextUp = shown.filter((id) => ACTION_DEFS[id].level > level);
   return (
     <section className="skill-actions" aria-labelledby="skill-heading">
       <header className="skill-header" data-skill={skill}>
@@ -100,7 +100,9 @@ export function SkillActions({ state, skill, onStart, act, onTend }: { state: Ga
         {open.map((id) => (
           <ActionRow key={id} id={id} state={state} onStart={() => onStart(id)} fresh={fresh.has(id)} onTend={onTend} />
         ))}
-        {nextUp && <ActionRow key={nextUp} id={nextUp} state={state} onStart={() => onStart(nextUp)} onTend={onTend} />}
+        {nextUp.map((id) => (
+          <ActionRow key={id} id={id} state={state} onStart={() => onStart(id)} onTend={onTend} />
+        ))}
       </div>
       <TalentPanel state={state} skill={skill} act={act} />
     </section>
