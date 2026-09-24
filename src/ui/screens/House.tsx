@@ -8,7 +8,7 @@ import { blockReason, skillLevel } from "../../engine/simulate";
 import type { GameState } from "../../engine/state";
 import { levelProgress } from "../../engine/xp";
 import { SkillIcon } from "../art/icons";
-import { Bar } from "../components/Bar";
+import { Bar, TimedBar } from "../components/Bar";
 import { ItemChip } from "../components/ItemLookup";
 import { formatDuration, formatRate, formatStop } from "../format";
 
@@ -107,7 +107,12 @@ function ActionRow({ id, state, onStart }: { id: ActionId; state: GameState; onS
       </div>
       <div className="action-control">
         {running ? (
-          <Bar value={state.active!.elapsedMs / actionDurationMs(state, id)} label={`${def.name} progress`} />
+          <TimedBar
+            key={`${id}:${state.stats.completed[id] ?? 0}:${Math.round(actionDurationMs(state, id))}`}
+            elapsedMs={state.active!.elapsedMs}
+            durationMs={actionDurationMs(state, id)}
+            label={`${def.name} progress`}
+          />
         ) : (
           <button className="btn btn-primary" onClick={onStart} disabled={blocked !== null} title={blocked ? formatStop(blocked) : undefined}>
             {locked ? `Level ${def.level}` : "Start"}

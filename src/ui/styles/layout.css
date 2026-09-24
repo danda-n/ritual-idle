@@ -174,6 +174,7 @@
 .chip.mark.suspect { border-color: var(--color-accent-deep); color: var(--color-accent); }
 .chip.mark.doubt { border-style: dashed; color: var(--color-muted); }
 .marks h3, .attempts h3 { font-size: var(--text-sm); margin-bottom: var(--space-2); }
+.picker + .attempts { margin-top: var(--space-4); }
 .glows { display: inline-flex; gap: 4px; align-items: center; }
 .glow { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--color-border); }
 .glow.lit { background: var(--color-accent); border-color: var(--color-accent); box-shadow: 0 0 8px rgb(224 173 74 / 0.6); }
@@ -189,7 +190,27 @@
 .slot { min-width: 140px; min-height: 32px; display: inline-flex; align-items: center; justify-content: center; font: var(--text-sm) var(--font-display); border: 1px dashed var(--color-border); border-radius: 999px; color: var(--color-muted); padding: 0 var(--space-3); background: transparent; }
 .slot.filled { border-style: solid; border-color: var(--color-accent); color: var(--color-accent); background: var(--color-raised); cursor: pointer; }
 .outcome { display: flex; align-items: center; gap: var(--space-3); justify-content: center; animation: toast-in var(--dur-slow) var(--ease-out); }
-.outcome.discovered .note-quote { color: var(--color-accent); }
+.outcome.is-discovered .note-quote { color: var(--color-accent); }
+.outcome .note-quote { text-align: center; }
+
+/* The circle comes alive as it fills: glow, lit marker dots, brighter rings, a slow drift.
+   Transform and opacity only, so it costs almost nothing; reduced motion stops the loops. */
+.ring-glow { opacity: calc(0.08 + var(--fill, 0) * 0.55); transition: opacity var(--dur-slow) var(--ease-out); }
+/* fill-box: the ring and its dots are symmetric around (0,0), so their own box centre is the circle centre. */
+.ring-outer { transform-box: fill-box; transform-origin: center; animation: ring-drift 90s linear infinite; }
+.ring.is-filling .ring-outer { animation-duration: 40s; }
+.ring.is-full .ring-outer { animation-duration: 18s; }
+.ring-dot { fill: var(--color-accent-deep); opacity: 0.55; transition: opacity var(--dur-med) var(--ease-out), fill var(--dur-med) var(--ease-out); }
+.ring-dot.lit { fill: var(--gold-400); opacity: 1; }
+.ring-inner { opacity: calc(0.45 + var(--fill, 0) * 0.55); transition: opacity var(--dur-slow) var(--ease-out); }
+.ring.is-full .ring-art { color: var(--gold-400); }
+.ring-art { transition: color var(--dur-slow) var(--ease-out); }
+.ring.is-answered .ring-glow { animation: ring-flare 1.2s var(--ease-out); }
+.slot.filled { animation: slot-in var(--dur-med) var(--ease-out); }
+@keyframes ring-drift { to { transform: rotate(360deg); } }
+@keyframes ring-flare { 0% { opacity: 0.2; transform: scale(0.9); } 35% { opacity: 1; transform: scale(1.08); } 100% { opacity: 0.6; transform: scale(1); } }
+@keyframes slot-in { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: none; } }
+.ring.is-answered .ring-glow { transform-box: fill-box; transform-origin: center; }
 .picker { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .chip.pick { cursor: pointer; background: transparent; min-height: 28px; font-size: var(--text-sm); }
 .chip.pick:hover:not(:disabled) { border-color: var(--color-accent); }
@@ -252,9 +273,10 @@
 
 /* Reduced motion: the OS preference or the in-game setting stops every loop. */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation: none !important; transition: none !important; }
+  *:not(.bar-fill), *::before, *::after { animation: none !important; transition: none !important; }
 }
-:root[data-motion="reduced"] *, :root[data-motion="reduced"] *::before, :root[data-motion="reduced"] *::after { animation: none !important; transition: none !important; }
+:root[data-motion="reduced"] *:not(.bar-fill), :root[data-motion="reduced"] *::before, :root[data-motion="reduced"] *::after { animation: none !important; transition: none !important; }
+/* Progress bars still fill under reduced motion (it's information, not decoration), just without easing. */
 
 .skip-link { position: absolute; left: var(--space-4); top: -60px; z-index: var(--z-modal); background: var(--color-accent); color: var(--color-on-accent); padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); font-family: var(--font-display); }
 .skip-link:focus { top: var(--space-2); }

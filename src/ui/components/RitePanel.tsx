@@ -9,7 +9,7 @@ import type { ItemId } from "../../content/items";
 import { CircleRiteIcon } from "../art/icons";
 import { formatClock } from "../format";
 import { ItemChip } from "./ItemLookup";
-import { Bar } from "./Bar";
+import { TimedBar } from "./Bar";
 
 export function RitePanel({ state, act }: { state: GameState; act: (c: (s: GameState) => Result) => unknown }) {
   if (!isRiteRevealed(state)) return null;
@@ -86,7 +86,7 @@ export function RitePanel({ state, act }: { state: GameState; act: (c: (s: GameS
       {performing && (
         <>
           <div className="goal">
-            <Bar value={performing.elapsedMs / HEARTH_RITE.durationMs} label="Rite progress" />
+            <TimedBar key="rite" elapsedMs={performing.elapsedMs} durationMs={HEARTH_RITE.durationMs} label="Rite progress" />
             <span className="muted num">{formatClock(HEARTH_RITE.durationMs - performing.elapsedMs)}</span>
           </div>
           <RiteLog lines={riteLog(state)} />

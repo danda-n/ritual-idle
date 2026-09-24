@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { GRIMOIRE_DEFS, type GrimoireId } from "../../content/grimoire";
 import type { ItemId } from "../../content/items";
 import { attune, circleSlots, experiment, type ExperimentOutcome, type Result, type Success } from "../../engine/commands";
@@ -34,21 +34,24 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
   const attuned = state.attunedTo;
   const progress = attuned ? progressOf(state, attuned) : null;
 
-  // Clear the circle when the attunement changes.
+  // Empty the slots when the attunement changes (the number of slots may change). The last result
+  // stays, so a discovery (which un-attunes the circle) can still flare.
   useEffect(() => {
     setPlaced([]);
-    setLast(null);
   }, [attuned]);
+
+  // How full the circle is (0–1): drives the glow, the lit marker dots and the ring's brightness.
+  const fill = slots > 0 ? placed.length / slots : 0;
+  const litDots = Math.round(fill * 8);
 
   const choices = GRIMOIRE_IDS.filter((id) => isSilhouetteVisible(state, id) && !isDiscovered(state, id));
   const held = (Object.entries(state.inventory) as [ItemId, number][])
     .filter(([id, n]) => n > 0 && !(hideWrong && progress?.provenWrong.includes(id)))
     .map(([id]) => id);
 
-  const place = (item: ItemId) => {
-    if (placed.includes(item) || placed.length >= slots) return;
-    setPlaced([...placed, item]);
-  };
+  // Functional updates, so quick clicks in a row each land (none overwrites the last).
+  const place = (item: ItemId) => setPlaced((p) => (p.includes(item) || p.length >= slots ? p : [...p, item]));
+  const remove = (item: ItemId) => setPlaced((p) => p.filter((x) => x !== item));
   const run = () => {
     const r = act((s) => experiment(s, placed));
     if (!r) return;
@@ -74,7 +77,10 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
           id="attune"
           className="field"
           value={attuned ?? ""}
-          onChange={(e) => act((s) => attune(s, (e.target.value || null) as GrimoireId | null))}
+          onChange={(e) => {
+            setLast(null);
+            act((s) => attune(s, (e.target.value || null) as GrimoireId | null));
+          }}
         >
           <option value="">Nothing: a free experiment (hunting secrets)</option>
           {choices.map((id) => (
@@ -89,19 +95,39 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
             : "Only an exact answer speaks. Two or three things; each try uses one of each."}
         </p>
 
-        <div className="ring" aria-label="Circle slots">
+        <div
+          className={`ring ${placed.length > 0 ? "is-filling" : ""} ${fill === 1 ? "is-full" : ""} ${last?.kind === "discovered" ? "is-answered" : ""}`}
+          style={{ "--fill": fill } as CSSProperties}
+          aria-label={`Circle slots, ${placed.length} of ${slots} filled`}
+        >
           <svg viewBox="-60 -60 120 120" className="ring-art" aria-hidden="true">
-            <circle r="52" fill="none" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 3" />
-            <circle r="40" fill="none" stroke="currentColor" strokeWidth="0.8" opacity="0.5" />
-            {Array.from({ length: 8 }, (_, i) => (
-              <circle key={i} r="1.6" cx={52 * Math.cos((i * Math.PI) / 4)} cy={52 * Math.sin((i * Math.PI) / 4)} fill="currentColor" />
-            ))}
+            <defs>
+              <radialGradient id="ring-glow">
+                <stop offset="0.35" stopColor="var(--gold-400)" stopOpacity="0.35" />
+                <stop offset="1" stopColor="var(--gold-400)" stopOpacity="0" />
+              </radialGradient>
+            </defs>
+            <circle className="ring-glow" r="58" fill="url(#ring-glow)" />
+            <g className="ring-outer">
+              <circle r="52" fill="none" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 3" />
+              {Array.from({ length: 8 }, (_, i) => (
+                <circle
+                  key={i}
+                  className={`ring-dot ${i < litDots ? "lit" : ""}`}
+                  style={{ transitionDelay: `${i * 40}ms` }}
+                  r="1.6"
+                  cx={52 * Math.cos((i * Math.PI) / 4 - Math.PI / 2)}
+                  cy={52 * Math.sin((i * Math.PI) / 4 - Math.PI / 2)}
+                />
+              ))}
+            </g>
+            <circle className="ring-inner" r="40" fill="none" stroke="currentColor" strokeWidth="0.8" />
           </svg>
           <div className="ring-slots">
             {Array.from({ length: slots }, (_, i) => {
               const item = placed[i];
               return item ? (
-                <button key={i} className="slot filled" onClick={() => setPlaced(placed.filter((x) => x !== item))} aria-label={`Remove ${itemName(item)}`}>
+                <button key={`${i}-${item}`} className="slot filled" onClick={() => remove(item)} aria-label={`Remove ${itemName(item)}`}>
                   {itemName(item)}
                 </button>
               ) : (
@@ -114,7 +140,7 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
         </div>
 
         {last && (
-          <div className={`outcome ${last.kind}`} role="status">
+          <div className={`outcome is-${last.kind}`} role="status">
             {last.kind === "glow" && <Glows glows={last.glows} of={last.of} />}
             <p className="note-quote">{outcomeLine(last)}</p>
           </div>

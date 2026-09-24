@@ -7,7 +7,7 @@ import type { GameState } from "../../engine/state";
 import { CircleRiteIcon, CoinIcon, CogIcon, SkillIcon } from "../art/icons";
 import { Rosette } from "../art/ornaments";
 import { formatClock } from "../format";
-import { Bar } from "./Bar";
+import { TimedBar } from "./Bar";
 
 export function TopBar({ state, onStop, stopNote, onSettings }: { state: GameState; onStop: () => void; stopNote?: string; onSettings: () => void }) {
   return (
@@ -42,7 +42,7 @@ function Working({ state, onStop, stopNote }: { state: GameState; onStop: () => 
       <div className="working" role="status">
         <CircleRiteIcon size={20} />
         <span className="working-name">{HEARTH_RITE.name}</span>
-        <Bar value={rite.elapsedMs / HEARTH_RITE.durationMs} label="Rite progress" />
+        <TimedBar key="rite" elapsedMs={rite.elapsedMs} durationMs={HEARTH_RITE.durationMs} label="Rite progress" />
         <span className="muted num">{formatClock(HEARTH_RITE.durationMs - rite.elapsedMs)}</span>
       </div>
     );
@@ -61,7 +61,12 @@ function Working({ state, onStop, stopNote }: { state: GameState; onStop: () => 
     <div className="working" role="status">
       <SkillIcon skill={def.skill} size={20} />
       <span className="working-name">{def.name}</span>
-      <Bar value={state.active.elapsedMs / duration} label={`${def.name} progress`} />
+      <TimedBar
+        key={`${state.active.id}:${state.stats.completed[state.active.id] ?? 0}:${Math.round(duration)}`}
+        elapsedMs={state.active.elapsedMs}
+        durationMs={duration}
+        label={`${def.name} progress`}
+      />
       <span className="muted num working-time">{left.toFixed(1)}s</span>
       <button className="btn btn-ghost" onClick={onStop}>
         Stop

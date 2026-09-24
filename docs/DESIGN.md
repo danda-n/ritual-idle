@@ -54,3 +54,10 @@ Item names go through `ItemChip` (`src/ui/components/ItemLookup.tsx`), so any it
 - **Accessibility:** a caption and `aria-label` describe the room in one sentence.
 - **Motion:** candle and hearth flicker, drifting smoke, and a circle pulse during the rite. The OS reduced-motion preference and the in-game setting stop all of it.
 - **Layout:** below 860px, the main content comes before the sidebar, and skills become a horizontal strip. A skip link jumps to the main content.
+
+## Motion notes
+- **Timed progress** (actions, the rite) uses `TimedBar` (`src/ui/components/Bar.tsx`). It reads the progress once per repetition, then a CSS `scaleX` animation runs on the compositor, so it moves every frame at no cost to the game loop. Key it per repetition.
+- **Stepwise progress** (XP, goals, insight) uses `Bar`, which eases between values.
+- **Progress bars keep filling under reduced motion**, because they carry information. Everything decorative stops.
+- **The circle fills with feeling:** the glow and inner ring brighten, the marker dots light in order, the outer ring's drift speeds up, items settle into their slots, and the circle flares when it answers. Transform and opacity only.
+- **Modifier classes are prefixed** (`is-glow`, `is-discovered`…) so a state can never collide with a component class. That collision is what squashed the circle's result line into a 10px dot.
