@@ -37,7 +37,8 @@ export interface ActionDef<S extends string, I extends string> {
 
 export type GoalDef<A extends string> =
   | { kind: "complete"; action: A; count: number }
-  | { kind: "requests"; count: number };
+  | { kind: "requests"; count: number }
+  | { kind: "rite" };
 
 /** Places (tabs) that open during the chapter. The House is always open. */
 export type Feature = "grimoire" | "village" | "circle";

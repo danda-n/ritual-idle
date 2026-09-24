@@ -1,11 +1,13 @@
 import { useState, type ReactNode } from "react";
 import { ACTION_DEFS } from "../content/actions";
 import type { SkillId } from "../content/skills";
+import { dismissEnding } from "../engine/commands";
 import { isFeatureOpen } from "../engine/progress";
 import { BookIcon, CircleRiteIcon, HouseIcon, LanternIcon } from "./art/icons";
 import { EmbroideryBand } from "./art/ornaments";
 import { AwaySummary } from "./components/AwaySummary";
 import { DevPanel } from "./components/DevPanel";
+import { ChapterEnd } from "./components/ChapterEnd";
 import { DiscoveryModal } from "./components/DiscoveryModal";
 import { Inventory } from "./components/Inventory";
 import { Notes } from "./components/Notes";
@@ -75,6 +77,9 @@ export function App() {
       <Toasts toasts={game.toasts} onDismiss={game.dismissToast} />
       {game.away && <AwaySummary away={game.away} onClose={game.dismissAway} />}
       {game.discovery && !game.away && <DiscoveryModal id={game.discovery} onClose={game.dismissDiscovery} />}
+      {state.rite.completed && !state.rite.completed.endingSeen && !game.away && !game.discovery && (
+        <ChapterEnd state={state} onClose={() => game.act(dismissEnding)} />
+      )}
     </div>
   );
 }

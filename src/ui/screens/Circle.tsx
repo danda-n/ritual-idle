@@ -5,6 +5,7 @@ import { attune, circleSlots, experiment, type ExperimentOutcome, type Result, t
 import { GRIMOIRE_IDS, isDiscovered, isSilhouetteVisible, progressOf } from "../../engine/grimoire";
 import type { GameState } from "../../engine/state";
 import { CircleRiteIcon } from "../art/icons";
+import { RitePanel } from "../components/RitePanel";
 import { itemName } from "../format";
 import { Glows } from "./Grimoire";
 
@@ -57,6 +58,9 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
 
   return (
     <div className="circle-screen">
+      <div className="circle-rite">
+        <RitePanel state={state} act={act} />
+      </div>
       <section className="panel circle-panel" aria-labelledby="circle-heading">
         <div className="panel-title">
           <CircleRiteIcon size={18} />

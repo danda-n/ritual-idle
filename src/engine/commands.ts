@@ -6,6 +6,7 @@ import { OMENS, type OmenId } from "../content/omens";
 import { addInsight, deduce, GRIMOIRE_IDS, glowCount, isDiscovered, isSilhouetteVisible, markDiscovered, matches, progressOf, type Fragment } from "./grimoire";
 import { requestCoin, trustMultiplier } from "./modifiers";
 import { applyBuff, giveNoteGifts } from "./omens";
+import { beginRite as startRite, canBeginRite } from "./rite";
 import { isFeatureOpen, revealNotes, type Note } from "./progress";
 import type { GameState, Settings } from "./state";
 import { xpForLevel } from "./xp";
@@ -95,6 +96,7 @@ export function releaseOmen(input: GameState, id: OmenId): Result {
   const state = structuredClone(input);
   state.omens[id] = (state.omens[id] ?? 0) - 1;
   applyBuff(state, OMENS[id].buff, state.lastTickAt, true);
+  if (state.rite.performing && OMENS[id].buff === "still_night") state.rite.performing.stillNight = true;
   return ok(state);
 }
 
@@ -164,4 +166,25 @@ export function setMark(input: GameState, id: GrimoireId, item: ItemId, mark: "s
 
 export function setSetting<K extends keyof Settings>(input: GameState, key: K, value: Settings[K]): Result {
   return ok({ ...input, settings: { ...input.settings, [key]: value } });
+}
+
+// The Major Rite
+
+export function beginRite(input: GameState): Result {
+  const reason = canBeginRite(input);
+  if (reason) return no(reason);
+  const state = structuredClone(input);
+  startRite(state, state.lastTickAt);
+  return ok(state);
+}
+
+/** Prime the rite to begin by itself the moment everything is ready (even offline). */
+export function primeRite(input: GameState, primed: boolean): Result {
+  if (input.rite.completed) return no("The circle is already awake.");
+  return ok({ ...input, rite: { ...input.rite, primed } });
+}
+
+export function dismissEnding(input: GameState): Result {
+  if (!input.rite.completed) return no("Not yet.");
+  return ok({ ...input, rite: { ...input.rite, completed: { ...input.rite.completed, endingSeen: true } } });
 }

@@ -519,3 +519,9 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
 - **Village requests can be turned away** with no penalty; a new one knocks after 30 seconds of game time. That way an impossible request never jams the board.
 - **The offline cap is derived from sanctum upgrades**, not stored in the save. Mended shutters give 36h in Chapter 1.
 - **Yield bonuses** (e.g. the drying rack's +10%) roll a chance for +1 on guaranteed outputs only.
+
+### Chapter 1 build: small decisions (M3–M4)
+- **Discovery grants the effect.** A successful circle experiment *is* the making; the reward applies at once, permanently.
+- **Janko, Follower 1 (draft):** in "assist me" mode, +30% speed at Initiate, plus the *Hearth-born* trait (+20% more on Chandlery). Assigning followers to their own actions comes in Chapter 2.
+- **The rite never fails**, and its outcome runs Faltering / Sound / Resplendent. Chapter 1 has no component grades yet, so its range is Sound to Resplendent.
+- **Player commands save immediately**, not on the next autosave.

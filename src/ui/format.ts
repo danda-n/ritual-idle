@@ -24,6 +24,8 @@ export function formatStop(reason: StopReason): string {
       return "Recipe not yet deciphered";
     case "skill_locked":
       return "Not yet";
+    case "rite_in_progress":
+      return "The rite is under way";
   }
 }
 

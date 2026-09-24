@@ -11,10 +11,12 @@ import { applyBuff, giveNoteGifts, grantOmen, pruneBuffs } from "./omens";
 import { isRecipeKnown, isSkillUnlocked, pagesRead, revealNotes, type Note, type Page } from "./progress";
 import { nextRandom } from "./rng";
 import type { GameState } from "./state";
+import { beginIfPrimed, stepRite } from "./rite";
 import { refillBoard } from "./village";
 import { levelForXp, xpForLevel } from "./xp";
 
 export type StopReason =
+  | { kind: "rite_in_progress" }
   | { kind: "skill_locked" }
   | { kind: "recipe_unknown" }
   | { kind: "level_too_low"; level: number }
@@ -36,11 +38,16 @@ export interface Report {
   /** Insight toward hidden recipes (from pages past the story ones, and curios). */
   fragments: Fragment[];
   curioStories: string[];
+  riteStarted: boolean;
+  /** Time spent performing the rite. */
+  riteMs: number;
+  /** Quality index if the rite finished during this span. */
+  riteCompleted: number | null;
   stopped?: { action: ActionId; reason: StopReason };
 }
 
 export function emptyReport(): Report {
-  return { elapsedMs: 0, actionsCompleted: 0, xpGained: {}, itemsGained: {}, itemsUsed: {}, levelUps: [], notesRevealed: [], pagesRead: [], omensFound: [], omensLost: 0, fragments: [], curioStories: [] };
+  return { elapsedMs: 0, actionsCompleted: 0, xpGained: {}, itemsGained: {}, itemsUsed: {}, levelUps: [], notesRevealed: [], pagesRead: [], omensFound: [], omensLost: 0, fragments: [], curioStories: [], riteStarted: false, riteMs: 0, riteCompleted: null };
 }
 
 export function skillLevel(state: GameState, skill: SkillId): number {
@@ -50,6 +57,7 @@ export function skillLevel(state: GameState, skill: SkillId): number {
 /** Why the action can't run right now, or null if it can. */
 export function blockReason(state: GameState, id: ActionId): StopReason | null {
   const def = ACTION_DEFS[id];
+  if (state.rite.performing) return { kind: "rite_in_progress" };
   if (!isSkillUnlocked(state, def.skill)) return { kind: "skill_locked" };
   if (!isRecipeKnown(state, id)) return { kind: "recipe_unknown" };
   if (skillLevel(state, def.skill) < def.level) return { kind: "level_too_low", level: def.level };
@@ -88,12 +96,29 @@ export function advance(input: GameState, ms: number): { state: GameState; repor
     return value;
   };
 
+  const tryPrimed = () => {
+    if (beginIfPrimed(state, clock())) report.riteStarted = true;
+  };
+
   refillBoard(state, clock());
-  while (state.active && remaining > 0) {
-    const { id } = state.active;
+  tryPrimed();
+  while ((state.active || state.rite.performing) && remaining > 0) {
+    // The rite takes the whole action slot while it runs.
+    if (state.rite.performing) {
+      const { used, completedQuality } = stepRite(state, remaining, clock());
+      remaining -= used;
+      report.riteMs += used;
+      if (completedQuality !== null) {
+        report.riteCompleted = completedQuality;
+        report.notesRevealed.push(...revealNotes(state));
+      }
+      continue;
+    }
+    const { id } = state.active!;
     const def = ACTION_DEFS[id];
 
-    if (state.active.elapsedMs === 0) {
+    const active = state.active!;
+    if (active.elapsedMs === 0) {
       const reason = blockReason(state, id);
       if (reason) {
         report.stopped = { action: id, reason };
@@ -102,14 +127,14 @@ export function advance(input: GameState, ms: number): { state: GameState; repor
       }
     }
 
-    const needed = actionDurationMs(state, id, clock()) - state.active.elapsedMs;
+    const needed = actionDurationMs(state, id, clock()) - active.elapsedMs;
     if (remaining < needed) {
-      state.active.elapsedMs += remaining;
+      active.elapsedMs += remaining;
       remaining = 0;
       break;
     }
     remaining -= needed;
-    state.active.elapsedMs = 0;
+    active.elapsedMs = 0;
 
     // Complete one repetition: consume inputs, roll outputs, grant XP.
     for (const [item, qty] of Object.entries(def.inputs) as [ItemId, number][]) {
@@ -162,6 +187,7 @@ export function advance(input: GameState, ms: number): { state: GameState; repor
     report.notesRevealed.push(...notes);
     report.omensFound.push(...giveNoteGifts(state, notes));
     refillBoard(state, clock());
+    tryPrimed();
   }
 
   state.lastTickAt = input.lastTickAt + ms;

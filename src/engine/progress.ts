@@ -28,6 +28,7 @@ export function currentNote(state: GameState): Note {
 export function goalProgress(state: GameState, note: Note): { done: number; target: number } | null {
   if (!("goal" in note)) return null;
   const goal: GoalDef<ActionId> = note.goal;
+  if (goal.kind === "rite") return { done: state.rite.completed ? 1 : 0, target: 1 };
   const done = goal.kind === "complete" ? completedCount(state, goal.action) : state.stats.requestsFilled;
   return { done: Math.min(done, goal.count), target: goal.count };
 }
@@ -67,4 +68,9 @@ export function revealNotes(state: GameState): Note[] {
     revealed.push(currentNote(state));
   }
   return revealed;
+}
+
+/** The Major Rite is revealed by the note whose goal is to perform it. */
+export function isRiteRevealed(state: GameState): boolean {
+  return revealedNotes(state).some((n) => "goal" in n && n.goal.kind === "rite");
 }

@@ -5,6 +5,7 @@ import type { Result, Success } from "../engine/commands";
 import { nextHintAt, progressOf, type Fragment } from "../engine/grimoire";
 import { rewind } from "../engine/devtools";
 import { OMENS } from "../content/omens";
+import { HEARTH_RITE } from "../content/rite";
 import { catchUp, type CatchUp } from "../engine/offline";
 import { clearLocal, loadLocal, saveLocal } from "../engine/save";
 import { advance, startAction, stopAction, type Report } from "../engine/simulate";
@@ -70,8 +71,9 @@ export function useGame() {
 
   // New notes and pages pop up while playing; after an absence they appear in the summary instead.
   const announce = useCallback(
-    (report: Partial<Pick<Report, "notesRevealed" | "pagesRead" | "omensFound" | "omensLost" | "fragments" | "curioStories">>) =>
+    (report: Partial<Pick<Report, "notesRevealed" | "pagesRead" | "omensFound" | "omensLost" | "fragments" | "curioStories" | "riteStarted">>) =>
       pushToasts([
+        ...(report.riteStarted ? [{ title: "The rite begins", text: `Everything was ready. The ${HEARTH_RITE.name} has begun.` }] : []),
         ...(report.curioStories ?? []).map((text) => ({ title: "A curio, read", text })),
         // Insight from the player's own attempts only toasts when it opens a clearer hint.
         ...(report.fragments ?? []).flatMap((f) => {
@@ -155,6 +157,7 @@ export function useGame() {
         return null;
       }
       commit(r.state);
+      saveLocal(r.state); // choices are saved at once, not on the next autosave
       if (r.aside) pushToasts([{ title: "They tell you something", text: r.aside }]);
       announce({ notesRevealed: r.notes, fragments: r.fragments });
       if (r.outcome?.kind === "discovered") setDiscovery(r.outcome.recipe);

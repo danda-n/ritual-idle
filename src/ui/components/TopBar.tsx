@@ -1,9 +1,10 @@
 import { ACTION_DEFS } from "../../content/actions";
 import { BUFFS } from "../../content/buffs";
+import { HEARTH_RITE } from "../../content/rite";
 import { actionDurationMs, activeBuffs } from "../../engine/modifiers";
 import { isFeatureOpen } from "../../engine/progress";
 import type { GameState } from "../../engine/state";
-import { CoinIcon, SkillIcon } from "../art/icons";
+import { CircleRiteIcon, CoinIcon, SkillIcon } from "../art/icons";
 import { Rosette } from "../art/ornaments";
 import { formatClock } from "../format";
 import { Bar } from "./Bar";
@@ -32,6 +33,17 @@ export function TopBar({ state, onStop, stopNote }: { state: GameState; onStop: 
 }
 
 function Working({ state, onStop, stopNote }: { state: GameState; onStop: () => void; stopNote?: string }) {
+  const rite = state.rite.performing;
+  if (rite) {
+    return (
+      <div className="working" role="status">
+        <CircleRiteIcon size={20} />
+        <span className="working-name">{HEARTH_RITE.name}</span>
+        <Bar value={rite.elapsedMs / HEARTH_RITE.durationMs} label="Rite progress" />
+        <span className="muted num">{formatClock(HEARTH_RITE.durationMs - rite.elapsedMs)}</span>
+      </div>
+    );
+  }
   if (!state.active) {
     return (
       <div className="working idle" role="status">

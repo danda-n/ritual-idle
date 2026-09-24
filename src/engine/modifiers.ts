@@ -1,5 +1,6 @@
 import { ACTION_DEFS, type ActionId } from "../content/actions";
 import { BUFF_DEFS } from "../content/buffs";
+import { FOLLOWERS } from "../content/followers";
 import type { ItemId } from "../content/items";
 import { SHOP } from "../content/shop";
 import type { RequestDef, UpgradeEffect } from "../content/types";
@@ -29,6 +30,11 @@ export function speedMultiplier(state: GameState, id: ActionId, now: number = st
   for (const e of effects(state)) if (e.kind === "speed" && e.skill === skill) bonus += e.bonus;
   for (const b of activeBuffs(state, now)) {
     bonus += BUFF_DEFS[b.id].speed?.[skill] ?? 0;
+  }
+  // Followers "assist me": they help with whatever you're doing.
+  for (const f of state.followers) {
+    const def = FOLLOWERS[f];
+    bonus += def.assist + (def.trait.skill === skill ? def.trait.bonus : 0);
   }
   return 1 + bonus;
 }
@@ -89,9 +95,10 @@ export function trustMultiplier(state: GameState): number {
   return mult;
 }
 
-/** Coin a request pays, after person-specific bonuses (Hana's soup). */
+/** Coin a request pays, after person-specific bonuses (Hana's soup lasts until the chapter ends). */
 export function requestCoin(state: GameState, req: RequestDef<string>): number {
   let mult = 1;
-  for (const r of discoveredRewards(state)) if (r.kind === "patron_coin" && r.from === req.from) mult *= r.multiplier;
+  const chapterOver = state.rite.completed !== null;
+  for (const r of discoveredRewards(state)) if (r.kind === "patron_coin" && r.from === req.from && !chapterOver) mult *= r.multiplier;
   return Math.round(req.coin * mult);
 }

@@ -1,5 +1,6 @@
 import type { ActionId } from "../content/actions";
 import type { BuffId } from "../content/buffs";
+import type { FollowerId } from "../content/followers";
 import type { GrimoireId } from "../content/grimoire";
 import type { ItemId } from "../content/items";
 import type { OmenId } from "../content/omens";
@@ -49,6 +50,8 @@ export interface GameState {
   /** The silhouette the circle is attuned to, or null for free experiments. */
   attunedTo: GrimoireId | null;
   settings: Settings;
+  rite: RiteState;
+  followers: FollowerId[];
   stats: {
     /** Lifetime completions per action. Drives note goals and which burnt pages have been read. */
     completed: Partial<Record<ActionId, number>>;
@@ -71,6 +74,13 @@ export interface RecipeProgress {
   provenRight: ItemId[];
   /** The player's own pencil marks. */
   marks: Partial<Record<ItemId, "suspect" | "doubt">>;
+}
+
+export interface RiteState {
+  /** Begin automatically as soon as every requirement is met. */
+  primed: boolean;
+  performing: { elapsedMs: number; stillNight: boolean } | null;
+  completed: { quality: number; endingSeen: boolean } | null;
 }
 
 export interface Settings {
@@ -102,6 +112,8 @@ export function newGame(now: number = Date.now(), seed: number = randomSeed()): 
     grimoire: {},
     attunedTo: null,
     settings: { grimoireAssist: false },
+    rite: { primed: false, performing: null, completed: null },
+    followers: [],
     stats: { completed: {}, requestsFilled: 0, omensSeen: 0, curiosRead: 0 },
   };
 }

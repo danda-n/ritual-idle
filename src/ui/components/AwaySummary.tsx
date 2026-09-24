@@ -1,5 +1,6 @@
 import type { ItemId } from "../../content/items";
 import { OMENS } from "../../content/omens";
+import { HEARTH_RITE, QUALITIES } from "../../content/rite";
 import { SKILLS } from "../../content/skills";
 import type { CatchUp } from "../../engine/offline";
 import { formatDuration, formatStop, itemName } from "../format";
@@ -14,9 +15,9 @@ export function AwaySummary({ away, onClose }: { away: CatchUp; onClose: () => v
         You were gone {formatDuration(away.awayMs)}.
         {away.capped && ` The house kept working for ${formatDuration(report.elapsedMs)}, the limit for now.`}
       </p>
-      {report.actionsCompleted === 0 ? (
+      {report.actionsCompleted === 0 && report.riteMs === 0 ? (
         <p>Nothing stirred. Leave something running next time.</p>
-      ) : (
+      ) : report.actionsCompleted === 0 ? null : (
         <>
           {report.levelUps.map((l) => (
             <p key={l.skill}>
@@ -43,6 +44,13 @@ export function AwaySummary({ away, onClose }: { away: CatchUp; onClose: () => v
           Page deciphered: <strong>{p.title}</strong>
         </p>
       ))}
+      {report.riteStarted && <p>The circle was ready, so the {HEARTH_RITE.name} began by itself.</p>}
+      {report.riteMs > 0 && report.riteCompleted === null && <p>The {HEARTH_RITE.name} went on without you ({formatDuration(report.riteMs)}).</p>}
+      {report.riteCompleted !== null && (
+        <p>
+          <strong>The {HEARTH_RITE.name} is complete</strong> ({QUALITIES[report.riteCompleted]}).
+        </p>
+      )}
       {report.curioStories.map((text, i) => (
         <p key={`c${i}`} className="text-2">
           A curio, read: <em>{text}</em>

@@ -210,6 +210,12 @@ There are three hidden recipes in Chapter 1. None unlock by level. You find them
   - The **cellar** opens in the sanctum.
   - A lore chapter.
 - **Resplendent bonus:** a cosmetic (embroidered circle cloth) and an extra lore fragment.
+- **Build details** *(M4)*:
+  - The Still Night bonus counts if the buff is active at any moment while the rite runs (released before or during it).
+  - Priming begins the rite the moment the last component exists, even offline.
+  - Janko ("assist me") gives +30% speed to whatever you do, and +20% more on Chandlery.
+  - A 9th note bridges to Chapter 2.
+  - Hana's double pay ends when the rite completes.
 
 ---
 

@@ -53,7 +53,13 @@ export const NOTES = [
   },
   {
     text: "The circle is warm. It has been waiting for you. Wake it.",
-    hint: "The Kindling of the Hearth-Circle is coming in a later build.",
+    hint: "The Kindling of the Hearth-Circle is on the Circle tab. Everything it needs is listed there.",
+    unlocks: [],
+    goal: { kind: "rite" },
+  },
+  {
+    text: "Rest now, child. The house will keep working, and so will the boy.",
+    hint: "Janko helps with whatever you're doing. Chapter II begins in a later build.",
     unlocks: [],
   },
 ] as const satisfies readonly NoteDef<SkillId, ActionId>[];

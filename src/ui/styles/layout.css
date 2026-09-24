@@ -202,3 +202,18 @@
 @media (max-width: 1100px) {
   .grimoire, .circle-screen { grid-template-columns: 1fr; }
 }
+
+/* Rite */
+.circle-rite { grid-column: 1 / -1; }
+.rite-panel { display: flex; flex-direction: column; gap: var(--space-3); }
+.rite-panel.performing { border-color: var(--color-accent-deep); box-shadow: var(--glow-candle); }
+.rite-panel h3 { font-size: var(--text-sm); }
+.rite-needs { columns: 2; column-gap: var(--space-5); }
+.rite-needs li { break-inside: avoid; color: var(--color-text-2); }
+.rite-needs li.met { color: var(--color-text); }
+.rite-needs li.met span:first-child { color: var(--color-accent); }
+.factors { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--space-1); font-size: var(--text-sm); color: var(--color-muted); }
+.factors li.met { color: var(--color-accent); }
+.rite-log { list-style: none; padding: 0 0 0 var(--space-3); margin: 0; border-left: 2px solid var(--color-accent-deep); display: flex; flex-direction: column; gap: var(--space-2); }
+.rite-log li { animation: toast-in var(--dur-slow) var(--ease-out); }
+@media (max-width: 860px) { .rite-needs { columns: 1; } }

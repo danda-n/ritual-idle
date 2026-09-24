@@ -3,6 +3,8 @@ import { ITEMS, type ItemId } from "../../content/items";
 import { NOTES } from "../../content/notes";
 import { addInsight, fragmentTarget } from "../../engine/grimoire";
 import type { GameState } from "../../engine/state";
+import { SKILL_IDS } from "../../content/skills";
+import { levelForXp, xpForLevel } from "../../engine/xp";
 
 // Dev builds only (see App). Time skips go through the real offline catch-up.
 const MIN = 60_000;
@@ -39,6 +41,17 @@ export function DevPanel({ dev }: { dev: { skip: (ms: number) => void; mutate: (
         </button>
         <button className="btn btn-ghost" onClick={() => dev.mutate((s) => ({ ...s, notesRevealed: Math.min(s.notesRevealed + 1, NOTES.length) }))}>
           Next note
+        </button>
+        <button
+          className="btn btn-ghost"
+          onClick={() =>
+            dev.mutate((s) => {
+              for (const id of SKILL_IDS) s.skills[id].xp = xpForLevel(Math.min(s.levelCap, levelForXp(s.skills[id].xp, s.levelCap) + 5));
+              return s;
+            })
+          }
+        >
+          +5 levels
         </button>
         <button
           className="btn btn-ghost"
