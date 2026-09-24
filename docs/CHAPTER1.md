@@ -1,7 +1,7 @@
 # Chapter 1: Hearth. Content Pass (v0.1)
 
 > This is the detail layer beneath [CONCEPT.md](CONCEPT.md). It covers the first session: from arriving at the cold house to the **Kindling of the Hearth-Circle**.
-> The numbers are a first pass. They're checked by [tools/ch1_sim.py](../tools/ch1_sim.py) (see §10) and will be tuned in playtests.
+> The numbers are a first pass. They're checked by the headless playthrough test ([src/engine/playthrough.test.ts](../src/engine/playthrough.test.ts), see §10) and will be tuned in playtests.
 > Item and action names are draft flavour.
 
 ---
@@ -227,14 +227,17 @@ There are three hidden recipes in Chapter 1. None unlock by level. You find them
 
 ---
 
-## 10. Pacing check (simulation)
+## 10. Pacing check (headless playthrough)
 
-[tools/ch1_sim.py](../tools/ch1_sim.py) plays Chapter 1 as an efficient player: one action at a time, no offline time, no requests or experiments.
+[src/engine/playthrough.test.ts](../src/engine/playthrough.test.ts) plays Chapter 1 as an efficient player, on the real game engine and content.
+- It follows grandmother's notes, deciphers pages to learn recipes, fills village requests for coin, buys bread, makes every component and performs the Rite.
+- Active play only: no offline time and no experiments.
+- It runs as part of `npm test`, so it fails if the chapter can't be finished, if a note soft-locks, or if the time leaves the 45–150 minute band. `npm run pacing` prints the timings.
+- It replaced the earlier Python sketch (`tools/ch1_sim.py`), whose copied numbers could drift from the game.
 
 - **XP curve:** XP to the next level = 25 × 1.18^(level − 1). That's 473 XP to reach level 10 and 3,075 XP to reach level 20.
-- **Result:** about **60 minutes** of actions to meet the Rite requirements, plus **30 minutes** to perform it.
-- **Levels at the Rite:** Chandlery 15, Herbalism 14, Sigilcraft 15, Scholarship 8, Ritualism 5. Scavenging hits the cap of 20 (so there's a visible reason to want the Rite).
-- **Real players** read notes, experiment and fill requests, which likely makes them 1.5–2× slower. **Estimate: about 1.5–2 hours to the Rite. That's on target.**
+- **Result** (5 seeds, measured in the M7 build): **89–91 minutes** of active play, which is about **60 minutes of preparation plus the 30-minute Rite**. That matches the earlier estimate.
+- **Real players** read notes, experiment and fill requests at their own pace, which likely makes the preparation 1.5–2× slower. **Estimate: about 1.5–2 hours to begin the Rite.** That's at the top of the 1–2h target. The Rite itself can run while the player is away.
 
 **Things to tune in playtests:**
 - Scavenging caps out before the Rite. That's fine as motivation, but check that it doesn't feel like a wall.
@@ -245,6 +248,11 @@ There are three hidden recipes in Chapter 1. None unlock by level. You find them
 ---
 
 ## 11. What the vertical slice needs from this document
+
+> **Status: complete** (milestones M0–M7). Everything below is built, tested and played through; see the README.
+> Open tuning items: §10 (preparation time is at the top of the target) and the playtest list above.
+
+### Original checklist
 
 The first build needs:
 - all of §2–§8: 6 skills, 27 actions, the notes sequence, the request board, 1 omen, 3 hidden recipes, the Rite

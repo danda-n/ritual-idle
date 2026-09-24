@@ -4,8 +4,8 @@ import type { SkillId } from "./skills";
 
 type Action = ActionDef<SkillId, ItemId>;
 
-// Chapter 1 actions — mirrors docs/CHAPTER1.md §3 and tools/ch1_sim.py.
-// Keep all three in sync when tuning.
+// Chapter 1 actions — mirrors docs/CHAPTER1.md §3. Keep the doc in sync when tuning;
+// src/engine/playthrough.test.ts checks the chapter is still finishable and on pace.
 export const ACTIONS = {
   // Herbalism
   pick_nettle: { name: "Pick nettle", skill: "herbalism", level: 1, seconds: 3, xp: 5, inputs: {}, outputs: [{ item: "nettle", qty: 1 }] },
