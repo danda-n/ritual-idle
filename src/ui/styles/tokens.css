@@ -25,16 +25,6 @@
   --folk-lilac: #a797f2;
   --folk-plum: #dd78b6;
 
-  /* Paper: printed cards. Inks all >= 4.6:1 on both paper tones */
-  --paper: #efe4cc;
-  --paper-2: #e4d6b8;
-  --paper-edge: #c9b28a;
-  --paper-ink: #221811;
-  --paper-muted: #65523f;
-  --paper-red: #9a2f1f;
-  --paper-ochre: #7d5410;
-  --paper-indigo: #3b3a8c;
-
   /* Semantic colour */
   --color-bg: var(--ink-950);
   --color-surface: var(--ink-900);

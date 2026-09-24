@@ -19,51 +19,48 @@ body {
 [data-skill="scholarship"] { --skill: var(--folk-lilac); }
 [data-skill="ritualism"] { --skill: var(--folk-plum); }
 
-/* ---------- Paper: re-map the tokens so every component inside prints in ink ---------- */
+/* ---------- Vellum: the cards you read and act on ----------
+   Warm, lifted dark vellum lit by a candle from above, framed in gold. It stands out by warmth,
+   light and frame rather than brightness, so it sits in the dark room instead of glaring.
+   Tokens are re-mapped inside the scope, so every component placed on it adapts. */
 .paper, .modal {
-  --color-surface: var(--paper);
-  --color-raised: var(--paper-2);
-  --color-sunken: #d9c9a7;
-  --color-border: var(--paper-edge);
-  --color-border-soft: #d6c39f;
-  --color-text: var(--paper-ink);
-  --color-text-2: #4a3a2b;
-  --color-muted: var(--paper-muted);
-  --color-accent: var(--paper-red);
-  --color-accent-deep: var(--paper-ochre);
-  --color-on-accent: var(--paper);
-  --color-warn-text: var(--paper-red);
-  --color-focus: var(--paper-indigo);
-  --glow-candle: 0 0 0 1px var(--paper-ochre);
-  background-color: var(--paper);
+  --color-surface: #33271c;
+  --color-raised: #43331f;
+  --color-sunken: #221a13;
+  --color-border: #8a6a3a;
+  --color-border-soft: #5a452c;
+  --color-text: var(--bone-100);
+  --color-text-2: #d6c7ad;
+  --color-muted: #b8a78c;
+  --color-accent: var(--folk-candle);
+  --color-accent-deep: var(--gold-600);
+  --color-on-accent: var(--ink-950);
+  --color-warn-text: #ef8a6e;
+  --color-focus: var(--folk-candle);
+  --glow-candle: 0 0 0 1px var(--gold-600), 0 0 16px rgb(232 176 78 / 0.18);
+  background-color: #33271c;
   background-image:
-    radial-gradient(ellipse at 20% 0%, rgb(255 255 255 / 0.35), transparent 60%),
-    radial-gradient(ellipse at 100% 100%, rgb(125 84 16 / 0.12), transparent 55%);
-  color: var(--paper-ink);
-  border: 1px solid var(--paper-edge);
-  box-shadow: 0 1px 0 rgb(255 255 255 / 0.25) inset, 0 10px 28px rgb(0 0 0 / 0.45);
+    radial-gradient(ellipse 70% 55% at 50% -5%, rgb(232 176 78 / 0.14), transparent 70%),
+    linear-gradient(180deg, #3b2d20, #2d2218);
+  color: var(--bone-100);
+  border: 1px solid #8a6a3a;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.45), 0 12px 30px rgb(0 0 0 / 0.5), 0 0 40px rgb(232 176 78 / 0.05);
   position: relative;
 }
-/* A printed double rule inside the edge, like a woodcut plate */
+/* An inner gold rule, like an illuminated page border */
 .paper::after, .modal::after {
   content: "";
   position: absolute;
   inset: 5px;
-  border: 1px solid rgb(154 47 31 / 0.35);
+  border: 1px solid rgb(232 176 78 / 0.22);
   border-radius: calc(var(--radius-md) - 2px);
   pointer-events: none;
 }
-.paper .panel-title svg, .modal .panel-title svg { color: var(--paper-red); }
-.paper .btn-primary, .modal .btn-primary { background: var(--paper-ink); color: var(--paper); }
-.paper .btn-primary:hover, .modal .btn-primary:hover { background: #3a2a1f; }
-.paper .btn-primary:disabled, .modal .btn-primary:disabled { background: var(--paper-2); color: var(--paper-muted); }
-.paper .btn-ghost, .modal .btn-ghost { color: var(--paper-ink); border-color: var(--paper-edge); }
-.paper .bar-fill, .modal .bar-fill { background: linear-gradient(90deg, var(--paper-ochre), var(--paper-red)); }
-.modal .field, .paper .field { background: #fbf5e7; color: var(--paper-ink); border-color: var(--paper-edge); }
-.modal .effects li, .paper .effects li { color: var(--paper-red); border-color: rgb(154 47 31 / 0.45); background: rgb(154 47 31 / 0.06); }
-.modal .effect-line, .paper .effect-line { color: var(--paper-red); }
-.modal .note-quote, .paper .note-quote { color: var(--paper-ink); }
-.modal h2 { color: var(--paper-ink); }
+.paper .panel-title svg, .modal .panel-title svg { color: var(--folk-candle); }
+.paper .panel-title h2, .modal h2 { color: var(--folk-candle); }
+.paper .bar-fill, .modal .bar-fill { background: linear-gradient(90deg, var(--gold-600), var(--folk-candle)); }
+.modal .effects li, .paper .effects li { color: var(--folk-candle); border-color: rgb(232 176 78 / 0.45); background: rgb(232 176 78 / 0.07); }
+.modal .effect-line, .paper .effect-line { color: var(--folk-candle); }
 .modal-backdrop { background: rgb(8 5 3 / 0.78); backdrop-filter: blur(2px); }
 
 /* ---------- Section titles: a red cross-stitch underline ---------- */
@@ -79,7 +76,7 @@ body {
   opacity: 0.55;
   mask: linear-gradient(90deg, #000 0 60%, transparent);
 }
-.paper .panel-title::after { background: repeating-linear-gradient(90deg, var(--paper-red) 0 4px, transparent 4px 8px); }
+.paper .panel-title::after, .modal .panel-title::after { opacity: 0.75; }
 
 /* ---------- Top bar: its own band ---------- */
 .topbar {
@@ -115,10 +112,10 @@ body {
   opacity: 0.5;
 }
 .tab:hover { color: var(--color-text); background: #221912; }
-.tab[aria-selected="true"] { background: var(--paper); color: var(--paper-ink); border-color: var(--paper-edge); }
-.tab[aria-selected="true"] svg { color: var(--paper-red); }
-.tab[aria-selected="true"]::before { background: repeating-linear-gradient(90deg, var(--paper-red) 0 3px, transparent 3px 6px); opacity: 0.8; }
-.tabs + .layout { border-top: 2px solid var(--paper); padding-top: var(--space-4); }
+.tab[aria-selected="true"] { background: linear-gradient(180deg, #43331f, #33271c); color: var(--folk-candle); border-color: #8a6a3a; }
+.tab[aria-selected="true"] svg { color: var(--folk-candle); }
+.tab[aria-selected="true"]::before { opacity: 0.9; }
+.tabs + .layout { border-top: 1px solid #8a6a3a; padding-top: var(--space-4); }
 
 /* ---------- Skill tiles and action rows carry their skill's colour ---------- */
 .skill-tile[data-skill] { border-left: 3px solid var(--skill); }
@@ -158,3 +155,20 @@ body {
 .action-row[data-skill] .btn-primary:not(:disabled):hover { background: var(--skill); color: var(--ink-950); border-color: var(--skill); }
 .action-row .btn:disabled { background: transparent; border-style: dashed; }
 input[type="checkbox"] { accent-color: var(--color-accent); width: 16px; height: 16px; }
+
+/* ---------- The shop ---------- */
+.shop-group { font-size: var(--text-xs); letter-spacing: 0.08em; color: var(--color-muted); margin: var(--space-3) 0 var(--space-1); }
+.shop .shop-list { gap: 0; }
+.shop .shop-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--space-3); padding: var(--space-2) 0; }
+.shop .shop-row.upgrade { grid-template-columns: 36px minmax(0, 1fr) auto; }
+.shop-info strong { font-family: var(--font-display); font-weight: 500; }
+.shop-info p { font-size: var(--text-xs); margin-top: 1px; }
+.shop-icon { width: 36px; height: 36px; display: grid; place-items: center; border-radius: var(--radius-md); border: 1px solid color-mix(in srgb, var(--skill, var(--folk-candle)) 45%, transparent); background: color-mix(in srgb, var(--skill, var(--folk-candle)) 10%, transparent); color: var(--skill, var(--folk-candle)); }
+.shop-effect { color: var(--skill, var(--folk-candle)); font-family: var(--font-display); letter-spacing: 0.02em; }
+.shop-buy { background: transparent; color: var(--folk-candle); border: 1px solid color-mix(in srgb, var(--folk-candle) 60%, transparent); white-space: nowrap; }
+.shop-buy:hover:not(:disabled) { background: var(--folk-candle); color: var(--ink-950); }
+.shop-short { font-size: var(--text-xs); color: var(--color-muted); border: 1px dashed var(--color-border); border-radius: var(--radius-sm); padding: var(--space-1) var(--space-2); white-space: nowrap; }
+.shop-owned { font-family: var(--font-display); font-size: var(--text-xs); letter-spacing: 0.04em; color: var(--skill, var(--folk-candle)); white-space: nowrap; }
+.shop-row.owned .shop-icon { background: color-mix(in srgb, var(--skill, var(--folk-candle)) 22%, transparent); }
+.shop-row.owned strong { color: var(--color-text-2); }
+.purse-small { color: var(--folk-candle); font-family: var(--font-display); }
