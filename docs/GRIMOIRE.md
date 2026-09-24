@@ -219,3 +219,19 @@ Save state per recipe: `{ discovered, insight, attempts: [{ items, glows }], pro
 - Should the circle limit candidates to items the player has *discovered*? (Yes by default. That keeps the pool at about 15–20 items in Chapter 1.)
 - The "almost answered" flicker in free experiments might make secrets too easy. Test with and without it.
 - Whether a discovery reveal should pause the action loop. Probably not: show it as a toast plus a Grimoire highlight.
+
+---
+
+## 12. Build notes (Chapter 1, M3)
+- **Silhouettes appear with their first fragment.** Fragments come from:
+  - deciphered pages past the 6 story pages (+3)
+  - curios, read automatically (+3, with a short story)
+  - three village requests that mention a recipe (+2, with the villager's aside)
+  - failed attuned attempts (+1)
+  Loose fragments (pages, curios) go to the unsolved hidden recipe with the least Insight.
+- **Proven right:** when an attempt's not-yet-crossed-out items equal its glow count, they're all marked as belonging.
+- **Discovery grants the effect at once.** The successful experiment *is* the making.
+  - The Dream pillow makes time away count 10% extra (applied after the cap).
+  - Threshold nail trust is kept as a fraction internally.
+- **Toasts:** Insight from your own attempts only pops up a toast when it unlocks a clearer hint; otherwise the Grimoire page shows it.
+- Content lives in `src/content/grimoire.ts` and logic in `src/engine/grimoire.ts`; the screens are `src/ui/screens/Grimoire.tsx` and `Circle.tsx`.

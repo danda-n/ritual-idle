@@ -15,7 +15,7 @@ const T0 = 1_000_000;
 const MIN = 60_000;
 
 function open(extra: Partial<GameState> = {}): GameState {
-  return { ...newGame(T0, 11), notesRevealed: NOTES.length, stats: { completed: { decipher_page: 6 }, requestsFilled: 1, omensSeen: 0 }, ...extra };
+  return { ...newGame(T0, 11), notesRevealed: NOTES.length, stats: { completed: { decipher_page: 6 }, requestsFilled: 1, omensSeen: 0, curiosRead: 0 }, ...extra };
 }
 
 function released(s: GameState): GameState {

@@ -1,4 +1,4 @@
-import { offlineCapMs } from "./modifiers";
+import { offlineBonus, offlineCapMs } from "./modifiers";
 import { advance, type Report } from "./simulate";
 import type { GameState } from "./state";
 
@@ -15,7 +15,8 @@ export interface CatchUp {
 export function catchUp(saved: GameState, now: number): CatchUp {
   const awayMs = Math.max(0, now - saved.lastTickAt);
   const cap = offlineCapMs(saved);
-  const simulatedMs = Math.min(awayMs, cap);
+  // The Dream pillow makes time away count extra, after the cap.
+  const simulatedMs = Math.min(awayMs, cap) * (1 + offlineBonus(saved));
   const { state, report } = advance(saved, simulatedMs);
   return { state: { ...state, lastTickAt: now }, report, awayMs, capped: awayMs > cap };
 }

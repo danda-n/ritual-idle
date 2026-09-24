@@ -3,6 +3,9 @@ import type { ItemId } from "../content/items";
 import type { SkillId } from "../content/skills";
 import { OMENS, type OmenId } from "../content/omens";
 import type { BuffId } from "../content/buffs";
+import { INSIGHT_GAIN } from "../content/grimoire";
+import { PAGES } from "../content/pages";
+import { addInsight, fragmentTarget, readCurio, type Fragment } from "./grimoire";
 import { actionDurationMs, chanceMultiplier, extraYieldChance } from "./modifiers";
 import { applyBuff, giveNoteGifts, grantOmen, pruneBuffs } from "./omens";
 import { isRecipeKnown, isSkillUnlocked, pagesRead, revealNotes, type Note, type Page } from "./progress";
@@ -30,11 +33,14 @@ export interface Report {
   omensFound: OmenId[];
   /** Omens that appeared while the shelf was full. */
   omensLost: number;
+  /** Insight toward hidden recipes (from pages past the story ones, and curios). */
+  fragments: Fragment[];
+  curioStories: string[];
   stopped?: { action: ActionId; reason: StopReason };
 }
 
 export function emptyReport(): Report {
-  return { elapsedMs: 0, actionsCompleted: 0, xpGained: {}, itemsGained: {}, itemsUsed: {}, levelUps: [], notesRevealed: [], pagesRead: [], omensFound: [], omensLost: 0 };
+  return { elapsedMs: 0, actionsCompleted: 0, xpGained: {}, itemsGained: {}, itemsUsed: {}, levelUps: [], notesRevealed: [], pagesRead: [], omensFound: [], omensLost: 0, fragments: [], curioStories: [] };
 }
 
 export function skillLevel(state: GameState, skill: SkillId): number {
@@ -118,6 +124,11 @@ export function advance(input: GameState, ms: number): { state: GameState; repor
       const qty = out.qty + (out.chance === undefined && extra > 0 && roll() < extra ? 1 : 0);
       add(state.inventory, out.item, qty);
       add(report.itemsGained, out.item, qty);
+      if (out.item === "curio") {
+        const { story, fragment } = readCurio(state);
+        report.curioStories.push(story);
+        if (fragment) report.fragments.push(fragment);
+      }
     }
     const skill = state.skills[def.skill];
     const before = levelForXp(skill.xp, state.levelCap);
@@ -142,6 +153,11 @@ export function advance(input: GameState, ms: number): { state: GameState; repor
     const pagesBefore = pagesRead(state).length;
     add(state.stats.completed, id, 1);
     report.pagesRead.push(...pagesRead(state).slice(pagesBefore));
+    // Past the story pages, each deciphered page carries a hint fragment.
+    if (id === "decipher_page" && (state.stats.completed.decipher_page ?? 0) > PAGES.length) {
+      const f = addInsight(state, fragmentTarget(state), INSIGHT_GAIN.page, "page");
+      if (f) report.fragments.push(f);
+    }
     const notes = revealNotes(state);
     report.notesRevealed.push(...notes);
     report.omensFound.push(...giveNoteGifts(state, notes));

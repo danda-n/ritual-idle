@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ITEMS, type ItemId } from "../../content/items";
 import { NOTES } from "../../content/notes";
+import { addInsight, fragmentTarget } from "../../engine/grimoire";
 import type { GameState } from "../../engine/state";
 
 // Dev builds only (see App). Time skips go through the real offline catch-up.
@@ -38,6 +39,17 @@ export function DevPanel({ dev }: { dev: { skip: (ms: number) => void; mutate: (
         </button>
         <button className="btn btn-ghost" onClick={() => dev.mutate((s) => ({ ...s, notesRevealed: Math.min(s.notesRevealed + 1, NOTES.length) }))}>
           Next note
+        </button>
+        <button
+          className="btn btn-ghost"
+          onClick={() =>
+            dev.mutate((s) => {
+              addInsight(s, fragmentTarget(s), 3, "page");
+              return s;
+            })
+          }
+        >
+          +fragment
         </button>
       </div>
     </details>

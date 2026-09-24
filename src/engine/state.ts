@@ -1,5 +1,6 @@
 import type { ActionId } from "../content/actions";
 import type { BuffId } from "../content/buffs";
+import type { GrimoireId } from "../content/grimoire";
 import type { ItemId } from "../content/items";
 import type { OmenId } from "../content/omens";
 import type { RequestId } from "../content/requests";
@@ -43,12 +44,38 @@ export interface GameState {
   omens: Partial<Record<OmenId, number>>;
   /** Active timed effects, ending at a time on the sim clock. */
   buffs: ActiveBuff[];
+  /** Progress on each hidden recipe or secret. Missing = never seen. */
+  grimoire: Partial<Record<GrimoireId, RecipeProgress>>;
+  /** The silhouette the circle is attuned to, or null for free experiments. */
+  attunedTo: GrimoireId | null;
+  settings: Settings;
   stats: {
     /** Lifetime completions per action. Drives note goals and which burnt pages have been read. */
     completed: Partial<Record<ActionId, number>>;
     requestsFilled: number;
     omensSeen: number;
+    curiosRead: number;
   };
+}
+
+export interface Attempt {
+  items: ItemId[];
+  glows: number;
+}
+
+export interface RecipeProgress {
+  insight: number;
+  discovered: boolean;
+  attempts: Attempt[];
+  provenWrong: ItemId[];
+  provenRight: ItemId[];
+  /** The player's own pencil marks. */
+  marks: Partial<Record<ItemId, "suspect" | "doubt">>;
+}
+
+export interface Settings {
+  /** Accessibility: doubles Insight gains (docs/GRIMOIRE.md §6). */
+  grimoireAssist: boolean;
 }
 
 export interface ActiveBuff {
@@ -72,6 +99,9 @@ export function newGame(now: number = Date.now(), seed: number = randomSeed()): 
     upgrades: [],
     omens: {},
     buffs: [],
-    stats: { completed: {}, requestsFilled: 0, omensSeen: 0 },
+    grimoire: {},
+    attunedTo: null,
+    settings: { grimoireAssist: false },
+    stats: { completed: {}, requestsFilled: 0, omensSeen: 0, curiosRead: 0 },
   };
 }

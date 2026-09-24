@@ -10,7 +10,7 @@ import { formatClock } from "../format";
 const OMEN_IDS = Object.keys(OMENS) as OmenId[];
 
 /** Shown once the first omen has appeared. */
-export function OmenShelf({ state, act }: { state: GameState; act: (c: (s: GameState) => Result) => boolean }) {
+export function OmenShelf({ state, act }: { state: GameState; act: (c: (s: GameState) => Result) => unknown }) {
   const buffs = activeBuffs(state);
   if (state.stats.omensSeen === 0 && buffs.length === 0) return null;
   const capacity = omenCapacity(state);

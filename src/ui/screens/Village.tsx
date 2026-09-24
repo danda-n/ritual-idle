@@ -6,7 +6,7 @@ import type { GameState } from "../../engine/state";
 import { CoinIcon, HouseIcon } from "../art/icons";
 import { itemName } from "../format";
 
-type Act = (command: (s: GameState) => Result) => boolean;
+type Act = (command: (s: GameState) => Result) => unknown;
 const SHOP_IDS = Object.keys(SHOP) as ShopId[];
 
 export function Village({ state, act }: { state: GameState; act: Act }) {

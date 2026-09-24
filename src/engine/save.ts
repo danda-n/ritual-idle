@@ -28,7 +28,9 @@ export function deserialize(json: string): GameState {
       completed: { ...data.stats?.completed },
       requestsFilled: data.stats?.requestsFilled ?? 0,
       omensSeen: data.stats?.omensSeen ?? 0,
+      curiosRead: data.stats?.curiosRead ?? 0,
     },
+    settings: { ...base.settings, ...data.settings },
     version: SAVE_VERSION,
   };
   // Fields that no longer exist (the offline cap is now derived from upgrades).

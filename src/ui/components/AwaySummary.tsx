@@ -43,6 +43,16 @@ export function AwaySummary({ away, onClose }: { away: CatchUp; onClose: () => v
           Page deciphered: <strong>{p.title}</strong>
         </p>
       ))}
+      {report.curioStories.map((text, i) => (
+        <p key={`c${i}`} className="text-2">
+          A curio, read: <em>{text}</em>
+        </p>
+      ))}
+      {report.fragments.length > 0 && (
+        <p>
+          {report.fragments.length === 1 ? "A hint fragment" : `${report.fragments.length} hint fragments`} went into the Grimoire.
+        </p>
+      )}
       {report.omensFound.map((o, i) => (
         <p key={i}>
           An omen appeared: <strong>{OMENS[o].name}</strong>. It waits on the shelf.

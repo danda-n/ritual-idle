@@ -152,3 +152,53 @@
 .omen-jars { display: flex; gap: 2px; color: var(--color-accent); filter: drop-shadow(0 0 6px rgb(224 173 74 / 0.35)); }
 .buff-list { margin-top: var(--space-2); }
 .buff-chip { flex-shrink: 0; }
+
+/* Grimoire */
+.grimoire { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: var(--space-4); align-items: start; }
+.grimoire-index h3 { font-size: var(--text-sm); color: var(--color-muted); margin: var(--space-3) 0 var(--space-2); letter-spacing: 0.06em; }
+.grimoire-index h3:first-child { margin-top: 0; }
+.grimoire-index ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.grimoire-index p { font-size: var(--text-sm); }
+.index-entry { width: 100%; display: flex; flex-direction: column; gap: var(--space-1); text-align: left; font: inherit; color: var(--color-text); background: transparent; border: var(--border-w) solid transparent; border-radius: var(--radius-sm); padding: var(--space-2); cursor: pointer; }
+.index-entry:hover { background: var(--color-raised); }
+.index-entry.selected { border-color: var(--color-accent-deep); background: var(--color-raised); }
+.grimoire-page { display: flex; flex-direction: column; gap: var(--space-3); min-height: 320px; }
+.hint { display: grid; grid-template-columns: 28px 1fr; gap: var(--space-2); align-items: baseline; }
+.hint-num { font-family: var(--font-title); color: var(--color-accent); font-size: var(--text-lg); }
+.hint.locked .hint-num { color: var(--color-muted); }
+.proofs { display: grid; grid-template-columns: auto 1fr; gap: var(--space-2) var(--space-3); margin: 0; }
+.proofs dt { font-family: var(--font-display); color: var(--color-text-2); font-size: var(--text-sm); }
+.proofs dd { margin: 0; display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.chip.struck { text-decoration: line-through; color: var(--color-muted); }
+.chip.mark { cursor: pointer; background: transparent; }
+.chip.mark.suspect { border-color: var(--color-accent-deep); color: var(--color-accent); }
+.chip.mark.doubt { border-style: dashed; color: var(--color-muted); }
+.marks h3, .attempts h3 { font-size: var(--text-sm); margin-bottom: var(--space-2); }
+.glows { display: inline-flex; gap: 4px; align-items: center; }
+.glow { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--color-border); }
+.glow.lit { background: var(--color-accent); border-color: var(--color-accent); box-shadow: 0 0 8px rgb(224 173 74 / 0.6); }
+
+/* Circle */
+.circle-screen { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-4); align-items: start; }
+.circle-panel { display: flex; flex-direction: column; gap: var(--space-3); }
+.field-label { font-family: var(--font-display); font-size: var(--text-sm); color: var(--color-text-2); }
+.circle-help { font-size: var(--text-sm); }
+.ring { position: relative; width: min(320px, 100%); aspect-ratio: 1; margin: 0 auto; }
+.ring-art { position: absolute; inset: 0; width: 100%; height: 100%; color: var(--color-accent-deep); }
+.ring-slots { position: absolute; inset: 22%; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: var(--space-2); }
+.slot { min-width: 140px; min-height: 32px; display: inline-flex; align-items: center; justify-content: center; font: var(--text-sm) var(--font-display); border: 1px dashed var(--color-border); border-radius: 999px; color: var(--color-muted); padding: 0 var(--space-3); background: transparent; }
+.slot.filled { border-style: solid; border-color: var(--color-accent); color: var(--color-accent); background: var(--color-raised); cursor: pointer; }
+.outcome { display: flex; align-items: center; gap: var(--space-3); justify-content: center; animation: toast-in var(--dur-slow) var(--ease-out); }
+.outcome.discovered .note-quote { color: var(--color-accent); }
+.picker { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.chip.pick { cursor: pointer; background: transparent; min-height: 28px; font-size: var(--text-sm); }
+.chip.pick:hover:not(:disabled) { border-color: var(--color-accent); }
+.chip.pick:disabled { opacity: 0.5; cursor: not-allowed; }
+.chip.pick.right { border-color: var(--color-accent-deep); }
+.chip.pick.doubt { border-style: dashed; }
+.toggle { display: inline-flex; align-items: center; gap: var(--space-1); font-size: var(--text-sm); cursor: pointer; }
+.discovery-mark { display: flex; justify-content: center; color: var(--color-accent); }
+
+@media (max-width: 1100px) {
+  .grimoire, .circle-screen { grid-template-columns: 1fr; }
+}

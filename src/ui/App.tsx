@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { ACTION_DEFS } from "../content/actions";
 import type { SkillId } from "../content/skills";
 import { isFeatureOpen } from "../engine/progress";
-import { HouseIcon, LanternIcon } from "./art/icons";
+import { BookIcon, CircleRiteIcon, HouseIcon, LanternIcon } from "./art/icons";
 import { EmbroideryBand } from "./art/ornaments";
 import { AwaySummary } from "./components/AwaySummary";
 import { DevPanel } from "./components/DevPanel";
+import { DiscoveryModal } from "./components/DiscoveryModal";
 import { Inventory } from "./components/Inventory";
 import { Notes } from "./components/Notes";
 import { OmenShelf } from "./components/OmenShelf";
@@ -15,10 +16,12 @@ import { Toasts } from "./components/Toasts";
 import { TopBar } from "./components/TopBar";
 import { formatStop } from "./format";
 import { SkillActions, SkillNav } from "./screens/House";
+import { Circle } from "./screens/Circle";
+import { Grimoire } from "./screens/Grimoire";
 import { Village } from "./screens/Village";
 import { useGame } from "./useGame";
 
-type TabId = "house" | "village";
+type TabId = "house" | "grimoire" | "village" | "circle";
 
 export function App() {
   const game = useGame();
@@ -32,9 +35,12 @@ export function App() {
   };
   const [skill, setSkill] = useState<SkillId>(state.active ? ACTION_DEFS[state.active.id].skill : "scavenging");
 
-  // Tabs appear as grandmother's notes open them (Grimoire and Circle arrive in later milestones).
+  // Tabs appear as grandmother's notes open them; each shows a dot until first visited.
   const tabs: TabDef<TabId>[] = [{ id: "house", label: "House", icon: <HouseIcon size={18} /> }];
-  if (isFeatureOpen(state, "village")) tabs.push({ id: "village", label: "Village", icon: <LanternIcon size={18} />, badge: tab !== "village" && state.board.some((b) => b.request) && !seen.village });
+  const place = (id: TabId, label: string, icon: ReactNode) => tabs.push({ id, label, icon, badge: !seen[id] && tab !== id });
+  if (isFeatureOpen(state, "grimoire")) place("grimoire", "Grimoire", <BookIcon size={18} />);
+  if (isFeatureOpen(state, "village")) place("village", "Village", <LanternIcon size={18} />);
+  if (isFeatureOpen(state, "circle")) place("circle", "Circle", <CircleRiteIcon size={18} />);
 
   return (
     <div className="app">
@@ -45,6 +51,8 @@ export function App() {
       <div className="layout">
         <div className="main" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
           {tab === "village" && <Village state={state} act={game.act} />}
+          {tab === "grimoire" && <Grimoire state={state} act={game.act} onAttuned={() => setTab("circle")} />}
+          {tab === "circle" && <Circle state={state} act={game.act} />}
           {tab === "house" && (
             <div className="house">
               <SkillNav state={state} skill={skill} onSelect={setSkill} />
@@ -66,6 +74,7 @@ export function App() {
 
       <Toasts toasts={game.toasts} onDismiss={game.dismissToast} />
       {game.away && <AwaySummary away={game.away} onClose={game.dismissAway} />}
+      {game.discovery && !game.away && <DiscoveryModal id={game.discovery} onClose={game.dismissDiscovery} />}
     </div>
   );
 }

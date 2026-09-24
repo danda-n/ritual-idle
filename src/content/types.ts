@@ -73,6 +73,8 @@ export interface RequestDef<I extends string> {
   trust: number;
   /** Trust needed before this request can appear on the board. */
   minTrust: number;
+  /** An aside when filled, carrying a hint fragment toward a hidden recipe. */
+  mentions?: { recipe: string; aside: string };
 }
 
 export type UpgradeEffect =
@@ -102,4 +104,25 @@ export interface OmenDef<B extends string> {
   dropChance: number;
   /** The buff it gives when released. */
   buff: B;
+}
+
+export type GrimoireReward =
+  | { kind: "offline_bonus"; bonus: number }
+  | { kind: "rite_quality"; steps: number }
+  | { kind: "trust_multiplier"; multiplier: number }
+  | { kind: "cosmetic"; id: string }
+  | { kind: "patron_coin"; from: string; multiplier: number };
+
+export interface GrimoireEntryDef<I extends string> {
+  name: string;
+  /** "hidden" recipes have silhouettes and hints; "secret" ones are found only by free experiments. */
+  kind: "hidden" | "secret";
+  /** Unordered; each ingredient is distinct. */
+  ingredients: I[];
+  hints?: { riddle: string; category: string[]; plain: I[] };
+  reward: GrimoireReward;
+  /** What the reward does, in plain words. */
+  rewardText: string;
+  /** Lore line shown when discovered. */
+  reveal: string;
 }

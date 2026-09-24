@@ -2,7 +2,8 @@ import { ACTION_DEFS, type ActionId } from "../content/actions";
 import { BUFF_DEFS } from "../content/buffs";
 import type { ItemId } from "../content/items";
 import { SHOP } from "../content/shop";
-import type { UpgradeEffect } from "../content/types";
+import type { RequestDef, UpgradeEffect } from "../content/types";
+import { discoveredRewards } from "./grimoire";
 import type { GameState } from "./state";
 
 // Every bonus in the game is computed here, so balance lives in one place.
@@ -64,4 +65,33 @@ export function omenCapacity(state: GameState): number {
   let cap = BASE_OMEN_CAPACITY;
   for (const e of effects(state)) if (e.kind === "omen_capacity") cap = Math.max(cap, e.capacity);
   return cap;
+}
+
+// Grimoire rewards (docs/GRIMOIRE.md §8)
+
+/** Extra offline time as a fraction (the Dream pillow: 0.1 = time away counts 10% more). */
+export function offlineBonus(state: GameState): number {
+  let bonus = 0;
+  for (const r of discoveredRewards(state)) if (r.kind === "offline_bonus") bonus += r.bonus;
+  return bonus;
+}
+
+/** Extra rite outcome steps (the Hearth mark). */
+export function riteQualitySteps(state: GameState): number {
+  let steps = 0;
+  for (const r of discoveredRewards(state)) if (r.kind === "rite_quality") steps += r.steps;
+  return steps;
+}
+
+export function trustMultiplier(state: GameState): number {
+  let mult = 1;
+  for (const r of discoveredRewards(state)) if (r.kind === "trust_multiplier") mult *= r.multiplier;
+  return mult;
+}
+
+/** Coin a request pays, after person-specific bonuses (Hana's soup). */
+export function requestCoin(state: GameState, req: RequestDef<string>): number {
+  let mult = 1;
+  for (const r of discoveredRewards(state)) if (r.kind === "patron_coin" && r.from === req.from) mult *= r.multiplier;
+  return Math.round(req.coin * mult);
 }

@@ -11,6 +11,7 @@ export const REQUESTS = {
     coin: 6,
     trust: 1,
     minTrust: 0,
+    mentions: { recipe: "dream_pillow", aside: "Your grandmother made me a pillow once, for the bad dreams. Bitter-smelling. It worked." },
   },
   millers_cough: {
     from: "The miller",
@@ -35,6 +36,7 @@ export const REQUESTS = {
     coin: 15,
     trust: 1,
     minTrust: 2,
+    mentions: { recipe: "hearth_mark", aside: "She drew a mark on our hearth once, with her finger and the ashes. Salt on top. Never went out after." },
   },
   smoke_loft: {
     from: "The weaver",
@@ -51,6 +53,7 @@ export const REQUESTS = {
     coin: 30,
     trust: 2,
     minTrust: 5,
+    mentions: { recipe: "threshold_nail", aside: "My mother said the witch kept a nail under her own door, and a yellow flower with it." },
   },
 } as const satisfies Record<string, RequestDef<ItemId>>;
 
