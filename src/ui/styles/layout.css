@@ -109,7 +109,7 @@
 @media (max-width: 860px) {
   .app { padding: var(--space-3) var(--space-4); }
   .layout { grid-template-columns: 1fr; }
-  .side { position: static; order: -1; }
+  .side { position: static; }
   .house { grid-template-columns: 1fr; }
   .skill-nav { flex-direction: row; overflow-x: auto; padding-bottom: var(--space-1); }
   .skill-tile { min-width: 160px; }
@@ -237,3 +237,25 @@
 .setting { display: flex; flex-direction: column; gap: var(--space-1); }
 .setting.toggle { flex-direction: row; align-items: flex-start; gap: var(--space-2); }
 .setting .muted, .setting p { font-size: var(--text-sm); }
+
+/* The living sanctum */
+.sanctum { grid-column: 1 / -1; margin: 0; border: var(--border-w) solid var(--color-border-soft); border-radius: var(--radius-md); overflow: hidden; background: var(--color-sunken); box-shadow: var(--shadow-1); }
+.sanctum svg { display: block; width: 100%; height: clamp(150px, 20vw, 240px); }
+.sanctum-caption { font-style: italic; font-size: var(--text-sm); color: var(--color-text-2); padding: var(--space-2) var(--space-3); border-top: var(--border-w) solid var(--color-border-soft); }
+.sanctum .flame { transform-box: fill-box; transform-origin: 50% 100%; animation: flicker 1.8s ease-in-out infinite; }
+.sanctum .flame:nth-of-type(2n) { animation-duration: 2.3s; }
+.sanctum .fire { transform-box: fill-box; transform-origin: 50% 100%; animation: flicker 2.6s ease-in-out infinite; }
+.sanctum .smoke path { animation: drift 6s ease-in-out infinite; }
+.sanctum.is-performing .floor-circle { animation: pulse 2.4s ease-in-out infinite; }
+@keyframes flicker { 0%, 100% { transform: scale(1, 1); opacity: 1; } 30% { transform: scale(0.94, 1.06); opacity: 0.9; } 60% { transform: scale(1.04, 0.95); opacity: 1; } }
+@keyframes drift { 0%, 100% { transform: translateY(0); opacity: 0.35; } 50% { transform: translateY(-6px); opacity: 0.15; } }
+
+/* Reduced motion: the OS preference or the in-game setting stops every loop. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+:root[data-motion="reduced"] *, :root[data-motion="reduced"] *::before, :root[data-motion="reduced"] *::after { animation: none !important; transition: none !important; }
+
+.skip-link { position: absolute; left: var(--space-4); top: -60px; z-index: var(--z-modal); background: var(--color-accent); color: var(--color-on-accent); padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); font-family: var(--font-display); }
+.skip-link:focus { top: var(--space-2); }
+.layout:focus { outline: none; }

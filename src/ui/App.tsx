@@ -6,6 +6,7 @@ import type { ItemId } from "../content/items";
 import { isFeatureOpen } from "../engine/progress";
 import { BookIcon, CircleRiteIcon, HouseIcon, LanternIcon } from "./art/icons";
 import { EmbroideryBand } from "./art/ornaments";
+import { Sanctum } from "./art/Sanctum";
 import { AwaySummary } from "./components/AwaySummary";
 import { DevPanel } from "./components/DevPanel";
 import { ChapterEnd } from "./components/ChapterEnd";
@@ -55,17 +56,21 @@ export function App() {
   return (
     <LookupContext.Provider value={setLookup}>
     <div className="app">
+      <a className="skip-link" href="#main">
+        Skip to main content
+      </a>
       <TopBar state={state} onStop={game.stop} stopNote={game.lastStop && formatStop(game.lastStop.reason)} onSettings={() => setSettingsOpen(true)} />
       <EmbroideryBand className="band" />
       <Tabs tabs={tabs} value={tab} onChange={setTab} label="Places" />
 
-      <div className="layout">
+      <div className="layout" id="main" tabIndex={-1}>
         <div className="main" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
           {tab === "village" && <Village state={state} act={game.act} />}
           {tab === "grimoire" && <Grimoire state={state} act={game.act} onAttuned={() => setTab("circle")} />}
           {tab === "circle" && <Circle state={state} act={game.act} />}
           {tab === "house" && (
             <div className="house">
+              <Sanctum state={state} />
               <SkillNav state={state} skill={skill} onSelect={setSkill} />
               <SkillActions state={state} skill={skill} onStart={game.start} />
             </div>

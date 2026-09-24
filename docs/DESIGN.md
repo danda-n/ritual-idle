@@ -36,3 +36,21 @@ Item names go through `ItemChip` (`src/ui/components/ItemLookup.tsx`), so any it
   - toasts announce politely and never steal focus
 - **Colour is never the only signal.** A missing input is ember *and* its chip keeps the count; a locked action says "Level N".
 - **No emoji as icons.** Only SVG.
+
+## The living sanctum: `src/ui/art/Sanctum.tsx`
+- **One code-drawn SVG scene**, woodcut and papercut in style: hatch-pattern shadows, flat ink shapes, bone highlights, ember and gold light.
+- **Its state is derived only from progress** (`sanctumView`). The five Chapter 1 states:
+  1. dark and cold (moonlight only)
+  2. candlelit (first tallow candle)
+  3. warded (salt line, then iron nails over the door)
+  4. circle awake (*Bless the threshold*)
+  5. cellar open (after the Rite)
+- **Props appear as you earn them:**
+  - drying rack, reading lamp, omen shelf (stored omens glow)
+  - dream pillow, honey-light jar
+  - Janko by the fire
+  - the embroidered cloth for a Resplendent rite
+  - Blessing smoke
+- **Accessibility:** a caption and `aria-label` describe the room in one sentence.
+- **Motion:** candle and hearth flicker, drifting smoke, and a circle pulse during the rite. The OS reduced-motion preference and the in-game setting stop all of it.
+- **Layout:** below 860px, the main content comes before the sidebar, and skills become a horizontal strip. A skip link jumps to the main content.
