@@ -7,9 +7,9 @@ import { HEARTH_RITE, PART_DEFS, type PartId } from "../content/rite";
 import { BRANCHES } from "../content/talents";
 import { SHOP } from "../content/shop";
 import type { SkillId } from "../content/skills";
-import { beginRite, buy, declineRequest, fillRequest, placePart, setSetting, spendTalent, type Result } from "./commands";
+import { beginRite, buy, claimReward, declineRequest, fillRequest, placePart, setSetting, spendTalent, type Result } from "./commands";
 import { actionDurationMs } from "./modifiers";
-import { currentNote, isRecipeKnown, isSkillUnlocked, type Step } from "./progress";
+import { currentNote, isRecipeKnown, isSkillUnlocked, stepById, type Step } from "./progress";
 import { advance, blockReason, skillLevel, startAction } from "./simulate";
 import { newGame, type GameState } from "./state";
 import { xpForLevel } from "./xp";
@@ -67,8 +67,12 @@ class Bot {
     this.after();
   }
 
-  /** Note the time of new notes, and spend any talent points. */
+  /** Note the time of new notes, claim rewards, and spend any talent points. */
   after() {
+    for (const id of [...this.state.rewardsWaiting]) {
+      const r = stepById(id)!.reward!;
+      this.state = this.must(claimReward(this.state, id, "xpChoice" in r ? r.xpChoice.suggest : undefined));
+    }
     while (this.noteAt.length < this.state.notesRevealed) this.noteAt.push(this.activeMs);
     for (const skill of SKILL_IDS) {
       while (isSkillUnlocked(this.state, skill) && pointsFree(this.state, skill) > 0) {

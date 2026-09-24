@@ -5,7 +5,8 @@ import { tend as tendCommand, type Result, type Success } from "../engine/comman
 import { nextHintAt, progressOf, type Fragment } from "../engine/grimoire";
 import { NOTES } from "../content/notes";
 import { ITEMS, type ItemId } from "../content/items";
-import { SKILLS } from "../content/skills";
+import { SKILL_IDS, SKILLS } from "../content/skills";
+import { stepById } from "../engine/progress";
 import { isRecipeKnown } from "../engine/progress";
 import { emitFx } from "./fx";
 import { isRareDrop, rewardText, unlockedByLevel } from "./tasks";
@@ -52,6 +53,15 @@ function celebrateCommand(before: GameState, after: GameState, toast: (t: Omit<T
   }
   const bought = after.upgrades.filter((u) => !before.upgrades.includes(u));
   if (bought.length > 0) toast(bought.map((u) => ({ title: `${SHOP[u].name} is up`, text: upgradeEffectFor(u) })));
+  // A claimed step reward: say what it gave (and where an XP choice went).
+  for (const id of before.rewardsWaiting.filter((r) => !after.rewardsWaiting.includes(r))) {
+    const step = stepById(id);
+    if (!step) continue;
+    const into = SKILL_IDS.find((k) => after.skills[k].xp > before.skills[k].xp);
+    const text = step.reward && "xpChoice" in step.reward && into ? `+${step.reward.xpChoice.amount} ${SKILLS[into].name} XP` : rewardText(step);
+    toast([{ title: "Claimed", text }]);
+    emitFx({ kind: "float", text, anchors: [".tracker"], tone: "good" });
+  }
   const placed = after.kindling.filter((p) => !before.kindling.includes(p));
   for (const p of placed) emitFx({ kind: "placed", part: p });
   if (placed.length > 0) {
@@ -118,8 +128,7 @@ export function useGame() {
       if (report.criticals) emitFx({ kind: "float", text: "Critical! ×2", anchors: fromWork, tone: "rare" });
       if (report.tendFinds) emitFx({ kind: "float", text: "Bonus find!", anchors: fromWork, tone: "good" });
       // Placing a part has its own toast; other steps say what they gave.
-      const stepToasts = (report.stepsDone ?? []).filter((st) => st.goal.kind !== "place").map((st) => ({ title: `Step done: ${st.label}`, text: rewardText(st) }));
-      for (const st of report.stepsDone ?? []) if (rewardText(st)) emitFx({ kind: "float", text: rewardText(st), anchors: [".tracker .step.current", ".tracker"], tone: "good" });
+      const stepToasts = (report.stepsDone ?? []).filter((st) => st.goal.kind !== "place").map((st) => ({ title: `Step done: ${st.label}`, text: st.reward ? `Reward ready to claim: ${rewardText(st)}` : "" }));
       const levelToasts: Omit<Toast, "id">[] = [];
       for (const l of report.levelUps ?? []) {
         emitFx({ kind: "float", text: `Level ${l.to}`, anchors: [`.skill-tile[data-skill="${l.skill}"]`, ".working"], tone: "level" });

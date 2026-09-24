@@ -5,6 +5,9 @@ import { SKILLS } from "../content/skills";
 import type { GoalDef } from "../content/types";
 import type { Note, Step } from "../engine/progress";
 import { ITEMS, type ItemId } from "../content/items";
+import { BUFFS } from "../content/buffs";
+import { OMENS, type OmenId } from "../content/omens";
+import { formatDuration } from "./format";
 import type { GameState } from "../engine/state";
 
 // Chapter steps, derived from grandmother's notes: each note with a goal is one step.
@@ -100,10 +103,13 @@ export function stepPlace(step: Step, state: GameState): Place {
 export function rewardText(step: Step): string {
   const r = step.reward;
   if (!r) return "";
-  const out: string[] = [];
-  if (r.xp) out.push(`+${r.xp.amount} ${SKILLS[r.xp.skill].name} XP`);
-  for (const [item, qty] of Object.entries(r.items ?? {})) out.push(`+${qty} ${ITEMS[item as ItemId].name.toLowerCase()}`);
-  return out.join(", ");
+  if ("xp" in r) return `+${r.xp.amount} ${SKILLS[r.xp.skill].name} XP`;
+  if ("xpChoice" in r) return `+${r.xpChoice.amount} XP, any skill`;
+  if ("surge" in r) return `Surge: ×2 speed for ${formatDuration(BUFFS.surge.durationMs)}`;
+  if ("omen" in r) return `An omen: ${OMENS[r.omen as OmenId].name}`;
+  return Object.entries(r.items)
+    .map(([item, qty]) => `+${qty} ${ITEMS[item as ItemId].name.toLowerCase()}`)
+    .join(", ");
 }
 
 /** A note's steps, which are done, and the first one still open. */

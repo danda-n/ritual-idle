@@ -56,13 +56,22 @@ export type StepGoal<S extends string, A extends string> =
   | { kind: "requests"; count: number }
   | { kind: "place"; part: string };
 
+export type StepReward<S extends string> =
+  | { items: Record<string, number> }
+  | { xp: { skill: S; amount: number } }
+  /** XP into a skill the player picks when claiming; `suggest` is the one the next step needs. */
+  | { xpChoice: { amount: number; suggest: S } }
+  /** A short burst of speed on everything (the Surge buff). */
+  | { surge: true }
+  | { omen: string };
+
 export interface StepDef<S extends string, A extends string> {
   /** Unique across all notes (it's saved). */
   id: string;
   label: string;
   goal: StepGoal<S, A>;
-  /** Something small, aimed at the next step. */
-  reward?: { xp?: { skill: S; amount: number }; items?: Record<string, number> };
+  /** Something small, aimed at the next step. Claimed with a button; progress never waits on it. */
+  reward?: StepReward<S>;
 }
 
 export interface NoteDef<S extends string, A extends string> {

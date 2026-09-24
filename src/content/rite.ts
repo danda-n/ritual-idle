@@ -18,7 +18,7 @@ export const KINDLING_PARTS = {
   ward: {
     name: "The Ward",
     skill: "sigilcraft",
-    items: { salt_line: 25, ash_sigil: 8 },
+    items: { salt_line: 25, ash_sigil: 10 },
     placed: "Salt closes the ring. The draught along the floor stops.",
   },
   smoke: {

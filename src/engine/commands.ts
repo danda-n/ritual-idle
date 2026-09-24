@@ -5,7 +5,7 @@ import type { ItemId } from "../content/items";
 import { OMENS, type OmenId } from "../content/omens";
 import { addInsight, deduce, GRIMOIRE_IDS, glowCount, isDiscovered, isSilhouetteVisible, markDiscovered, matches, progressOf, type Fragment } from "./grimoire";
 import { requestCoin, trustMultiplier } from "./modifiers";
-import { applyBuff, giveNoteGifts } from "./omens";
+import { applyBuff, giveNoteGifts, grantOmen } from "./omens";
 import { beginIfPrimed, beginRite as startRite, canBeginRite } from "./rite";
 import { PART_DEFS, type PartId } from "../content/rite";
 import type { SkillId } from "../content/skills";
@@ -15,7 +15,7 @@ import { TEND } from "../content/talents";
 import { ACTION_DEFS } from "../content/actions";
 import { BUFF_DEFS } from "../content/buffs";
 import { isSkillUnlocked } from "./progress";
-import { isFeatureOpen, revealNotes, type Note, type Step } from "./progress";
+import { grantXp, isFeatureOpen, revealNotes, stepById, type Note, type Step } from "./progress";
 import type { GameState, Settings } from "./state";
 import { xpForLevel } from "./xp";
 import { emptySlot, refillBoard } from "./village";
@@ -212,6 +212,27 @@ export function placePart(input: GameState, part: PartId): Result {
   const gifts = giveNoteGifts(state, notes);
   beginIfPrimed(state, state.lastTickAt);
   return ok(state, notes, { gifts, steps });
+}
+
+// Step rewards
+
+/**
+ * Claim a done step's reward. An XP choice needs `skill`, an open one. Rewards never block
+ * progress; they just wait here until claimed.
+ */
+export function claimReward(input: GameState, stepId: string, skill?: SkillId): Result {
+  const step = stepById(stepId);
+  if (!step?.reward || !input.rewardsWaiting.includes(stepId)) return no("Nothing to claim there.");
+  const r = step.reward;
+  if ("xpChoice" in r && (!skill || !isSkillUnlocked(input, skill))) return no("Choose an open skill.");
+  const state = structuredClone(input);
+  state.rewardsWaiting = state.rewardsWaiting.filter((id) => id !== stepId);
+  if ("items" in r) for (const [item, qty] of Object.entries(r.items)) state.inventory[item as ItemId] = (state.inventory[item as ItemId] ?? 0) + qty;
+  if ("xp" in r) grantXp(state, r.xp.skill, r.xp.amount);
+  if ("xpChoice" in r) grantXp(state, skill!, r.xpChoice.amount);
+  if ("surge" in r) applyBuff(state, "surge", state.lastTickAt, true);
+  if ("omen" in r) grantOmen(state, r.omen as OmenId, true);
+  return ok(state);
 }
 
 // Tending

@@ -411,3 +411,17 @@ input[type="checkbox"] { accent-color: var(--color-accent); width: 16px; height:
   .topbar .tend-bar { width: 44px; }
 }
 .chip.buff-out { font-size: var(--text-xs); white-space: normal; }
+
+/* ---------- Skill picker (omen blessings, XP rewards) ---------- */
+.picker-effect { font-family: var(--font-display); color: var(--folk-candle); }
+.skill-picker { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--space-2); }
+.skill-pick { display: grid; grid-template-columns: 24px minmax(0, 1fr); column-gap: var(--space-2); row-gap: 2px; align-items: center; text-align: left; padding: var(--space-2) var(--space-3); border: 1px solid color-mix(in srgb, var(--skill) 45%, transparent); border-left: 3px solid var(--skill); border-radius: var(--radius-md); background: color-mix(in srgb, var(--skill) 6%, transparent); color: var(--color-text); cursor: pointer; font: inherit; transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out); }
+.skill-pick:hover, .skill-pick:focus-visible { transform: translateY(-1px); box-shadow: 0 0 0 1px var(--skill), 0 0 16px color-mix(in srgb, var(--skill) 25%, transparent); }
+.skill-pick svg { color: var(--skill); grid-row: span 2; }
+.skill-pick-name { font-family: var(--font-display); }
+.skill-pick-level { font-size: var(--text-xs); color: var(--color-muted); }
+.skill-pick-tag { grid-column: 1 / -1; font-size: var(--text-xs); color: var(--skill); }
+.skill-pick.is-suggested { box-shadow: 0 0 0 1px var(--skill); }
+/* Rewards waiting in the tracker */
+.rewards-waiting { display: flex; flex-direction: column; gap: var(--space-1); margin-bottom: var(--space-2); }
+.claim-btn { justify-content: flex-start; min-height: 30px; font-size: var(--text-xs); text-align: left; }

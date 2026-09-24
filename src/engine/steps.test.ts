@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { ACTION_DEFS } from "../content/actions";
 import { NOTES } from "../content/notes";
 import { TEND } from "../content/talents";
-import { tend, type Result } from "./commands";
+import { claimReward, tend, type Result } from "./commands";
+import { BUFFS } from "../content/buffs";
 import { rewind } from "./devtools";
 import { actionDurationMs } from "./modifiers";
 import { catchUp } from "./offline";
@@ -19,16 +20,44 @@ const okay = (r: Result) => {
 };
 
 describe("stage steps", () => {
-  it("claim when met, grant their reward once, in any order", () => {
+  it("complete when met, and their reward waits for a claim", () => {
     const first = NOTES[0].steps[0];
     const s = startAction(newGame(T0, 1), "search_pantry");
     const { state, report } = advance(s, first.goal.count * actionDurationMs(s, "search_pantry") + 1);
     expect(report.stepsDone.map((x) => x.id)).toEqual(["start.pantry"]);
     expect(state.stepsDone).toEqual(["start.pantry"]);
-    // The searches' XP, plus the reward's
-    expect(state.skills.scavenging.xp).toBe(first.goal.count * ACTION_DEFS.search_pantry.xp + first.reward.xp.amount);
-    const again = advance(state, 1000);
-    expect(again.report.stepsDone).toEqual([]);
+    expect(state.rewardsWaiting).toEqual(["start.pantry"]);
+    expect(advance(state, 1000).report.stepsDone).toEqual([]);
+  });
+
+  it("an XP choice goes to the skill you pick (an open one), once", () => {
+    const first = NOTES[0].steps[0];
+    const s = { ...newGame(T0, 1), stepsDone: ["start.pantry"], rewardsWaiting: ["start.pantry"] };
+    expect(claimReward(s, "start.pantry").ok).toBe(false);
+    expect(claimReward(s, "start.pantry", "herbalism").ok).toBe(false); // not open yet
+    const claimed = okay(claimReward(s, "start.pantry", "scavenging"));
+    expect(claimed.skills.scavenging.xp).toBe(first.reward.xpChoice.amount);
+    expect(claimed.rewardsWaiting).toEqual([]);
+    expect(claimReward(claimed, "start.pantry", "scavenging").ok).toBe(false);
+  });
+
+  it("a Surge doubles speed on everything for its few seconds", () => {
+    const s = okay(claimReward({ ...startAction(newGame(T0, 1), "search_pantry"), stepsDone: ["start.tend"], rewardsWaiting: ["start.tend"] }, "start.tend"));
+    const base = ACTION_DEFS.search_pantry.seconds * 1000;
+    expect(actionDurationMs(s, "search_pantry")).toBeCloseTo(base / 2);
+    expect(actionDurationMs(s, "search_pantry", T0 + BUFFS.surge.durationMs)).toBe(base);
+  });
+
+  it("an omen reward lands on the shelf even when it's full", () => {
+    const s = { ...newGame(T0, 1), notesRevealed: 2, omens: { still_night: 9 }, stepsDone: ["light.beeswax"], rewardsWaiting: ["light.beeswax"] };
+    expect(okay(claimReward(s, "light.beeswax")).omens.still_night).toBe(10);
+  });
+
+  it("waiting rewards never hold the chapter up", () => {
+    const s = startAction(newGame(T0, 1), "search_pantry");
+    const { state } = advance(s, NOTES[0].goal.count * actionDurationMs(s, "search_pantry") + 10);
+    expect(state.rewardsWaiting.length).toBeGreaterThan(0);
+    expect(state.notesRevealed).toBe(2);
   });
 
   it("use lifetime counts, so steps already done claim at once when their stage arrives", () => {
@@ -46,6 +75,16 @@ describe("stage steps", () => {
       expect(steps[steps.length - 1]!.goal).toEqual({ kind: "place", part: note.goal.part });
       const open = new Set(NOTES.slice(0, i + 1).flatMap((n) => [...n.unlocks]));
       for (const st of steps) if (st.goal.kind === "complete") expect(open.has(ACTION_DEFS[st.goal.action].skill), st.id).toBe(true);
+    }
+  });
+
+  it("an XP choice only ever suggests a skill that's open by then", () => {
+    for (let i = 0; i < NOTES.length; i++) {
+      const note = NOTES[i]!;
+      const open = new Set(NOTES.slice(0, i + 1).flatMap((n) => [...n.unlocks]));
+      for (const st of ("steps" in note ? note.steps : []) as readonly Step[]) {
+        if (st.reward && "xpChoice" in st.reward) expect(open.has(st.reward.xpChoice.suggest), st.id).toBe(true);
+      }
     }
   });
 

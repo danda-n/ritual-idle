@@ -38,6 +38,7 @@ export function deserialize(json: string): GameState {
     settings: { ...base.settings, ...data.settings },
     rite: { ...base.rite, ...data.rite },
     kept: { ...base.kept, ...data.kept },
+    rewardsWaiting: data.rewardsWaiting ?? [],
     tend: { ...base.tend, ...data.tend },
     talents: { ...data.talents },
     version: SAVE_VERSION,

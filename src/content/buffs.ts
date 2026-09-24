@@ -12,6 +12,12 @@ export const BUFFS = {
     // You choose the skill when you release it.
     blessSkill: { speed: 0.5, chanceMultiplier: 2 },
   },
+  surge: {
+    name: "Surge",
+    description: "A step done; the work flies.",
+    durationMs: 20_000,
+    speed: { herbalism: 1, scavenging: 1, chandlery: 1, sigilcraft: 1, scholarship: 1, ritualism: 1 },
+  },
   blessing: {
     name: "Blessing",
     description: "The rooms are smoked clean.",

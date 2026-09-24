@@ -4,7 +4,7 @@ import type { PartId } from "../content/rite";
 import { PAGES } from "../content/pages";
 import type { SkillId } from "../content/skills";
 import type { Feature, GoalDef, StepDef } from "../content/types";
-import { xpForLevel, levelForXp } from "./xp";
+import { levelForXp, xpForLevel } from "./xp";
 import { GRIMOIRE_IDS, isSilhouetteVisible } from "./grimoire";
 import type { GameState } from "./state";
 
@@ -87,23 +87,30 @@ export function isStepMet(state: GameState, step: Step): boolean {
 }
 
 /**
- * Claim every met step of the current stage and give its reward. Mutates `state`; returns the
- * steps claimed. Steps can be met in any order.
+ * Mark every met step of the current stage done; its reward (if any) waits to be claimed.
+ * Mutates `state`; returns the steps done. Steps can be met in any order.
  */
 export function claimSteps(state: GameState): Step[] {
   const claimed: Step[] = [];
   for (const step of currentSteps(state)) {
     if (state.stepsDone.includes(step.id) || !isStepMet(state, step)) continue;
     state.stepsDone.push(step.id);
-    const r = step.reward;
-    if (r?.xp) {
-      const skill = state.skills[r.xp.skill];
-      skill.xp = Math.min(skill.xp + r.xp.amount, xpForLevel(state.levelCap));
-    }
-    for (const [item, qty] of Object.entries(r?.items ?? {})) state.inventory[item as keyof GameState["inventory"]] = (state.inventory[item as keyof GameState["inventory"]] ?? 0) + qty;
+    if (step.reward) state.rewardsWaiting.push(step.id);
     claimed.push(step);
   }
   return claimed;
+}
+
+const ALL_STEPS: Step[] = NOTES.flatMap((n) => ("steps" in n ? (n.steps as readonly Step[]) : []));
+
+export function stepById(id: string): Step | undefined {
+  return ALL_STEPS.find((s) => s.id === id);
+}
+
+/** Add XP to a skill, not past the level cap. Mutates `state`. */
+export function grantXp(state: GameState, skill: SkillId, amount: number): void {
+  const s = state.skills[skill];
+  s.xp = Math.min(s.xp + amount, xpForLevel(state.levelCap));
 }
 
 /**

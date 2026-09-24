@@ -4,7 +4,10 @@ import { HEARTH_RITE, PART_DEFS, type PartId } from "../../content/rite";
 import type { ItemId } from "../../content/items";
 import { SKILLS } from "../../content/skills";
 import { goalProgress } from "../../engine/progress";
-import { canPlace, placePart, type Result } from "../../engine/commands";
+import { canPlace, claimReward, placePart, type Result } from "../../engine/commands";
+import { stepById } from "../../engine/progress";
+import type { SkillId } from "../../content/skills";
+import { SkillPicker } from "./SkillPicker";
 import { skillLevel } from "../../engine/simulate";
 import type { GameState } from "../../engine/state";
 import { CircleRiteIcon } from "../art/icons";
@@ -41,6 +44,7 @@ export function ChapterTracker({ state, onGo, act }: { state: GameState; onGo: (
         </span>
       </div>
       <Bar value={done / STEPS.length} label="Chapter progress" />
+      <RewardsWaiting state={state} act={act} />
       <ol className="steps">
         {STEPS.map((s, i) => {
           if (!("goal" in s.note)) return null;
@@ -131,5 +135,37 @@ export function ChapterTracker({ state, onGo, act }: { state: GameState; onGo: (
       </ol>
       {state.rite.completed && <p className="step-hint">Chapter complete. Janko has joined you.</p>}
     </section>
+  );
+}
+
+/** Done steps whose rewards wait: one gold Claim button each. An XP choice asks which skill. */
+function RewardsWaiting({ state, act }: { state: GameState; act: (c: (s: GameState) => Result) => unknown }) {
+  const [choosing, setChoosing] = useState<string | null>(null);
+  if (state.rewardsWaiting.length === 0) return null;
+  const pending = choosing ? stepById(choosing) : undefined;
+  const choice = pending?.reward && "xpChoice" in pending.reward ? pending.reward.xpChoice : null;
+  return (
+    <div className="rewards-waiting" aria-label="Rewards to claim">
+      {state.rewardsWaiting.map((id) => {
+        const step = stepById(id);
+        if (!step?.reward) return null;
+        const r = step.reward;
+        return (
+          <button key={id} className="btn btn-primary claim-btn" onClick={() => ("xpChoice" in r ? setChoosing(id) : act((s) => claimReward(s, id)))}>
+            Claim · {rewardText(step)}
+          </button>
+        );
+      })}
+      {choosing && choice && (
+        <SkillPicker
+          state={state}
+          title={`Put ${choice.amount} XP into…`}
+          effect={`+${choice.amount} XP to the skill you choose`}
+          suggest={choice.suggest as SkillId}
+          onPick={(skill) => act((s) => claimReward(s, choosing, skill))}
+          onClose={() => setChoosing(null)}
+        />
+      )}
+    </div>
   );
 }
