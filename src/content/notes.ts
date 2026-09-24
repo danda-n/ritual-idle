@@ -4,7 +4,6 @@ import type { NoteDef } from "./types";
 
 // Grandmother's margin notes: the Chapter 1 onboarding (docs/CHAPTER1.md §2).
 // The first note is shown at the start of a new game; each goal reveals the next note.
-// Note 6 ("They'll knock. They always knock.") is added when the village board is built.
 export const NOTES = [
   {
     text: "The house is cold, child. Start with the hearth. Ash is the first thing a witch owns.",
@@ -28,6 +27,7 @@ export const NOTES = [
     text: "My pages burned. Read what's left by candlelight, and don't hurry them.",
     hint: "Burnt pages turn up in the attic (Scavenging 5). Decipher them with a tallow candle (Scholarship).",
     unlocks: ["scholarship"],
+    opens: ["grimoire"],
     goal: { kind: "complete", action: "decipher_page", count: 1 },
   },
   {
@@ -37,9 +37,17 @@ export const NOTES = [
     goal: { kind: "complete", action: "salt_line", count: 3 },
   },
   {
+    text: "They'll knock. They always knock. Help them, and they will forget to be afraid of you.",
+    hint: "Fill a request on the village board. Coin buys bread and fixes for the house.",
+    unlocks: [],
+    opens: ["village"],
+    goal: { kind: "requests", count: 1 },
+  },
+  {
     text: "Bless the threshold before you open the circle. Doors matter more than walls.",
     hint: "Bless the threshold with a salt line and a tallow candle (Ritualism).",
     unlocks: ["ritualism"],
+    opens: ["circle"],
     goal: { kind: "complete", action: "bless_threshold", count: 1 },
   },
   {

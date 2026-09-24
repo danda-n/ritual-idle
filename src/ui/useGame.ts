@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ActionId } from "../content/actions";
+import type { Result } from "../engine/commands";
+import { rewind } from "../engine/devtools";
 import { catchUp, type CatchUp } from "../engine/offline";
 import { clearLocal, loadLocal, saveLocal } from "../engine/save";
 import { advance, startAction, stopAction, type Report } from "../engine/simulate";
@@ -42,17 +44,23 @@ export function useGame() {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const nextToastId = useRef(0);
 
-  // New notes and pages pop up while playing; after an absence they appear in the summary instead.
-  const announce = useCallback((report: Report) => {
-    const fresh: Toast[] = [
-      ...report.notesRevealed.map((n) => ({ id: nextToastId.current++, title: "A new note in the margin", text: n.text })),
-      ...report.pagesRead.map((p) => ({ id: nextToastId.current++, title: `Page deciphered: ${p.title}`, text: p.text })),
-    ];
-    if (fresh.length === 0) return;
+  const pushToasts = useCallback((items: Omit<Toast, "id">[]) => {
+    if (items.length === 0) return;
+    const fresh = items.map((t) => ({ ...t, id: nextToastId.current++ }));
     setToasts((t) => [...t, ...fresh]);
     const ids = new Set(fresh.map((f) => f.id));
     setTimeout(() => setToasts((t) => t.filter((x) => !ids.has(x.id))), TOAST_MS);
   }, []);
+
+  // New notes and pages pop up while playing; after an absence they appear in the summary instead.
+  const announce = useCallback(
+    (report: Pick<Report, "notesRevealed" | "pagesRead">) =>
+      pushToasts([
+        ...report.notesRevealed.map((n) => ({ title: "A new note in the margin", text: n.text })),
+        ...report.pagesRead.map((p) => ({ title: `Page deciphered: ${p.title}`, text: p.text })),
+      ]),
+    [pushToasts],
+  );
 
   // The ref is the source of truth; React state mirrors it for rendering.
   const ref = useRef(initial.state);
@@ -114,9 +122,30 @@ export function useGame() {
     setLastStop(undefined);
   }, [commit]);
 
+  /** Run a player command; refusals show as a toast instead of failing silently. */
+  const act = useCallback(
+    (command: (s: GameState) => Result): boolean => {
+      const r = command(ref.current);
+      if (!r.ok) {
+        pushToasts([{ title: "Not yet", text: r.reason }]);
+        return false;
+      }
+      commit(r.state);
+      announce({ notesRevealed: r.notes, pagesRead: [] });
+      return true;
+    },
+    [commit, announce, pushToasts],
+  );
+
+  // Dev tools: pretend time passed (goes through the real offline path), or edit the state directly.
+  const dev = {
+    skip: (ms: number) => commit(rewind(ref.current, ms)),
+    mutate: (fn: (s: GameState) => GameState) => commit(fn(structuredClone(ref.current))),
+  };
+
   const dismissToast = useCallback((id: number) => setToasts((t) => t.filter((x) => x.id !== id)), []);
   // Stable identity so dialogs don't re-run their focus handling on every tick.
   const dismissAway = useCallback(() => setAway(null), []);
 
-  return { state, away, dismissAway, lastStop, toasts, dismissToast, start, stop, load, reset };
+  return { state, away, dismissAway, lastStop, toasts, dismissToast, start, stop, act, load, reset, dev };
 }

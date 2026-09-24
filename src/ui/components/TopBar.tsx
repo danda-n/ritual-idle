@@ -1,6 +1,8 @@
 import { ACTION_DEFS } from "../../content/actions";
+import { actionDurationMs } from "../../engine/modifiers";
+import { isFeatureOpen } from "../../engine/progress";
 import type { GameState } from "../../engine/state";
-import { SkillIcon } from "../art/icons";
+import { CoinIcon, SkillIcon } from "../art/icons";
 import { Rosette } from "../art/ornaments";
 import { Bar } from "./Bar";
 
@@ -12,6 +14,12 @@ export function TopBar({ state, onStop, stopNote }: { state: GameState; onStop: 
         <h1 className="brand-title">Ritual Idle</h1>
       </div>
       <Working state={state} onStop={onStop} stopNote={stopNote} />
+      {isFeatureOpen(state, "village") && (
+        <div className="purse" aria-label={`${state.coin} coin`}>
+          <CoinIcon size={18} />
+          <span className="num">{state.coin}</span>
+        </div>
+      )}
     </header>
   );
 }
@@ -25,12 +33,13 @@ function Working({ state, onStop, stopNote }: { state: GameState; onStop: () => 
     );
   }
   const def = ACTION_DEFS[state.active.id];
-  const left = Math.max(0, def.seconds - state.active.elapsedMs / 1000);
+  const duration = actionDurationMs(state, state.active.id);
+  const left = Math.max(0, (duration - state.active.elapsedMs) / 1000);
   return (
     <div className="working" role="status">
       <SkillIcon skill={def.skill} size={20} />
       <span className="working-name">{def.name}</span>
-      <Bar value={state.active.elapsedMs / (def.seconds * 1000)} label={`${def.name} progress`} />
+      <Bar value={state.active.elapsedMs / duration} label={`${def.name} progress`} />
       <span className="muted num working-time">{left.toFixed(1)}s</span>
       <button className="btn btn-ghost" onClick={onStop}>
         Stop

@@ -22,13 +22,19 @@ export function deserialize(json: string): GameState {
     ...data,
     skills: { ...base.skills, ...data.skills },
     inventory: { ...data.inventory },
-    stats: { completed: { ...data.stats?.completed } },
+    stats: { completed: { ...data.stats?.completed }, requestsFilled: data.stats?.requestsFilled ?? 0 },
     version: SAVE_VERSION,
   };
+  // Fields that no longer exist (the offline cap is now derived from upgrades).
+  delete (state as Partial<GameState> & { offlineCapMs?: number }).offlineCapMs;
+
   if (data.version < 2) {
     // v1 predates notes and pages: open everything so no earned progress gets locked away.
     state.notesRevealed = NOTES.length;
     state.stats.completed.decipher_page = Math.max(state.stats.completed.decipher_page ?? 0, PAGES.length);
+  } else if (data.version < 3 && state.notesRevealed >= 6) {
+    // v3 inserted the village note as note 6; saves past it shift up by one.
+    state.notesRevealed = Math.min(state.notesRevealed + 1, NOTES.length);
   }
   return state;
 }

@@ -1,9 +1,11 @@
 import { ACTION_DEFS, type ActionId } from "../content/actions";
 import type { ItemId } from "../content/items";
 import type { SkillId } from "../content/skills";
+import { actionDurationMs, extraYieldChance } from "./modifiers";
 import { isRecipeKnown, isSkillUnlocked, pagesRead, revealNotes, type Note, type Page } from "./progress";
 import { nextRandom } from "./rng";
 import type { GameState } from "./state";
+import { refillBoard } from "./village";
 import { levelForXp, xpForLevel } from "./xp";
 
 export type StopReason =
@@ -66,7 +68,15 @@ export function advance(input: GameState, ms: number): { state: GameState; repor
   const report = emptyReport();
   report.elapsedMs = ms;
   let remaining = ms;
+  /** The sim clock: wall-clock time the simulation has reached inside this call. */
+  const clock = () => input.lastTickAt + (ms - remaining);
+  const roll = () => {
+    const [value, seed] = nextRandom(state.rngSeed);
+    state.rngSeed = seed;
+    return value;
+  };
 
+  refillBoard(state, clock());
   while (state.active && remaining > 0) {
     const { id } = state.active;
     const def = ACTION_DEFS[id];
@@ -80,7 +90,7 @@ export function advance(input: GameState, ms: number): { state: GameState; repor
       }
     }
 
-    const needed = def.seconds * 1000 - state.active.elapsedMs;
+    const needed = actionDurationMs(state, id) - state.active.elapsedMs;
     if (remaining < needed) {
       state.active.elapsedMs += remaining;
       remaining = 0;
@@ -94,17 +104,13 @@ export function advance(input: GameState, ms: number): { state: GameState; repor
       state.inventory[item] = (state.inventory[item] ?? 0) - qty;
       add(report.itemsUsed, item, qty);
     }
+    const extra = extraYieldChance(state, id);
     for (const out of def.outputs) {
-      let drops = true;
-      if (out.chance !== undefined) {
-        const [roll, seed] = nextRandom(state.rngSeed);
-        state.rngSeed = seed;
-        drops = roll < out.chance;
-      }
-      if (drops) {
-        add(state.inventory, out.item, out.qty);
-        add(report.itemsGained, out.item, out.qty);
-      }
+      if (out.chance !== undefined && roll() >= out.chance) continue;
+      // Yield bonuses (e.g. the drying rack) only apply to guaranteed outputs.
+      const qty = out.qty + (out.chance === undefined && extra > 0 && roll() < extra ? 1 : 0);
+      add(state.inventory, out.item, qty);
+      add(report.itemsGained, out.item, qty);
     }
     const skill = state.skills[def.skill];
     const before = levelForXp(skill.xp, state.levelCap);
@@ -124,8 +130,10 @@ export function advance(input: GameState, ms: number): { state: GameState; repor
     add(state.stats.completed, id, 1);
     report.pagesRead.push(...pagesRead(state).slice(pagesBefore));
     report.notesRevealed.push(...revealNotes(state));
+    refillBoard(state, clock());
   }
 
   state.lastTickAt = input.lastTickAt + ms;
+  refillBoard(state, state.lastTickAt);
   return { state, report };
 }

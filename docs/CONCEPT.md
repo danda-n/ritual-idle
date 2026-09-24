@@ -514,3 +514,8 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
 - **Cost:** 1 of each item per attempt, plus consolation (Ritualism XP and Insight). Experiments are instant.
 - **Fragments are addressed** to their recipe, and hints escalate: riddle, then category, then plain names.
 - **Hint-less secrets:** a few per chapter, found by free experimenting.
+
+### Chapter 1 build: small decisions (M1)
+- **Village requests can be turned away** with no penalty; a new one knocks after 30 seconds of game time. That way an impossible request never jams the board.
+- **The offline cap is derived from sanctum upgrades**, not stored in the save. Mended shutters give 36h in Chapter 1.
+- **Yield bonuses** (e.g. the drying rack's +10%) roll a chance for +1 on guaranteed outputs only.

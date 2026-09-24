@@ -48,7 +48,7 @@ Skills unlock through **margin notes** from the half-burnt grimoire. Each note i
 
 The first **Still Night** omen drop is scripted around note 4, so the player learns to store and release omens early.
 
-**Build status:** notes 1–5, 7 and 8 are implemented in `src/content/notes.ts` (with a plain hint line under each note). Note 6 goes in when the village board is built. Until then, the Sigilcraft note leads straight to the Ritualism note. Burnt pages are in `src/content/pages.ts`: pages 1–5 each teach one 📜 recipe, and page 6 is the black-page teaser.
+**Build status:** all 8 notes are implemented in `src/content/notes.ts`, each with a plain hint line. Note 4 opens the Grimoire, note 6 the Village, and note 7 the Circle. Burnt pages are in `src/content/pages.ts`: pages 1–5 each teach one 📜 recipe, and page 6 is the black-page teaser.
 
 ---
 
@@ -117,6 +117,10 @@ The first ~6 deciphered pages follow a set order (the story and recipe unlocks).
 - **The request board** shows **3 requests** at a time. Filling one pays **coin** plus **trust**, and a new request appears after a short delay.
 - **Trust** unlocks better requests (more coin, rare rewards) and, in later chapters, village-related story.
 - **There's no "sell anything" market.** Coin comes only from requests, so the resource chains stay meaningful.
+- **Build details** *(M1)*:
+  - An emptied slot refills after **30 seconds** of game time, including offline.
+  - Any request can be **turned away** at no cost, so a request you can't fill never blocks the board.
+  - Trust gates in `src/content/requests.ts`: the stable mark needs 2 trust, smoking out the loft 3, iron by the cradle 5.
 - **Example requests in Chapter 1:**
 
 | Request | Needs | Pays |

@@ -1,3 +1,4 @@
+import { offlineCapMs } from "./modifiers";
 import { advance, type Report } from "./simulate";
 import type { GameState } from "./state";
 
@@ -13,7 +14,8 @@ export interface CatchUp {
 /** Fast-forward a loaded save to `now`, simulating up to the offline cap. */
 export function catchUp(saved: GameState, now: number): CatchUp {
   const awayMs = Math.max(0, now - saved.lastTickAt);
-  const simulatedMs = Math.min(awayMs, saved.offlineCapMs);
+  const cap = offlineCapMs(saved);
+  const simulatedMs = Math.min(awayMs, cap);
   const { state, report } = advance(saved, simulatedMs);
-  return { state: { ...state, lastTickAt: now }, report, awayMs, capped: awayMs > saved.offlineCapMs };
+  return { state: { ...state, lastTickAt: now }, report, awayMs, capped: awayMs > cap };
 }

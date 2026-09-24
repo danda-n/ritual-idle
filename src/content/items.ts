@@ -36,6 +36,8 @@ export const ITEMS = {
   // Scholarship
   deciphered_page: { name: "Deciphered page" },
   litany: { name: "Grandmother's Litany", description: "The focus for the Hearth-Circle." },
+  // Village
+  bread: { name: "Bread", description: "For the offering of bread and salt." },
   // Ritualism
   consecrated_salt: { name: "Consecrated salt" },
   blessing: { name: "Blessing" },

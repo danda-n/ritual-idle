@@ -13,7 +13,7 @@ import { levelForXp, xpForLevel, xpToNext } from "./xp";
 /** A game past the Chapter 1 onboarding: every skill and recipe open. */
 function newGame(now: number, seed: number): GameState {
   const s = freshGame(now, seed);
-  return { ...s, notesRevealed: NOTES.length, stats: { completed: { decipher_page: PAGES.length } } };
+  return { ...s, notesRevealed: NOTES.length, stats: { completed: { decipher_page: PAGES.length }, requestsFilled: 0 } };
 }
 
 const T0 = 1_000_000;

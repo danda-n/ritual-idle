@@ -2,6 +2,7 @@ import type { ActionId } from "../content/actions";
 import { NOTES } from "../content/notes";
 import { PAGES } from "../content/pages";
 import type { SkillId } from "../content/skills";
+import type { Feature, GoalDef } from "../content/types";
 import type { GameState } from "./state";
 
 // Chapter 1 onboarding: grandmother's notes unlock skills, deciphered pages unlock recipes.
@@ -26,7 +27,13 @@ export function currentNote(state: GameState): Note {
 
 export function goalProgress(state: GameState, note: Note): { done: number; target: number } | null {
   if (!("goal" in note)) return null;
-  return { done: Math.min(completedCount(state, note.goal.action), note.goal.count), target: note.goal.count };
+  const goal: GoalDef<ActionId> = note.goal;
+  const done = goal.kind === "complete" ? completedCount(state, goal.action) : state.stats.requestsFilled;
+  return { done: Math.min(done, goal.count), target: goal.count };
+}
+
+export function isFeatureOpen(state: GameState, feature: Feature): boolean {
+  return revealedNotes(state).some((n) => "opens" in n && (n.opens as readonly Feature[]).includes(feature));
 }
 
 export function isSkillUnlocked(state: GameState, skill: SkillId): boolean {

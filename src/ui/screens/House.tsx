@@ -1,6 +1,7 @@
 import { ACTION_DEFS, type ActionId } from "../../content/actions";
 import type { ItemId } from "../../content/items";
 import { SKILL_IDS, SKILLS, type SkillId } from "../../content/skills";
+import { actionDurationMs } from "../../engine/modifiers";
 import { isRecipeKnown, isSkillUnlocked } from "../../engine/progress";
 import { blockReason, skillLevel } from "../../engine/simulate";
 import type { GameState } from "../../engine/state";
@@ -78,7 +79,7 @@ function ActionRow({ id, state, onStart }: { id: ActionId; state: GameState; onS
       <div className="action-name">
         <strong>{def.name}</strong>
         <span className="muted num">
-          Lvl {def.level} · {def.seconds}s · {def.xp} xp
+          Lvl {def.level} · {+(actionDurationMs(state, id) / 1000).toFixed(1)}s · {def.xp} xp
         </span>
       </div>
       <div className="action-io">
@@ -101,7 +102,7 @@ function ActionRow({ id, state, onStart }: { id: ActionId; state: GameState; onS
       </div>
       <div className="action-control">
         {running ? (
-          <Bar value={state.active!.elapsedMs / (def.seconds * 1000)} label={`${def.name} progress`} />
+          <Bar value={state.active!.elapsedMs / actionDurationMs(state, id)} label={`${def.name} progress`} />
         ) : (
           <button className="btn btn-primary" onClick={onStart} disabled={blocked !== null} title={blocked ? formatStop(blocked) : undefined}>
             {locked ? `Level ${def.level}` : "Start"}

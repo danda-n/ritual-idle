@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { ACTION_DEFS } from "../content/actions";
 import type { SkillId } from "../content/skills";
-import { HouseIcon } from "./art/icons";
+import { isFeatureOpen } from "../engine/progress";
+import { HouseIcon, LanternIcon } from "./art/icons";
 import { EmbroideryBand } from "./art/ornaments";
 import { AwaySummary } from "./components/AwaySummary";
+import { DevPanel } from "./components/DevPanel";
 import { Inventory } from "./components/Inventory";
 import { Notes } from "./components/Notes";
 import { SaveTools } from "./components/SaveTools";
@@ -12,18 +14,26 @@ import { Toasts } from "./components/Toasts";
 import { TopBar } from "./components/TopBar";
 import { formatStop } from "./format";
 import { SkillActions, SkillNav } from "./screens/House";
+import { Village } from "./screens/Village";
 import { useGame } from "./useGame";
 
-type TabId = "house";
+type TabId = "house" | "village";
 
 export function App() {
   const game = useGame();
   const { state } = game;
-  const [tab, setTab] = useState<TabId>("house");
+  const [tab, setTabState] = useState<TabId>("house");
+  // Tabs show a dot until first visited.
+  const [seen, setSeen] = useState<Partial<Record<TabId, boolean>>>({ house: true });
+  const setTab = (t: TabId) => {
+    setTabState(t);
+    setSeen((s) => ({ ...s, [t]: true }));
+  };
   const [skill, setSkill] = useState<SkillId>(state.active ? ACTION_DEFS[state.active.id].skill : "scavenging");
 
-  // Tabs appear as the chapter opens them (Village, Circle and Grimoire arrive in later milestones).
+  // Tabs appear as grandmother's notes open them (Grimoire and Circle arrive in later milestones).
   const tabs: TabDef<TabId>[] = [{ id: "house", label: "House", icon: <HouseIcon size={18} /> }];
+  if (isFeatureOpen(state, "village")) tabs.push({ id: "village", label: "Village", icon: <LanternIcon size={18} />, badge: tab !== "village" && state.board.some((b) => b.request) && !seen.village });
 
   return (
     <div className="app">
@@ -33,6 +43,7 @@ export function App() {
 
       <div className="layout">
         <div className="main" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
+          {tab === "village" && <Village state={state} act={game.act} />}
           {tab === "house" && (
             <div className="house">
               <SkillNav state={state} skill={skill} onSelect={setSkill} />
@@ -48,6 +59,7 @@ export function App() {
 
       <footer className="footer">
         <SaveTools state={state} onLoad={game.load} onReset={game.reset} />
+        {import.meta.env.DEV && <DevPanel dev={game.dev} />}
       </footer>
 
       <Toasts toasts={game.toasts} onDismiss={game.dismissToast} />
