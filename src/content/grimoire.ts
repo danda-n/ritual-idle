@@ -14,7 +14,7 @@ export const GRIMOIRE = {
       plain: ["mugwort", "chamomile"],
     },
     reward: { kind: "offline_bonus", bonus: 0.1 },
-    rewardText: "Time away counts 10% extra.",
+    rewardText: "+10% speed on everything while you're away.",
     reveal: "The pillow smells of her. You sleep, and the house keeps working in your dreams.",
   },
   hearth_mark: {

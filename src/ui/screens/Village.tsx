@@ -5,6 +5,7 @@ import { REQUESTS } from "../../content/requests";
 import { SHOP, type ShopId, type UpgradeId } from "../../content/shop";
 import { buy, canBuy, declineRequest, fillRequest, hasItems, type Result } from "../../engine/commands";
 import { lookupItem } from "../../engine/estimates";
+import { requestCoin, trustMultiplier } from "../../engine/modifiers";
 import type { GameState } from "../../engine/state";
 import { CandleIcon, CoinIcon, HouseIcon, LeafIcon, MoonIcon } from "../art/icons";
 import { ItemChip } from "../components/ItemLookup";
@@ -146,7 +147,7 @@ function RequestCard({ state, index, act }: { state: GameState; index: number; a
         ))}
       </div>
       <p className="muted num">
-        Pays {req.coin} coin · +{req.trust} trust
+        Pays {requestCoin(state, req)} coin · +{+(req.trust * trustMultiplier(state)).toFixed(1)} trust
       </p>
       <div className="row">
         <button className="btn btn-primary" disabled={!ready} onClick={() => act((s) => fillRequest(s, index))}>

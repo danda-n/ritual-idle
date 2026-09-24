@@ -12,7 +12,7 @@ import { Glows } from "./Grimoire";
 
 type Act = (command: (s: GameState) => Result) => Success | null;
 
-const GLOW_LINES = ["The chalk stays cold.", "The circle stirs once.", "The circle stirs twice.", "The circle stirs three times."];
+const GLOW_LINES = ["The chalk stays cold.", "The circle stirs once.", "The circle stirs twice."];
 
 function outcomeLine(o: ExperimentOutcome): string {
   switch (o.kind) {
@@ -201,7 +201,7 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
             {held.map((id) => (
               <button
                 key={id}
-                className={`chip pick ${placed.includes(id) ? "accent" : ""} ${knowledge?.belongs.includes(id) ? "right" : ""} ${progress?.marks[id] ?? ""}`}
+                className={`chip pick ${placed.includes(id) ? "accent" : ""} ${knowledge?.belongs.includes(id) ? "right" : ""}`}
                 onClick={() => place(id)}
                 disabled={placed.includes(id) || placed.length >= slots}
               >

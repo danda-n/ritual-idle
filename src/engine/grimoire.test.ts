@@ -169,10 +169,13 @@ describe("free experiments", () => {
 describe("rewards", () => {
   const discover = (s: GameState, id: GrimoireId) => ({ ...s, grimoire: { ...s.grimoire, [id]: { ...progressOf(s, id), discovered: true } } });
 
-  it("Dream pillow makes time away count 10% extra", () => {
+  it("Dream pillow gives +10% speed while away, without moving timers", () => {
     const s = discover(startAction(open(), "pick_nettle"), "dream_pillow");
     expect(offlineBonus(s)).toBeCloseTo(0.1);
-    expect(catchUp(s, T0 + HOUR).report.elapsedMs).toBeCloseTo(1.1 * HOUR);
+    const away = catchUp(s, T0 + HOUR);
+    expect(away.report.elapsedMs).toBe(HOUR);
+    expect(Math.abs(away.report.actionsCompleted - 1320)).toBeLessThanOrEqual(1); // 1200 × 1.1, give or take float rounding
+    expect(away.state.lastTickAt).toBe(T0 + HOUR);
   });
 
   it("Hearth mark adds a rite quality step", () => {

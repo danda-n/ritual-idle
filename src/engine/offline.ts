@@ -15,8 +15,9 @@ export interface CatchUp {
 export function catchUp(saved: GameState, now: number): CatchUp {
   const awayMs = Math.max(0, now - saved.lastTickAt);
   const cap = offlineCapMs(saved);
-  // The Dream pillow makes time away count extra, after the cap.
-  const simulatedMs = Math.min(awayMs, cap) * (1 + offlineBonus(saved));
-  const { state, report } = advance(saved, simulatedMs);
+  const simulatedMs = Math.min(awayMs, cap);
+  // The Dream pillow speeds up work while you're away. (It used to add extra simulated time,
+  // which pushed timers like buffs and knocks into the future.)
+  const { state, report } = advance(saved, simulatedMs, { offlineSpeedBonus: offlineBonus(saved) });
   return { state: { ...state, lastTickAt: now }, report, awayMs, capped: awayMs > cap };
 }

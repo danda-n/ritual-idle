@@ -8,8 +8,8 @@ import { discoveredRewards } from "./grimoire";
 import type { GameState } from "./state";
 
 // Every bonus in the game is computed here, so balance lives in one place.
-// Sources so far: sanctum upgrades and timed buffs (released omens, minor rites).
-// Followers and grimoire effects join later. `now` is the sim clock; it defaults to the last tick.
+// Sources: sanctum upgrades, timed buffs (released omens, minor rites), followers and
+// Grimoire rewards. `now` is the sim clock; it defaults to the last tick.
 
 const HOUR = 60 * 60 * 1000;
 export const BASE_OFFLINE_CAP_MS = 24 * HOUR;
@@ -75,7 +75,7 @@ export function omenCapacity(state: GameState): number {
 
 // Grimoire rewards (docs/GRIMOIRE.md §8)
 
-/** Extra offline time as a fraction (the Dream pillow: 0.1 = time away counts 10% more). */
+/** Extra speed while away, as a fraction (the Dream pillow: 0.1 = 10% faster offline). */
 export function offlineBonus(state: GameState): number {
   let bonus = 0;
   for (const r of discoveredRewards(state)) if (r.kind === "offline_bonus") bonus += r.bonus;

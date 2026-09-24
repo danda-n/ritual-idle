@@ -114,15 +114,16 @@ export function useGame() {
       if (dt <= 0) return;
       if (dt > OFFLINE_GAP_MS) {
         const result = catchUp(s, now);
+        // Commit first, so announcements read the new state (e.g. a fragment's new insight).
+        commit(result.state);
         if (result.awayMs >= SUMMARY_THRESHOLD_MS) setAway(result);
         else announce(result.report);
-        commit(result.state);
         return;
       }
       const { state: next, report } = advance(s, dt);
+      commit(next);
       if (report.stopped) setLastStop(report.stopped);
       announce(report);
-      commit(next);
     }, TICK_MS);
     const saveNow = () => saveLocal(ref.current);
     const autosave = setInterval(saveNow, AUTOSAVE_MS);

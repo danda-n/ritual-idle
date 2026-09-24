@@ -55,6 +55,6 @@ describe("Circle guidance", () => {
   it("explains results", () => {
     expect(outcomeHelp({ kind: "glow", recipe: "dream_pillow", glows: 0, of: 3 })).toMatch(/crossed out/);
     expect(outcomeHelp({ kind: "glow", recipe: "dream_pillow", glows: 2, of: 3 })).toMatch(/2 of 3 right, but not which/);
-    expect(outcomeHelp({ kind: "discovered", recipe: "dream_pillow" })).toMatch(/10% extra/);
+    expect(outcomeHelp({ kind: "discovered", recipe: "dream_pillow" })).toMatch(/10% speed/);
   });
 });

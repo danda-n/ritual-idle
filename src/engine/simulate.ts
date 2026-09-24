@@ -73,7 +73,7 @@ export function blockReason(state: GameState, id: ActionId): StopReason | null {
  * The action to switch to when `stopped` can't continue, or null to go idle.
  * Only ever an action that can run right now, and never the one that just stopped.
  */
-export function fallbackFor(state: GameState, stopped: ActionId): ActionId | null {
+export function fallbackFor(state: GameState, stopped: ActionId | null): ActionId | null {
   const f = state.settings.fallback;
   if (f === "stop") return null;
   const target = f === "last_gathering" ? state.lastGathering : f;
@@ -97,7 +97,13 @@ function add<K extends string>(bag: Partial<Record<K, number>>, key: K, n: numbe
  * Advance the simulation by `ms`. Pure: returns a new state plus a report.
  * The active action repeats until time runs out or it can no longer run.
  */
-export function advance(input: GameState, ms: number): { state: GameState; report: Report } {
+export interface AdvanceOptions {
+  /** Extra speed while the player is away (the Dream pillow). 0.1 = 10% faster. */
+  offlineSpeedBonus?: number;
+}
+
+export function advance(input: GameState, ms: number, opts: AdvanceOptions = {}): { state: GameState; report: Report } {
+  const awaySpeed = 1 + (opts.offlineSpeedBonus ?? 0);
   const state = structuredClone(input);
   const report = emptyReport();
   report.elapsedMs = ms;
@@ -125,6 +131,12 @@ export function advance(input: GameState, ms: number): { state: GameState; repor
       if (completedQuality !== null) {
         report.riteCompleted = completedQuality;
         report.notesRevealed.push(...revealNotes(state));
+        // The house keeps working: go back to the fallback action.
+        const next = fallbackFor(state, null);
+        if (next) {
+          state.active = { id: next, elapsedMs: 0 };
+          report.fellBackTo.push(next);
+        }
       }
       continue;
     }
@@ -144,7 +156,7 @@ export function advance(input: GameState, ms: number): { state: GameState; repor
       if (ACTION_DEFS[id].skill === "herbalism" || ACTION_DEFS[id].skill === "scavenging") state.lastGathering = id;
     }
 
-    const needed = actionDurationMs(state, id, clock()) - active.elapsedMs;
+    const needed = actionDurationMs(state, id, clock()) / awaySpeed - active.elapsedMs;
     if (remaining < needed) {
       active.elapsedMs += remaining;
       remaining = 0;
@@ -152,6 +164,17 @@ export function advance(input: GameState, ms: number): { state: GameState; repor
     }
     remaining -= needed;
     active.elapsedMs = 0;
+
+    // The inputs may have been used elsewhere during the repetition (a request, the Circle).
+    // Then this repetition makes nothing, and work moves on as if it had just stopped.
+    const missing = (Object.entries(def.inputs) as [ItemId, number][]).find(([item, qty]) => (state.inventory[item] ?? 0) < qty);
+    if (missing) {
+      report.stopped = { action: id, reason: { kind: "missing_input", item: missing[0] } };
+      const next = fallbackFor(state, id);
+      state.active = next ? { id: next, elapsedMs: 0 } : null;
+      if (next) report.fellBackTo.push(next);
+      continue;
+    }
 
     // Complete one repetition: consume inputs, roll outputs, grant XP.
     for (const [item, qty] of Object.entries(def.inputs) as [ItemId, number][]) {
@@ -163,14 +186,16 @@ export function advance(input: GameState, ms: number): { state: GameState; repor
     for (const out of def.outputs) {
       if (out.chance !== undefined && roll() >= Math.min(1, out.chance * chanceMultiplier(state, out.item, now))) continue;
       // Yield bonuses (e.g. the drying rack) only apply to guaranteed outputs.
-      const qty = out.qty + (out.chance === undefined && extra > 0 && roll() < extra ? 1 : 0);
-      add(state.inventory, out.item, qty);
-      add(report.itemsGained, out.item, qty);
+      // Curios go into the collection, not the pantry.
       if (out.item === "curio") {
         const { story, fragment } = readCurio(state);
         report.curioStories.push(story);
         if (fragment) report.fragments.push(fragment);
+        continue;
       }
+      const qty = out.qty + (out.chance === undefined && extra > 0 && roll() < extra ? 1 : 0);
+      add(state.inventory, out.item, qty);
+      add(report.itemsGained, out.item, qty);
     }
     const skill = state.skills[def.skill];
     const before = levelForXp(skill.xp, state.levelCap);

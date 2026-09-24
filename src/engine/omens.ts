@@ -10,10 +10,13 @@ export function storedOmens(state: GameState): number {
   return Object.values(state.omens).reduce((a, n) => a + (n ?? 0), 0);
 }
 
-/** Put an omen on the shelf. Returns false if the shelf is full (the omen passes unseen). */
-export function grantOmen(state: GameState, id: OmenId): boolean {
+/**
+ * Put an omen on the shelf. Returns false if the shelf is full (the omen passes unseen).
+ * `promised` omens (a note's gift) always land, even on a full shelf.
+ */
+export function grantOmen(state: GameState, id: OmenId, promised = false): boolean {
   state.stats.omensSeen++;
-  if (storedOmens(state) >= omenCapacity(state)) return false;
+  if (!promised && storedOmens(state) >= omenCapacity(state)) return false;
   state.omens[id] = (state.omens[id] ?? 0) + 1;
   return true;
 }
@@ -41,7 +44,7 @@ export function pruneBuffs(state: GameState, now: number): void {
 export function giveNoteGifts(state: GameState, notes: readonly Note[]): OmenId[] {
   const granted: OmenId[] = [];
   for (const n of notes) {
-    if ("gift" in n && n.gift in OMENS && grantOmen(state, n.gift as OmenId)) granted.push(n.gift as OmenId);
+    if ("gift" in n && n.gift in OMENS && grantOmen(state, n.gift as OmenId, true)) granted.push(n.gift as OmenId);
   }
   return granted;
 }

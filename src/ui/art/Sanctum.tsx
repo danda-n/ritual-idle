@@ -1,6 +1,6 @@
 import { completedCount } from "../../engine/progress";
 import { isDiscovered } from "../../engine/grimoire";
-import { activeBuffs } from "../../engine/modifiers";
+import { activeBuffs, omenCapacity } from "../../engine/modifiers";
 import { storedOmens } from "../../engine/omens";
 import type { GameState } from "../../engine/state";
 
@@ -18,6 +18,8 @@ export interface SanctumView {
   lamp: boolean;
   shelf: boolean;
   omens: number;
+  /** Jars on the shelf: how many omens it can hold. */
+  capacity: number;
   pillow: boolean;
   honey: boolean;
   janko: boolean;
@@ -39,6 +41,7 @@ export function sanctumView(state: GameState): SanctumView {
     lamp: has("reading_lamp"),
     shelf: has("omen_shelf") || state.stats.omensSeen > 0,
     omens: storedOmens(state),
+    capacity: omenCapacity(state),
     pillow: isDiscovered(state, "dream_pillow"),
     honey: isDiscovered(state, "honey_light"),
     janko: state.followers.includes("janko"),
@@ -135,7 +138,7 @@ export function Sanctum({ state }: { state: GameState }) {
         {v.shelf && (
           <g>
             <rect x="300" y="96" width="120" height="6" fill="var(--ink-600)" />
-            {[318, 358, 398].map((x, i) => {
+            {[318, 358, 398].slice(0, Math.max(v.capacity, v.omens)).map((x, i) => {
               const glowing = i < v.omens;
               return (
                 <g key={x}>
