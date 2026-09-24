@@ -2,6 +2,8 @@
 
 An idle skilling game about inheriting a village witch's house. See [docs/CONCEPT.md](docs/CONCEPT.md).
 
+**Play Chapter 1:** https://danda-n.github.io/ritual-idle/ (every push to `main` redeploys automatically)
+
 ## Run it
 
 ```bash
