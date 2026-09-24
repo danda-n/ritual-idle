@@ -1,22 +1,15 @@
-import { createContext, useContext, useEffect, useRef, useState } from "react";
-import { ACTION_DEFS, type ActionId } from "../../content/actions";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { ACTION_DEFS } from "../../content/actions";
 import { ITEM_CATEGORIES, ITEM_DEFS, type ItemCategory, type ItemId } from "../../content/items";
 import { SKILLS } from "../../content/skills";
 import { lookupItem, producerAction, producingSkill } from "../../engine/estimates";
 import { blockReason } from "../../engine/simulate";
-import { newGame, type GameState } from "../../engine/state";
+import type { GameState } from "../../engine/state";
+import { useChipActions } from "../chipContext";
 import { CATEGORY_ICONS, SkillIcon } from "../art/icons";
 import { formatStop, itemName } from "../format";
 import { Modal } from "./Modal";
-
-/** What item chips need from the game: the state, a lookup, and a way to start an action. */
-export interface ChipActions {
-  state: GameState;
-  lookup: (item: ItemId) => void;
-  start: (id: ActionId) => void;
-}
-
-export const ChipContext = createContext<ChipActions>({ state: newGame(0, 0), lookup: () => {}, start: () => {} });
 
 /**
  * An item as a chip, coloured and marked with the skill that makes it.
@@ -26,23 +19,37 @@ export const ChipContext = createContext<ChipActions>({ state: newGame(0, 0), lo
  * - `plain`: text-style link for lists.
  */
 export function ItemChip({ item, qty, need, chance, plain }: { item: ItemId; qty?: number; need?: number; chance?: number; plain?: boolean }) {
-  const { state, lookup, start } = useContext(ChipContext);
+  const { state, lookup, start } = useChipActions();
   const [menu, setMenu] = useState(false);
   const wrap = useRef<HTMLSpanElement>(null);
+  const menuRef = useRef<HTMLSpanElement>(null);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const skill = producingSkill(item);
   const have = state.inventory[item] ?? 0;
   const short = need !== undefined && have < need;
 
-  // Close the menu on an outside click or Escape.
+  // The menu lives on its own top layer (a portal), placed under the chip, so rows below
+  // can't cover it or catch its clicks. It closes on an outside click, Escape, scroll or resize.
+  useLayoutEffect(() => {
+    if (!menu || !wrap.current) return;
+    const r = wrap.current.getBoundingClientRect();
+    setPos({ top: r.bottom + 6, left: Math.min(r.left, window.innerWidth - 316) });
+  }, [menu]);
   useEffect(() => {
     if (!menu) return;
-    const onDown = (e: MouseEvent) => wrap.current && !wrap.current.contains(e.target as Node) && setMenu(false);
+    const inside = (t: EventTarget | null) => !!t && (wrap.current?.contains(t as Node) || menuRef.current?.contains(t as Node));
+    const onDown = (e: MouseEvent) => !inside(e.target) && setMenu(false);
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setMenu(false);
+    const close = () => setMenu(false);
     document.addEventListener("mousedown", onDown);
     document.addEventListener("keydown", onKey);
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("resize", close);
     return () => {
       document.removeEventListener("mousedown", onDown);
       document.removeEventListener("keydown", onKey);
+      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("resize", close);
     };
   }, [menu]);
 
@@ -79,8 +86,10 @@ export function ItemChip({ item, qty, need, chance, plain }: { item: ItemId; qty
           </span>
         )}
       </button>
-      {menu && (
-        <span className="chip-menu" role="menu">
+      {menu &&
+        pos &&
+        createPortal(
+        <span className="chip-menu" role="menu" ref={menuRef} style={{ top: pos.top, left: pos.left }}>
           <span className="chip-menu-title">
             Short {need! - have} {itemName(item).toLowerCase()}
           </span>
@@ -113,8 +122,9 @@ export function ItemChip({ item, qty, need, chance, plain }: { item: ItemId; qty
           >
             Look up
           </button>
-        </span>
-      )}
+        </span>,
+          document.body,
+        )}
     </span>
   );
 }
