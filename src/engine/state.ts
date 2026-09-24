@@ -12,12 +12,15 @@ import type { UpgradeId } from "../content/shop";
 import { SKILL_IDS, type SkillId } from "../content/skills";
 import { randomSeed } from "./rng";
 
-export const SAVE_VERSION = 6;
+export const SAVE_VERSION = 7;
 
 export interface ActiveAction {
   id: ActionId;
-  /** Time already spent on the current repetition. */
-  elapsedMs: number;
+  /**
+   * How far through the current repetition (0–1). A fraction, not milliseconds, so a speed
+   * change (Tend, a buff, a level) speeds up only what's left.
+   */
+  progress: number;
 }
 
 /** One slot on the village board: a request, or empty until `refillAt` (sim clock). */
@@ -117,7 +120,6 @@ export interface Settings {
 
 export interface Talents {
   ranks: Partial<Record<BranchId, number>>;
-  keystone: boolean;
 }
 
 export interface ActiveBuff {

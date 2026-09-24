@@ -60,6 +60,7 @@ export function deserialize(json: string): GameState {
     delete state.inventory.curio;
   }
   if (data.version < 5) upgradeToStagedKindling(state);
+  if (data.version < 7) upgradeToV7(state, data);
   if (data.version < 6) {
     // v6 added stage steps: every step of a stage already passed counts as done (no rewards).
     state.stepsDone = NOTES.slice(0, state.notesRevealed - 1).flatMap((n) => ("steps" in n ? n.steps.map((st) => st.id) : []));
@@ -105,6 +106,16 @@ function upgradeToStagedKindling(state: GameState): void {
   state.notesRevealed = state.notesRevealed > 1 ? 2 : 1;
   // Someone who had already reached the Circle had seen their first experiments.
   state.experimentsOpen = state.kept.features.includes("circle");
+}
+
+/** v7: progress as a fraction of the repetition; the keystone became free (points are derived). */
+function upgradeToV7(state: GameState, data: Partial<GameState>): void {
+  const old = data.active as ({ id: GameState["active"] extends infer A ? (A extends { id: infer I } ? I : never) : never; elapsedMs?: number; progress?: number } | null | undefined);
+  if (old && old.progress === undefined) {
+    const full = ACTION_DEFS[old.id].seconds * 1000;
+    state.active = { id: old.id, progress: Math.min(0.99, Math.max(0, (old.elapsedMs ?? 0) / full)) };
+  }
+  for (const t of Object.values(state.talents)) if (t) delete (t as { keystone?: boolean }).keystone;
 }
 
 // Export strings are base64 so they survive being pasted into chats and forums.

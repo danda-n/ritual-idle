@@ -91,7 +91,7 @@ export function fallbackFor(state: GameState, stopped: ActionId | null): ActionI
 /** Switching to another action ends the Tend streak (the meter itself keeps burning). */
 export function startAction(state: GameState, id: ActionId): GameState {
   const tend = state.active?.id === id ? state.tend : { ...state.tend, streak: 0 };
-  return { ...state, active: { id, elapsedMs: 0 }, tend };
+  return { ...state, active: { id, progress: 0 }, tend };
 }
 
 export function stopAction(state: GameState): GameState {
@@ -179,7 +179,7 @@ export function advance(input: GameState, ms: number, opts: AdvanceOptions = {})
         // The house keeps working: go back to the fallback action.
         const next = fallbackFor(state, null);
         if (next) {
-          state.active = { id: next, elapsedMs: 0 };
+          state.active = { id: next, progress: 0 };
           report.fellBackTo.push(next);
         }
       }
@@ -189,12 +189,12 @@ export function advance(input: GameState, ms: number, opts: AdvanceOptions = {})
     const def = ACTION_DEFS[id];
 
     const active = state.active!;
-    if (active.elapsedMs === 0) {
+    if (active.progress === 0) {
       const reason = blockReason(state, id);
       if (reason) {
         report.stopped = { action: id, reason };
         const next = fallbackFor(state, id);
-        state.active = next ? { id: next, elapsedMs: 0 } : null;
+        state.active = next ? { id: next, progress: 0 } : null;
         if (next) report.fellBackTo.push(next);
         continue;
       }
@@ -202,23 +202,22 @@ export function advance(input: GameState, ms: number, opts: AdvanceOptions = {})
     }
 
     const duration = actionDurationMs(state, id, clock()) / awaySpeed;
-    const needed = duration - active.elapsedMs;
-    // The Tend meter runs out partway through: carry the progress over at the slower speed.
+    const needed = (1 - active.progress) * duration;
+    // The Tend meter runs out partway through: go to that moment, then carry on at the new speed.
     const tendLeft = state.tend.endsAt - clock();
     if (tendLeft > 0 && tendLeft < needed && remaining >= tendLeft) {
-      const fraction = (active.elapsedMs + tendLeft) / duration;
+      active.progress += tendLeft / duration;
       remaining -= tendLeft;
-      active.elapsedMs = fraction * (actionDurationMs(state, id, clock()) / awaySpeed);
       state.tend.streak = 0;
       continue;
     }
     if (remaining < needed) {
-      active.elapsedMs += remaining;
+      active.progress += remaining / duration;
       remaining = 0;
       break;
     }
     remaining -= needed;
-    active.elapsedMs = 0;
+    active.progress = 0;
 
     // The inputs may have been used elsewhere during the repetition (a request, the Circle).
     // Then this repetition makes nothing, and work moves on as if it had just stopped.
@@ -226,7 +225,7 @@ export function advance(input: GameState, ms: number, opts: AdvanceOptions = {})
     if (missing) {
       report.stopped = { action: id, reason: { kind: "missing_input", item: missing[0] } };
       const next = fallbackFor(state, id);
-      state.active = next ? { id: next, elapsedMs: 0 } : null;
+      state.active = next ? { id: next, progress: 0 } : null;
       if (next) report.fellBackTo.push(next);
       continue;
     }

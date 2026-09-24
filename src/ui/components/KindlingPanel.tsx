@@ -48,7 +48,7 @@ export function KindlingPanel({ state, act }: { state: GameState; act: Act }) {
           <div className="kindling-rite">
             {performing && (
               <div className="goal">
-                <TimedBar key="rite" elapsedMs={performing.elapsedMs} durationMs={HEARTH_RITE.durationMs} label="Rite progress" />
+                <TimedBar key="rite" progress={performing.elapsedMs / HEARTH_RITE.durationMs} durationMs={HEARTH_RITE.durationMs} label="Rite progress" />
                 <span className="muted num">{formatClock(HEARTH_RITE.durationMs - performing.elapsedMs)}</span>
               </div>
             )}

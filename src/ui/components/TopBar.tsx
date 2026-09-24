@@ -49,7 +49,7 @@ function Working({ state, onStop, stopNote, onGo }: { state: GameState; onStop: 
       <div className="working" role="status">
         <CircleRiteIcon size={20} />
         <span className="working-name">{HEARTH_RITE.name}</span>
-        <TimedBar key="rite" elapsedMs={rite.elapsedMs} durationMs={HEARTH_RITE.durationMs} label="Rite progress" />
+        <TimedBar key="rite" progress={rite.elapsedMs / HEARTH_RITE.durationMs} durationMs={HEARTH_RITE.durationMs} label="Rite progress" />
         <span className="muted num">{formatClock(HEARTH_RITE.durationMs - rite.elapsedMs)}</span>
       </div>
     );
@@ -77,14 +77,14 @@ function Working({ state, onStop, stopNote, onGo }: { state: GameState; onStop: 
   }
   const def = ACTION_DEFS[state.active.id];
   const duration = actionDurationMs(state, state.active.id);
-  const left = Math.max(0, (duration - state.active.elapsedMs) / 1000);
+  const left = Math.max(0, ((1 - state.active.progress) * duration) / 1000);
   return (
     <div className="working" role="status" data-skill={def.skill}>
       <SkillIcon skill={def.skill} size={20} />
       <span className="working-name">{def.name}</span>
       <TimedBar
         key={`${state.active.id}:${state.stats.completed[state.active.id] ?? 0}:${Math.round(duration)}`}
-        elapsedMs={state.active.elapsedMs}
+        progress={state.active.progress}
         durationMs={duration}
         label={`${def.name} progress`}
       />

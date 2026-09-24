@@ -151,7 +151,7 @@ function ActionRow({ id, state, onStart, fresh, onTend }: { id: ActionId; state:
           <>
             <TimedBar
               key={`${id}:${state.stats.completed[id] ?? 0}:${Math.round(actionDurationMs(state, id))}`}
-              elapsedMs={state.active!.elapsedMs}
+              progress={state.active!.progress}
               durationMs={actionDurationMs(state, id)}
               label={`${def.name} progress`}
             />

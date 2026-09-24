@@ -227,15 +227,14 @@ export function tend(input: GameState): Result {
 
 // Talents
 
-/** Spend a talent point on a branch rank, or on the keystone (`branch` null). */
-export function spendTalent(input: GameState, skill: SkillId, branch: BranchId | null): Result {
+/** Spend a talent point on a branch rank. Filling a branch blooms the keystone for free. */
+export function spendTalent(input: GameState, skill: SkillId, branch: BranchId): Result {
   if (!isSkillUnlocked(input, skill)) return no("That skill isn't open yet.");
   const reason = canSpend(input, skill, branch);
   if (reason) return no(reason);
   const state = structuredClone(input);
   const t = structuredClone(talentsOf(state, skill));
-  if (branch === null) t.keystone = true;
-  else t.ranks[branch] = (t.ranks[branch] ?? 0) + 1;
+  t.ranks[branch] = (t.ranks[branch] ?? 0) + 1;
   state.talents[skill] = t;
   return ok(state);
 }

@@ -10,7 +10,7 @@ import { actionDurationMs, levelSpeed } from "./modifiers";
 import { deserialize } from "./save";
 import { advance, startAction } from "./simulate";
 import { newGame, type GameState, type Talents } from "./state";
-import { canSpend, keystoneOpen, pointsFree, talentPoints } from "./talents";
+import { canSpend, keystoneEffect, keystoneOpen, pointsFree, talentPoints } from "./talents";
 import { xpForLevel } from "./xp";
 
 const T0 = 1_000_000;
@@ -70,17 +70,18 @@ describe("points", () => {
     expect(spendTalent({ ...at(9), notesRevealed: 1 }, "herbalism", "swift").ok).toBe(false);
   });
 
-  it("open the keystone after 3 in one branch, not 3 spread out", () => {
+  it("bloom the keystone for free once one branch is full, not with 3 spread out", () => {
     let spread = at(15); // 5 points
     for (const b of ["swift", "plenty", "fortune"] as const) spread = okay(spendTalent(spread, "herbalism", b));
     expect(keystoneOpen(spread, "herbalism")).toBe(false);
-    expect(canSpend(spread, "herbalism", null)).toMatch(/3 points in one branch/);
 
-    let deep = at(12);
-    for (let i = 0; i < 3; i++) deep = okay(spendTalent(deep, "herbalism", "plenty"));
-    deep = okay(spendTalent(deep, "herbalism", null));
-    expect(deep.talents.herbalism?.keystone).toBe(true);
-    expect(canSpend(deep, "herbalism", null)).not.toBeNull();
+    // The playtest case: level 9, all 3 points in Fortune.
+    let deep = at(9);
+    for (let i = 0; i < 3; i++) deep = okay(spendTalent(deep, "herbalism", "fortune"));
+    expect(keystoneOpen(deep, "herbalism")).toBe(true);
+    expect(keystoneEffect(deep, "herbalism")).toEqual(KEYSTONES.herbalism.effect);
+    expect(pointsFree(deep, "herbalism")).toBe(0);
+    expect(canSpend(deep, "herbalism", "fortune")).not.toBeNull();
   });
 
   it("reset for free, and every point comes back", () => {
@@ -98,36 +99,37 @@ describe("points", () => {
 
 describe("branch effects", () => {
   it("Swift adds 5% speed per rank", () => {
-    const s = at(1, "herbalism", { ranks: { swift: 2 }, keystone: false });
+    const s = at(1, "herbalism", { ranks: { swift: 2 } });
     expect(actionDurationMs(s, "pick_nettle")).toBeCloseTo(2000 / 1.1);
   });
 
   it("Plenty adds about 5% per rank to sure outputs", () => {
     const plain = made(at(1), "pick_nettle", 4000).inventory.nettle!;
-    const plenty = made(at(1, "herbalism", { ranks: { plenty: 3 }, keystone: false }), "pick_nettle", 4000).inventory.nettle!;
-    expect(plenty / plain).toBeGreaterThan(1.12);
-    expect(plenty / plain).toBeLessThan(1.18);
+    // 2 ranks (3 would also bloom the keystone)
+    const plenty = made(at(1, "herbalism", { ranks: { plenty: 2 } }), "pick_nettle", 4000).inventory.nettle!;
+    expect(plenty / plain).toBeGreaterThan(1.07);
+    expect(plenty / plain).toBeLessThan(1.13);
   });
 
   it("Fortune crits double both output and XP, about 3% per rank", () => {
-    const s = at(1, "chandlery", { ranks: { fortune: 3 }, keystone: false });
+    const s = at(1, "chandlery", { ranks: { fortune: 2 } });
     s.levelCap = 99; // keep XP from capping during the run
     const { state, report } = advance(startAction({ ...s, inventory: { tallow: 99_999 } }, "tallow_candle"), 4000 * 3000);
     const rate = report.criticals / report.actionsCompleted;
-    expect(rate).toBeGreaterThan(0.07);
-    expect(rate).toBeLessThan(0.11);
+    expect(rate).toBeGreaterThan(0.045);
+    expect(rate).toBeLessThan(0.075);
     expect(state.inventory.tallow_candle).toBe(report.actionsCompleted + report.criticals);
     expect(report.xpGained.chandlery).toBe((report.actionsCompleted + report.criticals) * ACTION_DEFS.tallow_candle.xp);
   });
 
   it("are deterministic for the same seed", () => {
-    const s = at(1, "herbalism", { ranks: { plenty: 2, fortune: 2 }, keystone: false });
+    const s = at(1, "herbalism", { ranks: { plenty: 2, fortune: 2 } });
     expect(made(s, "pick_nettle", 500).inventory).toEqual(made(s, "pick_nettle", 500).inventory);
   });
 });
 
 describe("keystones", () => {
-  const key = (_skill: SkillId): Talents => ({ ranks: { swift: 3 }, keystone: true });
+  const key = (_skill: SkillId): Talents => ({ ranks: { swift: 3 } });
 
   it("every skill has one", () => {
     for (const skill of Object.keys(newGame().skills) as SkillId[]) expect(KEYSTONES[skill].text.length).toBeGreaterThan(0);

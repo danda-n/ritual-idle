@@ -5,7 +5,7 @@ import { levelForXp } from "./xp";
 
 // Talents: points come from levels (one every POINT_EVERY), so only spending is saved.
 
-const NONE: Talents = { ranks: {}, keystone: false };
+const NONE: Talents = { ranks: {} };
 
 export function talentsOf(state: GameState, skill: SkillId): Talents {
   return state.talents[skill] ?? NONE;
@@ -21,21 +21,21 @@ export function talentPoints(state: GameState, skill: SkillId): number {
 
 export function pointsSpent(state: GameState, skill: SkillId): number {
   const t = talentsOf(state, skill);
-  return BRANCH_IDS.reduce((n, b) => n + (t.ranks[b] ?? 0), 0) + (t.keystone ? 1 : 0);
+  return BRANCH_IDS.reduce((n, b) => n + (t.ranks[b] ?? 0), 0);
 }
 
 export function pointsFree(state: GameState, skill: SkillId): number {
   return talentPoints(state, skill) - pointsSpent(state, skill);
 }
 
-/** The keystone opens after KEYSTONE_NEEDS points in any one branch. */
+/** The keystone blooms, free, once any one branch holds KEYSTONE_NEEDS points. */
 export function keystoneOpen(state: GameState, skill: SkillId): boolean {
   return BRANCH_IDS.some((b) => rankOf(state, skill, b) >= KEYSTONE_NEEDS);
 }
 
-/** The skill's keystone effect, if taken. */
+/** The skill's keystone effect, once it has bloomed. */
 export function keystoneEffect(state: GameState, skill: SkillId): KeystoneEffect | null {
-  return talentsOf(state, skill).keystone ? KEYSTONES[skill].effect : null;
+  return keystoneOpen(state, skill) ? KEYSTONES[skill].effect : null;
 }
 
 /** A branch's total effect for a skill (e.g. 0.1 for Swift rank 2). */
@@ -43,14 +43,9 @@ export function branchBonus(state: GameState, skill: SkillId, branch: BranchId):
   return BRANCHES[branch].perRank * rankOf(state, skill, branch);
 }
 
-/** Why this talent can't be taken, or null if it can. `branch` null means the keystone. */
-export function canSpend(state: GameState, skill: SkillId, branch: BranchId | null): string | null {
+/** Why this rank can't be taken, or null if it can. */
+export function canSpend(state: GameState, skill: SkillId, branch: BranchId): string | null {
   if (pointsFree(state, skill) < 1) return "No talent points to spend.";
-  if (branch === null) {
-    if (talentsOf(state, skill).keystone) return "Already taken.";
-    if (!keystoneOpen(state, skill)) return `Needs ${KEYSTONE_NEEDS} points in one branch first.`;
-    return null;
-  }
   if (rankOf(state, skill, branch) >= BRANCHES[branch].maxRank) return "That branch is full.";
   return null;
 }

@@ -30,7 +30,7 @@ function everything(): GameState {
     stats: { ...base.stats, completed: { decipher_page: PAGES.length + 1, tallow_candle: 3 }, requestsFilled: 3 },
     kindling: [...PART_IDS],
     experimentsOpen: true,
-    talents: { chandlery: { ranks: { swift: 1 }, keystone: false } },
+    talents: { chandlery: { ranks: { swift: 1 } } },
     inventory: { nettle: 12, salt: 5, ash: 5, rags: 3 },
     skills: { ...base.skills, ritualism: { xp: 2000 } },
   };
@@ -53,7 +53,7 @@ describe("saves", () => {
 
   it("load from every older version and keep playing", () => {
     const current = everything();
-    for (const version of [1, 2, 3, 4, 5]) {
+    for (const version of [1, 2, 3, 4, 5, 6]) {
       const old = { ...current, version } as Partial<GameState>;
       if (version < 3) {
         delete old.board;
@@ -67,7 +67,7 @@ describe("saves", () => {
       }
       const loaded = deserialize(JSON.stringify(old));
       expect(loaded.version).toBe(SAVE_VERSION);
-      expect(SAVE_VERSION).toBe(6);
+      expect(SAVE_VERSION).toBe(7);
       expect(() => catchUp(loaded, T0 + HOUR)).not.toThrow();
     }
   });

@@ -12,7 +12,7 @@ import { actionDurationMs } from "./modifiers";
 import { currentNote, isRecipeKnown, isSkillUnlocked } from "./progress";
 import { advance, blockReason, skillLevel, startAction } from "./simulate";
 import { newGame, type GameState } from "./state";
-import { keystoneOpen, pointsFree, rankOf } from "./talents";
+import { pointsFree, rankOf } from "./talents";
 import { SKILL_IDS } from "../content/skills";
 
 // A scripted player that finishes Chapter 1 using only the real engine and commands:
@@ -65,8 +65,8 @@ class Bot {
     while (this.noteAt.length < this.state.notesRevealed) this.noteAt.push(this.activeMs);
     for (const skill of SKILL_IDS) {
       while (isSkillUnlocked(this.state, skill) && pointsFree(this.state, skill) > 0) {
-        // Swift first, then the keystone, then Plenty and Fortune.
-        const branch = rankOf(this.state, skill, "swift") < BRANCHES.swift.maxRank ? "swift" : !this.state.talents[skill]?.keystone && keystoneOpen(this.state, skill) ? null : rankOf(this.state, skill, "plenty") < BRANCHES.plenty.maxRank ? "plenty" : "fortune";
+        // Swift first (filling it blooms the keystone), then Plenty and Fortune.
+        const branch = rankOf(this.state, skill, "swift") < BRANCHES.swift.maxRank ? "swift" : rankOf(this.state, skill, "plenty") < BRANCHES.plenty.maxRank ? "plenty" : "fortune";
         this.state = this.must(spendTalent(this.state, skill, branch));
       }
     }

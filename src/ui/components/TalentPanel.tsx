@@ -3,7 +3,7 @@ import { BRANCHES, BRANCH_IDS, branchText, KEYSTONE_NEEDS, KEYSTONES, POINT_EVER
 import { resetTalents, spendTalent, type Result } from "../../engine/commands";
 import { skillLevel } from "../../engine/simulate";
 import type { GameState } from "../../engine/state";
-import { canSpend, pointsFree, pointsSpent, rankOf, talentPoints, talentsOf } from "../../engine/talents";
+import { canSpend, keystoneOpen, pointsFree, pointsSpent, rankOf, talentPoints } from "../../engine/talents";
 
 type Act = (c: (s: GameState) => Result) => unknown;
 
@@ -17,8 +17,7 @@ export function TalentPanel({ state, skill, act }: { state: GameState; skill: Sk
   const level = skillLevel(state, skill);
   const nextAt = (Math.floor(level / POINT_EVERY) + 1) * POINT_EVERY;
   const keystone = KEYSTONES[skill];
-  const t = talentsOf(state, skill);
-  const keyBlock = canSpend(state, skill, null);
+  const bloomed = keystoneOpen(state, skill);
 
   return (
     <section className={`panel talents ${free > 0 ? "has-points" : ""}`} data-skill={skill} aria-labelledby="talents-heading">
@@ -68,19 +67,14 @@ export function TalentPanel({ state, skill, act }: { state: GameState; skill: Sk
               );
             })}
           </div>
-          <div className={`keystone ${t.keystone ? "is-taken" : ""} ${keyBlock === null ? "is-open" : ""}`}>
+          <div className={`keystone ${bloomed ? "is-taken" : ""}`}>
             <span className="keystone-mark" aria-hidden="true">
               ✦
             </span>
             <div>
               <strong>{keystone.name}</strong> <span className="branch-effect">{keystone.text}</span>
-              {!t.keystone && <p className="muted keystone-need">Needs {KEYSTONE_NEEDS} points in one branch.</p>}
+              {!bloomed && <p className="muted keystone-need">Blooms free when any branch is full ({KEYSTONE_NEEDS} points).</p>}
             </div>
-            {!t.keystone && (
-              <button className="btn btn-ghost talent-add" disabled={keyBlock !== null} title={keyBlock ?? undefined} onClick={() => act((s) => spendTalent(s, skill, null))}>
-                Take
-              </button>
-            )}
           </div>
         </>
       )}

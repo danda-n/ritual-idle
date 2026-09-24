@@ -121,6 +121,21 @@ describe("tending", () => {
     expect(rate).toBeLessThan(TEND.streakCap + 0.04);
   });
 
+  it("tending mid-repetition keeps the progress and only speeds up what's left", () => {
+    const half = advance(running(), base / 2).state;
+    expect(half.active!.progress).toBeCloseTo(0.5);
+    const tended = okay(tend(half));
+    expect(tended.active!.progress).toBeCloseTo(0.5);
+    // Half a repetition left at 1.5× speed: it finishes after base / 2 / 1.5, not at once.
+    expect(advance(tended, base / 2 / 1.5 - 5).report.actionsCompleted).toBe(0);
+    expect(advance(tended, base / 2 / 1.5 + 5).report.actionsCompleted).toBe(1);
+  });
+
+  it("older saves turn elapsed time into a fraction", () => {
+    const old = { ...running(), version: 6, active: { id: "search_pantry", elapsedMs: base / 4 } };
+    expect(deserialize(JSON.stringify(old)).active).toEqual({ id: "search_pantry", progress: 0.25 });
+  });
+
   it("the Tending talent lengthens the meter", () => {
     const s = { ...running(), talents: { scavenging: { ranks: { tending: 2 }, keystone: false } } };
     expect(tendMeterMs(s, "scavenging")).toBe(TEND.meterMs + 2 * TEND.rankMeterMs);
