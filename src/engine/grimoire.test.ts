@@ -59,7 +59,7 @@ describe("hint tiers", () => {
   });
 
   it("Grimoire assist doubles insight", () => {
-    const s = open({ settings: { grimoireAssist: true } });
+    const s = open({ settings: { ...newGame().settings, grimoireAssist: true } });
     addInsight(s, "dream_pillow", 3, "page");
     expect(progressOf(s, "dream_pillow").insight).toBe(6);
   });

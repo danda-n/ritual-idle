@@ -1,4 +1,5 @@
 import type { ReactNode, SVGProps } from "react";
+import type { ItemCategory } from "../../content/items";
 import type { SkillId } from "../../content/skills";
 
 // Hand-drawn icon set: 24px grid, 1.75 stroke, round joins, currentColor.
@@ -143,3 +144,12 @@ export function SkillIcon({ skill, ...p }: IconProps & { skill: SkillId }) {
   const C = SKILL_ICONS[skill];
   return <C {...p} />;
 }
+
+export const CATEGORY_ICONS: Record<ItemCategory, (p: IconProps) => ReactNode> = {
+  garden: LeafIcon,
+  house: HouseIcon,
+  candles: CandleIcon,
+  sigils: SigilIcon,
+  pages: ScrollIcon,
+  rites: CircleRiteIcon,
+};

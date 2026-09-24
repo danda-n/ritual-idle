@@ -4,12 +4,12 @@ import { HEARTH_RITE } from "../../content/rite";
 import { actionDurationMs, activeBuffs } from "../../engine/modifiers";
 import { isFeatureOpen } from "../../engine/progress";
 import type { GameState } from "../../engine/state";
-import { CircleRiteIcon, CoinIcon, SkillIcon } from "../art/icons";
+import { CircleRiteIcon, CoinIcon, CogIcon, SkillIcon } from "../art/icons";
 import { Rosette } from "../art/ornaments";
 import { formatClock } from "../format";
 import { Bar } from "./Bar";
 
-export function TopBar({ state, onStop, stopNote }: { state: GameState; onStop: () => void; stopNote?: string }) {
+export function TopBar({ state, onStop, stopNote, onSettings }: { state: GameState; onStop: () => void; stopNote?: string; onSettings: () => void }) {
   return (
     <header className="topbar">
       <div className="brand">
@@ -25,9 +25,12 @@ export function TopBar({ state, onStop, stopNote }: { state: GameState; onStop: 
       {isFeatureOpen(state, "village") && (
         <div className="purse" aria-label={`${state.coin} coin`}>
           <CoinIcon size={18} />
-          <span className="num">{state.coin}</span>
+          <span className="num">{Math.floor(state.coin)}</span>
         </div>
       )}
+      <button className="btn btn-ghost icon-btn" onClick={onSettings} aria-label="Settings">
+        <CogIcon size={18} />
+      </button>
     </header>
   );
 }

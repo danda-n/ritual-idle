@@ -4,6 +4,7 @@ import { SHOP, type ShopId, type UpgradeId } from "../../content/shop";
 import { buy, canBuy, declineRequest, fillRequest, hasItems, type Result } from "../../engine/commands";
 import type { GameState } from "../../engine/state";
 import { CoinIcon, HouseIcon } from "../art/icons";
+import { ItemChip } from "../components/ItemLookup";
 import { itemName } from "../format";
 
 type Act = (command: (s: GameState) => Result) => unknown;
@@ -16,7 +17,7 @@ export function Village({ state, act }: { state: GameState; act: Act }) {
         <div className="panel-title">
           <HouseIcon size={18} />
           <h2 id="board-heading">Knocks at the door</h2>
-          <span className="muted panel-aside num">Trust {state.trust}</span>
+          <span className="muted panel-aside num">Trust {Math.floor(state.trust)}</span>
         </div>
         <div className="request-grid">
           {state.board.map((slot, i) =>
@@ -37,7 +38,7 @@ export function Village({ state, act }: { state: GameState; act: Act }) {
           <CoinIcon size={18} />
           <h2 id="shop-heading">The village shop</h2>
           <span className="panel-aside num">
-            <CoinIcon size={14} /> {state.coin}
+            <CoinIcon size={14} /> {Math.floor(state.coin)}
           </span>
         </div>
         <ul className="shop-list">
@@ -78,12 +79,12 @@ function RequestCard({ state, index, act }: { state: GameState; index: number; a
       <p className="note-quote">{req.text}</p>
       <div className="action-io">
         {needs.map(([item, qty]) => (
-          <span key={item} className={`chip ${(state.inventory[item] ?? 0) < qty ? "short" : "accent"}`}>
+          <ItemChip key={item} item={item} className={(state.inventory[item] ?? 0) < qty ? "short" : "accent"}>
             <span className="num">
               {Math.min(state.inventory[item] ?? 0, qty)}/{qty}
             </span>{" "}
             {itemName(item)}
-          </span>
+          </ItemChip>
         ))}
       </div>
       <p className="muted num">

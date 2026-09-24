@@ -12,6 +12,8 @@ export interface SkillDef {
 
 export interface ItemDef {
   name: string;
+  /** Where it comes from (a key of ITEM_CATEGORIES). */
+  category: string;
   description?: string;
 }
 

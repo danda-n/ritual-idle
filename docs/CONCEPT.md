@@ -525,3 +525,15 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
 - **Janko, Follower 1 (draft):** in "assist me" mode, +30% speed at Initiate, plus the *Hearth-born* trait (+20% more on Chandlery). Assigning followers to their own actions comes in Chapter 2.
 - **The rite never fails**, and its outcome runs Faltering / Sound / Resplendent. Chapter 1 has no component grades yet, so its range is Sound to Resplendent.
 - **Player commands save immediately**, not on the next autosave.
+
+### Chapter 1 build: QoL (M5)
+- **No action queue.** Instead there's a **fallback**: when work stops for lack of an ingredient, you switch to the last gathering action (the default), a chosen action, or you stop. It applies offline too, and the away summary says what happened.
+- **Every item name can be clicked** to see where it comes from and what uses it. Only recipes you know are shown, so the lookup never spoils hidden content.
+- **The pantry is grouped by where things come from:** Garden & forest, House & village, Candles & incense, Sigils & wards, Pages & texts, Rites.
+- **Settings** (the gear in the top bar):
+  - fallback
+  - Grimoire assist
+  - reduced motion
+  - how long messages stay
+  - save export, import and reset
+  Visited tabs are remembered in the save.

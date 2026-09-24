@@ -52,6 +52,8 @@ export interface GameState {
   settings: Settings;
   rite: RiteState;
   followers: FollowerId[];
+  /** The last gathering action that ran; the default fallback. */
+  lastGathering: ActionId | null;
   stats: {
     /** Lifetime completions per action. Drives note goals and which burnt pages have been read. */
     completed: Partial<Record<ActionId, number>>;
@@ -83,9 +85,17 @@ export interface RiteState {
   completed: { quality: number; endingSeen: boolean } | null;
 }
 
+/** What to do when the current action can't continue (e.g. out of tallow). */
+export type Fallback = "last_gathering" | "stop" | ActionId;
+
 export interface Settings {
   /** Accessibility: doubles Insight gains (docs/GRIMOIRE.md §6). */
   grimoireAssist: boolean;
+  fallback: Fallback;
+  reducedMotion: boolean;
+  toastSeconds: number;
+  /** Tabs the player has visited (for the "new" dot). */
+  seenTabs: string[];
 }
 
 export interface ActiveBuff {
@@ -111,7 +121,8 @@ export function newGame(now: number = Date.now(), seed: number = randomSeed()): 
     buffs: [],
     grimoire: {},
     attunedTo: null,
-    settings: { grimoireAssist: false },
+    settings: { grimoireAssist: false, fallback: "last_gathering", reducedMotion: false, toastSeconds: 8, seenTabs: ["house"] },
+    lastGathering: null,
     rite: { primed: false, performing: null, completed: null },
     followers: [],
     stats: { completed: {}, requestsFilled: 0, omensSeen: 0, curiosRead: 0 },

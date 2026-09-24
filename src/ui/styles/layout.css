@@ -217,3 +217,23 @@
 .rite-log { list-style: none; padding: 0 0 0 var(--space-3); margin: 0; border-left: 2px solid var(--color-accent-deep); display: flex; flex-direction: column; gap: var(--space-2); }
 .rite-log li { animation: toast-in var(--dur-slow) var(--ease-out); }
 @media (max-width: 860px) { .rite-needs { columns: 1; } }
+
+/* QoL */
+.icon-btn { padding: 0 var(--space-2); min-width: 36px; }
+.rates { flex-basis: 100%; font-size: var(--text-xs); margin-top: 2px; }
+.chip.item-chip { cursor: pointer; background: transparent; font: inherit; font-family: var(--font-display); font-size: var(--text-xs); }
+.chip.item-chip:hover { border-color: var(--color-accent); color: var(--color-accent); }
+.chip.item-chip.plain { border-color: transparent; padding: 0; font-family: var(--font-body); font-size: var(--text-sm); color: var(--color-text); letter-spacing: 0; }
+.chip.item-chip.plain:hover { color: var(--color-accent); text-decoration: underline; text-underline-offset: 3px; }
+.filters { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-bottom: var(--space-3); }
+.chip.filter { cursor: pointer; background: transparent; min-height: 26px; }
+.inv-group + .inv-group { margin-top: var(--space-3); }
+.inv-group h3 { display: flex; align-items: center; gap: var(--space-1); font-size: var(--text-xs); color: var(--color-muted); letter-spacing: 0.06em; margin-bottom: var(--space-1); }
+.inv-group h3 svg { color: var(--color-accent-deep); }
+.lookup { display: grid; grid-template-columns: auto 1fr; gap: var(--space-2) var(--space-4); margin: 0; }
+.lookup dt { font-family: var(--font-display); color: var(--color-text-2); font-size: var(--text-sm); }
+.lookup dd { margin: 0; display: flex; flex-direction: column; gap: 2px; font-size: var(--text-sm); }
+.lookup-category { display: flex; align-items: center; gap: var(--space-1); }
+.setting { display: flex; flex-direction: column; gap: var(--space-1); }
+.setting.toggle { flex-direction: row; align-items: flex-start; gap: var(--space-2); }
+.setting .muted, .setting p { font-size: var(--text-sm); }

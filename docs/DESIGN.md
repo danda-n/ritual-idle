@@ -22,6 +22,8 @@ The folk-art / woodcut direction from [CONCEPT.md §9](CONCEPT.md): one candleli
 ## Components: `src/ui/styles/components.css`
 `btn` (primary / ghost / danger), `panel`, `bar`, `chip` (`short` = missing input, `accent` = output), `tabs`, `toast`, `modal`, `ledger` (item/count lists), `note-quote`, `field`.
 
+Item names go through `ItemChip` (`src/ui/components/ItemLookup.tsx`), so any item is clickable for a lookup. Add `plain` for text-style links in lists.
+
 ## Art: `src/ui/art/`
 - **Icons:** 24px grid, 1.75 stroke, round joins, `currentColor`, with a few solid "ink" fills. Decorative icons get `aria-hidden`; pass `title` when an icon carries meaning on its own.
 - **Ornaments:** embroidery band, papercut rosette and sigil divider. All decorative.

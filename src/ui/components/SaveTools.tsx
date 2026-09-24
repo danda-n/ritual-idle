@@ -27,7 +27,7 @@ export function SaveTools({ state, onLoad, onReset }: { state: GameState; onLoad
 
   return (
     <details className="save-tools">
-      <summary>Save</summary>
+      <summary>Save, export and import</summary>
       <div className="save-tools-body">
         <label className="sr-only" htmlFor="save-code">
           Save code

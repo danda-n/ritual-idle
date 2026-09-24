@@ -11,7 +11,7 @@ export function formatDuration(ms: number): string {
   const m = totalMin % 60;
   if (h > 0) return `${h}h ${m}m`;
   if (totalMin > 0) return `${m}m`;
-  return `${Math.floor(ms / 1000)}s`;
+  return `${Math.max(1, Math.round(ms / 1000))}s`;
 }
 
 export function formatStop(reason: StopReason): string {
@@ -36,4 +36,11 @@ export function formatClock(ms: number): string {
   const m = Math.floor((total % 3600) / 60);
   const sec = String(total % 60).padStart(2, "0");
   return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${sec}` : `${m}:${sec}`;
+}
+
+/** Compact rates: 1,200 → "1.2k", 45.2 → "45". */
+export function formatRate(n: number): string {
+  if (n >= 10_000) return `${Math.round(n / 1000)}k`;
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
+  return `${Math.round(n)}`;
 }

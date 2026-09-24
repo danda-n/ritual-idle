@@ -1,3 +1,4 @@
+import { ACTION_DEFS } from "../../content/actions";
 import type { ItemId } from "../../content/items";
 import { OMENS } from "../../content/omens";
 import { HEARTH_RITE, QUALITIES } from "../../content/rite";
@@ -67,7 +68,13 @@ export function AwaySummary({ away, onClose }: { away: CatchUp; onClose: () => v
         </p>
       ))}
       {report.omensLost > 0 && <p className="muted">{report.omensLost === 1 ? "An omen" : `${report.omensLost} omens`} passed unseen; the shelf was full.</p>}
-      {report.stopped && <p className="warn">Work stopped: {formatStop(report.stopped.reason)}.</p>}
+      {report.stopped && report.fellBackTo.length > 0 ? (
+        <p className="text-2">
+          {formatStop(report.stopped.reason)}, so you went back to {ACTION_DEFS[report.fellBackTo[report.fellBackTo.length - 1]!].name.toLowerCase()}.
+        </p>
+      ) : (
+        report.stopped && <p className="warn">Work stopped: {formatStop(report.stopped.reason)}.</p>
+      )}
       <button className="btn btn-primary" onClick={onClose}>
         Back to the house
       </button>

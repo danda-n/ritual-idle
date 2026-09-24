@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { ActionId } from "../content/actions";
+import { ACTION_DEFS, type ActionId } from "../content/actions";
 import { GRIMOIRE_DEFS, type GrimoireId } from "../content/grimoire";
 import type { Result, Success } from "../engine/commands";
 import { nextHintAt, progressOf, type Fragment } from "../engine/grimoire";
@@ -66,13 +66,14 @@ export function useGame() {
     const fresh = items.map((t) => ({ ...t, id: nextToastId.current++ }));
     setToasts((t) => [...t, ...fresh]);
     const ids = new Set(fresh.map((f) => f.id));
-    setTimeout(() => setToasts((t) => t.filter((x) => !ids.has(x.id))), TOAST_MS);
+    setTimeout(() => setToasts((t) => t.filter((x) => !ids.has(x.id))), (ref.current.settings.toastSeconds ?? TOAST_MS / 1000) * 1000);
   }, []);
 
   // New notes and pages pop up while playing; after an absence they appear in the summary instead.
   const announce = useCallback(
-    (report: Partial<Pick<Report, "notesRevealed" | "pagesRead" | "omensFound" | "omensLost" | "fragments" | "curioStories" | "riteStarted">>) =>
+    (report: Partial<Pick<Report, "notesRevealed" | "pagesRead" | "omensFound" | "omensLost" | "fragments" | "curioStories" | "riteStarted" | "fellBackTo">>) =>
       pushToasts([
+        ...(report.fellBackTo ?? []).slice(0, 1).map((id) => ({ title: "Back to gathering", text: `Out of an ingredient, so you went back to ${ACTION_DEFS[id].name.toLowerCase()}.` })),
         ...(report.riteStarted ? [{ title: "The rite begins", text: `Everything was ready. The ${HEARTH_RITE.name} has begun.` }] : []),
         ...(report.curioStories ?? []).map((text) => ({ title: "A curio, read", text })),
         // Insight from the player's own attempts only toasts when it opens a clearer hint.

@@ -1,7 +1,8 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { ACTION_DEFS } from "../content/actions";
 import type { SkillId } from "../content/skills";
-import { dismissEnding } from "../engine/commands";
+import { dismissEnding, setSetting } from "../engine/commands";
+import type { ItemId } from "../content/items";
 import { isFeatureOpen } from "../engine/progress";
 import { BookIcon, CircleRiteIcon, HouseIcon, LanternIcon } from "./art/icons";
 import { EmbroideryBand } from "./art/ornaments";
@@ -12,7 +13,8 @@ import { DiscoveryModal } from "./components/DiscoveryModal";
 import { Inventory } from "./components/Inventory";
 import { Notes } from "./components/Notes";
 import { OmenShelf } from "./components/OmenShelf";
-import { SaveTools } from "./components/SaveTools";
+import { ItemLookupModal, LookupContext } from "./components/ItemLookup";
+import { SettingsModal } from "./components/SettingsModal";
 import { Tabs, type TabDef } from "./components/Tabs";
 import { Toasts } from "./components/Toasts";
 import { TopBar } from "./components/TopBar";
@@ -29,24 +31,31 @@ export function App() {
   const game = useGame();
   const { state } = game;
   const [tab, setTabState] = useState<TabId>("house");
-  // Tabs show a dot until first visited.
-  const [seen, setSeen] = useState<Partial<Record<TabId, boolean>>>({ house: true });
+  const [lookup, setLookup] = useState<ItemId | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  // Tabs show a dot until first visited; visits are saved.
+  const seen = (t: TabId) => state.settings.seenTabs.includes(t);
   const setTab = (t: TabId) => {
     setTabState(t);
-    setSeen((s) => ({ ...s, [t]: true }));
+    if (!seen(t)) game.act((s) => setSetting(s, "seenTabs", [...s.settings.seenTabs, t]));
   };
+
+  useEffect(() => {
+    document.documentElement.dataset.motion = state.settings.reducedMotion ? "reduced" : "";
+  }, [state.settings.reducedMotion]);
   const [skill, setSkill] = useState<SkillId>(state.active ? ACTION_DEFS[state.active.id].skill : "scavenging");
 
   // Tabs appear as grandmother's notes open them; each shows a dot until first visited.
   const tabs: TabDef<TabId>[] = [{ id: "house", label: "House", icon: <HouseIcon size={18} /> }];
-  const place = (id: TabId, label: string, icon: ReactNode) => tabs.push({ id, label, icon, badge: !seen[id] && tab !== id });
+  const place = (id: TabId, label: string, icon: ReactNode) => tabs.push({ id, label, icon, badge: !seen(id) && tab !== id });
   if (isFeatureOpen(state, "grimoire")) place("grimoire", "Grimoire", <BookIcon size={18} />);
   if (isFeatureOpen(state, "village")) place("village", "Village", <LanternIcon size={18} />);
   if (isFeatureOpen(state, "circle")) place("circle", "Circle", <CircleRiteIcon size={18} />);
 
   return (
+    <LookupContext.Provider value={setLookup}>
     <div className="app">
-      <TopBar state={state} onStop={game.stop} stopNote={game.lastStop && formatStop(game.lastStop.reason)} />
+      <TopBar state={state} onStop={game.stop} stopNote={game.lastStop && formatStop(game.lastStop.reason)} onSettings={() => setSettingsOpen(true)} />
       <EmbroideryBand className="band" />
       <Tabs tabs={tabs} value={tab} onChange={setTab} label="Places" />
 
@@ -69,10 +78,11 @@ export function App() {
         </aside>
       </div>
 
-      <footer className="footer">
-        <SaveTools state={state} onLoad={game.load} onReset={game.reset} />
-        {import.meta.env.DEV && <DevPanel dev={game.dev} />}
-      </footer>
+      {import.meta.env.DEV && (
+        <footer className="footer">
+          <DevPanel dev={game.dev} />
+        </footer>
+      )}
 
       <Toasts toasts={game.toasts} onDismiss={game.dismissToast} />
       {game.away && <AwaySummary away={game.away} onClose={game.dismissAway} />}
@@ -80,6 +90,11 @@ export function App() {
       {state.rite.completed && !state.rite.completed.endingSeen && !game.away && !game.discovery && (
         <ChapterEnd state={state} onClose={() => game.act(dismissEnding)} />
       )}
+      {lookup && <ItemLookupModal state={state} item={lookup} onClose={() => setLookup(null)} />}
+      {settingsOpen && (
+        <SettingsModal state={state} act={game.act} onLoad={game.load} onReset={game.reset} onClose={() => setSettingsOpen(false)} />
+      )}
     </div>
+    </LookupContext.Provider>
   );
 }

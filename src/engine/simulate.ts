@@ -43,11 +43,13 @@ export interface Report {
   riteMs: number;
   /** Quality index if the rite finished during this span. */
   riteCompleted: number | null;
+  /** Actions switched to by the fallback rule when work stopped. */
+  fellBackTo: ActionId[];
   stopped?: { action: ActionId; reason: StopReason };
 }
 
 export function emptyReport(): Report {
-  return { elapsedMs: 0, actionsCompleted: 0, xpGained: {}, itemsGained: {}, itemsUsed: {}, levelUps: [], notesRevealed: [], pagesRead: [], omensFound: [], omensLost: 0, fragments: [], curioStories: [], riteStarted: false, riteMs: 0, riteCompleted: null };
+  return { elapsedMs: 0, actionsCompleted: 0, xpGained: {}, itemsGained: {}, itemsUsed: {}, levelUps: [], notesRevealed: [], pagesRead: [], omensFound: [], omensLost: 0, fragments: [], curioStories: [], riteStarted: false, riteMs: 0, riteCompleted: null, fellBackTo: [] };
 }
 
 export function skillLevel(state: GameState, skill: SkillId): number {
@@ -65,6 +67,18 @@ export function blockReason(state: GameState, id: ActionId): StopReason | null {
     if ((state.inventory[item] ?? 0) < qty) return { kind: "missing_input", item };
   }
   return null;
+}
+
+/**
+ * The action to switch to when `stopped` can't continue, or null to go idle.
+ * Only ever an action that can run right now, and never the one that just stopped.
+ */
+export function fallbackFor(state: GameState, stopped: ActionId): ActionId | null {
+  const f = state.settings.fallback;
+  if (f === "stop") return null;
+  const target = f === "last_gathering" ? state.lastGathering : f;
+  if (!target || target === stopped || blockReason(state, target) !== null) return null;
+  return target;
 }
 
 export function startAction(state: GameState, id: ActionId): GameState {
@@ -122,9 +136,12 @@ export function advance(input: GameState, ms: number): { state: GameState; repor
       const reason = blockReason(state, id);
       if (reason) {
         report.stopped = { action: id, reason };
-        state.active = null;
-        break;
+        const next = fallbackFor(state, id);
+        state.active = next ? { id: next, elapsedMs: 0 } : null;
+        if (next) report.fellBackTo.push(next);
+        continue;
       }
+      if (ACTION_DEFS[id].skill === "herbalism" || ACTION_DEFS[id].skill === "scavenging") state.lastGathering = id;
     }
 
     const needed = actionDurationMs(state, id, clock()) - active.elapsedMs;

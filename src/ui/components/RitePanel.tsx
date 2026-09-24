@@ -7,7 +7,8 @@ import { canBeginRite, riteFactors, riteLog, riteQuality, riteShortfall } from "
 import type { GameState } from "../../engine/state";
 import type { ItemId } from "../../content/items";
 import { CircleRiteIcon } from "../art/icons";
-import { formatClock, itemName } from "../format";
+import { formatClock } from "../format";
+import { ItemChip } from "./ItemLookup";
 import { Bar } from "./Bar";
 
 export function RitePanel({ state, act }: { state: GameState; act: (c: (s: GameState) => Result) => unknown }) {
@@ -39,7 +40,7 @@ export function RitePanel({ state, act }: { state: GameState; act: (c: (s: GameS
                 <li key={item} className={have >= need ? "met" : ""}>
                   <span>
                     <span aria-hidden="true">{have >= need ? "✓ " : "· "}</span>
-                    {itemName(item)}
+                    <ItemChip item={item} className="plain" />
                   </span>
                   <span className="num">
                     {Math.min(have, need)}/{need}
