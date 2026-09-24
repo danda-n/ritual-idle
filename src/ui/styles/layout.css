@@ -290,3 +290,17 @@
 .flavour { font-style: italic; font-size: var(--text-xs); color: var(--color-muted); }
 .buff-row > span:first-child { display: flex; flex-direction: column; }
 .effects-inline { font-size: var(--text-xs); color: var(--color-accent); }
+
+/* Chapter tracker */
+.tracker .bar { margin-bottom: var(--space-3); }
+.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.step { display: grid; grid-template-columns: 18px 1fr; gap: var(--space-2); align-items: baseline; font-size: var(--text-sm); }
+.step.done { color: var(--color-muted); }
+.step.done .step-mark { color: var(--color-accent-deep); }
+.step.current .step-mark { color: var(--color-accent); }
+.step.hidden { color: var(--color-muted); letter-spacing: 0.2em; }
+.step-body { display: flex; flex-direction: column; gap: var(--space-1); }
+.step-head { display: flex; justify-content: space-between; gap: var(--space-2); }
+.step-head strong { font-family: var(--font-display); font-weight: 500; }
+.step-hint { font-size: var(--text-xs); color: var(--color-text-2); }
+.journal { margin: 0; padding-left: var(--space-5); display: flex; flex-direction: column; gap: var(--space-3); }

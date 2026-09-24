@@ -3,7 +3,7 @@ import { GRIMOIRE_DEFS, INSIGHT, type GrimoireId } from "../../content/grimoire"
 import { PAGES } from "../../content/pages";
 import { attune, setMark, type Result } from "../../engine/commands";
 import { GRIMOIRE_IDS, hintTier, isDiscovered, isSilhouetteVisible, nextHintAt, plainNamesShown, progressOf } from "../../engine/grimoire";
-import { isFeatureOpen, pagesRead } from "../../engine/progress";
+import { isFeatureOpen, pagesRead, revealedNotes } from "../../engine/progress";
 import type { GameState } from "../../engine/state";
 import { BookIcon, CircleRiteIcon, ScrollIcon } from "../art/icons";
 import { Bar } from "../components/Bar";
@@ -11,7 +11,7 @@ import { itemName } from "../format";
 import type { ItemId } from "../../content/items";
 
 type Act = (command: (s: GameState) => Result) => unknown;
-type Selection = { kind: "recipe"; id: GrimoireId } | { kind: "pages" } | { kind: "secrets" } | { kind: "forbidden" };
+type Selection = { kind: "recipe"; id: GrimoireId } | { kind: "notes" } | { kind: "pages" } | { kind: "secrets" } | { kind: "forbidden" };
 
 export function Grimoire({ state, act, onAttuned }: { state: GameState; act: Act; onAttuned: () => void }) {
   const silhouettes = GRIMOIRE_IDS.filter((id) => GRIMOIRE_DEFS[id].kind === "hidden" && isSilhouetteVisible(state, id) && !isDiscovered(state, id));
@@ -53,6 +53,7 @@ export function Grimoire({ state, act, onAttuned }: { state: GameState; act: Act
         )}
         <h3>The rest of the book</h3>
         <ul>
+          {item({ kind: "notes" }, `Grandmother's notes (${state.notesRevealed})`)}
           {item({ kind: "pages" }, `Deciphered pages (${pagesRead(state).length})`)}
           {item({ kind: "secrets" }, "Unwritten things")}
           {blackPageRead && item({ kind: "forbidden" }, "The black page")}
@@ -62,6 +63,21 @@ export function Grimoire({ state, act, onAttuned }: { state: GameState; act: Act
       <section className="panel grimoire-page" aria-live="polite">
         {sel.kind === "recipe" && (isDiscovered(state, sel.id) ? <DiscoveredPage id={sel.id} /> : <SilhouettePage state={state} id={sel.id} act={act} onAttuned={onAttuned} />)}
         {sel.kind === "pages" && <PagesPage state={state} />}
+        {sel.kind === "notes" && (
+          <>
+            <div className="panel-title">
+              <BookIcon size={18} />
+              <h2>Grandmother's notes</h2>
+            </div>
+            <ol className="journal">
+              {revealedNotes(state).map((n) => (
+                <li key={n.text} className="note-quote">
+                  {n.text}
+                </li>
+              ))}
+            </ol>
+          </>
+        )}
         {sel.kind === "secrets" && (
           <>
             <div className="panel-title">

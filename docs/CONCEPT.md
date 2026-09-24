@@ -537,3 +537,10 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
   - how long messages stay
   - save export, import and reset
   Visited tabs are remembered in the save.
+
+### UI feedback round (after M7)
+- **Grandmother's notes are no longer a sidebar panel.**
+  - The sidebar shows a **chapter tracker**: done steps, the current task with its progress and hint, and one "???" ahead.
+  - Each note appears **once, as a modal story beat** when its step begins. It states plainly what opened and what's next.
+  - All notes stay readable in the **Grimoire journal**.
+- **Effects are always explicit.** Buffs, omens, upgrades and rewards lead with what they do (generated from the data). Flavour text is one short line at most.

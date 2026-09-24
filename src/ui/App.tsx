@@ -12,7 +12,8 @@ import { DevPanel } from "./components/DevPanel";
 import { ChapterEnd } from "./components/ChapterEnd";
 import { DiscoveryModal } from "./components/DiscoveryModal";
 import { Inventory } from "./components/Inventory";
-import { Notes } from "./components/Notes";
+import { ChapterTracker } from "./components/ChapterTracker";
+import { NoteModal } from "./components/NoteModal";
 import { OmenShelf } from "./components/OmenShelf";
 import { ItemLookupModal, LookupContext } from "./components/ItemLookup";
 import { SettingsModal } from "./components/SettingsModal";
@@ -77,7 +78,7 @@ export function App() {
           )}
         </div>
         <aside className="side">
-          <Notes state={state} />
+          <ChapterTracker state={state} />
           <OmenShelf state={state} act={game.act} />
           <Inventory state={state} />
         </aside>
@@ -94,6 +95,9 @@ export function App() {
       {game.discovery && !game.away && <DiscoveryModal id={game.discovery} onClose={game.dismissDiscovery} />}
       {state.rite.completed && !state.rite.completed.endingSeen && !game.away && !game.discovery && (
         <ChapterEnd state={state} onClose={() => game.act(dismissEnding)} />
+      )}
+      {game.story && !game.away && !game.discovery && (!state.rite.completed || state.rite.completed.endingSeen) && (
+        <NoteModal note={game.story} onClose={game.dismissStory} />
       )}
       {lookup && <ItemLookupModal state={state} item={lookup} onClose={() => setLookup(null)} />}
       {settingsOpen && (

@@ -3,6 +3,8 @@ import { ACTION_DEFS, type ActionId } from "../content/actions";
 import { GRIMOIRE_DEFS, type GrimoireId } from "../content/grimoire";
 import type { Result, Success } from "../engine/commands";
 import { nextHintAt, progressOf, type Fragment } from "../engine/grimoire";
+import { NOTES } from "../content/notes";
+import type { Note } from "../engine/progress";
 import { rewind } from "../engine/devtools";
 import { OMENS } from "../content/omens";
 import { buffDuration, buffEffects } from "./effects";
@@ -41,11 +43,11 @@ function fragmentToast(state: GameState, f: Fragment): Omit<Toast, "id"> & { cle
   };
 }
 
-function boot(): { state: GameState; away: CatchUp | null } {
+function boot(): { state: GameState; away: CatchUp | null; fresh: boolean } {
   const saved = loadLocal();
-  if (!saved) return { state: newGame(), away: null };
+  if (!saved) return { state: newGame(), away: null, fresh: true };
   const result = catchUp(saved, Date.now());
-  return { state: result.state, away: result.awayMs >= SUMMARY_THRESHOLD_MS ? result : null };
+  return { state: result.state, away: result.awayMs >= SUMMARY_THRESHOLD_MS ? result : null, fresh: false };
 }
 
 /**
@@ -60,6 +62,8 @@ export function useGame() {
   const [lastStop, setLastStop] = useState<Report["stopped"]>();
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [discovery, setDiscovery] = useState<GrimoireId | null>(null);
+  // Grandmother's notes appear as story beats, one at a time. A new game opens with the first.
+  const [story, setStory] = useState<Note[]>(() => (initial.fresh ? [NOTES[0] as Note] : []));
   const nextToastId = useRef(0);
 
   const pushToasts = useCallback((items: Omit<Toast, "id">[]) => {
@@ -72,7 +76,9 @@ export function useGame() {
 
   // New notes and pages pop up while playing; after an absence they appear in the summary instead.
   const announce = useCallback(
-    (report: Partial<Pick<Report, "notesRevealed" | "pagesRead" | "omensFound" | "omensLost" | "fragments" | "curioStories" | "riteStarted" | "fellBackTo">>) =>
+    (report: Partial<Pick<Report, "notesRevealed" | "pagesRead" | "omensFound" | "omensLost" | "fragments" | "curioStories" | "riteStarted" | "fellBackTo">>) => {
+      const notes = report.notesRevealed ?? [];
+      if (notes.length > 0) setStory((q) => [...q, ...notes]);
       pushToasts([
         ...(report.fellBackTo ?? []).slice(0, 1).map((id) => ({ title: "Back to gathering", text: `Out of an ingredient, so you went back to ${ACTION_DEFS[id].name.toLowerCase()}.` })),
         ...(report.riteStarted ? [{ title: "The rite begins", text: `Everything was ready. The ${HEARTH_RITE.name} has begun.` }] : []),
@@ -82,11 +88,14 @@ export function useGame() {
           const t = fragmentToast(ref.current, f);
           return f.source === "attempt" && !t.clearer ? [] : [t];
         }),
-        ...(report.notesRevealed ?? []).map((n) => ({ title: "A new note in the margin", text: n.text })),
-        ...(report.pagesRead ?? []).map((p) => ({ title: `Page deciphered: ${p.title}`, text: p.text })),
+        ...(report.pagesRead ?? []).map((p) => ({
+          title: `Page deciphered: ${p.title}`,
+          text: p.unlocks.length > 0 ? `New recipe: ${p.unlocks.map((a) => ACTION_DEFS[a].name).join(", ")}.` : "No recipe on this one. It's in the Grimoire.",
+        })),
         ...(report.omensFound ?? []).map((o) => ({ title: `An omen: ${OMENS[o].name}`, text: `On the shelf. Release for ${buffDuration(OMENS[o].buff)}: ${buffEffects(OMENS[o].buff).join(", ")}.` })),
         ...(report.omensLost ? [{ title: "An omen passed unseen", text: "The shelf was full. A bigger shelf would hold more." }] : []),
-      ]),
+      ]);
+    },
     [pushToasts],
   );
 
@@ -178,6 +187,7 @@ export function useGame() {
   // Stable identity so dialogs don't re-run their focus handling on every tick.
   const dismissAway = useCallback(() => setAway(null), []);
   const dismissDiscovery = useCallback(() => setDiscovery(null), []);
+  const dismissStory = useCallback(() => setStory((q) => q.slice(1)), []);
 
-  return { state, away, dismissAway, discovery, dismissDiscovery, lastStop, toasts, dismissToast, start, stop, act, load, reset, dev };
+  return { state, away, dismissAway, discovery, dismissDiscovery, story: story[0] ?? null, dismissStory, lastStop, toasts, dismissToast, start, stop, act, load, reset, dev };
 }
