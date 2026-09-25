@@ -351,23 +351,6 @@ input[type="checkbox"] { accent-color: var(--color-accent); width: 16px; height:
 .talents.has-points { border-color: color-mix(in srgb, var(--skill) 60%, transparent); }
 .talent-intro { font-size: var(--text-sm); }
 .talent-reset, .talent-add { min-height: 26px; padding: 0 var(--space-3); font-size: var(--text-xs); }
-.branches { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }
-.branch { display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border-soft); border-radius: var(--radius-md); }
-.branch.is-taken { border-color: color-mix(in srgb, var(--skill) 55%, transparent); }
-.branch-head { display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); }
-.branch-head strong { font-family: var(--font-display); font-weight: 500; }
-.branch-effect { font-size: var(--text-sm); color: var(--color-text-2); }
-.branch .talent-add { align-self: flex-start; }
-.pips { display: inline-flex; gap: 3px; }
-.pip { width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid var(--color-border); }
-.pip.on { background: var(--skill); border-color: var(--skill); }
-.keystone { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: var(--space-2); align-items: center; margin-top: var(--space-2); padding: var(--space-2) var(--space-3); border: 1px dashed var(--color-border); border-radius: var(--radius-md); color: var(--color-muted); }
-.keystone strong { font-family: var(--font-display); font-weight: 500; }
-.keystone.is-open { border-style: solid; border-color: var(--skill); color: var(--color-text); }
-.keystone.is-taken { border-style: solid; border-color: color-mix(in srgb, var(--skill) 55%, transparent); color: var(--color-text); }
-.keystone.is-taken .keystone-mark, .keystone.is-open .keystone-mark { color: var(--skill); }
-.keystone-need { font-size: var(--text-xs); }
-@media (max-width: 700px) { .branches { grid-template-columns: 1fr; } }
 .talent-badge { display: inline-grid; vertical-align: 1px; margin-left: var(--space-2); min-width: 20px; height: 16px; padding: 0 4px; place-items: center; border-radius: 999px; font-size: var(--text-xs); background: var(--skill); color: var(--ink-950); animation: badge-in var(--dur-med) var(--ease-out); }
 @keyframes badge-in { from { opacity: 0; transform: scale(0.6); } to { opacity: 1; transform: none; } }
 .next-skill { opacity: 0.75; border-style: dashed; cursor: default; }
@@ -432,3 +415,33 @@ input[type="checkbox"] { accent-color: var(--color-accent); width: 16px; height:
 .active-buff-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .active-buffs .bar { width: 56px; }
 .active-buffs .bar-fill { background: var(--skill, var(--folk-candle)); }
+
+/* ---------- Talent tree of life ---------- */
+.talent-tree { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); }
+.talent-tree svg { width: 100%; max-width: 420px; height: auto; overflow: visible; }
+.tree-trunk { fill: none; stroke: color-mix(in srgb, var(--skill) 55%, var(--color-border)); stroke-width: 3; stroke-dasharray: 6 3; stroke-linecap: round; }
+.tree-limb { fill: none; stroke: var(--color-border); stroke-width: 2; stroke-dasharray: 4 3; transition: stroke var(--dur-med) var(--ease-out); }
+.tree-limb.is-grown { stroke: color-mix(in srgb, var(--skill) 75%, transparent); stroke-dasharray: none; }
+.tree-leaf { fill: color-mix(in srgb, var(--skill) 55%, transparent); }
+.tree-label { font-family: var(--font-display); font-size: 12px; fill: var(--color-text-2); letter-spacing: 0.04em; }
+.tree-node { cursor: default; outline: none; }
+.tree-node circle { fill: var(--color-surface); stroke: var(--color-border); stroke-width: 1.5; transition: fill var(--dur-med) var(--ease-out), stroke var(--dur-med) var(--ease-out), transform var(--dur-fast) var(--ease-out); transform-box: fill-box; transform-origin: center; }
+.tree-node-rank { font: 600 11px var(--font-display); fill: var(--color-muted); pointer-events: none; }
+.tree-node.is-taken circle { fill: var(--skill); stroke: var(--skill); }
+.tree-node.is-taken .tree-node-rank { fill: var(--ink-950); }
+.tree-node.is-next { cursor: pointer; }
+.tree-node.is-next circle { stroke: var(--skill); stroke-width: 2; animation: node-pulse 1.8s ease-in-out infinite; }
+.tree-node.is-next .tree-node-rank { fill: var(--skill); }
+.tree-node.is-next:hover circle, .tree-node.is-next:focus-visible circle { transform: scale(1.15); fill: color-mix(in srgb, var(--skill) 25%, var(--color-surface)); }
+.tree-node:focus-visible circle { stroke: var(--gold-400); stroke-width: 2.5; }
+.tree-node.is-locked { opacity: 0.55; }
+@keyframes node-pulse { 50% { stroke-opacity: 0.35; } }
+.tree-crown { outline: none; }
+.tree-petal { fill: transparent; stroke: var(--color-border); stroke-width: 1.2; stroke-dasharray: 3 2; transform-box: view-box; transition: fill var(--dur-slow) var(--ease-out), stroke var(--dur-slow) var(--ease-out); }
+.tree-heart { fill: var(--color-surface); stroke: var(--color-border); stroke-width: 1.2; }
+.tree-crown.is-bloomed .tree-petal { fill: color-mix(in srgb, var(--skill) 70%, transparent); stroke: var(--skill); stroke-dasharray: none; animation: bloom 900ms var(--ease-out) both; }
+.tree-crown.is-bloomed .tree-heart { fill: var(--gold-400); stroke: var(--gold-400); }
+@keyframes bloom { from { opacity: 0; } to { opacity: 1; } }
+.tree-root circle { fill: color-mix(in srgb, var(--skill) 18%, var(--color-surface)); stroke: var(--skill); stroke-width: 2; }
+.tree-root svg { color: var(--skill); }
+.tree-caption { font-size: var(--text-sm); color: var(--color-text-2); text-align: center; min-height: 2.6em; max-width: 44ch; }

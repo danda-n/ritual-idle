@@ -1,23 +1,23 @@
 import { SKILLS, type SkillId } from "../../content/skills";
-import { BRANCHES, BRANCH_IDS, branchText, KEYSTONE_NEEDS, KEYSTONES, POINT_EVERY } from "../../content/talents";
+import { POINT_EVERY } from "../../content/talents";
 import { resetTalents, spendTalent, type Result } from "../../engine/commands";
 import { skillLevel } from "../../engine/simulate";
 import type { GameState } from "../../engine/state";
-import { canSpend, keystoneOpen, pointsFree, pointsSpent, rankOf, talentPoints } from "../../engine/talents";
+import { pointsFree, pointsSpent, talentPoints } from "../../engine/talents";
+import { TalentTree } from "./TalentTree";
 
 type Act = (c: (s: GameState) => Result) => unknown;
 
 /**
- * A skill's talents: three branches (Swift, Plenty, Fortune) of 3 ranks each, and the skill's own
- * keystone after 3 points in one branch. A point arrives every 3 levels; resetting is free.
+ * A skill's talents: the tree of life (four branches of 3 ranks, the keystone blooming free when a
+ * branch is full). A point arrives every 3 levels; resetting is free. Before the first point it's
+ * one quiet line.
  */
 export function TalentPanel({ state, skill, act }: { state: GameState; skill: SkillId; act: Act }) {
   const points = talentPoints(state, skill);
   const free = pointsFree(state, skill);
   const level = skillLevel(state, skill);
   const nextAt = (Math.floor(level / POINT_EVERY) + 1) * POINT_EVERY;
-  const keystone = KEYSTONES[skill];
-  const bloomed = keystoneOpen(state, skill);
 
   return (
     <section className={`panel talents ${free > 0 ? "has-points" : ""}`} data-skill={skill} aria-labelledby="talents-heading">
@@ -39,44 +39,9 @@ export function TalentPanel({ state, skill, act }: { state: GameState; skill: Sk
         </span>
       </div>
       {points === 0 ? (
-        <p className="muted talent-intro">A talent point every {POINT_EVERY} levels. Spend it on tending, speed, more output or lucky doubles. Reset any time for free.</p>
+        <p className="muted talent-intro">A talent point every {POINT_EVERY} levels, for tending, speed, more output or lucky doubles. Fill a branch and the keystone blooms free. Reset any time.</p>
       ) : (
-        <>
-          <div className="branches">
-            {BRANCH_IDS.map((b) => {
-              const rank = rankOf(state, skill, b);
-              const max = BRANCHES[b].maxRank;
-              const block = canSpend(state, skill, b);
-              return (
-                <div key={b} className={`branch ${rank > 0 ? "is-taken" : ""}`}>
-                  <div className="branch-head">
-                    <strong>{BRANCHES[b].name}</strong>
-                    <span className="pips" aria-label={`Rank ${rank} of ${max}`}>
-                      {Array.from({ length: max }, (_, i) => (
-                        <span key={i} className={`pip ${i < rank ? "on" : ""}`} />
-                      ))}
-                    </span>
-                  </div>
-                  <p className="branch-effect">{rank > 0 ? branchText(b, rank) : <span className="muted">{branchText(b, 1)} per rank</span>}</p>
-                  {rank < max && (
-                    <button className="btn btn-ghost talent-add" disabled={block !== null} title={block ?? undefined} onClick={() => act((s) => spendTalent(s, skill, b))}>
-                      +1 rank
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-          <div className={`keystone ${bloomed ? "is-taken" : ""}`}>
-            <span className="keystone-mark" aria-hidden="true">
-              ✦
-            </span>
-            <div>
-              <strong>{keystone.name}</strong> <span className="branch-effect">{keystone.text}</span>
-              {!bloomed && <p className="muted keystone-need">Blooms free when any branch is full ({KEYSTONE_NEEDS} points).</p>}
-            </div>
-          </div>
-        </>
+        <TalentTree state={state} skill={skill} onTake={(b) => act((s) => spendTalent(s, skill, b))} />
       )}
     </section>
   );
