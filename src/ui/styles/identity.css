@@ -478,3 +478,22 @@ input[type="checkbox"] { accent-color: var(--color-accent); width: 16px; height:
 .stage-choice { display: flex; flex-direction: column; gap: var(--space-1); margin-bottom: var(--space-2); }
 .stage-choice-title { font-family: var(--font-display); color: var(--folk-candle); font-size: var(--text-sm); }
 .stage-pick { width: 100%; }
+
+/* ---------- Activity feed: one quiet line under the top bar ---------- */
+.feed { position: relative; margin-top: calc(-1 * var(--space-2)); }
+.feed-line { display: flex; align-items: center; gap: var(--space-2); width: 100%; height: 28px; padding: 0 var(--space-3); font: inherit; font-size: var(--text-sm); color: var(--color-text-2); text-align: left; background: transparent; border: 1px solid transparent; border-radius: var(--radius-sm); cursor: pointer; }
+.feed-line:hover:not(:disabled) { border-color: var(--color-border-soft); background: var(--color-surface); }
+.feed-line:disabled { cursor: default; }
+.feed-line:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 1px; }
+.feed-mark { color: var(--folk-candle); font-size: var(--text-xs); }
+.feed-text { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; animation: feed-in var(--dur-slow) var(--ease-out); }
+.feed-more { font-size: var(--text-xs); font-family: var(--font-display); }
+@keyframes feed-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.feed-list { position: absolute; z-index: var(--z-toast); left: 0; right: 0; top: 30px; max-width: 640px; max-height: 360px; overflow-y: auto; margin: 0; padding: var(--space-2) var(--space-3); list-style: none; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); box-shadow: var(--shadow-2); }
+.feed-list li { display: flex; gap: var(--space-3); padding: var(--space-1) 0; font-size: var(--text-sm); border-bottom: 1px dotted var(--color-border-soft); }
+.feed-list li:last-child { border-bottom: none; }
+.feed-time { flex: none; font-size: var(--text-xs); }
+
+/* ---------- Stores tab ---------- */
+.stores .ledger { columns: 2 220px; column-gap: var(--space-6); }
+.stores .ledger li { break-inside: avoid; }

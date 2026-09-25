@@ -48,6 +48,15 @@ export const LanternIcon = (p: IconProps) => (
   </Icon>
 );
 
+/** A lidded crock: the Stores. */
+export const JarIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M8 4h8M9 4v2.5M15 4v2.5" />
+    <path d="M9 6.5C6.5 8 6 10 6 13c0 4 1.5 7 6 7s6-3 6-7c0-3-.5-5-3-6.5H9Z" />
+    <path d="M7 12c3 1.3 7 1.3 10 0" />
+  </Icon>
+);
+
 export const CandleIcon = (p: IconProps) => (
   <Icon {...p}>
     <path d="M12 3c1.6 1.8 1.6 3.6 0 5-1.6-1.4-1.6-3.2 0-5Z" fill="currentColor" />

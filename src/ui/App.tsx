@@ -4,14 +4,15 @@ import type { SkillId } from "../content/skills";
 import { dismissEnding, setSetting } from "../engine/commands";
 import type { ItemId } from "../content/items";
 import { isFeatureOpen, isSkillUnlocked } from "../engine/progress";
-import { BookIcon, CircleRiteIcon, HouseIcon, LanternIcon } from "./art/icons";
+import { BookIcon, CircleRiteIcon, HouseIcon, LanternIcon, JarIcon } from "./art/icons";
 import { EmbroideryBand } from "./art/ornaments";
 import { Sanctum } from "./art/Sanctum";
 import { AwaySummary } from "./components/AwaySummary";
 import { DevPanel } from "./components/DevPanel";
 import { ChapterEnd } from "./components/ChapterEnd";
 import { DiscoveryModal } from "./components/DiscoveryModal";
-import { Inventory } from "./components/Inventory";
+import { ActivityFeed } from "./components/ActivityFeed";
+import { Stores } from "./screens/Stores";
 import { ChapterTracker } from "./components/ChapterTracker";
 import { TaskCard } from "./components/TaskCard";
 import { OmenShelf } from "./components/OmenShelf";
@@ -31,7 +32,7 @@ import { Village } from "./screens/Village";
 import type { Place } from "./tasks";
 import { useGame } from "./useGame";
 
-type TabId = "house" | "grimoire" | "village" | "circle";
+type TabId = "house" | "stores" | "grimoire" | "village" | "circle";
 
 export function App() {
   const game = useGame();
@@ -57,7 +58,10 @@ export function App() {
   };
 
   // Tabs appear as grandmother's notes open them; each shows a dot until first visited.
-  const tabs: TabDef<TabId>[] = [{ id: "house", label: "House", icon: <HouseIcon size={18} /> }];
+  const tabs: TabDef<TabId>[] = [
+    { id: "house", label: "House", icon: <HouseIcon size={18} /> },
+    { id: "stores", label: "Stores", icon: <JarIcon size={18} /> },
+  ];
   const place = (id: TabId, label: string, icon: ReactNode) => tabs.push({ id, label, icon, badge: !seen(id) && tab !== id });
   if (isFeatureOpen(state, "grimoire")) place("grimoire", "Grimoire", <BookIcon size={18} />);
   if (isFeatureOpen(state, "village")) place("village", "Village", <LanternIcon size={18} />);
@@ -70,11 +74,13 @@ export function App() {
         Skip to main content
       </a>
       <TopBar state={state} onStop={game.stop} stopNote={game.lastStop && formatStop(game.lastStop.reason)} onSettings={() => setSettingsOpen(true)} onGo={goTo} />
+      <ActivityFeed feed={game.feed} />
       <EmbroideryBand className="band" />
       <Tabs tabs={tabs} value={tab} onChange={setTab} label="Places" />
 
       <div className="layout" id="main" tabIndex={-1}>
         <div className="main" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
+          {tab === "stores" && <Stores state={state} />}
           {tab === "village" && <Village state={state} act={game.act} />}
           {tab === "grimoire" && <Grimoire state={state} act={game.act} onAttuned={() => setTab("circle")} />}
           {tab === "circle" && <Circle state={state} act={game.act} />}
@@ -90,7 +96,6 @@ export function App() {
         <aside className="side">
           <ChapterTracker state={state} onGo={goTo} act={game.act} />
           <OmenShelf state={state} act={game.act} />
-          <Inventory state={state} />
         </aside>
       </div>
 

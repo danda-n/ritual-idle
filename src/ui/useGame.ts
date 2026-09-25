@@ -15,7 +15,7 @@ import { OMENS } from "../content/omens";
 import { buffDuration, buffEffects, upgradeEffectFor } from "./effects";
 import { UPGRADE_DEFS } from "../content/upgrades";
 import { PART_DEFS } from "../content/rite";
-import { TALENT_LEVELS } from "../content/talents";
+import { TALENT_LEVELS, TALENTS, type TalentLevel } from "../content/talents";
 import { catchUp, type CatchUp } from "../engine/offline";
 import { clearLocal, loadLocal, saveLocal } from "../engine/save";
 import { advance, startAction, stopAction, type Report } from "../engine/simulate";
@@ -37,11 +37,24 @@ export interface Toast {
   text: string;
 }
 
+/** A line in the activity feed: the routine things that happen (steps, levels, omens, claims). */
+export interface FeedEntry {
+  id: number;
+  text: string;
+  at: number;
+}
+
+/** How many feed lines are kept (this session only; they aren't saved). */
+const FEED_SIZE = 30;
+
 /** Gaps longer than this (sleeping laptop, hidden tab) go through the offline path so the cap applies. */
 const OFFLINE_GAP_MS = 5 * 60_000;
 
-/** Feedback for a player command, worked out from what changed. */
-function celebrateCommand(before: GameState, after: GameState, toast: (t: Omit<Toast, "id">[]) => void) {
+/**
+ * Feedback for a player command, worked out from what changed. Two channels: `toast` for the big
+ * moments (a part placed, a project built, a contract done), `log` for the rest (the feed).
+ */
+function celebrateCommand(before: GameState, after: GameState, toast: (t: Omit<Toast, "id">[]) => void, log: (lines: string[]) => void) {
   const coin = Math.floor(after.coin) - Math.floor(before.coin);
   if (coin > 0) emitFx({ kind: "float", text: `+${coin} coin`, anchors: [".purse"], tone: "coin" });
   const trust = Math.floor(after.trust) - Math.floor(before.trust);
@@ -49,6 +62,9 @@ function celebrateCommand(before: GameState, after: GameState, toast: (t: Omit<T
   if (after.stats.requestsFilled > before.stats.requestsFilled) {
     const slot = after.board.findIndex((b, i) => b.request === null && before.board[i]?.request !== null);
     if (slot >= 0) emitFx({ kind: "helped", slot });
+    toast([{ title: "Contract done", text: `+${coin} coin, and the village trusts you a little more.` }]);
+  } else if (after.board.some((b, i) => JSON.stringify(b.delivered) !== JSON.stringify(before.board[i]?.delivered ?? {}))) {
+    log(["Delivered part of a contract"]);
   }
   const bought = after.upgrades.filter((u) => !before.upgrades.includes(u));
   if (bought.length > 0) toast(bought.map((u) => ({ title: `${UPGRADE_DEFS[u].name} is built`, text: upgradeEffectFor(u) })));
@@ -58,7 +74,7 @@ function celebrateCommand(before: GameState, after: GameState, toast: (t: Omit<T
     if (!step) continue;
     const into = SKILL_IDS.find((k) => after.skills[k].xp > before.skills[k].xp);
     const text = step.reward && "xpChoice" in step.reward && into ? `+${step.reward.xpChoice.amount} ${SKILLS[into].name} XP` : rewardText(step);
-    toast([{ title: "Claimed", text }]);
+    log([`Claimed: ${text}`]);
     emitFx({ kind: "float", text, anchors: [".tracker"], tone: "good" });
   }
   const placed = after.kindling.filter((p) => !before.kindling.includes(p));
@@ -66,7 +82,12 @@ function celebrateCommand(before: GameState, after: GameState, toast: (t: Omit<T
   if (placed.length > 0) {
     toast(placed.map((p) => ({ title: `${PART_DEFS[p].name} is placed · ${after.kindling.length} of 5`, text: "" })));
   }
-  if (after.rite.performing && !before.rite.performing) toast([{ title: "The rite begins", text: "Five phases. Answer each moment as it comes." }]);
+  if (after.rite.performing && !before.rite.performing) toast([{ title: "The rite begins", text: "It runs by itself, about three minutes. Stay or step away." }]);
+  for (const k of SKILL_IDS) {
+    for (const [lvl, side] of Object.entries(after.talents[k] ?? {})) {
+      if (before.talents[k]?.[Number(lvl) as TalentLevel] !== side) log([`${SKILLS[k].name} talent: ${TALENTS[k][Number(lvl) as TalentLevel][side].name}`]);
+    }
+  }
 }
 
 function boot(): { state: GameState; away: CatchUp | null; fresh: boolean } {
@@ -92,6 +113,15 @@ export function useGame() {
   // them (so the step's own celebration can land first). A new game opens with the first.
   const [story, setStory] = useState<{ note: Note; at: number }[]>(() => (initial.fresh ? [{ note: NOTES[0] as Note, at: 0 }] : []));
   const nextToastId = useRef(0);
+  const [feed, setFeed] = useState<FeedEntry[]>([]);
+  const nextFeedId = useRef(0);
+
+  const log = useCallback((lines: string[]) => {
+    if (lines.length === 0) return;
+    const at = Date.now();
+    const fresh = lines.map((text) => ({ id: nextFeedId.current++, text, at }));
+    setFeed((f) => [...fresh.reverse(), ...f].slice(0, FEED_SIZE));
+  }, []);
 
   const pushToasts = useCallback((items: Omit<Toast, "id">[]) => {
     if (items.length === 0) return;
@@ -116,8 +146,9 @@ export function useGame() {
       const insight = (report.fragments ?? []).reduce((n, f) => n + f.amount, 0);
       if (insight > 0) emitFx({ kind: "float", text: `+${insight} insight`, anchors: ["#tab-grimoire", ".tabs"], tone: "good" });
       if (report.doubled) emitFx({ kind: "float", text: "Doubled! ×2", anchors: fromWork, tone: "rare" });
-      // Placing a part has its own toast; other steps say what they gave.
-      const stepToasts = (report.stepsDone ?? []).filter((st) => st.goal.kind !== "place").map((st) => ({ title: `Step done: ${st.label}`, text: st.reward ? `Reward ready to claim: ${rewardText(st)}` : "" }));
+      // Routine things go to the feed; toasts are kept for the big moments.
+      const lines: string[] = [];
+      for (const st of (report.stepsDone ?? []).filter((st) => st.goal.kind !== "place")) lines.push(`Step done: ${st.label}${st.reward ? ` · reward to claim: ${rewardText(st)}` : ""}`);
       const levelToasts: Omit<Toast, "id">[] = [];
       for (const l of report.levelUps ?? []) {
         emitFx({ kind: "float", text: `Level ${l.to}`, anchors: [`.skill-tile[data-skill="${l.skill}"]`, ".working"], tone: "level" });
@@ -128,26 +159,28 @@ export function useGame() {
           ...(points > 0 ? [points > 1 ? `${points} talents to choose` : "A talent to choose"] : []),
         ];
         if (opened.length > 0) emitFx({ kind: "unlocked", ids: opened });
+        // A new tier or a talent is a big moment; a plain level is a feed line.
         if (news.length > 0) levelToasts.push({ title: `${SKILLS[l.skill].name} ${l.to}`, text: news.join(" · ") });
+        else lines.push(`${SKILLS[l.skill].name} reached level ${l.to}`);
       }
       const rareToasts = (Object.keys(report.itemsGained ?? {}) as ItemId[])
         .filter((item) => isRareDrop(item, 0.01))
         .map((item) => ({ title: `Rare find: ${ITEMS[item].name}`, text: "" }));
+      for (const id of (report.fellBackTo ?? []).slice(0, 1)) lines.push(`Out of an ingredient: back to ${ACTION_DEFS[id].name.toLowerCase()}`);
+      for (const p of report.pagesRead ?? []) if (p.unlocks.length === 0) lines.push(`Page deciphered: ${p.title}`);
+      for (const o of report.omensFound ?? []) lines.push(`An omen: ${OMENS[o].name}, on the shelf (bless a skill: ${buffEffects(OMENS[o].buff).join(", ")}, ${buffDuration(OMENS[o].buff)})`);
+      if (report.omensLost) lines.push("An omen passed unseen: the shelf was full");
+      log(lines);
       pushToasts([
-        ...stepToasts,
         ...levelToasts,
         ...rareToasts,
-        ...(report.fellBackTo ?? []).slice(0, 1).map((id) => ({ title: "Back to gathering", text: `Out of an ingredient, so you went back to ${ACTION_DEFS[id].name.toLowerCase()}.` })),
         ...(report.curioStories ?? []).map(() => ({ title: `Curio found (${ref.current.stats.curiosRead}/${CURIO_STORIES.length})`, text: "Read it in the Grimoire." })),
-        ...(report.pagesRead ?? []).map((p) => ({
-          title: `Page deciphered: ${p.title}`,
-          text: p.unlocks.length > 0 ? `New recipe: ${p.unlocks.map((a) => ACTION_DEFS[a].name).join(", ")}.` : "Added to the Grimoire.",
-        })),
-        ...(report.omensFound ?? []).map((o) => ({ title: `An omen: ${OMENS[o].name}`, text: `On the shelf. Release for ${buffDuration(OMENS[o].buff)}: ${buffEffects(OMENS[o].buff).join(", ")}.` })),
-        ...(report.omensLost ? [{ title: "An omen passed unseen", text: "The shelf was full. A bigger shelf would hold more." }] : []),
+        ...(report.pagesRead ?? [])
+          .filter((p) => p.unlocks.length > 0)
+          .map((p) => ({ title: `Page deciphered: ${p.title}`, text: `New recipe: ${p.unlocks.map((a) => ACTION_DEFS[a].name).join(", ")}.` })),
       ]);
     },
-    [pushToasts],
+    [pushToasts, log],
   );
 
   // The ref is the source of truth; React state mirrors it for rendering.
@@ -223,13 +256,13 @@ export function useGame() {
       const before = ref.current;
       commit(r.state);
       saveLocal(r.state); // choices are saved at once, not on the next autosave
-      celebrateCommand(before, r.state, pushToasts);
+      celebrateCommand(before, r.state, pushToasts, log);
       if (r.aside) pushToasts([{ title: "They tell you something", text: r.aside }]);
       announce({ notesRevealed: r.notes, fragments: r.fragments, omensFound: r.gifts, stepsDone: r.steps });
       if (r.outcome?.kind === "discovered") setDiscovery(r.outcome.recipe);
       return r;
     },
-    [commit, announce, pushToasts],
+    [commit, announce, pushToasts, log],
   );
 
   // Dev tools: pretend time passed (goes through the real offline path), or edit the state directly.
@@ -244,5 +277,5 @@ export function useGame() {
   const dismissDiscovery = useCallback(() => setDiscovery(null), []);
   const dismissStory = useCallback(() => setStory((q) => q.slice(1)), []);
 
-  return { state, away, dismissAway, discovery, dismissDiscovery, story: story[0] && Date.now() - story[0].at >= STORY_DELAY_MS ? story[0].note : null, dismissStory, lastStop, toasts, dismissToast, start, stop, act, load, reset, dev };
+  return { state, away, dismissAway, discovery, dismissDiscovery, story: story[0] && Date.now() - story[0].at >= STORY_DELAY_MS ? story[0].note : null, dismissStory, lastStop, toasts, dismissToast, feed, start, stop, act, load, reset, dev };
 }
