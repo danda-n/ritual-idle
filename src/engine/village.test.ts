@@ -2,9 +2,10 @@ import { describe, expect, it } from "vitest";
 import { NOTES } from "../content/notes";
 import { ACTION_DEFS } from "../content/actions";
 import { PART_DEFS } from "../content/rite";
-import { REFILL_MS, REQUESTS } from "../content/requests";
-import { buy, canBuy, declineRequest, fillRequest } from "./commands";
-import { actionDurationMs, offlineCapMs } from "./modifiers";
+import { BOARD_SLOTS, REFILL_MS, REQUESTS } from "../content/requests";
+import { build, buy, canBuild, canBuy, declineRequest, deliver } from "./commands";
+import { actionDurationMs, offlineCapMs, omenCapacity } from "./modifiers";
+import { UPGRADES } from "../content/upgrades";
 import { catchUp } from "./offline";
 import { isFeatureOpen } from "./progress";
 import { deserialize } from "./save";
@@ -23,7 +24,7 @@ function villageOpen(extra: Partial<GameState> = {}): GameState {
   return s;
 }
 
-function expectOk(r: ReturnType<typeof fillRequest>): GameState {
+function expectOk(r: ReturnType<typeof deliver>): GameState {
   if (!r.ok) throw new Error(r.reason);
   return r.state;
 }
@@ -36,29 +37,59 @@ describe("village board", () => {
     expect(s.board).toEqual([]);
   });
 
-  it("opens with three requests, only ones the player is trusted for", () => {
+  it("opens with two contracts, only ones the player is trusted for", () => {
     const s = villageOpen();
-    expect(s.board).toHaveLength(3);
+    expect(s.board).toHaveLength(BOARD_SLOTS);
+    expect(BOARD_SLOTS).toBe(2);
     for (const slot of s.board) {
       expect(slot.request).not.toBeNull();
       expect(REQUESTS[slot.request!].minTrust).toBe(0);
     }
-    expect(new Set(s.board.map((b) => b.request)).size).toBe(3);
+    expect(new Set(s.board.map((b) => b.request)).size).toBe(2);
   });
 
   it("pays coin and trust, consumes the items, and empties the slot", () => {
     const base = villageOpen();
     const id = base.board[0]!.request!;
     const needs = REQUESTS[id].needs as Record<string, number>;
-    const s = expectOk(fillRequest({ ...base, inventory: { ...needs } }, 0));
+    const s = expectOk(deliver({ ...base, inventory: { ...needs } }, 0));
     expect(s.coin).toBe(REQUESTS[id].coin);
     expect(s.trust).toBe(REQUESTS[id].trust);
     for (const item of Object.keys(needs)) expect(s.inventory[item as keyof typeof s.inventory]).toBe(0);
-    expect(s.board[0]).toEqual({ request: null, refillAt: T0 + REFILL_MS });
+    expect(s.board[0]).toEqual({ request: null, refillAt: T0 + REFILL_MS, delivered: {} });
   });
 
-  it("refuses when the player lacks the items", () => {
-    expect(fillRequest(villageOpen(), 0).ok).toBe(false);
+  it("refuses when the player has none of what they need", () => {
+    expect(deliver(villageOpen(), 0).ok).toBe(false);
+  });
+
+  it("takes deliveries in parts, and pays only when the last part arrives", () => {
+    const base = villageOpen();
+    base.board[0] = { request: "stable_mark", refillAt: T0, delivered: {} };
+    // Part one: some salt lines, no sigils yet.
+    let s = expectOk(deliver({ ...base, inventory: { salt_line: 4 } }, 0));
+    expect(s.board[0]!.delivered).toEqual({ salt_line: 4 });
+    expect(s.inventory.salt_line).toBe(0);
+    expect(s.coin).toBe(0);
+    // Part two: more than enough; only what's still needed is taken.
+    s = expectOk(deliver({ ...s, inventory: { salt_line: 10, ash_sigil: 4 } }, 0));
+    expect(s.inventory.salt_line).toBe(8);
+    expect(s.coin).toBe(REQUESTS.stable_mark.coin);
+    expect(s.stats.requestsFilled).toBe(1);
+    expect(s.board[0]!.request).toBeNull();
+  });
+
+  it("keeps what was delivered through a save", () => {
+    const base = villageOpen();
+    base.board[0] = { request: "stable_mark", refillAt: T0, delivered: {} };
+    const s = expectOk(deliver({ ...base, inventory: { salt_line: 2 } }, 0));
+    expect(deserialize(JSON.stringify(s)).board[0]!.delivered).toEqual({ salt_line: 2 });
+  });
+
+  it("older saves: three request slots become two contracts", () => {
+    const old = { ...villageOpen(), version: 7, board: [{ request: "hana_soup", refillAt: T0 }, { request: "lye_ash", refillAt: T0 }, { request: null, refillAt: T0 }] };
+    const loaded = deserialize(JSON.stringify(old));
+    expect(loaded.board).toEqual([{ request: "hana_soup", refillAt: T0, delivered: {} }, { request: "lye_ash", refillAt: T0, delivered: {} }]);
   });
 
   it("refills an emptied slot after the wait, including while offline", () => {
@@ -95,15 +126,66 @@ describe("shop", () => {
     expect(r.state.inventory.bread).toBe(1);
   });
 
-  it("sells each upgrade once, and only with enough coin", () => {
-    expect(canBuy(villageOpen({ coin: 10 }), "reading_lamp")).toBe("Not enough coin.");
-    const r = buy(villageOpen({ coin: 200 }), "reading_lamp");
-    if (!r.ok) throw new Error(r.reason);
-    expect(canBuy(r.state, "reading_lamp")).toBe("Already done.");
+  it("is short of coin when it's short", () => {
+    expect(canBuy(villageOpen({ coin: 1 }), "bread")).toBe("Not enough coin.");
   });
 
   it("is closed before the village opens", () => {
     expect(canBuy({ ...newGame(T0, 3), coin: 100 }, "bread")).not.toBeNull();
+  });
+});
+
+describe("house projects", () => {
+  it("need their materials, and use them", () => {
+    const s = newGame(T0, 3);
+    expect(canBuild(s, "reading_lamp")).toBe("Not enough materials yet.");
+    const r = build({ ...s, inventory: { beeswax_candle: 7, glass: 8 } }, "reading_lamp");
+    if (!r.ok) throw new Error(r.reason);
+    expect(r.state.upgrades).toEqual(["reading_lamp"]);
+    expect(r.state.inventory).toEqual({ beeswax_candle: 1, glass: 0 });
+    expect(canBuild(r.state, "reading_lamp")).toBe("Already built.");
+  });
+
+  it("need no coin and no village: they're side work from the start", () => {
+    expect(build({ ...newGame(T0, 3), inventory: { ...UPGRADES.omen_shelf.items } }, "omen_shelf").ok).toBe(true);
+  });
+
+  it("some need another first: the carved shelf after the omen shelf", () => {
+    const s = { ...newGame(T0, 3), inventory: { ...UPGRADES.carved_shelf.items } };
+    expect(canBuild(s, "carved_shelf")).toMatch(/omen shelf first/);
+    expect(canBuild({ ...s, upgrades: ["omen_shelf" as const] }, "carved_shelf")).toBeNull();
+  });
+});
+
+describe("omens and the shelf", () => {
+  const working = (extra: Partial<GameState> = {}): GameState => ({ ...newGame(T0, 5), levelCap: 20, ...extra });
+
+  it("no omens turn up before the omen shelf is built", () => {
+    const { state, report } = advance(startAction(working(), "search_pantry"), 3000 * 3000);
+    expect(report.actionsCompleted).toBeGreaterThan(2000);
+    expect(report.omensFound).toEqual([]);
+    expect(report.omensLost).toBe(0);
+    expect(state.stats.omensSeen).toBe(0);
+  });
+
+  it("building the shelf brings the first omen, and then they turn up from work", () => {
+    const r = build(working({ inventory: { ...UPGRADES.omen_shelf.items } }), "omen_shelf");
+    if (!r.ok) throw new Error(r.reason);
+    expect(r.gifts).toEqual(["still_night"]);
+    expect(r.state.omens.still_night).toBe(1);
+    expect(omenCapacity(r.state)).toBe(2);
+    const { report } = advance(startAction(r.state, "search_pantry"), 3000 * 3000);
+    expect(report.omensFound.length + report.omensLost).toBeGreaterThan(5);
+  });
+
+  it("older saves: whoever met omens keeps a shelf, and the old 3-omen shelf becomes the carved one", () => {
+    const met = deserialize(JSON.stringify({ ...newGame(T0, 3), version: 7, omens: { still_night: 1 }, stats: { ...newGame().stats, omensSeen: 2 } }));
+    expect(met.upgrades).toEqual(["omen_shelf"]);
+    const bought = deserialize(JSON.stringify({ ...newGame(T0, 3), version: 7, upgrades: ["omen_shelf", "reading_lamp"], stats: { ...newGame().stats, omensSeen: 4 } }));
+    expect(bought.upgrades).toEqual(["omen_shelf", "reading_lamp", "carved_shelf"]);
+    expect(omenCapacity(bought)).toBe(3);
+    const none = deserialize(JSON.stringify({ ...newGame(T0, 3), version: 7 }));
+    expect(none.upgrades).toEqual([]);
   });
 });
 

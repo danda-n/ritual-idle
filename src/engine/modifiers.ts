@@ -2,7 +2,7 @@ import { ACTION_DEFS, type ActionId } from "../content/actions";
 import { BUFF_DEFS } from "../content/buffs";
 import { FOLLOWERS } from "../content/followers";
 import type { ItemId } from "../content/items";
-import { SHOP } from "../content/shop";
+import { UPGRADE_DEFS } from "../content/upgrades";
 import type { RequestDef, UpgradeEffect } from "../content/types";
 import type { SkillId } from "../content/skills";
 import { discoveredRewards } from "./grimoire";
@@ -17,12 +17,11 @@ import { levelForXp } from "./xp";
 
 const HOUR = 60 * 60 * 1000;
 export const BASE_OFFLINE_CAP_MS = 24 * HOUR;
-export const BASE_OMEN_CAPACITY = 2;
 /** Each level past 1 makes its skill's actions this much faster, compounding (1.01 = 1%). */
 export const LEVEL_SPEED = 1.01;
 
 function effects(state: GameState): UpgradeEffect[] {
-  return state.upgrades.map((id) => SHOP[id].effect);
+  return state.upgrades.map((id) => UPGRADE_DEFS[id].effect);
 }
 
 /** Taken talent effects of one kind that reach this skill (its own, or aimed at it from another). */
@@ -158,8 +157,9 @@ export function offlineCapMs(state: GameState): number {
   return cap;
 }
 
+/** Omens need somewhere to go: none turn up until the omen shelf is built. */
 export function omenCapacity(state: GameState): number {
-  let cap = BASE_OMEN_CAPACITY;
+  let cap = 0;
   for (const e of effects(state)) if (e.kind === "omen_capacity") cap = Math.max(cap, e.capacity);
   return cap;
 }

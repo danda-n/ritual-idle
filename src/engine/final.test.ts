@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { PART_IDS } from "../content/rite";
 import { NOTES } from "../content/notes";
 import { PAGES } from "../content/pages";
-import { attune, beginRite, experiment, fillRequest, releaseOmen, setSetting, type Result } from "./commands";
+import { attune, beginRite, experiment, deliver, releaseOmen, setSetting, type Result } from "./commands";
 import { addInsight } from "./grimoire";
 import { catchUp } from "./offline";
 import { deserialize, exportSave, importSave, serialize } from "./save";
@@ -103,7 +103,7 @@ describe("the village never jams", () => {
   it("a request the player can't fill can always be turned away and replaced", () => {
     const s = { ...newGame(T0, 3), notesRevealed: NOTES.length };
     refillBoard(s, T0);
-    for (let i = 0; i < s.board.length; i++) expect(fillRequest(s, i).ok).toBe(false);
+    for (let i = 0; i < s.board.length; i++) expect(deliver(s, i).ok).toBe(false);
     const after = catchUp(s, T0 + 60_000).state;
     expect(after.board.every((b) => b.request !== null)).toBe(true);
   });

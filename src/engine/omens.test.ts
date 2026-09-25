@@ -3,8 +3,7 @@ import { ACTION_DEFS } from "../content/actions";
 import { BUFFS } from "../content/buffs";
 import { NOTES } from "../content/notes";
 import { OMENS } from "../content/omens";
-import { placePart, releaseOmen } from "./commands";
-import { PART_DEFS, type PartId } from "../content/rite";
+import { releaseOmen } from "./commands";
 import { rewind } from "./devtools";
 import { actionDurationMs, chanceMultiplier, omenCapacity } from "./modifiers";
 import { catchUp } from "./offline";
@@ -46,25 +45,15 @@ describe("omen drops", () => {
   });
 
   it("respect the shelf capacity; extras pass unseen", () => {
-    const { state, report } = advance(startAction(open(), "pick_nettle"), 3000 * 8000);
-    expect(state.omens.still_night).toBe(omenCapacity(open()));
-    expect(omenCapacity(open())).toBe(2);
-    expect(omenCapacity(open({ upgrades: ["omen_shelf"] }))).toBe(3);
+    const shelf = open({ upgrades: ["omen_shelf"] });
+    const { state, report } = advance(startAction(shelf, "pick_nettle"), 3000 * 8000);
+    expect(state.omens.still_night).toBe(omenCapacity(shelf));
+    expect(omenCapacity(open())).toBe(0);
+    expect(omenCapacity(shelf)).toBe(2);
+    expect(omenCapacity(open({ upgrades: ["omen_shelf", "carved_shelf"] }))).toBe(3);
     expect(report.omensLost).toBeGreaterThan(0);
   });
 
-  it("the note that opens Scholarship gives the first Still Night", () => {
-    const giftNote = NOTES.findIndex((n) => "gift" in n);
-    expect(NOTES[giftNote]!.unlocks).toEqual(["scholarship"]);
-    const prev = NOTES[giftNote - 1]!;
-    if (!("goal" in prev) || prev.goal.kind !== "place") throw new Error("expected a place goal");
-    const part = prev.goal.part as PartId;
-    const s: GameState = { ...newGame(T0, 11), notesRevealed: giftNote, inventory: { ...PART_DEFS[part].items } };
-    const r = placePart(s, part);
-    if (!r.ok) throw new Error(r.reason);
-    expect(r.gifts).toEqual(["still_night"]);
-    expect(r.state.omens.still_night).toBe(1);
-  });
 });
 
 describe("releasing Still Night", () => {

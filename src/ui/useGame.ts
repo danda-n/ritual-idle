@@ -13,7 +13,7 @@ import type { Note } from "../engine/progress";
 import { rewind } from "../engine/devtools";
 import { OMENS } from "../content/omens";
 import { buffDuration, buffEffects, upgradeEffectFor } from "./effects";
-import { SHOP } from "../content/shop";
+import { UPGRADE_DEFS } from "../content/upgrades";
 import { PART_DEFS } from "../content/rite";
 import { TALENT_LEVELS } from "../content/talents";
 import { catchUp, type CatchUp } from "../engine/offline";
@@ -51,7 +51,7 @@ function celebrateCommand(before: GameState, after: GameState, toast: (t: Omit<T
     if (slot >= 0) emitFx({ kind: "helped", slot });
   }
   const bought = after.upgrades.filter((u) => !before.upgrades.includes(u));
-  if (bought.length > 0) toast(bought.map((u) => ({ title: `${SHOP[u].name} is up`, text: upgradeEffectFor(u) })));
+  if (bought.length > 0) toast(bought.map((u) => ({ title: `${UPGRADE_DEFS[u].name} is built`, text: upgradeEffectFor(u) })));
   // A claimed step reward: say what it gave (and where an XP choice went).
   for (const id of before.rewardsWaiting.filter((r) => !after.rewardsWaiting.includes(r))) {
     const step = stepById(id);

@@ -6,6 +6,8 @@ import { PAGES } from "../content/pages";
 import { HEARTH_RITE, PART_IDS } from "../content/rite";
 import { SKILL_IDS, type SkillId } from "../content/skills";
 import { TALENT_LEVELS } from "../content/talents";
+import { BOARD_SLOTS } from "../content/requests";
+import { UPGRADE_IDS, UPGRADES, type UpgradeId } from "../content/upgrades";
 import type { Feature } from "../content/types";
 import { SAVE_VERSION, newGame, type GameState, type RecipeProgress } from "./state";
 
@@ -43,6 +45,8 @@ export function deserialize(json: string): GameState {
     middleOrder: data.middleOrder ?? [],
     stageStart: data.stageStart ?? {},
     talents: loadTalents(data.talents),
+    // Contracts: two slots now, each remembering what's been delivered.
+    board: (data.board ?? []).slice(0, BOARD_SLOTS).map((b) => ({ ...b, delivered: { ...b.delivered } })),
     version: SAVE_VERSION,
   };
   // Fields that no longer exist (the offline cap is now derived from upgrades).
@@ -165,10 +169,18 @@ function loadTalents(data: unknown): GameState["talents"] {
 
 /**
  * v8: Tend is gone (its meter and streak), and the rite has no moments: one under way keeps its
- * place, with no offerings made. (Old talent ranks are dropped by `loadTalents`.)
+ * place, with no offerings made. Upgrades became house projects. (Old talent ranks are dropped by
+ * `loadTalents`; the board is trimmed to two contracts on every load.)
  */
 function upgradeToV8(state: GameState): void {
   delete (state as { tend?: unknown }).tend;
+  // House upgrades are built projects now, and omens need the omen shelf. The old omen shelf held
+  // 3 (now the carved shelf); anyone who has met omens keeps a shelf for them.
+  const had = state.upgrades as string[];
+  const upgrades = new Set(had.filter((u): u is UpgradeId => u in UPGRADES));
+  if (had.includes("omen_shelf")) upgrades.add("carved_shelf");
+  if (state.stats.omensSeen > 0 || Object.values(state.omens).some((n) => (n ?? 0) > 0)) upgrades.add("omen_shelf");
+  state.upgrades = UPGRADE_IDS.filter((u) => upgrades.has(u));
   const p = state.rite.performing as (NonNullable<GameState["rite"]["performing"]> & { moments?: boolean[] }) | null;
   if (p) {
     delete p.moments;

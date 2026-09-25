@@ -43,7 +43,6 @@ export function noteUnlocks(note: Note): string[] {
   for (const s of note.unlocks as readonly (keyof typeof SKILLS)[]) out.push(`New skill: ${SKILLS[s].name}`);
   const places: Record<string, string> = { grimoire: "the Grimoire", village: "the Village", circle: "the Circle", experiments: "experiments at the Circle" };
   if ("opens" in note) for (const f of note.opens as readonly string[]) out.push(`Opens ${places[f] ?? f}`);
-  if ("gift" in note) out.push("An omen for the shelf: Still Night");
   return out;
 }
 

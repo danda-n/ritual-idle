@@ -1,7 +1,8 @@
 import { BOARD_SLOTS, REFILL_MS, REQUESTS, type RequestId } from "../content/requests";
 import { isFeatureOpen } from "./progress";
 import { nextRandom } from "./rng";
-import type { GameState } from "./state";
+import type { ItemId } from "../content/items";
+import type { BoardSlot, GameState } from "./state";
 
 const REQUEST_IDS = Object.keys(REQUESTS) as RequestId[];
 
@@ -18,7 +19,7 @@ export function eligibleRequests(state: GameState): RequestId[] {
 export function refillBoard(state: GameState, now: number): void {
   if (!isFeatureOpen(state, "village")) return;
   if (state.board.length === 0) {
-    state.board = Array.from({ length: BOARD_SLOTS }, () => ({ request: null, refillAt: now }));
+    state.board = Array.from({ length: BOARD_SLOTS }, () => ({ request: null, refillAt: now, delivered: {} }));
   }
   for (const slot of state.board) {
     if (slot.request !== null || slot.refillAt > now) continue;
@@ -30,9 +31,31 @@ export function refillBoard(state: GameState, now: number): void {
     const [roll, seed] = nextRandom(state.rngSeed);
     state.rngSeed = seed;
     slot.request = pool[Math.floor(roll * pool.length)]!;
+    slot.delivered = {};
   }
 }
 
+/** What a contract still needs, after what's been delivered. */
+export function stillNeeded(slot: BoardSlot): Partial<Record<ItemId, number>> {
+  if (!slot.request) return {};
+  const out: Partial<Record<ItemId, number>> = {};
+  for (const [item, qty] of Object.entries(REQUESTS[slot.request].needs) as [ItemId, number][]) {
+    const left = qty - (slot.delivered[item] ?? 0);
+    if (left > 0) out[item] = left;
+  }
+  return out;
+}
+
+/** What delivering now would hand over: as much of each need as you hold. */
+export function deliverable(state: GameState, slot: BoardSlot): Partial<Record<ItemId, number>> {
+  const out: Partial<Record<ItemId, number>> = {};
+  for (const [item, left] of Object.entries(stillNeeded(slot)) as [ItemId, number][]) {
+    const give = Math.min(left, state.inventory[item] ?? 0);
+    if (give > 0) out[item] = give;
+  }
+  return out;
+}
+
 export function emptySlot(state: GameState, index: number, now: number): void {
-  state.board[index] = { request: null, refillAt: now + REFILL_MS };
+  state.board[index] = { request: null, refillAt: now + REFILL_MS, delivered: {} };
 }

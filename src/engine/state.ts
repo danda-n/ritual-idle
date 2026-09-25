@@ -8,7 +8,7 @@ import type { OfferingId, PartId } from "../content/rite";
 import type { Side, TalentLevel } from "../content/talents";
 import type { Feature } from "../content/types";
 import type { RequestId } from "../content/requests";
-import type { UpgradeId } from "../content/shop";
+import type { UpgradeId } from "../content/upgrades";
 import { SKILL_IDS, type SkillId } from "../content/skills";
 import { randomSeed } from "./rng";
 
@@ -23,10 +23,14 @@ export interface ActiveAction {
   progress: number;
 }
 
-/** One slot on the village board: a request, or empty until `refillAt` (sim clock). */
+/**
+ * One slot on the village board: a contract, or empty until `refillAt` (sim clock). Contracts can
+ * be delivered in parts; `delivered` is what they've had so far.
+ */
 export interface BoardSlot {
   request: RequestId | null;
   refillAt: number;
+  delivered: Partial<Record<ItemId, number>>;
 }
 
 export interface GameState {

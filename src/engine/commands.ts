@@ -1,11 +1,12 @@
 import { EXPERIMENT_CONSOLATION_XP, GRIMOIRE_DEFS, INSIGHT_GAIN, type GrimoireId } from "../content/grimoire";
 import { REQUESTS } from "../content/requests";
-import { SHOP, type ShopId, type UpgradeId } from "../content/shop";
+import { SHOP, type ShopId } from "../content/shop";
+import { UPGRADE_DEFS, type UpgradeId } from "../content/upgrades";
 import type { ItemId } from "../content/items";
 import { OMENS, type OmenId } from "../content/omens";
 import { addInsight, buyHintInto, deduce, GRIMOIRE_IDS, glowCount, hintCost, isDiscovered, isSilhouetteVisible, markDiscovered, matches, progressOf, type Fragment, type HintKind } from "./grimoire";
 import { requestCoin, trustMultiplier } from "./modifiers";
-import { applyBuff, giveNoteGifts, grantOmen } from "./omens";
+import { applyBuff, grantOmen } from "./omens";
 import { beginRite as startRite, canBeginRite } from "./rite";
 import { PART_DEFS, type OfferingId, type PartId } from "../content/rite";
 import type { SkillId } from "../content/skills";
@@ -16,7 +17,7 @@ import { isSkillUnlocked } from "./progress";
 import { enterNextStage, grantXp, isFeatureOpen, middleParts, MIDDLE_AT, revealNotes, stageChoices, stepById, type Note, type Step } from "./progress";
 import type { GameState, Settings } from "./state";
 import { xpForLevel } from "./xp";
-import { emptySlot, refillBoard } from "./village";
+import { deliverable, emptySlot, stillNeeded } from "./village";
 
 // Player commands. Each is pure: it returns a new state, or says why it can't be done.
 // The sim clock for timers is `state.lastTickAt` (the UI ticks it to real time).
@@ -35,7 +36,7 @@ export interface Success {
   /** A villager's aside when a request is filled. */
   aside?: string;
   outcome?: ExperimentOutcome;
-  /** Omens given by notes this command revealed. */
+  /** Omens this command gave (the omen shelf comes with one). */
   gifts?: OmenId[];
   /** Stage steps this command completed. */
   steps?: Step[];
@@ -54,13 +55,23 @@ export function hasItems(state: GameState, needs: Partial<Record<ItemId, number>
   return (Object.entries(needs) as [ItemId, number][]).every(([item, qty]) => (state.inventory[item] ?? 0) >= qty);
 }
 
-export function fillRequest(input: GameState, slotIndex: number): Result {
+/**
+ * Deliver to a contract: hand over as much of what it still needs as you hold. When the last of
+ * it arrives, it pays and the slot empties; until then what's delivered stays delivered.
+ */
+export function deliver(input: GameState, slotIndex: number): Result {
   const slot = input.board[slotIndex];
   if (!isFeatureOpen(input, "village") || !slot?.request) return no("Nobody is knocking there.");
-  const req = REQUESTS[slot.request];
-  if (!hasItems(input, req.needs)) return no("You don't have what they need yet.");
+  const give = deliverable(input, slot);
+  if (Object.keys(give).length === 0) return no("You have nothing they need yet.");
   const state = structuredClone(input);
-  for (const [item, qty] of Object.entries(req.needs) as [ItemId, number][]) state.inventory[item] = (state.inventory[item] ?? 0) - qty;
+  const s = state.board[slotIndex]!;
+  for (const [item, qty] of Object.entries(give) as [ItemId, number][]) {
+    state.inventory[item] = (state.inventory[item] ?? 0) - qty;
+    s.delivered[item] = (s.delivered[item] ?? 0) + qty;
+  }
+  if (Object.keys(stillNeeded(s)).length > 0) return ok(state);
+  const req = REQUESTS[s.request!];
   state.coin += requestCoin(state, req);
   state.trust += req.trust * trustMultiplier(state);
   state.stats.requestsFilled++;
@@ -70,8 +81,7 @@ export function fillRequest(input: GameState, slotIndex: number): Result {
   // After the insight, so a first hint can open experiments.
   const steps: Step[] = [];
   const notes = revealNotes(state, steps);
-  const gifts = giveNoteGifts(state, notes);
-  return ok(state, notes, { fragments: fragment ? [fragment] : [], aside: fragment ? mention?.aside : undefined, gifts, steps });
+  return ok(state, notes, { fragments: fragment ? [fragment] : [], aside: fragment ? mention?.aside : undefined, steps });
 }
 
 /** Turn a request away. No penalty; someone else knocks after the usual wait. */
@@ -84,9 +94,7 @@ export function declineRequest(input: GameState, slotIndex: number): Result {
 
 export function canBuy(state: GameState, id: ShopId): string | null {
   if (!isFeatureOpen(state, "village")) return "The village isn't open to you yet.";
-  const entry = SHOP[id];
-  if (entry.kind === "upgrade" && state.upgrades.includes(id as UpgradeId)) return "Already done.";
-  if (state.coin < entry.cost) return "Not enough coin.";
+  if (state.coin < SHOP[id].cost) return "Not enough coin.";
   return null;
 }
 
@@ -96,10 +104,29 @@ export function buy(input: GameState, id: ShopId): Result {
   const entry = SHOP[id];
   const state = structuredClone(input);
   state.coin -= entry.cost;
-  if (entry.kind === "item") state.inventory[entry.item] = (state.inventory[entry.item] ?? 0) + entry.qty;
-  else state.upgrades.push(id as UpgradeId);
-  refillBoard(state, state.lastTickAt);
+  state.inventory[entry.item] = (state.inventory[entry.item] ?? 0) + entry.qty;
   return ok(state);
+}
+
+/** Why a house project can't be built now, or null if it can. */
+export function canBuild(state: GameState, id: UpgradeId): string | null {
+  const def = UPGRADE_DEFS[id];
+  if (state.upgrades.includes(id)) return "Already built.";
+  if (def.requires && !state.upgrades.includes(def.requires as UpgradeId)) return `Build the ${UPGRADE_DEFS[def.requires as UpgradeId].name.toLowerCase()} first.`;
+  if (!hasItems(state, def.items)) return "Not enough materials yet.";
+  return null;
+}
+
+/** Build a house project from its materials. The omen shelf comes with its first omen. */
+export function build(input: GameState, id: UpgradeId): Result {
+  const reason = canBuild(input, id);
+  if (reason) return no(reason);
+  const state = structuredClone(input);
+  for (const [item, qty] of Object.entries(UPGRADE_DEFS[id].items) as [ItemId, number][]) state.inventory[item] = (state.inventory[item] ?? 0) - qty;
+  state.upgrades.push(id);
+  const gifts: OmenId[] = [];
+  if (id === "omen_shelf" && grantOmen(state, "still_night", true)) gifts.push("still_night");
+  return ok(state, [], { gifts });
 }
 
 /**
@@ -209,8 +236,7 @@ export function chooseStage(input: GameState, part: PartId): Result {
   state.middleOrder = [...middleParts(state).slice(0, state.notesRevealed - MIDDLE_AT[0]), part];
   const steps: Step[] = [];
   const notes = [enterNextStage(state), ...revealNotes(state, steps)];
-  const gifts = giveNoteGifts(state, notes);
-  return ok(state, notes, { gifts, steps });
+  return ok(state, notes, { steps });
 }
 
 // The Kindling
@@ -232,8 +258,7 @@ export function placePart(input: GameState, part: PartId): Result {
   state.kindling.push(part);
   const steps: Step[] = [];
   const notes = revealNotes(state, steps);
-  const gifts = giveNoteGifts(state, notes);
-  return ok(state, notes, { gifts, steps });
+  return ok(state, notes, { steps });
 }
 
 // Step rewards

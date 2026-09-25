@@ -1,7 +1,7 @@
 import { BUFF_DEFS, type BuffId } from "../content/buffs";
 import { FOLLOWERS, type FollowerId } from "../content/followers";
 import { ITEMS, type ItemId } from "../content/items";
-import { SHOP, type UpgradeId } from "../content/shop";
+import { UPGRADE_DEFS, type UpgradeId } from "../content/upgrades";
 import { SKILLS, SKILL_IDS, type SkillId } from "../content/skills";
 import type { UpgradeEffect } from "../content/types";
 import { formatDuration } from "./format";
@@ -47,7 +47,7 @@ export function upgradeEffect(effect: UpgradeEffect): string {
 }
 
 export function upgradeEffectFor(id: UpgradeId): string {
-  return upgradeEffect(SHOP[id].effect);
+  return upgradeEffect(UPGRADE_DEFS[id].effect);
 }
 
 export function followerEffects(id: FollowerId): string[] {

@@ -85,8 +85,6 @@ export interface NoteDef<S extends string, A extends string> {
   unlocks: S[];
   /** Places that open when this note appears. */
   opens?: Feature[];
-  /** An omen given when this note appears (the scripted first Still Night). */
-  gift?: string;
   /** Completing the goal reveals the next note. The last note may have none. */
   goal?: GoalDef<A>;
 }
@@ -117,9 +115,23 @@ export type UpgradeEffect =
   | { kind: "omen_capacity"; capacity: number }
   | { kind: "offline_cap"; hours: number };
 
-export type ShopEntry<I extends string> =
-  | { kind: "item"; name: string; description: string; cost: number; item: I; qty: number }
-  | { kind: "upgrade"; name: string; description: string; cost: number; effect: UpgradeEffect };
+export interface ShopEntry<I extends string> {
+  name: string;
+  description: string;
+  cost: number;
+  item: I;
+  qty: number;
+}
+
+/** A house project: built once from items you make, then it helps for good. */
+export interface UpgradeDef<I extends string> {
+  name: string;
+  description: string;
+  items: Partial<Record<I, number>>;
+  effect: UpgradeEffect;
+  /** Another project that has to be built first. */
+  requires?: string;
+}
 
 export interface BuffDef<S extends string, I extends string> {
   name: string;

@@ -1,8 +1,7 @@
 import { BUFFS, type BuffId } from "../content/buffs";
-import { OMENS, type OmenId } from "../content/omens";
+import type { OmenId } from "../content/omens";
 import { omenCapacity } from "./modifiers";
 import type { SkillId } from "../content/skills";
-import type { Note } from "./progress";
 import type { GameState } from "./state";
 
 // Omens and buffs. These helpers mutate `state`; callers pass a private copy.
@@ -13,7 +12,7 @@ export function storedOmens(state: GameState): number {
 
 /**
  * Put an omen on the shelf. Returns false if the shelf is full (the omen passes unseen).
- * `promised` omens (a note's gift) always land, even on a full shelf.
+ * `promised` omens (the one that comes with the shelf) always land, even on a full shelf.
  */
 export function grantOmen(state: GameState, id: OmenId, promised = false): boolean {
   state.stats.omensSeen++;
@@ -43,11 +42,3 @@ export function pruneBuffs(state: GameState, now: number): void {
   state.buffs = state.buffs.filter((b) => b.endsAt > now);
 }
 
-/** Notes can carry a gift (the scripted first Still Night). Returns the omens granted. */
-export function giveNoteGifts(state: GameState, notes: readonly Note[]): OmenId[] {
-  const granted: OmenId[] = [];
-  for (const n of notes) {
-    if ("gift" in n && n.gift in OMENS && grantOmen(state, n.gift as OmenId, true)) granted.push(n.gift as OmenId);
-  }
-  return granted;
-}

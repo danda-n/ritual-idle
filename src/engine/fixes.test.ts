@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { PART_DEFS, PART_IDS, type PartId } from "../content/rite";
+import { PART_IDS } from "../content/rite";
 import { NOTES } from "../content/notes";
 import { PAGES } from "../content/pages";
-import { beginRite, fillRequest, placePart, type Result } from "./commands";
+import { beginRite, build, deliver, type Result } from "./commands";
+import { UPGRADES } from "../content/upgrades";
 import { catchUp } from "./offline";
 import { advance, startAction } from "./simulate";
 import { newGame, type GameState } from "./state";
@@ -24,8 +25,8 @@ describe("inputs used mid-repetition", () => {
     // Deciphering needs a tallow candle; hand the last candles to Old Tomas halfway through.
     let s = startAction(open({ inventory: { burnt_page: 5, tallow_candle: 3 }, skills: { ...newGame().skills, scholarship: { xp: xpForLevel(3) } } }), "decipher_page");
     s = advance(s, 3000).state;
-    s.board = [{ request: "grave_candles", refillAt: 0 }];
-    s = okay(fillRequest(s, 0));
+    s.board = [{ request: "grave_candles", refillAt: 0, delivered: {} }];
+    s = okay(deliver(s, 0));
     const { state, report } = advance(s, 4000);
     expect(state.inventory.tallow_candle).toBe(0);
     expect(state.inventory.deciphered_page ?? 0).toBe(0);
@@ -49,18 +50,12 @@ describe("after the rite", () => {
 });
 
 describe("omens and curios", () => {
-  it("the scripted Still Night lands even on a full shelf", () => {
-    // The gift comes with the note after the part before it is placed.
-    const giftNote = NOTES.findIndex((n) => "gift" in n);
-    const prev = NOTES[giftNote - 1]!;
-    if (!("goal" in prev) || prev.goal.kind !== "place") throw new Error("expected a place goal");
-    const part = prev.goal.part as PartId;
-    const b = newGame(T0, 11);
-    const s: GameState = { ...b, notesRevealed: giftNote, omens: { still_night: 1 }, inventory: { ...PART_DEFS[part].items } };
-    const r = placePart(s, part);
+  it("the Still Night that comes with the omen shelf lands even on a full shelf", () => {
+    const s: GameState = { ...newGame(T0, 11), omens: { still_night: 2 }, inventory: { ...UPGRADES.omen_shelf.items } };
+    const r = build(s, "omen_shelf");
     const state = okay(r);
     expect(r.ok && r.gifts).toContain("still_night");
-    expect(state.omens.still_night).toBe(2);
+    expect(state.omens.still_night).toBe(3);
   });
 
   it("curios go to the collection, not the pantry", () => {

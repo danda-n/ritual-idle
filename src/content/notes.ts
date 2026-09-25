@@ -65,7 +65,6 @@ export const NOTES = [
     hint: "Search the attic for burnt pages (Scholarship). Deciphering one uses a tallow candle.",
     unlocks: ["scholarship"],
     opens: ["grimoire"],
-    gift: "still_night",
     steps: [
       { id: "words.candles", label: "Pour 24 tallow candles to read by", goal: { kind: "complete", action: "tallow_candle", count: 24 } },
       { id: "words.attic", label: "Search the attic 60 times", goal: { kind: "complete", action: "search_attic", count: 60 } },
@@ -82,7 +81,7 @@ export const NOTES = [
     unlocks: ["ritualism"],
     opens: ["village"],
     steps: [
-      { id: "offering.help", label: "Help a villager (Village tab)", goal: { kind: "requests", count: 1 } },
+      { id: "offering.help", label: "Finish a contract for a villager (Village tab)", goal: { kind: "requests", count: 1 } },
       { id: "offering.lines", label: "Lay 15 salt lines", goal: { kind: "complete", action: "salt_line", count: 15 } },
       { id: "offering.candles", label: "Pour 17 tallow candles", goal: { kind: "complete", action: "tallow_candle", count: 17 } },
       { id: "offering.bless", label: "Bless the threshold 15 times", goal: { kind: "complete", action: "bless_threshold", count: 15 } },

@@ -6,8 +6,9 @@ import type { BuffId } from "../content/buffs";
 import { INSIGHT_GAIN } from "../content/grimoire";
 import { PAGES } from "../content/pages";
 import { addInsight, readCurio, type Fragment } from "./grimoire";
+import { omenCapacity } from "./modifiers";
 import { actionDurationMs, actionInputs, buffLength, bulkExtra, byproducts, chanceMultiplier, doubleChance, everyNth, extraYieldChance, insightPerRep, omenChanceMultiplier, saveChance, xpBonus } from "./modifiers";
-import { applyBuff, giveNoteGifts, grantOmen, pruneBuffs } from "./omens";
+import { applyBuff, grantOmen, pruneBuffs } from "./omens";
 import { isRecipeKnown, isSkillUnlocked, pagesRead, revealNotes, type Note, type Page, type Step } from "./progress";
 import { nextRandom } from "./rng";
 import type { GameState } from "./state";
@@ -254,7 +255,8 @@ export function advance(input: GameState, ms: number, opts: AdvanceOptions = {})
     }
     report.actionsCompleted++;
     if (def.buff) applyBuff(state, def.buff as BuffId, now, false, undefined, buffLength(state, def.skill));
-    for (const omen of Object.keys(OMENS) as OmenId[]) {
+    // Omens turn up only once the omen shelf is built.
+    if (omenCapacity(state) > 0) for (const omen of Object.keys(OMENS) as OmenId[]) {
       if (roll() >= OMENS[omen].dropChance * omenChanceMultiplier(state)) continue;
       if (grantOmen(state, omen)) report.omensFound.push(omen);
       else report.omensLost++;
@@ -272,7 +274,6 @@ export function advance(input: GameState, ms: number, opts: AdvanceOptions = {})
     if (insight > 0) report.fragments.push(addInsight(state, insight, "page"));
     const notes = revealNotes(state, report.stepsDone);
     report.notesRevealed.push(...notes);
-    report.omensFound.push(...giveNoteGifts(state, notes));
     refillBoard(state, clock());
     }
 

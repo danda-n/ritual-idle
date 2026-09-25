@@ -7,7 +7,7 @@ import { HEARTH_RITE, PART_DEFS, QUALITIES, RITE_MS, type PartId } from "../cont
 import type { Side } from "../content/talents";
 import { SHOP } from "../content/shop";
 import type { SkillId } from "../content/skills";
-import { beginRite, buy, chooseStage, claimReward, declineRequest, fillRequest, placePart, setSetting, chooseTalent, type Result } from "./commands";
+import { beginRite, buy, chooseStage, claimReward, declineRequest, deliver, placePart, setSetting, chooseTalent, type Result } from "./commands";
 import { actionDurationMs, actionInputs } from "./modifiers";
 import { currentNote, isRecipeKnown, isSkillUnlocked, isStepMet, stageChoices, stageOrder, stepById, type Step } from "./progress";
 import { advance, blockReason, skillLevel, startAction } from "./simulate";
@@ -159,7 +159,7 @@ class Bot {
     }
     const req = REQUESTS[this.state.board[slot]!.request!];
     for (const [item, qty] of Object.entries(req.needs) as [ItemId, number][]) this.ensure(item, qty);
-    this.state = this.must(fillRequest(this.state, slot));
+    this.state = this.must(deliver(this.state, slot));
   }
 
   /** Do the current stage's steps in order, then its goal. Returns false when the next goal is the rite. */

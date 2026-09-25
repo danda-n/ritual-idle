@@ -16,14 +16,14 @@ import { DrainBar } from "./Bar";
 const OMEN_IDS = Object.keys(OMENS) as OmenId[];
 
 /**
- * Shown once the first omen has appeared: jars for what's stored, one Release button (a skill
- * blessing asks which skill, in a dialog), and what's active, each with a draining bar.
+ * Shown once the omen shelf is built (a house project): jars for what's stored, one "Bless a
+ * skill" button (it asks which skill, in a dialog), and what's active, each with a draining bar.
  */
 export function OmenShelf({ state, act }: { state: GameState; act: (c: (s: GameState) => Result) => unknown }) {
   const [choosing, setChoosing] = useState<OmenId | null>(null);
   const buffs = activeBuffs(state);
-  if (state.stats.omensSeen === 0 && buffs.length === 0 && storedOmens(state) === 0) return null;
   const capacity = omenCapacity(state);
+  if (capacity === 0 && buffs.length === 0) return null;
   const stored = storedOmens(state);
   const running = state.active ? ACTION_DEFS[state.active.id].skill : undefined;
   return (
@@ -50,7 +50,7 @@ export function OmenShelf({ state, act }: { state: GameState; act: (c: (s: GameS
             </span>
           </div>
           <button className="btn btn-primary" onClick={() => (BUFF_DEFS[OMENS[id].buff].blessSkill ? setChoosing(id) : act((s) => releaseOmen(s, id)))}>
-            Release
+            {BUFF_DEFS[OMENS[id].buff].blessSkill ? "Bless a skill" : "Use it"}
           </button>
         </div>
       ))}
@@ -58,7 +58,7 @@ export function OmenShelf({ state, act }: { state: GameState; act: (c: (s: GameS
       {choosing && (
         <SkillPicker
           state={state}
-          title={`Release ${OMENS[choosing].name}: bless which work?`}
+          title={`Bless a skill with ${OMENS[choosing].name}`}
           effect={`${buffEffects(OMENS[choosing].buff).join(", ")} · ${buffDuration(OMENS[choosing].buff)}`}
           suggest={running}
           suggestLabel="working on it now"

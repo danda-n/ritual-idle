@@ -146,7 +146,7 @@ export function lookupItem(state: GameState, item: ItemId): ItemLookup {
   return {
     madeBy: ACTION_IDS.filter((id) => visible(id) && ACTION_DEFS[id].outputs.some((o) => o.item === item)),
     usedBy: ACTION_IDS.filter((id) => visible(id) && item in ACTION_DEFS[id].inputs),
-    sold: Object.values(SHOP).some((e) => e.kind === "item" && e.item === item),
+    sold: Object.values(SHOP).some((e) => e.item === item),
     inKindling: PART_IDS.filter((p) => !state.kindling.includes(p)).reduce((n, p) => n + (PART_DEFS[p].items[item] ?? 0), 0),
     wantedBy: Object.values(REQUESTS).filter((r) => item in r.needs && r.minTrust <= state.trust).map((r) => r.from),
     inRecipes: (Object.keys(GRIMOIRE_DEFS) as (keyof typeof GRIMOIRE_DEFS)[])

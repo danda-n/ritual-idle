@@ -61,7 +61,15 @@ export function Grimoire({ state, act, onAttuned }: { state: GameState; act: Act
           <ul>
             {silhouettes.map((id) => {
               const k = recipeKnowledge(state, id);
-              return item({ kind: "recipe", id }, GRIMOIRE_DEFS[id].name, <span className="muted num">{k.belongs.length}/{k.size} known</span>);
+              // What it gives, up front: a reason to chase it before you've put in any work.
+              return item(
+                { kind: "recipe", id },
+                GRIMOIRE_DEFS[id].name,
+                <>
+                  <span className="index-gives">Gives: {GRIMOIRE_DEFS[id].rewardText}</span>
+                  <span className="muted num">{k.belongs.length}/{k.size} known</span>
+                </>,
+              );
             })}
           </ul>
         )}

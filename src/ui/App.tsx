@@ -3,7 +3,7 @@ import { ACTION_DEFS } from "../content/actions";
 import type { SkillId } from "../content/skills";
 import { dismissEnding, setSetting } from "../engine/commands";
 import type { ItemId } from "../content/items";
-import { isFeatureOpen } from "../engine/progress";
+import { isFeatureOpen, isSkillUnlocked } from "../engine/progress";
 import { BookIcon, CircleRiteIcon, HouseIcon, LanternIcon } from "./art/icons";
 import { EmbroideryBand } from "./art/ornaments";
 import { Sanctum } from "./art/Sanctum";
@@ -15,6 +15,7 @@ import { Inventory } from "./components/Inventory";
 import { ChapterTracker } from "./components/ChapterTracker";
 import { TaskCard } from "./components/TaskCard";
 import { OmenShelf } from "./components/OmenShelf";
+import { Projects } from "./components/Projects";
 import { ChipContext } from "./chipContext";
 import { ItemLookupModal } from "./components/ItemLookup";
 import { SettingsModal } from "./components/SettingsModal";
@@ -82,6 +83,7 @@ export function App() {
               <Sanctum state={state} />
               <SkillNav state={state} skill={skill} onSelect={setSkill} />
               <SkillActions state={state} skill={skill} onStart={game.start} act={game.act} />
+              {isSkillUnlocked(state, "chandlery") && <Projects state={state} act={game.act} />}
             </div>
           )}
         </div>

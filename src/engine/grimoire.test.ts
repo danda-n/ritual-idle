@@ -4,7 +4,7 @@ import { ITEMS, type ItemId } from "../content/items";
 import { NOTES } from "../content/notes";
 import { PAGES } from "../content/pages";
 import { REQUESTS } from "../content/requests";
-import { attune, buyHint, experiment, fillRequest, setSetting, type Result, type Success } from "./commands";
+import { attune, buyHint, experiment, deliver, setSetting, type Result, type Success } from "./commands";
 import { addInsight, deduce, hintCost, isDiscovered, isSilhouetteVisible, progressOf } from "./grimoire";
 import { actionDurationMs, offlineBonus, requestCoin, riteQualitySteps, trustMultiplier } from "./modifiers";
 import { catchUp } from "./offline";
@@ -113,9 +113,9 @@ describe("insight sources", () => {
   });
 
   it("requests that mention a recipe carry a fragment and an aside", () => {
-    const s = open({ trust: 0, inventory: { nettle: 10 } });
-    s.board = [{ request: "hana_soup", refillAt: 0 }];
-    const r = okay(fillRequest(s, 0));
+    const s = open({ trust: 0, inventory: { ...REQUESTS.hana_soup.needs } });
+    s.board = [{ request: "hana_soup", refillAt: 0, delivered: {} }];
+    const r = okay(deliver(s, 0));
     expect(r.aside).toBe(REQUESTS.hana_soup.mentions.aside);
     expect(r.state.insight).toBe(INSIGHT_GAIN.request);
   });
@@ -209,16 +209,16 @@ describe("rewards", () => {
   });
 
   it("Threshold nail multiplies trust gains", () => {
-    const s = discover(open({ inventory: { nettle: 10 } }), "threshold_nail");
+    const s = discover(open({ inventory: { ...REQUESTS.hana_soup.needs } }), "threshold_nail");
     expect(trustMultiplier(s)).toBe(1.5);
-    s.board = [{ request: "hana_soup", refillAt: 0 }];
-    expect(okay(fillRequest(s, 0)).state.trust).toBe(1.5);
+    s.board = [{ request: "hana_soup", refillAt: 0, delivered: {} }];
+    expect(okay(deliver(s, 0)).state.trust).toBe(1.5);
   });
 
   it("Hana's soup doubles Hana's pay only", () => {
     const s = discover(open(), "hanas_soup");
-    expect(requestCoin(s, REQUESTS.hana_soup)).toBe(12);
-    expect(requestCoin(s, REQUESTS.millers_cough)).toBe(12);
+    expect(requestCoin(s, REQUESTS.hana_soup)).toBe(REQUESTS.hana_soup.coin * 2);
+    expect(requestCoin(s, REQUESTS.millers_cough)).toBe(REQUESTS.millers_cough.coin);
   });
 });
 
