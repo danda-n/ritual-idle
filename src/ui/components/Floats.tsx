@@ -13,11 +13,15 @@ interface Float {
 
 const LIFETIME_MS = 1100;
 const MAX_FLOATS = 8;
+/** Floats from the same spot queue up this far apart, so they rise one after another. */
+const GAP_MS = 220;
 
 /** Renders floating feedback labels above everything, positioned at their anchor element. */
 export function Floats() {
   const [floats, setFloats] = useState<Float[]>([]);
   const next = useRef(0);
+  /** When each anchor may next show a float (a little queue per spot). */
+  const nextAt = useRef(new Map<Element, number>());
 
   useEffect(
     () =>
@@ -27,11 +31,16 @@ export function Floats() {
         if (!el) return;
         const r = el.getBoundingClientRect();
         if (r.width === 0 && r.height === 0) return;
-        // A little sideways jitter so repeated floats don't stack exactly.
         const down = r.top < 90;
-        const f: Float = { id: next.current++, text: e.text, tone: e.tone, x: r.left + r.width / 2 + (Math.random() - 0.5) * 24, y: down ? r.bottom : r.top, down };
-        setFloats((fs) => [...fs.slice(-(MAX_FLOATS - 1)), f]);
-        setTimeout(() => setFloats((fs) => fs.filter((x) => x.id !== f.id)), LIFETIME_MS);
+        const f: Float = { id: next.current++, text: e.text, tone: e.tone, x: r.left + r.width / 2, y: down ? r.bottom : r.top, down };
+        // Queue behind whatever this spot showed last, like a parrot: one after another.
+        const now = performance.now();
+        const at = Math.max(now, nextAt.current.get(el) ?? 0);
+        nextAt.current.set(el, at + GAP_MS);
+        setTimeout(() => {
+          setFloats((fs) => [...fs.slice(-(MAX_FLOATS - 1)), f]);
+          setTimeout(() => setFloats((fs) => fs.filter((x) => x.id !== f.id)), LIFETIME_MS);
+        }, at - now);
       }),
     [],
   );

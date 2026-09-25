@@ -21,7 +21,8 @@ export function TaskCard({ note, state, onClose, onGo }: { note: Note; state: Ga
   const go: Place | null = current ? stepPlace(current, state) : experiments ? { tab: "circle" } : goal ? taskPlace(goal) : null;
 
   return (
-    <Modal title={title} onClose={onClose}>
+    // A stray click outside shouldn't throw the card away: close with its button or Escape.
+    <Modal title={title} onClose={onClose} dismissOnBackdrop={false}>
       {unlocks.length > 0 && (
         <ul className="effects">
           {unlocks.map((u) => (

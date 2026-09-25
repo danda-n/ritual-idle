@@ -126,9 +126,11 @@ body {
 .skill-header[data-skill] svg { color: var(--skill); }
 .skill-header[data-skill] h2 { color: var(--skill); }
 
-.action-row { transition: transform var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out); }
+.action-row { transition: border-color var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out); }
 .action-row[data-skill]:not(.locked):not(.unknown) { border-left: 3px solid color-mix(in srgb, var(--skill) 70%, transparent); }
-.action-row:not(.locked):not(.unknown):hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgb(0 0 0 / 0.35); }
+/* Hover never moves or resizes a row: only its border and tint change. The whole row starts it. */
+.action-row.can-start { cursor: pointer; }
+.action-row.can-start:hover { border-color: color-mix(in srgb, var(--skill, var(--color-accent)) 70%, transparent); background-color: color-mix(in srgb, var(--skill, var(--color-accent)) 5%, var(--color-surface)); }
 .action-row.running[data-skill] {
   border-color: var(--skill);
   box-shadow: 0 0 0 1px var(--skill), 0 0 22px color-mix(in srgb, var(--skill) 22%, transparent);
@@ -181,7 +183,7 @@ input[type="checkbox"] { accent-color: var(--color-accent); width: 16px; height:
 /* Enough: solid border and a quiet count. Short: dashed border and a warning pill. */
 .chip.item-chip.enough { border-style: solid; }
 .chip.item-chip.short { border-style: dashed; border-color: color-mix(in srgb, var(--skill, var(--bone-500)) 65%, transparent); cursor: pointer; }
-.chip.item-chip .count { margin-left: 2px; padding: 0 5px; border-radius: 999px; font-size: 11px; line-height: 16px; }
+.chip.item-chip .count { margin-left: 2px; padding: 0 5px; border-radius: 999px; font-size: 12px; line-height: 16px; }
 .chip.item-chip .count-quiet { color: var(--color-muted); }
 .chip.item-chip .count-short { background: #6a2a1d; color: #ffe1d8; }
 .chip.item-chip .chip-chance { color: var(--color-muted); }
@@ -294,7 +296,7 @@ input[type="checkbox"] { accent-color: var(--color-accent); width: 16px; height:
 }
 .action-row.fresh { position: relative; animation: fresh-row 2.4s var(--ease-out); }
 @keyframes fresh-row { 0%, 40% { box-shadow: 0 0 0 1px var(--skill, var(--folk-candle)), 0 0 26px color-mix(in srgb, var(--skill, var(--folk-candle)) 40%, transparent); } 100% { box-shadow: none; } }
-.new-badge { position: absolute; top: -8px; right: 12px; font-family: var(--font-display); font-size: 11px; letter-spacing: 0.06em; color: var(--ink-950); background: var(--skill, var(--folk-candle)); border-radius: 999px; padding: 0 8px; animation: pop 500ms var(--ease-out); }
+.new-badge { position: absolute; top: -8px; right: 12px; font-family: var(--font-display); font-size: 12px; letter-spacing: 0.06em; color: var(--ink-950); background: var(--skill, var(--folk-candle)); border-radius: 999px; padding: 0 8px; animation: pop 500ms var(--ease-out); }
 .request-card.helped { position: relative; }
 .helped-stamp { font-family: var(--font-title); font-size: var(--text-xl); color: var(--folk-moss); transform: rotate(-8deg); border: 2px solid var(--folk-moss); border-radius: var(--radius-md); padding: 2px 12px; align-self: center; animation: stamp 500ms var(--ease-out); }
 @keyframes stamp { 0% { opacity: 0; transform: rotate(-8deg) scale(1.6); } 60% { opacity: 1; transform: rotate(-8deg) scale(0.95); } 100% { transform: rotate(-8deg) scale(1); } }
@@ -304,7 +306,7 @@ input[type="checkbox"] { accent-color: var(--color-accent); width: 16px; height:
 @keyframes tick { 0% { transform: scale(0) rotate(-30deg); } 60% { transform: scale(1.5) rotate(0); } 100% { transform: scale(1); } }
 .action-row.fresh { position: relative; animation: fresh-row 2.4s var(--ease-out); }
 @keyframes fresh-row { 0%, 40% { box-shadow: 0 0 0 1px var(--skill, var(--folk-candle)), 0 0 26px color-mix(in srgb, var(--skill, var(--folk-candle)) 40%, transparent); } 100% { box-shadow: none; } }
-.new-badge { position: absolute; top: -8px; right: 12px; font-family: var(--font-display); font-size: 11px; letter-spacing: 0.06em; color: var(--ink-950); background: var(--skill, var(--folk-candle)); border-radius: 999px; padding: 0 8px; animation: pop 500ms var(--ease-out); }
+.new-badge { position: absolute; top: -8px; right: 12px; font-family: var(--font-display); font-size: 12px; letter-spacing: 0.06em; color: var(--ink-950); background: var(--skill, var(--folk-candle)); border-radius: 999px; padding: 0 8px; animation: pop 500ms var(--ease-out); }
 .request-card.helped { position: relative; }
 .helped-stamp { font-family: var(--font-title); font-size: var(--text-xl); color: var(--folk-moss); transform: rotate(-8deg); border: 2px solid var(--folk-moss); border-radius: var(--radius-md); padding: 2px 12px; align-self: center; animation: stamp 500ms var(--ease-out); }
 @keyframes stamp { 0% { opacity: 0; transform: rotate(-8deg) scale(1.6); } 60% { opacity: 1; transform: rotate(-8deg) scale(0.95); } 100% { transform: rotate(-8deg) scale(1); } }

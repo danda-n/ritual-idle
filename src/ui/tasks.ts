@@ -8,6 +8,8 @@ import { ITEMS, type ItemId } from "../content/items";
 import { BUFFS } from "../content/buffs";
 import { OMENS, type OmenId } from "../content/omens";
 import { formatDuration } from "./format";
+import { producerAction } from "../engine/estimates";
+import { blockReason } from "../engine/simulate";
 import type { GameState } from "../engine/state";
 
 // Chapter steps, derived from grandmother's notes: each note with a goal is one step.
@@ -82,12 +84,18 @@ export function partState(state: GameState, part: PartId): "placed" | "open" | "
   return at >= 0 && at < state.notesRevealed ? "open" : "later";
 }
 
-/** Where a step is done, for its Go button. */
+/**
+ * Where a step is done, for its Go button. For a craft you can't start yet for lack of an
+ * ingredient, that's where the ingredient is made.
+ */
 export function stepPlace(step: Step, state: GameState): Place {
   const g = step.goal;
   switch (g.kind) {
-    case "complete":
-      return { tab: "house", skill: ACTION_DEFS[g.action].skill };
+    case "complete": {
+      const short = (Object.entries(ACTION_DEFS[g.action].inputs) as [ItemId, number][]).find(([item, qty]) => (state.inventory[item] ?? 0) < qty);
+      const maker = short ? producerAction(state, short[0], (id) => blockReason(state, id) === null) : null;
+      return { tab: "house", skill: maker ? ACTION_DEFS[maker].skill : ACTION_DEFS[g.action].skill };
+    }
     case "level":
       return { tab: "house", skill: g.skill };
     case "tended":

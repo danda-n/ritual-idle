@@ -15,7 +15,8 @@
 .brand-title { font-family: var(--font-title); font-size: var(--text-2xl); font-weight: 400; color: var(--color-accent); letter-spacing: 0.03em; }
 .working { display: flex; align-items: center; gap: var(--space-3); flex: 1; min-width: 0; color: var(--color-text); }
 .working svg { color: var(--color-accent); flex-shrink: 0; }
-.working-name { font-family: var(--font-display); white-space: nowrap; }
+.working-name { font-family: var(--font-display); white-space: nowrap; width: 15em; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
+.working.idle .working-name { width: auto; }
 .working .bar { flex: 1; max-width: 360px; }
 .working-time { width: 4ch; text-align: right; }
 .band { color: var(--color-danger); opacity: 0.7; display: block; }

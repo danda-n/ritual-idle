@@ -128,7 +128,12 @@ function ActionRow({ id, state, onStart, fresh, onTend }: { id: ActionId; state:
   const inputs = Object.entries(def.inputs) as [ItemId, number][];
 
   return (
-    <div data-skill={def.skill} className={`action-row ${locked ? "locked" : ""} ${running ? "running" : ""} ${fresh ? "fresh" : ""}`}>
+    <div
+      data-skill={def.skill}
+      className={`action-row ${locked ? "locked" : ""} ${running ? "running" : ""} ${fresh ? "fresh" : ""} ${!running && blocked === null ? "can-start" : ""}`}
+      // The whole row starts it (the Start button is there for the keyboard; chips have their own menus).
+      onClick={() => !running && blocked === null && onStart()}
+    >
       {fresh && <span className="new-badge">New</span>}
       <div className="action-name">
         <strong>{def.name}</strong>
@@ -168,7 +173,15 @@ function ActionRow({ id, state, onStart, fresh, onTend }: { id: ActionId; state:
             <TendControl state={state} onTend={onTend} compact />
           </>
         ) : (
-          <button className="btn btn-primary" onClick={onStart} disabled={blocked !== null} title={blocked ? formatStop(blocked) : undefined}>
+          <button
+            className="btn btn-primary"
+            onClick={(e) => {
+              e.stopPropagation();
+              onStart();
+            }}
+            disabled={blocked !== null}
+            title={blocked ? formatStop(blocked) : undefined}
+          >
             {startLabel(state, id, blocked)}
           </button>
         )}

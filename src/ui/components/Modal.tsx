@@ -9,7 +9,7 @@ const open: object[] = [];
  * pass a fresh function on every render (the game re-renders 10 times a second), and
  * re-running the setup would steal focus back, closing any open dropdown.
  */
-export function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
+export function Modal({ title, onClose, children, dismissOnBackdrop = true }: { title: string; onClose: () => void; children: ReactNode; dismissOnBackdrop?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const close = useRef(onClose);
   close.current = onClose;
@@ -30,7 +30,7 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
 
   const id = useId();
   return (
-    <div className="modal-backdrop" onClick={(e) => e.target === e.currentTarget && close.current()}>
+    <div className="modal-backdrop" onClick={(e) => dismissOnBackdrop && e.target === e.currentTarget && close.current()}>
       <div className="modal" role="dialog" aria-modal="true" aria-labelledby={id} ref={ref}>
         <h2 id={id}>{title}</h2>
         {children}

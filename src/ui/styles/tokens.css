@@ -48,12 +48,13 @@
   --font-title: "IM Fell English SC", "Alegreya SC", Georgia, serif;
   --font-display: "Alegreya SC", Georgia, serif;
   --font-body: "Alegreya", Georgia, "Iowan Old Style", serif;
-  --text-xs: 13px;
-  --text-sm: 14px;
-  --text-md: 16px;
-  --text-lg: 18px;
-  --text-xl: 22px;
-  --text-2xl: 28px;
+  /* One step up after the playtest ("I lean in to read"). */
+  --text-xs: 14px;
+  --text-sm: 15px;
+  --text-md: 17px;
+  --text-lg: 19px;
+  --text-xl: 23px;
+  --text-2xl: 29px;
   --leading-tight: 1.25;
   --leading-body: 1.5;
 

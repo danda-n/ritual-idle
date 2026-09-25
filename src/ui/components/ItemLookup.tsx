@@ -55,7 +55,16 @@ export function ItemChip({ item, qty, need, chance, plain }: { item: ItemId; qty
 
   if (plain) {
     return (
-      <button type="button" className="chip item-chip plain" data-skill={skill ?? undefined} onClick={() => lookup(item)} title={`Look up ${itemName(item)}`}>
+      <button
+        type="button"
+        className="chip item-chip plain"
+        data-skill={skill ?? undefined}
+        onClick={(e) => {
+          e.stopPropagation();
+          lookup(item);
+        }}
+        title={`Look up ${itemName(item)}`}
+      >
         {skill && <SkillIcon skill={skill} size={12} />}
         {itemName(item)}
       </button>
@@ -73,7 +82,12 @@ export function ItemChip({ item, qty, need, chance, plain }: { item: ItemId; qty
         data-skill={skill ?? undefined}
         aria-haspopup={short ? "menu" : undefined}
         aria-expanded={short ? menu : undefined}
-        onClick={() => (short ? setMenu((m) => !m) : lookup(item))}
+        onClick={(e) => {
+          // Chips live inside clickable rows: keep the click here.
+          e.stopPropagation();
+          if (short) setMenu((m) => !m);
+          else lookup(item);
+        }}
         title={short ? `Short of ${itemName(item)}: you have ${have}, need ${need}` : `Look up ${itemName(item)}`}
       >
         {skill && <SkillIcon skill={skill} size={12} />}
@@ -89,7 +103,8 @@ export function ItemChip({ item, qty, need, chance, plain }: { item: ItemId; qty
       {menu &&
         pos &&
         createPortal(
-        <span className="chip-menu" role="menu" ref={menuRef} style={{ top: pos.top, left: pos.left }}>
+        // A portal still bubbles clicks to the row in React: stop them here.
+        <span className="chip-menu" role="menu" ref={menuRef} style={{ top: pos.top, left: pos.left }} onClick={(e) => e.stopPropagation()}>
           <span className="chip-menu-title">
             Short {need! - have} {itemName(item).toLowerCase()}
           </span>
