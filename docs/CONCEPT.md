@@ -33,7 +33,7 @@ Every skill feeds the ritual circle. Followers take over the work you have maste
 | Endgame | New Game+ Patron cycles; the Moon and the Hunger at launch |
 | Art | Folk-art / woodcut style; placeholders until the loop is proven |
 | Tech | TypeScript web + Electron; local saves + Steam Cloud + export |
-| Currency | Village coin, earned only from villagers' requests. Buys basics (bread, tallow) and sanctum upgrades. No free-sell market |
+| Currency | Village coin, earned only from villagers' contracts. Buys basics (bread, tallow). House upgrades are built from items, not bought (fourth patch). No free-sell market |
 | Skill unlocks | Ch1: 6 skills · Ch2: +4 · Ch3: +3 (Taint arrives) · Ch4–5: depth only |
 
 ---
@@ -506,7 +506,7 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
   - Ch2: Gravetending, Alchemy, Binding-craft, Summoning.
   - Ch3: Astrology, Divination, Purification. Taint also arrives in Ch3.
   - Ch4–5 add depth, not skills.
-- **Village coin:** earned only through village requests (plus trust). It buys basic supplies and sanctum upgrades, including offline-cap upgrades. There's no "sell anything" market.
+- **Village coin:** earned only through village requests (plus trust). It buys basic supplies and sanctum upgrades, including offline-cap upgrades. There's no "sell anything" market. *(Fourth patch: upgrades became house projects built from items; coin buys only provisions.)*
 - **Onboarding** runs through grandmother's margin notes, which unlock the skills one by one over the first 20–30 minutes.
 
 ### Grimoire hint model (decided)
@@ -560,7 +560,7 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
 - **Within a skill,** only what you've reached plus the next recipe shows. A recipe stays hidden while one of its ingredients comes from a skill that isn't open yet.
 - **Experiments come mid-chapter,** introduced by their own note when the first hint arrives. They're optional, with the Dream pillow as the stated goal.
 - **Levels speed up their skill:** +1% per level, compounding.
-- **Talents:**
+- **Talents** *(replaced by pick-one-of-two builds in the fourth patch)*:
   - 1 point every 3 levels.
   - Three shared branches (Swift / Plenty / Fortune, 3 ranks each) and a skill-specific keystone after 3 points in one branch.
   - Resetting is free.
@@ -568,7 +568,7 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
 - **Old saves:** skills and places an older save had opened stay open (`kept` in the save). The chapter resumes at the first part not yet placed, and a finished chapter counts every part as placed.
 
 ### Second patch: hands-on start, a useful omen, task-first notes
-- **Changes a logged decision** (Q8: "active play = decisions only"). Active play is now decisions **plus optional tending**:
+- **Changes a logged decision** (Q8: "active play = decisions only"). Active play is now decisions **plus optional tending** *(Tend was removed in the fourth patch, which restores Q8)*:
   - Clicking **Tend** lights a draining meter: +50% speed while lit, and a streak that grows a bonus-find chance (up to 20%).
   - A fourth talent branch, **Tending**, improves it.
   - It's never required. The pacing test plays idle, so the chapter is ~90 minutes without it.
@@ -586,10 +586,28 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
 - **The chapter is shorter:** the rite begins at ~22 minutes (efficient idle play), and the chapter is ~27–35 minutes. This follows from the no-grind rule and was chosen over bigger parts. Chapter II carries more length.
 - **Step rewards are claimed and varied:** a Surge (×2 speed for 20s), XP into a skill you pick, items, an omen. Claiming never gates progress.
 - **Omens are a rhythm, not a rarity:** about every 4–5 minutes, ×2 speed and ×2 chance finds on a chosen skill for 2 minutes. The shelf holds 2 (3 with the upgrade).
-- **The keystone blooms free** when a branch is full. Talents are drawn as a folk tree of life.
+- **The keystone blooms free** when a branch is full. Talents are drawn as a folk tree of life. *(Replaced by talent pairs, drawn as a vine, in the fourth patch.)*
 - **Insight is spent, not accumulated:** one pool, no toasts. You buy a recipe's categories, an ingredient's name, or a secret's clue, so secrets are findable.
-- **The rite is played, not waited for.** It replaces the 30-minute rite (which asked players to leave) with 5 phases of a minute, each with a 12-second moment to answer. Quality comes from moments answered, the Hearth mark and an omen. It still never fails, and still finishes offline.
+- **The rite is played, not waited for** *(replaced in the fourth patch: the rite runs by itself, with optional offerings)*. It replaces the 30-minute rite (which asked players to leave) with 5 phases of a minute, each with a 12-second moment to answer. Quality comes from moments answered, the Hearth mark and an omen. It still never fails, and still finishes offline.
 - **Fixed:**
   - Tend no longer finishes a repetition at once (progress is a fraction now).
   - Escape closes only the top dialog.
   - Smoke the rooms states its effect.
+
+### Fourth patch: calm, choices, builds and side projects
+- **Tend is removed** (the meter, the Space key, the Tending talent branch and the "Tend once" step). Active play is choices, not clicking. This **restores Q8** ("active play only helps through decisions"), which the second patch had changed.
+- **The Major Rite runs by itself.** Five phases of 36 seconds (about 3 minutes), no moments to answer, and it carries on offline. It needs Ritualism 3.
+  - **Quality comes only from optional offerings** chosen before beginning: a hearth candle (an item, used when the rite begins), the Hearth mark (a discovered hidden recipe) and an active Still Night blessing. None = Sound, 1–2 = Fine, all 3 = Resplendent.
+  - **Quality is cosmetic:** it changes only the lore and a keepsake, never the rewards. It still never fails.
+- **Free order of the middle parts.** After the Light, the player chooses the order of the Ward, the Smoke and the Words; the Offering stays last. Each middle skill gathers for itself (Sigilcraft sweeps its ash, Scholarship searches the attic, Herbalism binds smudge and makes mugwort incense), so every order works without grinding. The playthrough bot plays all six orders.
+- **Honest steps:** steps count from the stage's start, a craft step is also met by holding enough, step counts match each part's needs, and there's at most one reward per stage (on placing its part, plus the Start Surge).
+- **Recipes come in tiers, a new tier every 3 levels** (Tier 1 at level 1, then 3, 6, 9, 12, 15, 18), shown on each row. The XP curve is flatter to match: 110 × 1.1^(level − 1), with no easing. The rite begins at about 30–32 minutes for an efficient idle player.
+- **Talents are builds:** at levels 3, 6, 9 and 12 each skill offers a pair, and you take one side. The sides pull different ways (speed, bulk, thrift, finds, doubles, insight, help for another skill…). Switching and resetting are free. Old branch ranks are dropped on load. Drawn as a vine.
+- **Side projects:**
+  - **House upgrades are projects built from items**, with no coin: the omen shelf, reading lamp, drying rack, mended shutters and carved omen shelf. They give the deeper recipes and the attic's odds and ends a use. Nothing on the main path needs them.
+  - **Omens need the omen shelf.** None turn up until it's built; building it brings the first Still Night. "Bless a skill" replaces "Release". Steps no longer give omens (the Light and the Words each gave a Still Night before).
+  - **The village board holds 2 bigger contracts** that can be **delivered in parts** (what's delivered stays delivered). The Offering stage asks you to finish one. The shop sells only bread and tallow.
+- **Calm feedback:** routine events (steps done, plain level-ups, omens, claims, talent picks, partial deliveries) go to an **activity feed**, one quiet line under the top bar (click it for the last 30). **Toasts are kept for big moments:** a part placed, a project built, a contract done, a new tier or talent at a level-up, a new recipe from a page, rare finds, curios, the rite beginning. The inventory moved to its own **Stores** tab.
+- **Calm UI:** loot floats queue and stack instead of overlapping; rows never change size on hover and a click anywhere on a row starts it; task cards close only with their button or Escape; Go leads to where the missing ingredient is made; text is one step larger.
+- **Item icons:** every item has its own code-drawn woodcut glyph, coloured by the skill that makes it, on chips, Stores, contracts, projects and the Circle.
+- **Old saves** (save version 8): Tend and in-progress rite moments are dropped; anyone who had met an omen keeps an omen shelf, the old bought shelf becomes the carved shelf, and the board trims to 2.

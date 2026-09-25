@@ -8,7 +8,7 @@ import type { NoteDef } from "./types";
 // The first note is shown at the start of a new game; each goal reveals the next note.
 export const NOTES = [
   {
-    text: "The house is cold, child. Under the floor is my circle. It sleeps, and it will want waking: light, a ward, smoke, words and an offering, in that order. Start in the pantry.",
+    text: "The house is cold, child. Under the floor is my circle. It sleeps, and it will want waking: light first, then a ward, smoke and words in whatever order you like, and an offering last. Start in the pantry.",
     quote: "The house is cold, child. Start in the pantry.",
     hint: "Search the pantry (Scavenging) for tallow.",
     unlocks: ["scavenging"],

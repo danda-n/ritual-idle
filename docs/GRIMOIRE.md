@@ -103,7 +103,7 @@ The Grimoire keeps the notes, so the player doesn't have to.
 | A deciphered page past the sixth | +2 |
 | A curio story (attic, chest) | +3 |
 | A village request that mentions a recipe (the aside is a free hint too: *"your grandmother made me a pillow once…"*) | +2 |
-| Marginalia (the Scholarship keystone) | +1 per page |
+| Marginalia (a Scholarship talent at level 6; *Footnotes* at 12 gives +2) | +1 per page |
 | Divination vision (Chapter 3+) | Reveals one item's right/wrong status directly |
 
 - **The effect:** a puzzle fan solves it from the riddle with a few tries, which also earns insight. A player who dislikes puzzles buys names. Nobody gets stuck.
@@ -120,7 +120,7 @@ The Grimoire keeps the notes, so the player doesn't have to.
 | 1 Hearth | 3-ingredient recipes, count feedback, auto-deduction. Teaches the model |
 | 2 Grave | Some 4-ingredient recipes. Gravetending curios carry more fragments. The dead can be *asked* (Summoning) for a hint |
 | 3 Fern | **Divination:** spend a *vision* for per-item feedback on one attempt. **Forbidden pages** become readable, with Taint-gated recipes |
-| 4 Drowned | Recipes that need an **omen as an ingredient** (a released omen fills a slot) |
+| 4 Drowned | Recipes that need an **omen as an ingredient** (an omen from the shelf fills a slot) |
 | 5 Starlit | A few capstone secrets that combine discoveries from every chapter |
 | Patron cycles | Patron-only silhouettes appear (the Veil expansion leans into this). Everything already found stays found |
 
@@ -248,7 +248,7 @@ Save state per recipe: `{ discovered, insight, attempts: [{ items, glows }], pro
 Every screen answers "what is this for, and what do I do next?". Gameplay, not lore. Logic is in `src/ui/guidance.ts` (tested).
 - **Grimoire:**
   - A three-step strip: *Collect insight → Buy a hint → Try it at the Circle* (third patch).
-  - Each recipe page leads with **Gives** (the reward, so the player knows why to bother).
+  - Each recipe page leads with **Gives** (the reward, so the player knows why to bother). *(Fourth patch)* The list of hidden recipes also shows what each one gives.
   - Then a **Next step** box that follows progress: "Try any 3 things at the Circle" → "2 of 3 known: find the last one" → "You know all 3: make it at the Circle". It has a button that attunes the Circle and goes there.
   - Then *Belongs* (proven, or named by a hint), *Crossed out*, and *Still possible* (things held that aren't ruled out).
   - The hints come last, with one line on where Insight comes from.

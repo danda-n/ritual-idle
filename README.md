@@ -21,26 +21,27 @@ Then open the URL it prints.
 
 From the cold house to the Kindling of the Hearth-Circle:
 - **The staged Kindling:** the chapter's rite is built in five parts, placed in the Circle one by one. Each stage's note from grandmother brings the one new skill it needs. Deciphered burnt pages teach extra recipes.
-- **Small steps** inside every stage, each with a small reward, shown task-first (grandmother gets one line).
-- **Tending:** click Tend (or press Space) for +50% speed while its meter burns, and a growing bonus-find streak. Optional.
-- **Steps sized to the level:** following the steps never needs grinding, and nothing made is wasted (the playthrough test checks both). Step rewards are claimed: Surges, XP where you choose, items, omens.
-- **Skill talents:** a folk tree of life per skill; a point every 3 levels, four branches (Tending / Swift / Plenty / Fortune), and a keystone that blooms free when a branch is full. Free reset. Each level also makes its skill 1% faster.
-- **Timed actions** with XP, level caps and rates. Each skill shows only what you've reached plus the next recipe. An item lookup on every item name; a pantry grouped by where things come from.
+- **Free order:** after the Light, you choose the order of the Ward, the Smoke and the Words; the Offering comes last.
+- **Small steps** inside every stage, counted from the stage's start, shown task-first (grandmother gets one line). One reward per stage, claimed: a Surge, XP where you choose, or items.
+- **Steps sized to the level:** following the steps never needs grinding, in any order, and nothing made is wasted (the playthrough test checks both).
+- **Skill talents as builds:** at levels 3, 6, 9 and 12 each skill offers a pair, and you take one side; switching and reset are free. Drawn as a vine. Each level also makes its skill 1% faster.
+- **Timed actions** with XP, level caps and rates, in tiers (a new tier every 3 levels). Each skill shows only what you've reached plus the next tier. Click anywhere on a row to start it. An item lookup on every item name, a woodcut icon for every item, and a Stores tab grouped by where things come from.
 - **The village:**
-  - a request board with trust
-  - a shop
-  - four sanctum upgrades
-- **The Still Night omen** every few minutes: ×2 on a skill you choose for 2 minutes. The omen shelf and timed buffs.
+  - two contracts at a time, delivered in parts, with trust
+  - a shop for bread and tallow
+- **House projects** built from items: the omen shelf, reading lamp, drying rack, mended shutters and carved omen shelf.
+- **The Still Night omen** every few minutes once the omen shelf is built: bless a skill you choose with ×2 for 2 minutes. Timed buffs.
 - **The Grimoire and circle:**
   - three hidden recipes, with hints you buy using insight
   - two secrets, with clues you buy
   - automatic deduction
-- **The Major Rite:** a 5-minute ceremony you play: five phases, each with a moment to answer. It never fails; how you perform sets the quality, and it finishes offline if you leave. Afterwards: Janko, the first follower, and the chapter-end screen.
-- **Offline progress** (24h, 36h with an upgrade) with a "while you were away" summary. A fallback when work stops.
+- **The Major Rite:** about 3 minutes in five phases, running by itself (offline too). It never fails; optional offerings (a hearth candle, the Hearth mark, Still Night) set its quality, which changes only lore and a keepsake. Afterwards: Janko, the first follower, and the chapter-end screen.
+- **Offline progress** (24h, 36h with the mended shutters) with a "while you were away" summary. A fallback when work stops.
 - **Saving:** autosave, immediate saves on every choice, save export/import, and upgrades for older saves.
 - **The living sanctum:** a code-drawn woodcut scene that changes as you progress.
+- **Calm feedback:** an activity feed under the top bar for routine events; toasts only for big moments.
 - **Settings:** fallback, Grimoire assist, reduced motion, message duration.
 
 Dev builds have a **Dev tools** panel at the bottom of the page (time skip, give items, +omen, next note, items for the next part, +5 levels, +5 insight) for playtesting.
 
-Design docs: [CONCEPT](docs/CONCEPT.md), [CHAPTER1](docs/CHAPTER1.md), [GRIMOIRE](docs/GRIMOIRE.md), [DESIGN](docs/DESIGN.md), [RESEARCH](docs/RESEARCH.md).
+Design docs: [CONCEPT](docs/CONCEPT.md), [CHAPTER1](docs/CHAPTER1.md), [GRIMOIRE](docs/GRIMOIRE.md), [DESIGN](docs/DESIGN.md), [PLAYTEST](docs/PLAYTEST.md), [RESEARCH](docs/RESEARCH.md).

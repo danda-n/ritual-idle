@@ -279,7 +279,7 @@ describe("Chapter 1 playthrough", () => {
 
   it("reaches the rite in 28–45 min of active play, in every order", () => {
     const minutes = runs.map((b) => Math.round(b.riteAt / MIN));
-    console.log(`Chapter 1 rite begins at: ${minutes.join(", ")} min (then the ~5-min rite)`);
+    console.log(`Chapter 1 rite begins at: ${minutes.join(", ")} min (then the ~3-min rite)`);
     const bot = runs[0]!;
     const names = stageOrder(bot.state).map((n, i) => ("goal" in n && n.goal.kind === "place" ? PART_DEFS[n.goal.part as PartId].name.replace("The ", "") : "goal" in n && n.goal.kind === "rite" ? "Perform" : i === 0 ? "Start" : "End"));
     console.log(`Stages (seed 1): ${bot.noteAt.slice(0, names.length).map((at, i) => `${names[i]} ${(at / MIN).toFixed(1)}`).join(" · ")} · rite ${(bot.riteAt / MIN).toFixed(1)} min`);
