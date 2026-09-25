@@ -8,6 +8,7 @@ import { BUFFS } from "../content/buffs";
 import { OMENS, type OmenId } from "../content/omens";
 import { formatDuration } from "./format";
 import { producerAction } from "../engine/estimates";
+import { actionInputs } from "../engine/modifiers";
 import { blockReason } from "../engine/simulate";
 import type { GameState } from "../engine/state";
 
@@ -95,7 +96,7 @@ export function stepPlace(step: Step, state: GameState): Place {
   const g = step.goal;
   switch (g.kind) {
     case "complete": {
-      const short = (Object.entries(ACTION_DEFS[g.action].inputs) as [ItemId, number][]).find(([item, qty]) => (state.inventory[item] ?? 0) < qty);
+      const short = (Object.entries(actionInputs(state, g.action)) as [ItemId, number][]).find(([item, qty]) => (state.inventory[item] ?? 0) < qty);
       const maker = short ? producerAction(state, short[0], (id) => blockReason(state, id) === null) : null;
       return { tab: "house", skill: maker ? ACTION_DEFS[maker].skill : ACTION_DEFS[g.action].skill };
     }

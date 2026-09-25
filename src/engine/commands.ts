@@ -9,8 +9,8 @@ import { applyBuff, giveNoteGifts, grantOmen } from "./omens";
 import { beginRite as startRite, canBeginRite } from "./rite";
 import { PART_DEFS, type OfferingId, type PartId } from "../content/rite";
 import type { SkillId } from "../content/skills";
-import type { BranchId } from "../content/talents";
-import { canSpend, talentsOf } from "./talents";
+import type { Side, TalentLevel } from "../content/talents";
+import { canChoose } from "./talents";
 import { BUFF_DEFS } from "../content/buffs";
 import { isSkillUnlocked } from "./progress";
 import { enterNextStage, grantXp, isFeatureOpen, middleParts, MIDDLE_AT, revealNotes, stageChoices, stepById, type Note, type Step } from "./progress";
@@ -259,19 +259,17 @@ export function claimReward(input: GameState, stepId: string, skill?: SkillId): 
 
 // Talents
 
-/** Spend a talent point on a branch rank. Filling a branch blooms the keystone for free. */
-export function spendTalent(input: GameState, skill: SkillId, branch: BranchId): Result {
+/** Take one side of a talent pair. Switching to the other side later is free. */
+export function chooseTalent(input: GameState, skill: SkillId, level: TalentLevel, side: Side): Result {
   if (!isSkillUnlocked(input, skill)) return no("That skill isn't open yet.");
-  const reason = canSpend(input, skill, branch);
+  const reason = canChoose(input, skill, level);
   if (reason) return no(reason);
   const state = structuredClone(input);
-  const t = structuredClone(talentsOf(state, skill));
-  t.ranks[branch] = (t.ranks[branch] ?? 0) + 1;
-  state.talents[skill] = t;
+  state.talents[skill] = { ...state.talents[skill], [level]: side };
   return ok(state);
 }
 
-/** Take back every talent point in a skill. Free, any time. */
+/** Clear every talent choice in a skill. Free, any time. */
 export function resetTalents(input: GameState, skill: SkillId): Result {
   const state = structuredClone(input);
   delete state.talents[skill];

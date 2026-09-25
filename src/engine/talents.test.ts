@@ -1,15 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { ACTION_DEFS } from "../content/actions";
+import { ACTION_DEFS, type ActionId } from "../content/actions";
 import { NOTES } from "../content/notes";
+import { OMENS } from "../content/omens";
 import { PAGES } from "../content/pages";
-import type { SkillId } from "../content/skills";
-import { BRANCHES, KEYSTONES } from "../content/talents";
-import { resetTalents, spendTalent, type Result } from "./commands";
-import { actionDurationMs, levelSpeed } from "./modifiers";
+import { SKILL_IDS, type SkillId } from "../content/skills";
+import { TALENT_LEVELS, TALENTS, type TalentLevel } from "../content/talents";
+import { chooseTalent, resetTalents, type Result } from "./commands";
+import { actionDurationMs, actionInputs, levelSpeed, omenChanceMultiplier, speedMultiplier, xpBonus } from "./modifiers";
 import { deserialize } from "./save";
-import { advance, startAction } from "./simulate";
+import { advance, blockReason, startAction } from "./simulate";
 import { newGame, type GameState, type Talents } from "./state";
-import { canSpend, keystoneEffect, keystoneOpen, pointsFree, talentPoints } from "./talents";
+import { choicesWaiting, takenTalents } from "./talents";
 import { xpForLevel } from "./xp";
 
 const T0 = 1_000_000;
@@ -22,168 +23,195 @@ const okay = (r: Result) => {
 function at(level: number, skill: SkillId = "herbalism", talents?: Talents): GameState {
   const b = newGame(T0, 31);
   const skills = Object.fromEntries(Object.keys(b.skills).map((k) => [k, { xp: xpForLevel(level) }])) as GameState["skills"];
-  return { ...b, notesRevealed: NOTES.length, stats: { ...b.stats, completed: { decipher_page: PAGES.length } }, skills, talents: talents ? { [skill]: talents } : {} };
+  return { ...b, levelCap: 20, notesRevealed: NOTES.length, stats: { ...b.stats, completed: { decipher_page: PAGES.length } }, skills, talents: talents ? { [skill]: talents } : {} };
 }
 
-/** Run an action for `reps` repetitions' worth of base time and count what it made. */
-function made(s: GameState, id: keyof typeof ACTION_DEFS, reps: number) {
-  return advance(startAction(s, id), reps * actionDurationMs(s, id)).state;
+/** A state with one talent taken, at level 12 so every pair is open. */
+function taking(skill: SkillId, level: TalentLevel, side: "a" | "b"): GameState {
+  return at(12, skill, { [level]: side });
 }
+
+/** Run an action for `reps` repetitions' worth of time. */
+function run(s: GameState, id: ActionId, reps: number) {
+  return advance(startAction(s, id), reps * actionDurationMs(s, id) + 1);
+}
+
+const BASE = (id: ActionId) => ACTION_DEFS[id].seconds * 1000;
 
 describe("level speed", () => {
   it("each level makes its skill 1% faster, compounding", () => {
     expect(levelSpeed(at(1), "herbalism")).toBe(1);
     expect(levelSpeed(at(11), "herbalism")).toBeCloseTo(1.01 ** 10);
-    expect(actionDurationMs(at(11), "pick_nettle")).toBeCloseTo((ACTION_DEFS.pick_nettle.seconds * 1000) / 1.01 ** 10);
   });
 
   it("only speeds up its own skill", () => {
     const s = { ...at(1), skills: { ...at(1).skills, herbalism: { xp: xpForLevel(20) } } };
-    expect(actionDurationMs(s, "pick_nettle")).toBeLessThan((ACTION_DEFS.pick_nettle.seconds * 1000));
-    expect(actionDurationMs(s, "sweep_hearth")).toBe(ACTION_DEFS.sweep_hearth.seconds * 1000);
+    expect(actionDurationMs(s, "pick_nettle")).toBeLessThan(BASE("pick_nettle"));
+    expect(actionDurationMs(s, "sweep_hearth")).toBe(BASE("sweep_hearth"));
   });
 });
 
-describe("points", () => {
-  it("arrive every 3 levels: 6 at the Chapter 1 cap", () => {
-    expect(talentPoints(at(1), "herbalism")).toBe(0);
-    expect(talentPoints(at(2), "herbalism")).toBe(0);
-    expect(talentPoints(at(3), "herbalism")).toBe(1);
-    expect(talentPoints(at(20), "herbalism")).toBe(6);
+describe("talent pairs", () => {
+  it("every skill has a pair at levels 3, 6, 9 and 12, each side with a name, words and an effect", () => {
+    for (const skill of SKILL_IDS)
+      for (const level of TALENT_LEVELS)
+        for (const t of [TALENTS[skill][level].a, TALENTS[skill][level].b]) {
+          expect(t.name.length, `${skill} ${level}`).toBeGreaterThan(0);
+          expect(t.text.length).toBeGreaterThan(0);
+          expect(t.effects.length).toBeGreaterThan(0);
+        }
   });
 
-  it("are spent a rank at a time, up to each branch's cap", () => {
-    let s = at(12); // 4 points
-    for (let i = 0; i < BRANCHES.swift.maxRank; i++) s = okay(spendTalent(s, "herbalism", "swift"));
-    expect(s.talents.herbalism?.ranks.swift).toBe(3);
-    expect(spendTalent(s, "herbalism", "swift").ok).toBe(false);
-    expect(pointsFree(s, "herbalism")).toBe(1);
+  it("open as the skill reaches each level", () => {
+    expect(choicesWaiting(at(2), "herbalism")).toEqual([]);
+    expect(choicesWaiting(at(3), "herbalism")).toEqual([3]);
+    expect(choicesWaiting(at(10), "herbalism")).toEqual([3, 6, 9]);
+    expect(chooseTalent(at(5), "herbalism", 6, "a").ok).toBe(false);
   });
 
-  it("refuse without a free point", () => {
-    const r = spendTalent(at(2), "herbalism", "swift");
-    expect(!r.ok && r.reason).toMatch(/No talent points/);
+  it("take one side only: choosing the other side switches, for free", () => {
+    let s = okay(chooseTalent(at(3), "herbalism", 3, "a"));
+    expect(takenTalents(s, "herbalism")).toEqual([TALENTS.herbalism[3].a]);
+    expect(choicesWaiting(s, "herbalism")).toEqual([]);
+    s = okay(chooseTalent(s, "herbalism", 3, "b"));
+    expect(takenTalents(s, "herbalism")).toEqual([TALENTS.herbalism[3].b]);
   });
 
   it("refuse in a skill that isn't open", () => {
-    expect(spendTalent({ ...at(9), notesRevealed: 1 }, "herbalism", "swift").ok).toBe(false);
+    expect(chooseTalent({ ...at(9), notesRevealed: 1 }, "herbalism", 3, "a").ok).toBe(false);
   });
 
-  it("bloom the keystone for free once one branch is full, not with 3 spread out", () => {
-    let spread = at(15); // 5 points
-    for (const b of ["swift", "plenty", "fortune"] as const) spread = okay(spendTalent(spread, "herbalism", b));
-    expect(keystoneOpen(spread, "herbalism")).toBe(false);
-
-    // The playtest case: level 9, all 3 points in Fortune.
-    let deep = at(9);
-    for (let i = 0; i < 3; i++) deep = okay(spendTalent(deep, "herbalism", "fortune"));
-    expect(keystoneOpen(deep, "herbalism")).toBe(true);
-    expect(keystoneEffect(deep, "herbalism")).toEqual(KEYSTONES.herbalism.effect);
-    expect(pointsFree(deep, "herbalism")).toBe(0);
-    expect(canSpend(deep, "herbalism", "fortune")).not.toBeNull();
-  });
-
-  it("reset for free, and every point comes back", () => {
-    let s = okay(spendTalent(okay(spendTalent(at(6), "herbalism", "swift")), "herbalism", "fortune"));
-    expect(pointsFree(s, "herbalism")).toBe(0);
+  it("reset for free: every choice is open again", () => {
+    let s = okay(chooseTalent(okay(chooseTalent(at(6), "herbalism", 3, "a")), "herbalism", 6, "b"));
     s = okay(resetTalents(s, "herbalism"));
-    expect(pointsFree(s, "herbalism")).toBe(2);
     expect(s.talents.herbalism).toBeUndefined();
-  });
-
-  it("follow the level cap: XP past the cap earns nothing", () => {
-    expect(talentPoints({ ...at(1), skills: { ...at(1).skills, herbalism: { xp: xpForLevel(40) } } }, "herbalism")).toBe(6);
+    expect(choicesWaiting(s, "herbalism")).toEqual([3, 6]);
   });
 });
 
-describe("branch effects", () => {
-  it("Swift adds 5% speed per rank", () => {
-    const s = at(1, "herbalism", { ranks: { swift: 2 } });
-    expect(actionDurationMs(s, "pick_nettle")).toBeCloseTo((ACTION_DEFS.pick_nettle.seconds * 1000) / 1.1);
+describe("talent effects", () => {
+  it("speed: +15% for the skill's own actions", () => {
+    expect(speedMultiplier(taking("herbalism", 3, "a"), "pick_nettle")).toBeCloseTo(1.15 * levelSpeed(at(12), "herbalism"));
   });
 
-  it("Plenty adds about 5% per rank to sure outputs", () => {
-    const plain = made(at(1), "pick_nettle", 4000).inventory.nettle!;
-    // 2 ranks (3 would also bloom the keystone)
-    const plenty = made(at(1, "herbalism", { ranks: { plenty: 2 } }), "pick_nettle", 4000).inventory.nettle!;
-    expect(plenty / plain).toBeGreaterThan(1.07);
-    expect(plenty / plain).toBeLessThan(1.13);
+  it("speed for another skill: Herb-wise speeds Chandlery, not Herbalism", () => {
+    const s = taking("herbalism", 9, "b");
+    expect(speedMultiplier(s, "tallow_candle")).toBeCloseTo(1.12 * levelSpeed(s, "chandlery"));
+    expect(speedMultiplier(s, "pick_nettle")).toBeCloseTo(levelSpeed(s, "herbalism"));
   });
 
-  it("Fortune crits double both output and XP, about 3% per rank", () => {
-    const s = at(1, "chandlery", { ranks: { fortune: 2 } });
-    s.levelCap = 99; // keep XP from capping during the run
-    const { state, report } = advance(startAction({ ...s, inventory: { tallow: 99_999 } }, "tallow_candle"), 4000 * 3000);
-    const rate = report.criticals / report.actionsCompleted;
-    expect(rate).toBeGreaterThan(0.045);
-    expect(rate).toBeLessThan(0.075);
-    expect(state.inventory.tallow_candle).toBe(report.actionsCompleted + report.criticals);
-    expect(report.xpGained.chandlery).toBe((report.actionsCompleted + report.criticals) * ACTION_DEFS.tallow_candle.xp);
+  it("xp for another skill: The rite's words raises Ritualism XP", () => {
+    const s = taking("scholarship", 9, "b");
+    expect(xpBonus(s, "bless_threshold")).toBeCloseTo(0.2);
+    expect(xpBonus(s, "decipher_page")).toBe(0);
   });
 
-  it("are deterministic for the same seed", () => {
-    const s = at(1, "herbalism", { ranks: { plenty: 2, fortune: 2 } });
-    expect(made(s, "pick_nettle", 500).inventory).toEqual(made(s, "pick_nettle", 500).inventory);
-  });
-});
-
-describe("keystones", () => {
-  const key = (_skill: SkillId): Talents => ({ ranks: { swift: 3 } });
-
-  it("every skill has one", () => {
-    for (const skill of Object.keys(newGame().skills) as SkillId[]) expect(KEYSTONES[skill].text.length).toBeGreaterThan(0);
+  it("bulk: two at a time with twice the XP, but slower", () => {
+    const s = { ...taking("chandlery", 6, "a"), inventory: { tallow: 20 } };
+    expect(actionDurationMs(s, "tallow_candle")).toBeCloseTo((BASE("tallow_candle") * 1.8) / speedMultiplier(s, "tallow_candle"));
+    const { state, report } = run(s, "tallow_candle", 3);
+    expect(report.actionsCompleted).toBe(3);
+    expect(state.inventory.tallow_candle).toBe(6);
+    expect(report.xpGained.chandlery).toBe(6 * ACTION_DEFS.tallow_candle.xp);
   });
 
-  it("Long-burning: about 10% of candles come in pairs", () => {
-    const s = { ...at(1, "chandlery", key("chandlery")), inventory: { tallow: 99_999 } };
-    const { state, report } = advance(startAction(s, "tallow_candle"), 3000 * 3000);
-    const extra = state.inventory.tallow_candle! / report.actionsCompleted - 1;
-    expect(extra).toBeGreaterThan(0.07);
-    expect(extra).toBeLessThan(0.13);
+  it("thrift: Thin wicks makes a tallow candle from 1 tallow", () => {
+    const s = { ...taking("chandlery", 3, "b"), inventory: { tallow: 1 } };
+    expect(actionInputs(s, "tallow_candle")).toEqual({ tallow: 1 });
+    expect(blockReason(s, "tallow_candle")).toBeNull();
+    expect(run(s, "tallow_candle", 1).state.inventory.tallow_candle).toBe(1);
   });
 
-  it("Keen eye: chance finds are 50% more likely", () => {
-    // Salt from the pantry is a chance find (50%).
-    const plain = made(at(1), "search_pantry", 4000).inventory.salt!;
-    const keen = made(at(1, "scavenging", key("scavenging")), "search_pantry", 4000).inventory.salt!;
-    expect(keen / plain).toBeGreaterThan(1.35);
-    expect(keen / plain).toBeLessThan(1.65);
+  it("thrift can drop an input entirely: Pure smoke needs no tallow", () => {
+    expect(actionInputs(taking("herbalism", 6, "b"), "mugwort_incense")).toEqual({ mugwort: 2 });
   });
 
-  it("Dew-picked: every 5th pick gives 1 extra", () => {
-    const s = at(1, "herbalism", key("herbalism"));
-    const { state, report } = advance(startAction(s, "pick_nettle"), 10 * actionDurationMs(s, "pick_nettle") + 1);
+  it("find: Deep shelves makes salt from the pantry 50% more likely", () => {
+    const plain = run(at(12), "search_pantry", 3000).state.inventory.salt!;
+    const deep = run(taking("scavenging", 3, "b"), "search_pantry", 3000).state.inventory.salt!;
+    expect(deep / plain).toBeGreaterThan(1.35);
+    expect(deep / plain).toBeLessThan(1.65);
+  });
+
+  it("find for one item: Well stocked makes pantry salt certain, and nothing else", () => {
+    const { state, report } = run(taking("scavenging", 12, "b"), "search_pantry", 50);
+    expect(state.inventory.salt).toBe(report.actionsCompleted);
+  });
+
+  it("double: about 10% of repetitions come doubled, XP too", () => {
+    const s = { ...taking("chandlery", 9, "a"), inventory: { tallow: 99_999 } };
+    const { state, report } = run(s, "tallow_candle", 3000);
+    const rate = report.doubled / report.actionsCompleted;
+    expect(rate).toBeGreaterThan(0.08);
+    expect(rate).toBeLessThan(0.12);
+    expect(state.inventory.tallow_candle).toBe(report.actionsCompleted + report.doubled);
+  });
+
+  it("extra: Green thumb gives an extra herb about 20% of the time", () => {
+    const { state, report } = run(taking("herbalism", 3, "b"), "pick_nettle", 3000);
+    const extra = state.inventory.nettle! / report.actionsCompleted - 1;
+    expect(extra).toBeGreaterThan(0.17);
+    expect(extra).toBeLessThan(0.23);
+  });
+
+  it("every nth: Dew-picked gives 1 extra every 5th pick", () => {
+    const { state, report } = run(taking("herbalism", 9, "a"), "pick_nettle", 10);
     expect(report.actionsCompleted).toBe(10);
     expect(state.inventory.nettle).toBe(12);
   });
 
-  it("Steady hand: about 15% of workings use no materials", () => {
-    const s = { ...at(1, "sigilcraft", key("sigilcraft")), inventory: { salt: 3000 } };
-    const { report } = advance(startAction(s, "salt_line"), 2000 * actionDurationMs(s, "salt_line"));
+  it("save: Steady hand uses no materials about 15% of the time", () => {
+    const s = { ...taking("sigilcraft", 9, "a"), inventory: { salt: 3000 } };
+    const { report } = run(s, "salt_line", 2000);
     const saved = 1 - report.itemsUsed.salt! / report.actionsCompleted;
     expect(saved).toBeGreaterThan(0.12);
     expect(saved).toBeLessThan(0.18);
   });
 
-  it("Marginalia: each page deciphered gives +1 insight", () => {
-    const s = { ...at(3, "scholarship", key("scholarship")), stats: { ...at(3).stats, completed: { decipher_page: 0 } }, inventory: { burnt_page: 2, tallow_candle: 2 } };
-    const { state } = advance(startAction(s, "decipher_page"), 2 * actionDurationMs(s, "decipher_page"));
-    expect(state.insight).toBe(2);
+  it("byproduct: Wick ash leaves ash from about a third of the candles", () => {
+    const s = { ...taking("chandlery", 6, "b"), inventory: { tallow: 99_999 } };
+    const { state, report } = run(s, "tallow_candle", 3000);
+    const rate = state.inventory.ash! / report.actionsCompleted;
+    expect(rate).toBeGreaterThan(0.29);
+    expect(rate).toBeLessThan(0.37);
   });
 
-  it("Devout: minor rites give 25% more XP", () => {
-    const s = { ...at(1, "ritualism", key("ritualism")), inventory: { salt_line: 1, tallow_candle: 1 } };
-    const { report } = advance(startAction(s, "bless_threshold"), actionDurationMs(s, "bless_threshold"));
-    expect(report.xpGained.ritualism).toBe(Math.round(ACTION_DEFS.bless_threshold.xp * 1.25));
+  it("insight: Marginalia gives +1 insight per page deciphered", () => {
+    const base = taking("scholarship", 6, "b");
+    const s = { ...base, stats: { ...base.stats, completed: { decipher_page: 0 } }, inventory: { burnt_page: 2, tallow_candle: 2 } };
+    expect(run(s, "decipher_page", 2).state.insight).toBe(2);
+  });
+
+  it("buff length: Long blessing makes the rooms' blessing last twice as long", () => {
+    const s = { ...taking("ritualism", 6, "a"), inventory: { smudge: 1, tallow_candle: 1 } };
+    const plain = { ...at(12), inventory: { smudge: 1, tallow_candle: 1 } };
+    const long = run(s, "smoke_rooms", 1).state.buffs.find((b) => b.id === "blessing")!;
+    const short = run(plain, "smoke_rooms", 1).state.buffs.find((b) => b.id === "blessing")!;
+    expect(long.endsAt - T0).toBeGreaterThan(1.9 * (short.endsAt - T0));
+  });
+
+  it("omen chance: Omen-sense doubles it, from any skill's work", () => {
+    expect(omenChanceMultiplier(taking("ritualism", 9, "a"))).toBe(2);
+    expect(OMENS.still_night.dropChance).toBeGreaterThan(0);
+  });
+
+  it("are deterministic for the same seed", () => {
+    const s = taking("herbalism", 3, "b");
+    expect(run(s, "pick_nettle", 500).state.inventory).toEqual(run(s, "pick_nettle", 500).state.inventory);
   });
 });
 
 describe("saves", () => {
   it("talents round-trip, and older saves start with none", () => {
-    const s = okay(spendTalent(at(6), "herbalism", "swift"));
+    const s = okay(chooseTalent(at(6), "herbalism", 6, "b"));
     expect(deserialize(JSON.stringify(s)).talents).toEqual(s.talents);
     const old = { ...newGame(T0, 1), version: 4 } as Partial<GameState>;
     delete old.talents;
     expect(deserialize(JSON.stringify(old)).talents).toEqual({});
+  });
+
+  it("drop anything that isn't a side at a talent level (the old branch ranks)", () => {
+    const old = { ...newGame(T0, 1), talents: { herbalism: { ranks: { swift: 2 } }, chandlery: { 3: "a", 4: "b", 6: "x" } } };
+    expect(deserialize(JSON.stringify(old)).talents).toEqual({ chandlery: { 3: "a" } });
   });
 });

@@ -4,7 +4,8 @@ import { ITEMS } from "../content/items";
 import { NOTES } from "../content/notes";
 import { PAGES } from "../content/pages";
 import { HEARTH_RITE, PART_IDS } from "../content/rite";
-import { SKILL_IDS } from "../content/skills";
+import { SKILL_IDS, type SkillId } from "../content/skills";
+import { TALENT_LEVELS } from "../content/talents";
 import type { Feature } from "../content/types";
 import { SAVE_VERSION, newGame, type GameState, type RecipeProgress } from "./state";
 
@@ -41,7 +42,7 @@ export function deserialize(json: string): GameState {
     rewardsWaiting: data.rewardsWaiting ?? [],
     middleOrder: data.middleOrder ?? [],
     stageStart: data.stageStart ?? {},
-    talents: { ...data.talents },
+    talents: loadTalents(data.talents),
     version: SAVE_VERSION,
   };
   // Fields that no longer exist (the offline cap is now derived from upgrades).
@@ -113,14 +114,13 @@ function upgradeToStagedKindling(state: GameState): void {
   state.experimentsOpen = state.kept.features.includes("circle");
 }
 
-/** v7: progress as a fraction of the repetition; the keystone became free (points are derived). */
+/** v7: progress as a fraction of the repetition. */
 function upgradeToV7(state: GameState, data: Partial<GameState>): void {
   const old = data.active as ({ id: GameState["active"] extends infer A ? (A extends { id: infer I } ? I : never) : never; elapsedMs?: number; progress?: number } | null | undefined);
   if (old && old.progress === undefined) {
     const full = ACTION_DEFS[old.id].seconds * 1000;
     state.active = { id: old.id, progress: Math.min(0.99, Math.max(0, (old.elapsedMs ?? 0) / full)) };
   }
-  for (const t of Object.values(state.talents)) if (t) delete (t as { keystone?: boolean }).keystone;
   // Insight became one pool spent on hints. Each recipe's old insight joins the pool, and the
   // hints it had already shown (categories at 6, a name at 12, another every 6) count as bought.
   let pool = 0;
@@ -149,12 +149,26 @@ function upgradeToV7(state: GameState, data: Partial<GameState>): void {
 }
 
 /**
- * v8: Tend is gone (its meter, streak and talent ranks), and the rite has no moments: one under
- * way keeps its place, with no offerings made.
+ * Talents became pairs (a side at levels 3, 6, 9 and 12). Anything else, like the old branch
+ * ranks, is dropped: nothing is lost, since talents come from levels. Choose again.
+ */
+function loadTalents(data: unknown): GameState["talents"] {
+  const out: GameState["talents"] = {};
+  if (!data || typeof data !== "object") return out;
+  for (const [skill, picks] of Object.entries(data)) {
+    if (!(SKILL_IDS as string[]).includes(skill) || !picks || typeof picks !== "object") continue;
+    const kept = Object.fromEntries(Object.entries(picks).filter(([lvl, side]) => (TALENT_LEVELS as readonly number[]).includes(Number(lvl)) && (side === "a" || side === "b")));
+    if (Object.keys(kept).length > 0) out[skill as SkillId] = kept;
+  }
+  return out;
+}
+
+/**
+ * v8: Tend is gone (its meter and streak), and the rite has no moments: one under way keeps its
+ * place, with no offerings made. (Old talent ranks are dropped by `loadTalents`.)
  */
 function upgradeToV8(state: GameState): void {
   delete (state as { tend?: unknown }).tend;
-  for (const t of Object.values(state.talents)) if (t) delete (t.ranks as Record<string, number>).tending;
   const p = state.rite.performing as (NonNullable<GameState["rite"]["performing"]> & { moments?: boolean[] }) | null;
   if (p) {
     delete p.moments;

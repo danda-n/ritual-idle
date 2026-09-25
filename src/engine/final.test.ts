@@ -30,7 +30,7 @@ function everything(): GameState {
     stats: { ...base.stats, completed: { decipher_page: PAGES.length + 1, tallow_candle: 3 }, requestsFilled: 3 },
     kindling: [...PART_IDS],
     experimentsOpen: true,
-    talents: { chandlery: { ranks: { swift: 1 } } },
+    talents: { chandlery: { 3: "a" } },
     inventory: { nettle: 12, salt: 5, ash: 5, rags: 3 },
     skills: { ...base.skills, ritualism: { xp: 2000 } },
   };

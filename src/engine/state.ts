@@ -5,7 +5,7 @@ import type { GrimoireId } from "../content/grimoire";
 import type { ItemId } from "../content/items";
 import type { OmenId } from "../content/omens";
 import type { OfferingId, PartId } from "../content/rite";
-import type { BranchId } from "../content/talents";
+import type { Side, TalentLevel } from "../content/talents";
 import type { Feature } from "../content/types";
 import type { RequestId } from "../content/requests";
 import type { UpgradeId } from "../content/shop";
@@ -66,7 +66,7 @@ export interface GameState {
   kindling: PartId[];
   /** Experiments at the Circle open with the first hint toward a hidden recipe. */
   experimentsOpen: boolean;
-  /** Talent ranks spent per skill. Points come from levels, so only spending is stored. */
+  /** The side taken at each talent level, per skill (docs/CHAPTER1.md §13). */
   talents: Partial<Record<SkillId, Talents>>;
   /** Stage steps already done (their goals met). */
   stepsDone: string[];
@@ -124,9 +124,8 @@ export interface Settings {
   seenTabs: string[];
 }
 
-export interface Talents {
-  ranks: Partial<Record<BranchId, number>>;
-}
+/** The side taken at each talent level. */
+export type Talents = Partial<Record<TalentLevel, Side>>;
 
 export interface ActiveBuff {
   id: BuffId;

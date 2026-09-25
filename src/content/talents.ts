@@ -1,59 +1,160 @@
+import type { ActionId } from "./actions";
+import type { ItemId } from "./items";
 import type { SkillId } from "./skills";
 
-// Skill talents (docs/CHAPTER1.md §13). Every skill has the same three branches, 3 ranks each,
-// plus one keystone of its own that opens after 3 points in any one branch.
-// A point arrives every POINT_EVERY levels. Resetting is free.
+// Skill talents (docs/CHAPTER1.md §13): builds, not small percentages. At levels 3, 6, 9 and 12
+// each skill offers a pair, and you take one side of each pair. The sides pull different ways,
+// and some help another skill. Switching sides is free, any time.
 
-export const POINT_EVERY = 3;
-export const KEYSTONE_NEEDS = 3;
+/** The levels at which a skill offers a pair (one per tier). */
+export const TALENT_LEVELS = [3, 6, 9, 12] as const;
+export type TalentLevel = (typeof TALENT_LEVELS)[number];
+export type Side = "a" | "b";
 
-export const BRANCHES = {
-  swift: { name: "Swift", maxRank: 3, perRank: 0.05, effect: "speed" },
-  plenty: { name: "Plenty", maxRank: 3, perRank: 0.05, effect: "extra_output" },
-  fortune: { name: "Fortune", maxRank: 3, perRank: 0.03, effect: "critical" },
-} as const satisfies Record<string, { name: string; maxRank: number; perRank: number; effect: string }>;
+export type TalentEffect =
+  /** This skill is faster (or another skill, with `skill`). */
+  | { kind: "speed"; bonus: number; skill?: SkillId }
+  /** More XP in this skill (or another, with `skill`). */
+  | { kind: "xp"; bonus: number; skill?: SkillId }
+  /** This skill's chance finds are more likely (all of them, or one item). */
+  | { kind: "find"; multiplier: number; item?: ItemId }
+  /** These actions make +1 of their main output, and its XP, but take longer. */
+  | { kind: "bulk"; actions: ActionId[]; slower: number }
+  /** A chance that a repetition comes doubled: outputs and XP. */
+  | { kind: "double"; chance: number }
+  /** A chance of 1 extra of each sure output. */
+  | { kind: "extra"; chance: number }
+  /** Every nth repetition of an action gives 1 extra of its sure outputs. */
+  | { kind: "everyNth"; n: number }
+  /** This action uses fewer of an input. */
+  | { kind: "thrift"; action: ActionId; item: ItemId; less: number }
+  /** A chance that these actions use no inputs at all. */
+  | { kind: "save"; actions: ActionId[]; chance: number }
+  /** These actions also give an item, sometimes. */
+  | { kind: "byproduct"; actions: ActionId[]; item: ItemId; chance: number }
+  /** Insight from each repetition of this action. */
+  | { kind: "insight"; action: ActionId; amount: number }
+  /** Buffs from this skill's actions last longer. */
+  | { kind: "buffLength"; multiplier: number }
+  /** Omens turn up more often, from any work. */
+  | { kind: "omenChance"; multiplier: number };
 
-export type BranchId = keyof typeof BRANCHES;
-export const BRANCH_IDS = Object.keys(BRANCHES) as BranchId[];
-
-/** What a branch does at a rank, in plain words. */
-export function branchText(id: BranchId, rank: number): string {
-  const pct = Math.round(BRANCHES[id].perRank * rank * 100);
-  switch (id) {
-    case "swift":
-      return `+${pct}% speed`;
-    case "plenty":
-      return `${pct}% chance of 1 extra of each sure output`;
-    case "fortune":
-      return `${pct}% chance of a critical: double output and XP`;
-  }
-}
-
-export type KeystoneEffect =
-  /** Chance that guaranteed outputs come doubled. */
-  | { kind: "double_output"; chance: number }
-  /** Chance-based finds are this much more likely. */
-  | { kind: "find_chance"; multiplier: number }
-  /** Every nth completion of an action gives 1 extra of its sure outputs. */
-  | { kind: "every_nth"; n: number }
-  /** Chance a repetition uses no inputs. */
-  | { kind: "save_inputs"; chance: number }
-  /** Insight toward a hidden recipe from each completion (deciphering). */
-  | { kind: "insight"; amount: number }
-  /** Extra XP, as a fraction. */
-  | { kind: "xp_bonus"; bonus: number };
-
-export interface KeystoneDef {
+export interface TalentDef {
   name: string;
+  /** What it does, in plain words, trade-off included. */
   text: string;
-  effect: KeystoneEffect;
+  effects: TalentEffect[];
 }
 
-export const KEYSTONES: Record<SkillId, KeystoneDef> = {
-  scavenging: { name: "Keen eye", text: "Chance finds are 50% more likely.", effect: { kind: "find_chance", multiplier: 1.5 } },
-  chandlery: { name: "Long-burning", text: "10% of what you pour comes in pairs.", effect: { kind: "double_output", chance: 0.1 } },
-  sigilcraft: { name: "Steady hand", text: "15% of workings use no materials.", effect: { kind: "save_inputs", chance: 0.15 } },
-  herbalism: { name: "Dew-picked", text: "Every 5th pick gives 1 extra.", effect: { kind: "every_nth", n: 5 } },
-  scholarship: { name: "Marginalia", text: "Each page deciphered gives +1 insight.", effect: { kind: "insight", amount: 1 } },
-  ritualism: { name: "Devout", text: "Minor rites give 25% more XP.", effect: { kind: "xp_bonus", bonus: 0.25 } },
+export type TalentPair = { a: TalentDef; b: TalentDef };
+
+export const TALENTS: Record<SkillId, Record<TalentLevel, TalentPair>> = {
+  scavenging: {
+    3: {
+      a: { name: "Quick fingers", text: "+15% Scavenging speed.", effects: [{ kind: "speed", bonus: 0.15 }] },
+      b: { name: "Deep shelves", text: "Chance finds (salt, rags, curios) are 50% more likely.", effects: [{ kind: "find", multiplier: 1.5 }] },
+    },
+    6: {
+      a: { name: "Full arms", text: "The pantry and the hives give 2 at a time (and twice the XP), but take 80% longer.", effects: [{ kind: "bulk", actions: ["search_pantry", "rob_hives"], slower: 0.8 }] },
+      b: { name: "For the chandler", text: "Chandlery is 12% faster.", effects: [{ kind: "speed", bonus: 0.12, skill: "chandlery" }] },
+    },
+    9: {
+      a: { name: "Scavenger's luck", text: "10% chance a search comes doubled, XP too.", effects: [{ kind: "double", chance: 0.1 }] },
+      b: { name: "Busy hands", text: "+25% Scavenging XP.", effects: [{ kind: "xp", bonus: 0.25 }] },
+    },
+    12: {
+      a: { name: "Grandmother's eye", text: "Curios are three times as likely.", effects: [{ kind: "find", multiplier: 3, item: "curio" }] },
+      b: { name: "Well stocked", text: "The pantry always turns up salt.", effects: [{ kind: "find", multiplier: 2, item: "salt" }] },
+    },
+  },
+  chandlery: {
+    3: {
+      a: { name: "Quick pour", text: "+15% Chandlery speed.", effects: [{ kind: "speed", bonus: 0.15 }] },
+      b: { name: "Thin wicks", text: "Tallow candles take 1 tallow instead of 2.", effects: [{ kind: "thrift", action: "tallow_candle", item: "tallow", less: 1 }] },
+    },
+    6: {
+      a: { name: "Double moulds", text: "Candles come 2 at a time (and twice the XP), but each pour takes 80% longer.", effects: [{ kind: "bulk", actions: ["tallow_candle", "beeswax_candle"], slower: 0.8 }] },
+      b: { name: "Wick ash", text: "A third of your candles also leave 1 ash (for sigils).", effects: [{ kind: "byproduct", actions: ["tallow_candle", "beeswax_candle"], item: "ash", chance: 0.33 }] },
+    },
+    9: {
+      a: { name: "Steady flame", text: "10% chance a pour comes doubled, XP too.", effects: [{ kind: "double", chance: 0.1 }] },
+      b: { name: "A light to read by", text: "Scholarship is 12% faster.", effects: [{ kind: "speed", bonus: 0.12, skill: "scholarship" }] },
+    },
+    12: {
+      a: { name: "Hearth-light", text: "Hearth candles come in pairs, at no extra time.", effects: [{ kind: "bulk", actions: ["hearth_candle"], slower: 0 }] },
+      b: { name: "Chandler's pride", text: "+30% Chandlery XP.", effects: [{ kind: "xp", bonus: 0.3 }] },
+    },
+  },
+  sigilcraft: {
+    3: {
+      a: { name: "Sure strokes", text: "+15% Sigilcraft speed.", effects: [{ kind: "speed", bonus: 0.15 }] },
+      b: { name: "Fine ash", text: "Ash sigils take 1 ash instead of 2.", effects: [{ kind: "thrift", action: "ash_sigil", item: "ash", less: 1 }] },
+    },
+    6: {
+      a: { name: "Long lines", text: "Salt lines come 2 at a time (and twice the XP), but take 80% longer.", effects: [{ kind: "bulk", actions: ["salt_line"], slower: 0.8 }] },
+      b: { name: "Warded rooms", text: "Ritualism is 12% faster.", effects: [{ kind: "speed", bonus: 0.12, skill: "ritualism" }] },
+    },
+    9: {
+      a: { name: "Steady hand", text: "15% of workings use no materials.", effects: [{ kind: "save", actions: ["salt_line", "ash_sigil", "iron_ward", "chalk_segment", "hearth_ward"], chance: 0.15 }] },
+      b: { name: "Practised", text: "+25% Sigilcraft XP.", effects: [{ kind: "xp", bonus: 0.25 }] },
+    },
+    12: {
+      a: { name: "Charcoal eye", text: "Sweeping turns up charcoal three times as often.", effects: [{ kind: "find", multiplier: 3, item: "charcoal" }] },
+      b: { name: "Iron will", text: "Iron wards come in pairs, at no extra time.", effects: [{ kind: "bulk", actions: ["iron_ward"], slower: 0 }] },
+    },
+  },
+  herbalism: {
+    3: {
+      a: { name: "Light step", text: "+15% Herbalism speed.", effects: [{ kind: "speed", bonus: 0.15 }] },
+      b: { name: "Green thumb", text: "20% chance of an extra herb or bundle.", effects: [{ kind: "extra", chance: 0.2 }] },
+    },
+    6: {
+      a: { name: "Tight bundles", text: "Smudge bundles come 2 at a time (and twice the XP), but take 80% longer.", effects: [{ kind: "bulk", actions: ["smudge_bundle"], slower: 0.8 }] },
+      b: { name: "Pure smoke", text: "Mugwort incense needs no tallow.", effects: [{ kind: "thrift", action: "mugwort_incense", item: "tallow", less: 1 }] },
+    },
+    9: {
+      a: { name: "Dew-picked", text: "Every 5th pick gives 1 extra.", effects: [{ kind: "everyNth", n: 5 }] },
+      b: { name: "Herb-wise", text: "Chandlery is 12% faster.", effects: [{ kind: "speed", bonus: 0.12, skill: "chandlery" }] },
+    },
+    12: {
+      a: { name: "Wild harvest", text: "10% chance a pick comes doubled, XP too.", effects: [{ kind: "double", chance: 0.1 }] },
+      b: { name: "Herbwife", text: "+30% Herbalism XP.", effects: [{ kind: "xp", bonus: 0.3 }] },
+    },
+  },
+  scholarship: {
+    3: {
+      a: { name: "Quick eyes", text: "+15% Scholarship speed.", effects: [{ kind: "speed", bonus: 0.15 }] },
+      b: { name: "Keen search", text: "The attic's finds (pages, rags, curios) are 50% more likely.", effects: [{ kind: "find", multiplier: 1.5 }] },
+    },
+    6: {
+      a: { name: "By one candle", text: "Half the pages you decipher need no candle or page.", effects: [{ kind: "save", actions: ["decipher_page"], chance: 0.5 }] },
+      b: { name: "Marginalia", text: "+1 insight from every page deciphered.", effects: [{ kind: "insight", action: "decipher_page", amount: 1 }] },
+    },
+    9: {
+      a: { name: "Well read", text: "+25% Scholarship XP.", effects: [{ kind: "xp", bonus: 0.25 }] },
+      b: { name: "The rite's words", text: "+20% Ritualism XP.", effects: [{ kind: "xp", bonus: 0.2, skill: "ritualism" }] },
+    },
+    12: {
+      a: { name: "Footnotes", text: "+2 insight from every page deciphered.", effects: [{ kind: "insight", action: "decipher_page", amount: 2 }] },
+      b: { name: "Copyist", text: "10% chance a working comes doubled, XP too.", effects: [{ kind: "double", chance: 0.1 }] },
+    },
+  },
+  ritualism: {
+    3: {
+      a: { name: "Practised rites", text: "+15% Ritualism speed.", effects: [{ kind: "speed", bonus: 0.15 }] },
+      b: { name: "Devout", text: "+25% Ritualism XP.", effects: [{ kind: "xp", bonus: 0.25 }] },
+    },
+    6: {
+      a: { name: "Long blessing", text: "Smoking the rooms blesses them twice as long.", effects: [{ kind: "buffLength", multiplier: 2 }] },
+      b: { name: "Consecrated hands", text: "30% of rites use no materials.", effects: [{ kind: "save", actions: ["bless_threshold", "smoke_rooms"], chance: 0.3 }] },
+    },
+    9: {
+      a: { name: "Omen-sense", text: "Omens turn up twice as often, from any work.", effects: [{ kind: "omenChance", multiplier: 2 }] },
+      b: { name: "Circle-keeper", text: "Sigilcraft is 12% faster.", effects: [{ kind: "speed", bonus: 0.12, skill: "sigilcraft" }] },
+    },
+    12: {
+      a: { name: "Blessed work", text: "10% chance a blessing comes doubled, XP too.", effects: [{ kind: "double", chance: 0.1 }] },
+      b: { name: "High rites", text: "+30% Ritualism XP.", effects: [{ kind: "xp", bonus: 0.3 }] },
+    },
+  },
 };

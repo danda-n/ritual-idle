@@ -9,6 +9,7 @@ import { stepById } from "../../engine/progress";
 import type { SkillId } from "../../content/skills";
 import { SkillPicker } from "./SkillPicker";
 import { skillLevel } from "../../engine/simulate";
+import { actionInputs } from "../../engine/modifiers";
 import type { GameState } from "../../engine/state";
 import { CircleRiteIcon } from "../art/icons";
 import { chapterSteps, rewardText, stepPlace, stepProgress, stepsOf, taskName, taskPlace, type Place } from "../tasks";
@@ -72,7 +73,7 @@ export function ChapterTracker({ state, onGo, act }: { state: GameState; onGo: (
             const p = goalProgress(state, s.note);
             const action = goal.kind === "complete" ? ACTION_DEFS[goal.action] : null;
             // A part lists its items; an action its inputs. Chips show have/need.
-            const inputs = (goal.kind === "place" ? Object.entries(PART_DEFS[goal.part as PartId].items) : action ? Object.entries(action.inputs) : []) as [ItemId, number][];
+            const inputs = (goal.kind === "place" ? Object.entries(PART_DEFS[goal.part as PartId].items) : action && goal.kind === "complete" ? Object.entries(actionInputs(state, goal.action)) : []) as [ItemId, number][];
             const needLevel =
               action && skillLevel(state, action.skill) < action.level
                 ? { skill: action.skill, level: action.level }

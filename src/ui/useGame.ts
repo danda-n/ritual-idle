@@ -15,7 +15,7 @@ import { OMENS } from "../content/omens";
 import { buffDuration, buffEffects, upgradeEffectFor } from "./effects";
 import { SHOP } from "../content/shop";
 import { PART_DEFS } from "../content/rite";
-import { POINT_EVERY } from "../content/talents";
+import { TALENT_LEVELS } from "../content/talents";
 import { catchUp, type CatchUp } from "../engine/offline";
 import { clearLocal, loadLocal, saveLocal } from "../engine/save";
 import { advance, startAction, stopAction, type Report } from "../engine/simulate";
@@ -103,7 +103,7 @@ export function useGame() {
 
   // New notes and pages pop up while playing; after an absence they appear in the summary instead.
   const announce = useCallback(
-    (report: Partial<Pick<Report, "notesRevealed" | "pagesRead" | "omensFound" | "omensLost" | "fragments" | "curioStories" | "fellBackTo" | "itemsGained" | "levelUps" | "criticals" | "stepsDone">>) => {
+    (report: Partial<Pick<Report, "notesRevealed" | "pagesRead" | "omensFound" | "omensLost" | "fragments" | "curioStories" | "fellBackTo" | "itemsGained" | "levelUps" | "doubled" | "stepsDone">>) => {
       const notes = report.notesRevealed ?? [];
       if (notes.length > 0) setStory((q) => [...q, ...notes.map((note) => ({ note, at: Date.now() }))]);
 
@@ -115,17 +115,17 @@ export function useGame() {
       // Insight never toasts: a quiet float on the Grimoire tab, where it's spent.
       const insight = (report.fragments ?? []).reduce((n, f) => n + f.amount, 0);
       if (insight > 0) emitFx({ kind: "float", text: `+${insight} insight`, anchors: ["#tab-grimoire", ".tabs"], tone: "good" });
-      if (report.criticals) emitFx({ kind: "float", text: "Critical! ×2", anchors: fromWork, tone: "rare" });
+      if (report.doubled) emitFx({ kind: "float", text: "Doubled! ×2", anchors: fromWork, tone: "rare" });
       // Placing a part has its own toast; other steps say what they gave.
       const stepToasts = (report.stepsDone ?? []).filter((st) => st.goal.kind !== "place").map((st) => ({ title: `Step done: ${st.label}`, text: st.reward ? `Reward ready to claim: ${rewardText(st)}` : "" }));
       const levelToasts: Omit<Toast, "id">[] = [];
       for (const l of report.levelUps ?? []) {
         emitFx({ kind: "float", text: `Level ${l.to}`, anchors: [`.skill-tile[data-skill="${l.skill}"]`, ".working"], tone: "level" });
         const opened = unlockedByLevel(l.skill, l.from, l.to, (id) => isRecipeKnown(ref.current, id));
-        const points = Math.floor(l.to / POINT_EVERY) - Math.floor(l.from / POINT_EVERY);
+        const points = TALENT_LEVELS.filter((t) => t > l.from && t <= l.to).length;
         const news = [
           ...(opened.length > 0 ? [`New: ${opened.map((id) => ACTION_DEFS[id].name).join(", ")}`] : []),
-          ...(points > 0 ? [points > 1 ? `${points} talent points to spend` : "A talent point to spend"] : []),
+          ...(points > 0 ? [points > 1 ? `${points} talents to choose` : "A talent to choose"] : []),
         ];
         if (opened.length > 0) emitFx({ kind: "unlocked", ids: opened });
         if (news.length > 0) levelToasts.push({ title: `${SKILLS[l.skill].name} ${l.to}`, text: news.join(" · ") });

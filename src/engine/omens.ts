@@ -26,8 +26,8 @@ export function grantOmen(state: GameState, id: OmenId, promised = false): boole
  * Start or lengthen a buff. `stack` adds the full duration on top of any time left
  * (released omens are scarce); otherwise it just refreshes (repeatable minor rites).
  */
-export function applyBuff(state: GameState, id: BuffId, now: number, stack: boolean, skill?: SkillId): void {
-  const duration = BUFFS[id].durationMs;
+export function applyBuff(state: GameState, id: BuffId, now: number, stack: boolean, skill?: SkillId, lengthMult = 1): void {
+  const duration = BUFFS[id].durationMs * lengthMult;
   // A blessing on another skill is its own buff, running side by side.
   const same = (b: { id: BuffId; skill?: SkillId }) => b.id === id && b.skill === skill;
   const existing = state.buffs.find((b) => same(b) && b.endsAt > now);

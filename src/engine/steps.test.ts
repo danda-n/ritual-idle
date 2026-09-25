@@ -138,10 +138,10 @@ describe("stage steps", () => {
 });
 
 describe("older saves (v8)", () => {
-  it("drop Tend and its talent ranks, keeping the rest", () => {
+  it("drop Tend and the old talent ranks (talents are pairs now: choose again)", () => {
     const old = { ...newGame(T0, 1), version: 7, tend: { endsAt: 5, streak: 3, lastAt: 1 }, talents: { scavenging: { ranks: { tending: 2, swift: 1 } } } };
     const loaded = deserialize(JSON.stringify(old));
     expect("tend" in loaded).toBe(false);
-    expect(loaded.talents.scavenging?.ranks).toEqual({ swift: 1 });
+    expect(loaded.talents).toEqual({});
   });
 });

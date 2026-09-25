@@ -4,21 +4,21 @@ import type { ItemId } from "../content/items";
 import { NOTES } from "../content/notes";
 import { REQUESTS } from "../content/requests";
 import { HEARTH_RITE, PART_DEFS, QUALITIES, RITE_MS, type PartId } from "../content/rite";
-import { BRANCHES } from "../content/talents";
+import type { Side } from "../content/talents";
 import { SHOP } from "../content/shop";
 import type { SkillId } from "../content/skills";
-import { beginRite, buy, chooseStage, claimReward, declineRequest, fillRequest, placePart, setSetting, spendTalent, type Result } from "./commands";
-import { actionDurationMs } from "./modifiers";
-import { currentNote, isRecipeKnown, isSkillUnlocked, stageChoices, stageOrder, stepById, type Step } from "./progress";
+import { beginRite, buy, chooseStage, claimReward, declineRequest, fillRequest, placePart, setSetting, chooseTalent, type Result } from "./commands";
+import { actionDurationMs, actionInputs } from "./modifiers";
+import { currentNote, isRecipeKnown, isSkillUnlocked, isStepMet, stageChoices, stageOrder, stepById, type Step } from "./progress";
 import { advance, blockReason, skillLevel, startAction } from "./simulate";
 import { newGame, type GameState } from "./state";
 import { xpForLevel } from "./xp";
-import { pointsFree, rankOf } from "./talents";
+import { choicesWaiting } from "./talents";
 import { SKILL_IDS } from "../content/skills";
 
 // A scripted player that finishes Chapter 1 using only the real engine and commands. It follows
-// each stage's steps literally (make exactly what the step says), places each part, spends talent
-// points, fills requests for bread, then performs the rite. Idle play: it never tends or releases
+// each stage's steps literally (make exactly what the step says), places each part, takes a side
+// of each talent pair (all "a" or all "b"), fills requests for bread, then performs the rite. Idle play: it never tends or releases
 // omens. It's the pacing check for Chapter 1 (docs/CHAPTER1.md §10), and the no-grind check:
 // if anything needs a level the steps didn't earn, that's recorded as grinding and the test fails.
 
@@ -40,9 +40,13 @@ class Bot {
   /** The order it takes the free middle parts in. */
   order: PartId[];
 
-  constructor(seed: number, order: PartId[] = ["ward", "smoke", "words"]) {
+  /** The side it takes of every talent pair. */
+  side: Side;
+
+  constructor(seed: number, order: PartId[] = ["ward", "smoke", "words"], side: Side = "a") {
     this.state = this.must(setSetting(newGame(0, seed), "fallback", "stop"));
     this.order = order;
+    this.side = side;
   }
 
   must(r: Result): GameState {
@@ -71,7 +75,7 @@ class Bot {
     this.after();
   }
 
-  /** Note the time of new notes, claim rewards, and spend any talent points. */
+  /** Note the time of new notes, claim rewards, and choose any talents waiting. */
   after() {
     for (const id of [...this.state.rewardsWaiting]) {
       const r = stepById(id)!.reward!;
@@ -79,11 +83,8 @@ class Bot {
     }
     while (this.noteAt.length < this.state.notesRevealed) this.noteAt.push(this.activeMs);
     for (const skill of SKILL_IDS) {
-      while (isSkillUnlocked(this.state, skill) && pointsFree(this.state, skill) > 0) {
-        // Swift first (filling it blooms the keystone), then Plenty and Fortune.
-        const branch = rankOf(this.state, skill, "swift") < BRANCHES.swift.maxRank ? "swift" : rankOf(this.state, skill, "plenty") < BRANCHES.plenty.maxRank ? "plenty" : "fortune";
-        this.state = this.must(spendTalent(this.state, skill, branch));
-      }
+      if (!isSkillUnlocked(this.state, skill)) continue;
+      for (const level of choicesWaiting(this.state, skill)) this.state = this.must(chooseTalent(this.state, skill, level, this.side));
     }
   }
 
@@ -108,7 +109,7 @@ class Bot {
   /** Perform an action once, gathering its inputs first. */
   run(id: ActionId) {
     this.enable(id);
-    for (const [item, qty] of Object.entries(ACTION_DEFS[id].inputs) as [ItemId, number][]) this.ensure(item, qty);
+    for (const [item, qty] of Object.entries(actionInputs(this.state, id)) as [ItemId, number][]) this.ensure(item, qty);
     this.once(id);
   }
 
@@ -177,7 +178,7 @@ class Bot {
       if (this.state.notesRevealed !== at) break;
       this.doing = step.id;
       const g = step.goal;
-      if (g.kind === "complete") while ((this.state.stats.completed[g.action] ?? 0) < g.count) this.run(g.action);
+      if (g.kind === "complete") while (!isStepMet(this.state, step)) this.run(g.action);
       else if (g.kind === "requests") while (this.state.stats.requestsFilled < g.count) this.fillOne();
       else if (g.kind === "place") this.place(g.part as PartId);
       this.stepLog.push({ id: step.id, minutes: this.activeMs / MIN });
@@ -245,9 +246,12 @@ describe("Chapter 1 playthrough", () => {
     ["smoke", "words", "ward"], ["words", "ward", "smoke"], ["words", "smoke", "ward"],
   ];
   const runs = orders.flatMap((order) => [1, 2].map((seed) => new Bot(seed, order).play()));
+  // The other side of every talent pair, in two orders: the chapter still works with that build.
+  const otherBuild = [orders[0]!, orders[5]!].map((order) => new Bot(3, order, "b").play());
+  const all = [...runs, ...otherBuild];
 
-  it("can be finished from a fresh game, with every note reached", () => {
-    for (const bot of runs) {
+  it("can be finished from a fresh game, with every note reached, with either talent build", () => {
+    for (const bot of all) {
       expect(bot.state.rite.completed).not.toBeNull();
       expect(bot.state.notesRevealed).toBe(NOTES.length);
       expect(bot.state.followers).toContain("janko");
@@ -261,7 +265,7 @@ describe("Chapter 1 playthrough", () => {
   it("never needs grinding: following the steps earns every level the next step needs", () => {
     const bot = runs[0]!;
     console.log(`Steps (seed 1, minutes): ${bot.stepLog.map((st) => `${st.id} ${st.minutes.toFixed(1)}`).join(" · ")}`);
-    for (const b of runs) {
+    for (const b of all) {
       const report = b.grinds.map((g) => `${g.at}: ${g.action} needs level ${g.need}, had ${g.had} (${g.short} XP short)`);
       expect(report, "grinding needed").toEqual([]);
     }
@@ -270,7 +274,7 @@ describe("Chapter 1 playthrough", () => {
   it("makes nothing without a use: crafted things are all spent by the rite", () => {
     const crafted: ItemId[] = ["tallow_candle", "beeswax_candle", "salt_line", "ash_sigil", "smudge", "mugwort_incense", "deciphered_page", "consecrated_salt", "litany"];
     console.log(`Left over at the rite (seed 1): ${JSON.stringify(runs[0]!.leftAtRite)}`);
-    for (const b of runs) for (const item of crafted) expect(b.leftAtRite[item] ?? 0, item).toBeLessThanOrEqual(3);
+    for (const b of all) for (const item of crafted) expect(b.leftAtRite[item] ?? 0, item).toBeLessThanOrEqual(3);
   });
 
   it("reaches the rite in 28–45 min of active play, in every order", () => {

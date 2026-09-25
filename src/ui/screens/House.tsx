@@ -5,12 +5,12 @@ import { SKILL_IDS, SKILLS, type SkillId } from "../../content/skills";
 import { inputsLastMs, outputPerHour, revealedRecipes, timeToCapMs, timeToNextLevelMs, xpPerHour } from "../../engine/estimates";
 import { PART_DEFS, type PartId } from "../../content/rite";
 import type { Result } from "../../engine/commands";
-import { pointsFree } from "../../engine/talents";
+import { choicesWaiting } from "../../engine/talents";
 import { TalentPanel } from "../components/TalentPanel";
 import { BUFFS, type BuffId } from "../../content/buffs";
 import { buffDuration, buffEffects } from "../effects";
 import { taskName } from "../tasks";
-import { actionDurationMs } from "../../engine/modifiers";
+import { actionDurationMs, actionInputs } from "../../engine/modifiers";
 import { isRecipeKnown, isSkillUnlocked, middleParts, MIDDLE_AT, stageChoices, stageOrder } from "../../engine/progress";
 import { blockReason, skillLevel, type StopReason } from "../../engine/simulate";
 import type { GameState } from "../../engine/state";
@@ -34,9 +34,9 @@ export function SkillNav({ state, skill, onSelect }: { state: GameState; skill: 
             <SkillIcon skill={id} size={22} />
             <span className="skill-tile-name">
               {SKILLS[id].name}
-              {pointsFree(state, id) > 0 && (
-                <span className="talent-badge num" title="Talent points to spend">
-                  +{pointsFree(state, id)}
+              {choicesWaiting(state, id).length > 0 && (
+                <span className="talent-badge num" title="A talent to choose">
+                  +{choicesWaiting(state, id).length}
                 </span>
               )}
             </span>
@@ -143,7 +143,7 @@ function ActionRow({ id, state, onStart, fresh }: { id: ActionId; state: GameSta
   const blocked = blockReason(state, id);
   const locked = blocked?.kind === "level_too_low";
   const running = state.active?.id === id;
-  const inputs = Object.entries(def.inputs) as [ItemId, number][];
+  const inputs = Object.entries(actionInputs(state, id)) as [ItemId, number][];
 
   return (
     <div
@@ -250,7 +250,7 @@ function startLabel(state: GameState, id: ActionId, blocked: StopReason | null):
     case "level_too_low":
       return `Level ${blocked.level}`;
     case "missing_input": {
-      const need = ACTION_DEFS[id].inputs[blocked.item] ?? 0;
+      const need = actionInputs(state, id)[blocked.item] ?? 0;
       return `Needs ${need - (state.inventory[blocked.item] ?? 0)} ${ITEMS[blocked.item].name.toLowerCase()}`;
     }
     case "rite_in_progress":

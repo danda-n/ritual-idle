@@ -7,7 +7,8 @@ import type { RequestDef, UpgradeEffect } from "../content/types";
 import type { SkillId } from "../content/skills";
 import { discoveredRewards } from "./grimoire";
 import type { GameState } from "./state";
-import { branchBonus, keystoneEffect } from "./talents";
+import type { TalentEffect } from "../content/talents";
+import { talentEffects } from "./talents";
 import { levelForXp } from "./xp";
 
 // Every bonus in the game is computed here, so balance lives in one place.
@@ -22,6 +23,18 @@ export const LEVEL_SPEED = 1.01;
 
 function effects(state: GameState): UpgradeEffect[] {
   return state.upgrades.map((id) => SHOP[id].effect);
+}
+
+/** Taken talent effects of one kind that reach this skill (its own, or aimed at it from another). */
+function talents<K extends TalentEffect["kind"]>(state: GameState, kind: K, skill: SkillId): Extract<TalentEffect, { kind: K }>[] {
+  return talentEffects(state)
+    .filter(({ from, effect }) => effect.kind === kind && ("skill" in effect && effect.skill ? effect.skill === skill : from === skill))
+    .map(({ effect }) => effect as Extract<TalentEffect, { kind: K }>);
+}
+
+/** Talent effects of one kind that name this action. */
+function talentsOn<K extends "bulk" | "save" | "byproduct" | "thrift" | "insight">(state: GameState, kind: K, id: ActionId): Extract<TalentEffect, { kind: K }>[] {
+  return talents(state, kind, ACTION_DEFS[id].skill).filter((e) => ("actions" in e ? (e.actions as readonly ActionId[]).includes(id) : "action" in e && e.action === id));
 }
 
 export function activeBuffs(state: GameState, now: number = state.lastTickAt) {
@@ -39,7 +52,8 @@ export function levelSpeed(state: GameState, skill: SkillId): number {
  */
 export function speedMultiplier(state: GameState, id: ActionId, now: number = state.lastTickAt): number {
   const skill = ACTION_DEFS[id].skill;
-  let bonus = branchBonus(state, skill, "swift");
+  let bonus = 0;
+  for (const t of talents(state, "speed", skill)) bonus += t.bonus;
   for (const e of effects(state)) if (e.kind === "speed" && e.skill === skill) bonus += e.bonus;
   for (const b of activeBuffs(state, now)) {
     bonus += BUFF_DEFS[b.id].speed?.[skill] ?? 0;
@@ -53,18 +67,69 @@ export function speedMultiplier(state: GameState, id: ActionId, now: number = st
   return (1 + bonus) * levelSpeed(state, skill);
 }
 
-/** Time one repetition takes, after speed bonuses. */
+/** Time one repetition takes, after speed bonuses (and the slower pace of a bulk talent). */
 export function actionDurationMs(state: GameState, id: ActionId, now: number = state.lastTickAt): number {
-  return (ACTION_DEFS[id].seconds * 1000) / speedMultiplier(state, id, now);
+  const slower = talentsOn(state, "bulk", id).reduce((n, t) => n + t.slower, 0);
+  return (ACTION_DEFS[id].seconds * 1000 * (1 + slower)) / speedMultiplier(state, id, now);
+}
+
+/** Extra units of the main output per repetition from bulk talents (they bring their XP too). */
+export function bulkExtra(state: GameState, id: ActionId): number {
+  return talentsOn(state, "bulk", id).length;
+}
+
+/** What one repetition uses, after thrift talents (an input can drop out entirely). */
+export function actionInputs(state: GameState, id: ActionId): Partial<Record<ItemId, number>> {
+  const inputs: Partial<Record<ItemId, number>> = { ...ACTION_DEFS[id].inputs };
+  for (const t of talentsOn(state, "thrift", id)) inputs[t.item] = Math.max(0, (inputs[t.item] ?? 0) - t.less);
+  for (const [item, qty] of Object.entries(inputs) as [ItemId, number][]) if (qty <= 0) delete inputs[item];
+  return inputs;
+}
+
+/** Chance a repetition uses no inputs (Steady hand, By one candle…). */
+export function saveChance(state: GameState, id: ActionId): number {
+  return Math.min(1, talentsOn(state, "save", id).reduce((n, t) => n + t.chance, 0));
+}
+
+/** Items an action sometimes gives besides its own (Wick ash). */
+export function byproducts(state: GameState, id: ActionId): { item: ItemId; chance: number }[] {
+  return talentsOn(state, "byproduct", id).map((t) => ({ item: t.item, chance: t.chance }));
+}
+
+/** Insight from each repetition (Marginalia, Footnotes). */
+export function insightPerRep(state: GameState, id: ActionId): number {
+  return talentsOn(state, "insight", id).reduce((n, t) => n + t.amount, 0);
+}
+
+/** Chance a repetition comes doubled, outputs and XP (Scavenger's luck, Steady flame…). */
+export function doubleChance(state: GameState, id: ActionId): number {
+  return talents(state, "double", ACTION_DEFS[id].skill).reduce((n, t) => n + t.chance, 0);
+}
+
+/** Every nth repetition gives 1 extra of each sure output (Dew-picked), or 0 for none. */
+export function everyNth(state: GameState, id: ActionId): number {
+  return talents(state, "everyNth", ACTION_DEFS[id].skill)[0]?.n ?? 0;
+}
+
+/** How much longer the buffs from a skill's actions last (Long blessing). */
+export function buffLength(state: GameState, skill: SkillId): number {
+  return talents(state, "buffLength", skill).reduce((m, t) => m * t.multiplier, 1);
+}
+
+/** Omens turn up this much more often (Omen-sense). */
+export function omenChanceMultiplier(state: GameState): number {
+  let mult = 1;
+  for (const { effect } of talentEffects(state)) if (effect.kind === "omenChance") mult *= effect.multiplier;
+  return mult;
 }
 
 /**
  * Multiplier on an item's drop chance from active buffs (e.g. Still Night doubles burnt pages),
- * and from the skill's Keen eye keystone when `skill` is given.
+ * and from the skill's find talents when `skill` is given.
  */
 export function chanceMultiplier(state: GameState, item: ItemId, now: number = state.lastTickAt, skill?: SkillId): number {
-  const keystone = skill ? keystoneEffect(state, skill) : null;
-  let mult = keystone?.kind === "find_chance" ? keystone.multiplier : 1;
+  let mult = 1;
+  if (skill) for (const t of talents(state, "find", skill)) if (!t.item || t.item === item) mult *= t.multiplier;
   for (const b of activeBuffs(state, now)) {
     mult *= BUFF_DEFS[b.id].chanceMultiplier?.[item] ?? 1;
     // A blessed skill's chance finds (Still Night): only with the skill known.
@@ -73,23 +138,18 @@ export function chanceMultiplier(state: GameState, item: ItemId, now: number = s
   return mult;
 }
 
-/** Chance of one extra unit on each guaranteed output (the drying rack, the Plenty talent). */
+/** Chance of one extra unit on each guaranteed output (the drying rack, Green thumb). */
 export function extraYieldChance(state: GameState, id: ActionId): number {
   const skill = ACTION_DEFS[id].skill;
-  let chance = branchBonus(state, skill, "plenty");
+  let chance = 0;
+  for (const t of talents(state, "extra", skill)) chance += t.chance;
   for (const e of effects(state)) if (e.kind === "extra_yield" && e.skill === skill) chance += e.chance;
   return chance;
 }
 
-/** Chance of a critical (double output and XP), from the Fortune talent. */
-export function criticalChance(state: GameState, id: ActionId): number {
-  return branchBonus(state, ACTION_DEFS[id].skill, "fortune");
-}
-
-/** Extra XP as a fraction (the Devout keystone). */
+/** Extra XP as a fraction (Devout, Busy hands, The rite's words…). */
 export function xpBonus(state: GameState, id: ActionId): number {
-  const k = keystoneEffect(state, ACTION_DEFS[id].skill);
-  return k?.kind === "xp_bonus" ? k.bonus : 0;
+  return talents(state, "xp", ACTION_DEFS[id].skill).reduce((n, t) => n + t.bonus, 0);
 }
 
 export function offlineCapMs(state: GameState): number {

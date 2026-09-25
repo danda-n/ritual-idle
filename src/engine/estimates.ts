@@ -5,7 +5,7 @@ import { SHOP } from "../content/shop";
 import { GRIMOIRE_DEFS } from "../content/grimoire";
 import type { ItemId } from "../content/items";
 import type { SkillId } from "../content/skills";
-import { actionDurationMs, chanceMultiplier, criticalChance, extraYieldChance } from "./modifiers";
+import { actionDurationMs, actionInputs, bulkExtra, chanceMultiplier, doubleChance, extraYieldChance, xpBonus } from "./modifiers";
 import { isDiscovered } from "./grimoire";
 import { currentNote, isRecipeKnown, isSkillUnlocked, revealedNotes, type Step } from "./progress";
 import { skillLevel } from "./simulate";
@@ -22,7 +22,7 @@ export function repsPerHour(state: GameState, id: ActionId): number {
 }
 
 export function xpPerHour(state: GameState, id: ActionId): number {
-  return repsPerHour(state, id) * ACTION_DEFS[id].xp * (1 + criticalChance(state, id));
+  return repsPerHour(state, id) * ACTION_DEFS[id].xp * (1 + xpBonus(state, id)) * (1 + bulkExtra(state, id)) * (1 + doubleChance(state, id));
 }
 
 /** True if every input comes from a skill that's open (so nothing it needs is out of reach). */
@@ -78,22 +78,22 @@ export function isRecipeRevealed(state: GameState, id: ActionId): boolean {
   return revealedRecipes(state, ACTION_DEFS[id].skill).includes(id);
 }
 
-/** Expected output per hour, counting drop chances and yield bonuses (keystones aside). */
+/** Expected output per hour, counting drop chances and yield bonuses (every-nth and byproducts aside). */
 export function outputPerHour(state: GameState, id: ActionId): { item: ItemId; perHour: number }[] {
   const reps = repsPerHour(state, id);
   const extra = extraYieldChance(state, id);
-  const crit = 1 + criticalChance(state, id);
+  const double = 1 + doubleChance(state, id);
   const skill = ACTION_DEFS[id].skill;
-  return ACTION_DEFS[id].outputs.map((o) => {
+  return ACTION_DEFS[id].outputs.map((o, i) => {
     const chance = o.chance === undefined ? 1 : Math.min(1, o.chance * chanceMultiplier(state, o.item, state.lastTickAt, skill));
-    const qty = o.qty + (o.chance === undefined ? extra : 0);
-    return { item: o.item, perHour: reps * chance * qty * crit };
+    const qty = o.qty + (o.chance === undefined ? extra + (i === 0 ? bulkExtra(state, id) : 0) : 0);
+    return { item: o.item, perHour: reps * chance * qty * double };
   });
 }
 
 /** How long the inputs on hand last at this action, or null if it needs none. */
 export function inputsLastMs(state: GameState, id: ActionId): number | null {
-  const inputs = Object.entries(ACTION_DEFS[id].inputs) as [ItemId, number][];
+  const inputs = Object.entries(actionInputs(state, id)) as [ItemId, number][];
   if (inputs.length === 0) return null;
   const reps = Math.min(...inputs.map(([item, qty]) => Math.floor((state.inventory[item] ?? 0) / qty)));
   return reps * actionDurationMs(state, id);
