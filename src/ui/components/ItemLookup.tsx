@@ -8,6 +8,7 @@ import { blockReason } from "../../engine/simulate";
 import type { GameState } from "../../engine/state";
 import { useChipActions } from "../chipContext";
 import { CATEGORY_ICONS, SkillIcon } from "../art/icons";
+import { ItemIcon } from "../art/items";
 import { formatStop, itemName } from "../format";
 import { Modal } from "./Modal";
 
@@ -65,7 +66,7 @@ export function ItemChip({ item, qty, need, chance, plain }: { item: ItemId; qty
         }}
         title={`Look up ${itemName(item)}`}
       >
-        {skill && <SkillIcon skill={skill} size={12} />}
+        <ItemIcon item={item} size={15} />
         {itemName(item)}
       </button>
     );
@@ -90,7 +91,7 @@ export function ItemChip({ item, qty, need, chance, plain }: { item: ItemId; qty
         }}
         title={short ? `Short of ${itemName(item)}: you have ${have}, need ${need}` : `Look up ${itemName(item)}`}
       >
-        {skill && <SkillIcon skill={skill} size={12} />}
+        <ItemIcon item={item} size={15} />
         {(need ?? qty) !== undefined && <span className="num">{need ?? qty}</span>}
         <span>{itemName(item)}</span>
         {chance !== undefined && <span className="chip-chance num">{Math.round(chance * 1000) / 10}%</span>}

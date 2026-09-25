@@ -8,6 +8,8 @@ import { CircleRiteIcon } from "../art/icons";
 import { KindlingPanel } from "../components/KindlingPanel";
 import { isFeatureOpen } from "../../engine/progress";
 import { itemName } from "../format";
+import { ItemIcon } from "../art/items";
+import { producingSkill } from "../../engine/estimates";
 import { circleStep, outcomeHelp, recipeKnowledge } from "../guidance";
 import { Glows } from "./Grimoire";
 
@@ -158,7 +160,8 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
             {Array.from({ length: slots }, (_, i) => {
               const item = placed[i];
               return item ? (
-                <button key={`${i}-${item}`} className="slot filled" onClick={() => remove(item)} aria-label={`Remove ${itemName(item)}`}>
+                <button key={`${i}-${item}`} className="slot filled" data-skill={producingSkill(item) ?? undefined} onClick={() => remove(item)} aria-label={`Remove ${itemName(item)}`}>
+                  <ItemIcon item={item} size={18} />
                   {itemName(item)}
                 </button>
               ) : (
@@ -212,6 +215,7 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
                 title={known.has(id) ? "Known: this belongs" : undefined}
               >
                 {known.has(id) && <span aria-label="known">✓ </span>}
+                <ItemIcon item={id} size={15} />
                 {itemName(id)} <span className="muted num">{state.inventory[id]}</span>
               </button>
             ))}

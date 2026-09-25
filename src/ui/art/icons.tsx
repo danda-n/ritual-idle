@@ -5,9 +5,9 @@ import type { SkillId } from "../../content/skills";
 // Hand-drawn icon set: 24px grid, 1.75 stroke, round joins, currentColor.
 // Woodcut feel comes from chunky shapes and a few solid "ink" fills.
 
-type IconProps = SVGProps<SVGSVGElement> & { size?: number; title?: string };
+export type IconProps = SVGProps<SVGSVGElement> & { size?: number; title?: string };
 
-function Icon({ size = 20, title, children, ...rest }: IconProps & { children: ReactNode }) {
+export function Icon({ size = 20, title, children, ...rest }: IconProps & { children: ReactNode }) {
   return (
     <svg
       width={size}
