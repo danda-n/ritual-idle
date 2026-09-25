@@ -12,7 +12,7 @@ import { applyBuff, giveNoteGifts, grantOmen, pruneBuffs } from "./omens";
 import { isRecipeKnown, isSkillUnlocked, pagesRead, revealNotes, type Note, type Page, type Step } from "./progress";
 import { nextRandom } from "./rng";
 import type { GameState } from "./state";
-import { beginIfPrimed, stepRite } from "./rite";
+import { stepRite } from "./rite";
 import { refillBoard } from "./village";
 import { levelForXp, xpForLevel } from "./xp";
 
@@ -41,7 +41,6 @@ export interface Report {
   curioStories: string[];
   /** Repetitions that came up critical (the Fortune talent). */
   criticals: number;
-  riteStarted: boolean;
   /** Time spent performing the rite. */
   riteMs: number;
   /** Quality index if the rite finished during this span. */
@@ -56,7 +55,7 @@ export interface Report {
 }
 
 export function emptyReport(): Report {
-  return { elapsedMs: 0, actionsCompleted: 0, xpGained: {}, itemsGained: {}, itemsUsed: {}, levelUps: [], notesRevealed: [], pagesRead: [], omensFound: [], omensLost: 0, fragments: [], curioStories: [], criticals: 0, riteStarted: false, riteMs: 0, riteCompleted: null, fellBackTo: [], stepsDone: [], tendFinds: 0 };
+  return { elapsedMs: 0, actionsCompleted: 0, xpGained: {}, itemsGained: {}, itemsUsed: {}, levelUps: [], notesRevealed: [], pagesRead: [], omensFound: [], omensLost: 0, fragments: [], curioStories: [], criticals: 0, riteMs: 0, riteCompleted: null, fellBackTo: [], stepsDone: [], tendFinds: 0 };
 }
 
 export function skillLevel(state: GameState, skill: SkillId): number {
@@ -161,12 +160,8 @@ export function advance(input: GameState, ms: number, opts: AdvanceOptions = {})
     return value;
   };
 
-  const tryPrimed = () => {
-    if (beginIfPrimed(state, clock())) report.riteStarted = true;
-  };
 
   refillBoard(state, clock());
-  tryPrimed();
   while ((state.active || state.rite.performing) && remaining > 0) {
     // The rite takes the whole action slot while it runs.
     if (state.rite.performing) {
@@ -302,8 +297,7 @@ export function advance(input: GameState, ms: number, opts: AdvanceOptions = {})
     report.notesRevealed.push(...notes);
     report.omensFound.push(...giveNoteGifts(state, notes));
     refillBoard(state, clock());
-    tryPrimed();
-  }
+    }
 
   state.lastTickAt = input.lastTickAt + ms;
   refillBoard(state, state.lastTickAt);

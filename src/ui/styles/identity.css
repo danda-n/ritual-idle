@@ -453,3 +453,19 @@ input[type="checkbox"] { accent-color: var(--color-accent); width: 16px; height:
 .secret h3 { display: flex; gap: var(--space-2); align-items: baseline; font-size: var(--text-sm); }
 .insight-have { color: var(--folk-candle) !important; border-color: rgb(232 176 78 / 0.45) !important; }
 .hint .buy-hint { justify-self: start; width: auto; }
+
+/* ---------- The Kindling, performed ---------- */
+.ceremony { display: flex; flex-direction: column; gap: var(--space-2); }
+.ceremony-head { display: flex; justify-content: space-between; gap: var(--space-2); align-items: baseline; }
+.ceremony-head strong { font-family: var(--font-display); font-weight: 500; }
+.moment { min-height: 72px; display: flex; flex-direction: column; gap: var(--space-1); align-items: flex-start; justify-content: center; padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); border: 1px dashed var(--color-border); }
+.moment.is-open { border-style: solid; border-color: var(--gold-400); background: rgb(232 176 78 / 0.1); animation: rite-ready 1.6s ease-in-out infinite; }
+.moment.is-open .bar { width: 160px; }
+.moment.is-answered { border-style: solid; border-color: var(--color-accent-deep); color: var(--color-accent); }
+.rite-quality { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; font-size: var(--text-sm); }
+.rite-quality .pips { display: inline-flex; gap: 3px; }
+.rite-quality .pip { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--color-border); }
+.rite-quality .pip.on { background: var(--gold-400); border-color: var(--gold-400); }
+.rite-quality-how { flex-basis: 100%; font-size: var(--text-xs); }
+.petal.is-now path { stroke: var(--gold-400); stroke-width: 2; animation: node-pulse 1.4s ease-in-out infinite; }
+.moment-top { min-height: 28px; font-size: var(--text-xs); animation: rite-ready 1.6s ease-in-out infinite; }

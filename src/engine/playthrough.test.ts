@@ -3,16 +3,17 @@ import { ACTION_DEFS, type ActionId } from "../content/actions";
 import type { ItemId } from "../content/items";
 import { NOTES } from "../content/notes";
 import { REQUESTS } from "../content/requests";
-import { HEARTH_RITE, PART_DEFS, type PartId } from "../content/rite";
+import { HEARTH_RITE, PART_DEFS, QUALITIES, type PartId } from "../content/rite";
 import { BRANCHES } from "../content/talents";
 import { SHOP } from "../content/shop";
 import type { SkillId } from "../content/skills";
-import { beginRite, buy, claimReward, declineRequest, fillRequest, placePart, setSetting, spendTalent, type Result } from "./commands";
+import { answerMoment, beginRite, buy, claimReward, declineRequest, fillRequest, placePart, setSetting, spendTalent, type Result } from "./commands";
 import { actionDurationMs } from "./modifiers";
 import { currentNote, isRecipeKnown, isSkillUnlocked, stepById, type Step } from "./progress";
 import { advance, blockReason, skillLevel, startAction } from "./simulate";
 import { newGame, type GameState } from "./state";
 import { xpForLevel } from "./xp";
+import { openMoment } from "./rite";
 import { pointsFree, rankOf } from "./talents";
 import { SKILL_IDS } from "../content/skills";
 
@@ -205,7 +206,11 @@ class Bot {
     this.riteAt = this.activeMs;
     this.leftAtRite = { ...this.state.inventory };
     this.state = this.must(beginRite(this.state));
-    this.wait(HEARTH_RITE.durationMs);
+    // Play the ceremony: wait for each moment and answer it.
+    while (this.state.rite.performing) {
+      if (openMoment(this.state)) this.state = this.must(answerMoment(this.state));
+      this.wait(1000);
+    }
   }
 
   riteAt = 0;
@@ -236,6 +241,8 @@ describe("Chapter 1 playthrough", () => {
       expect(bot.state.followers).toContain("janko");
       expect(bot.state.levelCap).toBe(HEARTH_RITE.rewards.levelCap);
       expect(blockReason(bot.state, "pick_nettle")).toBeNull();
+      // Every moment answered: Fine, without the Hearth mark or an omen.
+      expect(QUALITIES[bot.state.rite.completed!.quality]).toBe("Fine");
     }
   });
 

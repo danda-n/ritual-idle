@@ -3,7 +3,7 @@ import { GRIMOIRE_DEFS, type GrimoireId } from "../content/grimoire";
 import { ITEMS } from "../content/items";
 import { NOTES } from "../content/notes";
 import { PAGES } from "../content/pages";
-import { PART_IDS } from "../content/rite";
+import { HEARTH_RITE, PART_IDS } from "../content/rite";
 import { SKILL_IDS } from "../content/skills";
 import type { Feature } from "../content/types";
 import { SAVE_VERSION, newGame, type GameState, type RecipeProgress } from "./state";
@@ -135,6 +135,15 @@ function upgradeToV7(state: GameState, data: Partial<GameState>): void {
     p.clues = p.clues ?? 0;
   }
   state.insight = (data.insight ?? 0) + pool;
+  // The rite became a 5-phase ceremony. One under way carries on at the same share of the way
+  // through; the moments it can no longer be asked count as answered, and Still Night counts.
+  delete (state.rite as { primed?: boolean }).primed;
+  const oldRite = state.rite.performing as unknown as { elapsedMs?: number; stillNight?: boolean } | null;
+  if (oldRite && oldRite.elapsedMs !== undefined) {
+    const at = Math.min(0.999, oldRite.elapsedMs / (30 * 60_000)) * HEARTH_RITE.phases.length;
+    const phase = Math.floor(at);
+    state.rite.performing = { phase, phaseMs: (at - phase) * HEARTH_RITE.phaseMs, moments: Array.from({ length: phase }, () => true), omen: !!oldRite.stillNight };
+  }
   if (pool > 0 && state.kept.features.includes("grimoire")) state.experimentsOpen = true;
 }
 

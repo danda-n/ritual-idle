@@ -106,9 +106,8 @@ export interface RecipeProgress {
 }
 
 export interface RiteState {
-  /** Begin automatically as soon as every requirement is met. */
-  primed: boolean;
-  performing: { elapsedMs: number; stillNight: boolean } | null;
+  /** The ceremony under way: which phase, how far into it, which moments were answered. */
+  performing: { phase: number; phaseMs: number; moments: boolean[]; omen: boolean } | null;
   completed: { quality: number; endingSeen: boolean } | null;
 }
 
@@ -164,7 +163,7 @@ export function newGame(now: number = Date.now(), seed: number = randomSeed()): 
     rewardsWaiting: [],
     tend: { endsAt: 0, streak: 0, lastAt: 0 },
     kept: { skills: [], features: [] },
-    rite: { primed: false, performing: null, completed: null },
+    rite: { performing: null, completed: null },
     followers: [],
     stats: { completed: {}, requestsFilled: 0, omensSeen: 0, curiosRead: 0, tended: 0 },
   };

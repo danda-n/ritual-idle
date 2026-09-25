@@ -52,7 +52,6 @@ export function AwaySummary({ away, onClose }: { away: CatchUp; onClose: () => v
           Page deciphered: <strong>{p.title}</strong>
         </p>
       ))}
-      {report.riteStarted && <p>Everything was ready, so the {HEARTH_RITE.name} began by itself.</p>}
       {report.riteMs > 0 && report.riteCompleted === null && <p>The {HEARTH_RITE.name} went on without you ({formatDuration(report.riteMs)}).</p>}
       {report.riteCompleted !== null && (
         <p>

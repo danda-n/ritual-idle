@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { ACTION_DEFS } from "../content/actions";
 import type { SkillId } from "../content/skills";
-import { dismissEnding, setSetting } from "../engine/commands";
+import { answerMoment, dismissEnding, setSetting } from "../engine/commands";
 import type { ItemId } from "../content/items";
 import { isFeatureOpen } from "../engine/progress";
 import { BookIcon, CircleRiteIcon, HouseIcon, LanternIcon } from "./art/icons";
@@ -81,7 +81,7 @@ export function App() {
       <a className="skip-link" href="#main">
         Skip to main content
       </a>
-      <TopBar state={state} onStop={game.stop} stopNote={game.lastStop && formatStop(game.lastStop.reason)} onSettings={() => setSettingsOpen(true)} onGo={goTo} onTend={game.tend} />
+      <TopBar state={state} onStop={game.stop} stopNote={game.lastStop && formatStop(game.lastStop.reason)} onSettings={() => setSettingsOpen(true)} onGo={goTo} onTend={game.tend} onAnswer={() => game.act(answerMoment)} />
       <EmbroideryBand className="band" />
       <Tabs tabs={tabs} value={tab} onChange={setTab} label="Places" />
 

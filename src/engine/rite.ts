@@ -1,13 +1,15 @@
-import { HEARTH_RITE, PART_IDS, SKILLED_RITUALIST, type PartId } from "../content/rite";
+import { HEARTH_RITE, PART_IDS, QUALITY_AT, RITE_MS, type PartId } from "../content/rite";
 import type { SkillId } from "../content/skills";
 import { activeBuffs, riteQualitySteps } from "./modifiers";
 import { isRiteRevealed } from "./progress";
 import type { GameState } from "./state";
 import { levelForXp } from "./xp";
 
-// The Chapter 1 Major Rite. Its parts are placed in the Circle one by one (see `placePart`);
-// once all are placed it takes the action slot for 30 minutes of sim time, runs offline,
-// and always succeeds; preparation only sets the outcome quality. Helpers mutate `state`.
+// The Chapter 1 Major Rite, a short played ceremony. Its parts are placed in the Circle one by one
+// (see `placePart`); once all are placed and Ritualism is high enough, it takes the action slot
+// for five phases. Each phase has one moment the player can answer; answered moments, the Hearth
+// mark and an omen active during it set the quality. It never fails, and if you leave it finishes
+// offline without the moments. Helpers mutate `state`.
 
 export interface Shortfall {
   /** Kindling parts not yet placed in the Circle. */
@@ -33,34 +35,56 @@ export function canBeginRite(state: GameState): string | null {
   return null;
 }
 
-const stillNightActive = (state: GameState, now: number) => activeBuffs(state, now).some((b) => b.id === "still_night");
+const omenActive = (state: GameState, now: number) => activeBuffs(state, now).some((b) => b.id === "still_night");
 
 /** Start the rite (it replaces whatever you were doing). The parts are already in the Circle. */
 export function beginRite(state: GameState, now: number): void {
   state.active = null;
-  state.rite.performing = { elapsedMs: 0, stillNight: stillNightActive(state, now) };
+  state.rite.performing = { phase: 0, phaseMs: 0, moments: [], omen: omenActive(state, now) };
 }
 
-/** If the rite is primed and everything is ready, begin it. Returns true if it began. */
-export function beginIfPrimed(state: GameState, now: number): boolean {
-  if (!state.rite.primed || canBeginRite(state) !== null) return false;
-  beginRite(state, now);
+/** The current phase's moment, if it's open right now (and not yet answered). */
+export function openMoment(state: GameState): { phase: number; leftMs: number } | null {
+  const p = state.rite.performing;
+  if (!p) return null;
+  const def = HEARTH_RITE.phases[p.phase];
+  if (!def || p.moments[p.phase]) return null;
+  const from = def.moment.at * HEARTH_RITE.phaseMs;
+  if (p.phaseMs < from || p.phaseMs >= from + HEARTH_RITE.momentMs) return null;
+  return { phase: p.phase, leftMs: from + HEARTH_RITE.momentMs - p.phaseMs };
+}
+
+/** Answer the open moment: one quality step. Returns false if none is open. */
+export function answerMomentInto(state: GameState): boolean {
+  const m = openMoment(state);
+  if (!m) return false;
+  state.rite.performing!.moments[m.phase] = true;
   return true;
 }
 
-/** The three things that make the rite better, and whether each is met. */
-export function riteFactors(state: GameState, stillNight: boolean) {
+/** What counts toward the quality, and whether each is met. */
+export function riteFactors(state: GameState) {
+  const p = state.rite.performing;
+  const answered = p ? p.moments.filter(Boolean).length : 0;
   return [
-    { label: "Still Night active during the rite", met: stillNight },
-    { label: "The Hearth mark is discovered", met: riteQualitySteps(state) > 0 },
-    { label: `Ritualism ${SKILLED_RITUALIST} or higher`, met: levelForXp(state.skills.ritualism.xp, state.levelCap) >= SKILLED_RITUALIST },
+    { label: `Moments answered (${answered} of ${HEARTH_RITE.phases.length})`, steps: answered, of: HEARTH_RITE.phases.length },
+    { label: "The Hearth mark is discovered", steps: riteQualitySteps(state) > 0 ? 1 : 0, of: 1 },
+    { label: "Still Night active during the rite", steps: p?.omen || omenActive(state, state.lastTickAt) ? 1 : 0, of: 1 },
   ];
 }
 
-/** Quality index into QUALITIES: 0 factors → Sound, 1–2 → Fine, all 3 → Resplendent. */
-export function riteQuality(state: GameState, stillNight: boolean): number {
-  const met = riteFactors(state, stillNight).filter((f) => f.met).length;
-  return met === 0 ? 0 : met < 3 ? 1 : 2;
+/** Quality steps so far (0–7). */
+export function qualitySteps(state: GameState): number {
+  return riteFactors(state).reduce((n, f) => n + f.steps, 0);
+}
+
+/** Quality index into QUALITIES: 0–2 steps → Sound, 3–5 → Fine, 6–7 → Resplendent. */
+export function qualityFor(steps: number): number {
+  return steps >= QUALITY_AT.resplendent ? 2 : steps >= QUALITY_AT.fine ? 1 : 0;
+}
+
+export function riteQuality(state: GameState): number {
+  return qualityFor(qualitySteps(state));
 }
 
 /**
@@ -69,25 +93,26 @@ export function riteQuality(state: GameState, stillNight: boolean): number {
  */
 export function stepRite(state: GameState, ms: number, now: number): { used: number; completedQuality: number | null } {
   const p = state.rite.performing!;
-  if (stillNightActive(state, now)) p.stillNight = true;
-  const used = Math.min(ms, HEARTH_RITE.durationMs - p.elapsedMs);
-  p.elapsedMs += used;
-  if (p.elapsedMs < HEARTH_RITE.durationMs) return { used, completedQuality: null };
+  if (omenActive(state, now)) p.omen = true;
+  const done = p.phase * HEARTH_RITE.phaseMs + p.phaseMs;
+  const used = Math.min(ms, RITE_MS - done);
+  const total = done + used;
+  p.phase = Math.min(HEARTH_RITE.phases.length, Math.floor(total / HEARTH_RITE.phaseMs));
+  p.phaseMs = total - p.phase * HEARTH_RITE.phaseMs;
+  if (total < RITE_MS) return { used, completedQuality: null };
 
-  const quality = riteQuality(state, p.stillNight);
+  const quality = riteQuality(state);
   state.rite.performing = null;
-  state.rite.primed = false;
   state.rite.completed = { quality, endingSeen: false };
   state.levelCap = Math.max(state.levelCap, HEARTH_RITE.rewards.levelCap);
   if (!state.followers.includes(HEARTH_RITE.rewards.follower)) state.followers.push(HEARTH_RITE.rewards.follower);
   return { used, completedQuality: quality };
 }
 
-/** Log lines revealed so far (for the running rite, or all of them once it's done). */
+/** Log lines so far: one per phase reached (all of them, and the finale, once it's done). */
 export function riteLog(state: GameState): string[] {
-  if (state.rite.completed) return [...HEARTH_RITE.log.map(([, t]) => t), HEARTH_RITE.finale];
+  if (state.rite.completed) return [...HEARTH_RITE.phases.map((ph) => ph.log), HEARTH_RITE.finale];
   const p = state.rite.performing;
   if (!p) return [];
-  const f = p.elapsedMs / HEARTH_RITE.durationMs;
-  return HEARTH_RITE.log.filter(([at]) => at <= f).map(([, t]) => t);
+  return HEARTH_RITE.phases.slice(0, p.phase + 1).map((ph) => ph.log);
 }

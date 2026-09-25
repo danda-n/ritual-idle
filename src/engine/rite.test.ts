@@ -2,14 +2,14 @@ import { describe, expect, it } from "vitest";
 import { ACTION_DEFS } from "../content/actions";
 import { NOTES } from "../content/notes";
 import { PAGES } from "../content/pages";
-import { HEARTH_RITE, PART_DEFS, PART_IDS, QUALITIES } from "../content/rite";
-import { beginRite, dismissEnding, placePart, primeRite, releaseOmen, type Result } from "./commands";
+import { HEARTH_RITE, PART_DEFS, PART_IDS, QUALITIES, RITE_MS } from "../content/rite";
+import { answerMoment, beginRite, dismissEnding, placePart, releaseOmen, type Result } from "./commands";
 import { progressOf } from "./grimoire";
 import { actionDurationMs, requestCoin } from "./modifiers";
 import { catchUp } from "./offline";
 import { currentNote, isFeatureOpen, isRiteRevealed, isSkillUnlocked } from "./progress";
 import { REQUESTS } from "../content/requests";
-import { riteLog, riteQuality, riteShortfall } from "./rite";
+import { openMoment, qualityFor, qualitySteps, riteLog, riteShortfall } from "./rite";
 import { deserialize } from "./save";
 import { advance, blockReason, startAction } from "./simulate";
 import { newGame, type GameState } from "./state";
@@ -92,20 +92,21 @@ describe("performing", () => {
     expect(blockReason(s, "pick_nettle")).toEqual({ kind: "rite_in_progress" });
   });
 
-  it("reveals its log as it runs and finishes after 30 minutes, even offline", () => {
+  it("runs five phases, one log line each, and finishes (without moments) even offline", () => {
     const s = okay(beginRite(ready()));
-    const mid = advance(s, 16 * MIN).state;
-    expect(riteLog(mid).length).toBeGreaterThan(1);
+    const mid = advance(s, 2.5 * HEARTH_RITE.phaseMs).state;
+    expect(mid.rite.performing?.phase).toBe(2);
+    expect(riteLog(mid)).toHaveLength(3);
     expect(mid.rite.completed).toBeNull();
-    const { state, report } = catchUp(s, T0 + 31 * MIN);
-    expect(report.riteCompleted).toBe(0); // Sound: no factors met
-    expect(report.riteMs).toBe(30 * MIN);
+    const { state, report } = catchUp(s, T0 + RITE_MS + MIN);
+    expect(report.riteCompleted).toBe(0); // Sound: nothing answered
+    expect(report.riteMs).toBe(RITE_MS);
     expect(state.rite.completed?.quality).toBe(0);
-    expect(riteLog(state)).toHaveLength(HEARTH_RITE.log.length + 1);
+    expect(riteLog(state)).toHaveLength(HEARTH_RITE.phases.length + 1);
   });
 
   it("rewards: caps to 40, Janko, and the bridge note", () => {
-    const { state, report } = advance(okay(beginRite(ready())), 30 * MIN);
+    const { state, report } = advance(okay(beginRite(ready())), RITE_MS);
     expect(state.levelCap).toBe(40);
     expect(state.followers).toEqual(["janko"]);
     expect(report.notesRevealed).toEqual([NOTES[RITE_NOTE + 1]]);
@@ -113,55 +114,59 @@ describe("performing", () => {
   });
 
   it("cannot be performed twice", () => {
-    const { state } = advance(okay(beginRite(ready())), 30 * MIN);
+    const { state } = advance(okay(beginRite(ready())), RITE_MS);
     expect(beginRite(state).ok).toBe(false);
   });
 });
 
-describe("quality", () => {
-  it("is Sound with no factors, and never fails", () => {
-    expect(QUALITIES[riteQuality(ready(), false)]).toBe("Sound");
+describe("moments", () => {
+  const momentStart = (i: number) => i * HEARTH_RITE.phaseMs + HEARTH_RITE.phases[i]!.moment.at * HEARTH_RITE.phaseMs;
+  const elapsed = (s: GameState) => s.rite.performing!.phase * HEARTH_RITE.phaseMs + s.rite.performing!.phaseMs;
+
+  it("open partway through each phase for a few seconds, and count only then", () => {
+    const s = okay(beginRite(ready()));
+    expect(openMoment(s)).toBeNull();
+    expect(answerMoment(s).ok).toBe(false);
+    const at = advance(s, momentStart(0) + 1000).state;
+    expect(openMoment(at)?.phase).toBe(0);
+    const answered = okay(answerMoment(at));
+    expect(answered.rite.performing?.moments[0]).toBe(true);
+    expect(answerMoment(answered).ok).toBe(false); // once per phase
+    const late = advance(s, momentStart(0) + HEARTH_RITE.momentMs + 10).state;
+    expect(openMoment(late)).toBeNull();
   });
 
-  it("one or two factors make it Fine; all three make it Resplendent", () => {
+  it("answering them all makes it Fine; with the Hearth mark and Still Night, Resplendent", () => {
+    const playAll = (start: GameState) => {
+      let s = okay(beginRite(start));
+      for (let i = 0; i < HEARTH_RITE.phases.length; i++) {
+        s = advance(s, momentStart(i) + 500 - elapsed(s)).state;
+        s = okay(answerMoment(s));
+      }
+      return advance(s, RITE_MS).state.rite.completed!.quality;
+    };
+    expect(QUALITIES[playAll(ready())]).toBe("Fine");
     const mark = { hearth_mark: { ...progressOf(ready(), "hearth_mark"), discovered: true } };
-    const skilled = { ...newGame().skills, ritualism: { xp: xpForLevel(10) } };
-    expect(QUALITIES[riteQuality(ready({ grimoire: mark }), false)]).toBe("Fine");
-    expect(QUALITIES[riteQuality(ready({ grimoire: mark }), true)]).toBe("Fine");
-    expect(QUALITIES[riteQuality(ready({ grimoire: mark, skills: skilled }), true)]).toBe("Resplendent");
+    const night = ready({ grimoire: mark, buffs: [{ id: "still_night", endsAt: T0 + MIN, skill: "ritualism" }] });
+    expect(QUALITIES[playAll(night)]).toBe("Resplendent");
+  });
+});
+
+describe("quality", () => {
+  it("bands: 0–2 steps Sound, 3–5 Fine, 6–7 Resplendent; it never fails", () => {
+    expect([0, 2, 3, 5, 6, 7].map((n) => QUALITIES[qualityFor(n)])).toEqual(["Sound", "Sound", "Fine", "Fine", "Resplendent", "Resplendent"]);
   });
 
   it("counts Still Night released while the rite runs", () => {
     const s = okay(beginRite(ready({ omens: { still_night: 1 } })));
-    const released = okay(releaseOmen(s, "still_night", "scavenging"));
-    expect(advance(released, 30 * MIN).state.rite.completed?.quality).toBe(1); // Fine
-  });
-});
-
-describe("priming", () => {
-  // One bless short of Ritualism 5.
-  const almost = () => ready({ inventory: { salt_line: 1, tallow_candle: 1 }, skills: { ...newGame().skills, ritualism: { xp: xpForLevel(5) - 1 } } });
-
-  it("begins by itself the moment Ritualism reaches the level", () => {
-    const s = okay(primeRite(startAction(almost(), "bless_threshold"), true));
-    const { state, report } = advance(s, 10_000 + 1000);
-    expect(report.riteStarted).toBe(true);
-    expect(state.rite.performing).not.toBeNull();
-  });
-
-  it("begins by itself when the last part is placed", () => {
-    const s = okay(primeRite(ready({ kindling: PART_IDS.filter((p) => p !== "offering"), inventory: { ...PART_DEFS.offering.items } }), true));
-    expect(okay(placePart(s, "offering")).rite.performing).not.toBeNull();
-  });
-
-  it("does nothing while unprimed", () => {
-    const { state } = advance(startAction(almost(), "bless_threshold"), 11_000);
-    expect(state.rite.performing).toBeNull();
+    const released = okay(releaseOmen(s, "still_night", "ritualism"));
+    expect(released.rite.performing?.omen).toBe(true);
+    expect(qualitySteps(released)).toBe(1);
   });
 });
 
 describe("after the chapter", () => {
-  const done = () => advance(okay(beginRite(ready())), 30 * MIN).state;
+  const done = () => advance(okay(beginRite(ready())), RITE_MS).state;
 
   it("Janko speeds up whatever you're doing, more on Chandlery", () => {
     const s = done(); // Herbalism and Chandlery are still level 1 here
@@ -180,13 +185,14 @@ describe("after the chapter", () => {
   });
 
   it("rite state round-trips", () => {
-    const s = advance(okay(beginRite(ready())), 5 * MIN).state;
+    const s = advance(okay(beginRite(ready())), 2 * MIN).state;
     expect(deserialize(JSON.stringify(s)).rite).toEqual(s.rite);
   });
 });
 
 describe("save v5", () => {
-  const v4 = (extra: Partial<GameState>) => JSON.stringify({ ...newGame(T0, 9), version: 4, kindling: undefined, kept: undefined, experimentsOpen: undefined, talents: undefined, ...extra });
+  // Old-format saves, so plain objects (the shapes no longer match today's types).
+  const v4 = (extra: Record<string, unknown>) => JSON.stringify({ ...newGame(T0, 9), version: 4, kindling: undefined, kept: undefined, experimentsOpen: undefined, talents: undefined, ...extra });
 
   it("a finished chapter counts every part as placed", () => {
     const loaded = deserialize(v4({ notesRevealed: 9, rite: { primed: false, performing: null, completed: { quality: 2, endingSeen: true } } }));
@@ -199,6 +205,8 @@ describe("save v5", () => {
     const loaded = deserialize(v4({ notesRevealed: 8, rite: { primed: false, performing: { elapsedMs: 60_000, stillNight: false }, completed: null } }));
     expect(loaded.kindling).toEqual(PART_IDS);
     expect(currentNote(loaded)).toBe(NOTES[RITE_NOTE]);
+    // 1 of the old 30 minutes is the first phase of five, about a sixth of the way in.
+    expect(loaded.rite.performing).toEqual({ phase: 0, phaseMs: expect.closeTo(HEARTH_RITE.phaseMs / 6, 0), moments: [], omen: false });
     expect(advance(loaded, 30 * MIN).state.rite.completed).not.toBeNull();
   });
 

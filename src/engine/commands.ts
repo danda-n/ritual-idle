@@ -6,7 +6,7 @@ import { OMENS, type OmenId } from "../content/omens";
 import { addInsight, buyHintInto, deduce, GRIMOIRE_IDS, glowCount, hintCost, isDiscovered, isSilhouetteVisible, markDiscovered, matches, progressOf, type Fragment, type HintKind } from "./grimoire";
 import { requestCoin, trustMultiplier } from "./modifiers";
 import { applyBuff, giveNoteGifts, grantOmen } from "./omens";
-import { beginIfPrimed, beginRite as startRite, canBeginRite } from "./rite";
+import { answerMomentInto, beginRite as startRite, canBeginRite } from "./rite";
 import { PART_DEFS, type PartId } from "../content/rite";
 import type { SkillId } from "../content/skills";
 import type { BranchId } from "../content/talents";
@@ -115,7 +115,7 @@ export function releaseOmen(input: GameState, id: OmenId, skill?: SkillId): Resu
   const state = structuredClone(input);
   state.omens[id] = (state.omens[id] ?? 0) - 1;
   applyBuff(state, OMENS[id].buff, state.lastTickAt, true, blesses ? skill : undefined);
-  if (state.rite.performing && OMENS[id].buff === "still_night") state.rite.performing.stillNight = true;
+  if (state.rite.performing && OMENS[id].buff === "still_night") state.rite.performing.omen = true;
   return ok(state);
 }
 
@@ -221,7 +221,6 @@ export function placePart(input: GameState, part: PartId): Result {
   const steps: Step[] = [];
   const notes = revealNotes(state, steps);
   const gifts = giveNoteGifts(state, notes);
-  beginIfPrimed(state, state.lastTickAt);
   return ok(state, notes, { gifts, steps });
 }
 
@@ -288,10 +287,11 @@ export function beginRite(input: GameState): Result {
   return ok(state);
 }
 
-/** Prime the rite to begin by itself the moment everything is ready (even offline). */
-export function primeRite(input: GameState, primed: boolean): Result {
-  if (input.rite.completed) return no("The circle is already awake.");
-  return ok({ ...input, rite: { ...input.rite, primed } });
+/** Answer the rite's open moment (one quality step). */
+export function answerMoment(input: GameState): Result {
+  const state = structuredClone(input);
+  if (!answerMomentInto(state)) return no("Nothing to answer right now.");
+  return ok(state);
 }
 
 export function dismissEnding(input: GameState): Result {

@@ -14,7 +14,7 @@ import { rewind } from "../engine/devtools";
 import { OMENS } from "../content/omens";
 import { buffDuration, buffEffects, upgradeEffectFor } from "./effects";
 import { SHOP } from "../content/shop";
-import { HEARTH_RITE, PART_DEFS } from "../content/rite";
+import { PART_DEFS } from "../content/rite";
 import { POINT_EVERY } from "../content/talents";
 import { catchUp, type CatchUp } from "../engine/offline";
 import { clearLocal, loadLocal, saveLocal } from "../engine/save";
@@ -66,7 +66,7 @@ function celebrateCommand(before: GameState, after: GameState, toast: (t: Omit<T
   if (placed.length > 0) {
     toast(placed.map((p) => ({ title: `${PART_DEFS[p].name} is placed · ${after.kindling.length} of 5`, text: "" })));
   }
-  if (after.rite.performing && !before.rite.performing) toast([{ title: "The rite begins", text: `The ${HEARTH_RITE.name} has begun. It takes 30 minutes.` }]);
+  if (after.rite.performing && !before.rite.performing) toast([{ title: "The rite begins", text: "Five phases. Answer each moment as it comes." }]);
 }
 
 function boot(): { state: GameState; away: CatchUp | null; fresh: boolean } {
@@ -103,7 +103,7 @@ export function useGame() {
 
   // New notes and pages pop up while playing; after an absence they appear in the summary instead.
   const announce = useCallback(
-    (report: Partial<Pick<Report, "notesRevealed" | "pagesRead" | "omensFound" | "omensLost" | "fragments" | "curioStories" | "riteStarted" | "fellBackTo" | "itemsGained" | "levelUps" | "criticals" | "stepsDone" | "tendFinds">>) => {
+    (report: Partial<Pick<Report, "notesRevealed" | "pagesRead" | "omensFound" | "omensLost" | "fragments" | "curioStories" | "fellBackTo" | "itemsGained" | "levelUps" | "criticals" | "stepsDone" | "tendFinds">>) => {
       const notes = report.notesRevealed ?? [];
       if (notes.length > 0) setStory((q) => [...q, ...notes.map((note) => ({ note, at: Date.now() }))]);
 
@@ -139,7 +139,6 @@ export function useGame() {
         ...levelToasts,
         ...rareToasts,
         ...(report.fellBackTo ?? []).slice(0, 1).map((id) => ({ title: "Back to gathering", text: `Out of an ingredient, so you went back to ${ACTION_DEFS[id].name.toLowerCase()}.` })),
-        ...(report.riteStarted ? [{ title: "The rite begins", text: `Everything was ready. The ${HEARTH_RITE.name} has begun.` }] : []),
         ...(report.curioStories ?? []).map(() => ({ title: `Curio found (${ref.current.stats.curiosRead}/${CURIO_STORIES.length})`, text: "Read it in the Grimoire." })),
         ...(report.pagesRead ?? []).map((p) => ({
           title: `Page deciphered: ${p.title}`,
