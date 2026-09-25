@@ -33,5 +33,5 @@ Vite + React + TypeScript, Vitest. Electron (Steam) and PixiJS (sanctum scene) c
 - Every engine behavior gets a test in `src/engine/*.test.ts`.
 - Save format changes: bump `SAVE_VERSION` and make `deserialize` upgrade older saves. Never break existing saves.
 - Design guardrails (from the decision log): no real-time gating, no failure on rites, low follower management, generous offline progress, no pay-to-win.
-- Dev builds show a Dev tools panel at the bottom of the page: time skip (through the real offline path), give items, +100 coin, +omen, next note, items for the next part, +5 levels, +fragment. When you add a new timestamp to the state, add it to `rewind` in `devtools.ts` as well.
+- Dev builds show a Dev tools panel at the bottom of the page: time skip (through the real offline path), give items, +100 coin, +omen, next note, items for the next part, +5 levels, +5 insight. When you add a new timestamp to the state, add it to `rewind` in `devtools.ts` as well.
 - Test in the browser on a separate origin (e.g. `http://test.localhost:5391`), which has its own save. Never use the designer's `localhost` save for testing.

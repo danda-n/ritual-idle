@@ -61,7 +61,7 @@ export function AwaySummary({ away, onClose }: { away: CatchUp; onClose: () => v
       {report.curioStories.length > 0 && <p className="text-2">{report.curioStories.length === 1 ? "A curio" : `${report.curioStories.length} curios`} found. Read them in the Grimoire.</p>}
       {report.fragments.length > 0 && (
         <p>
-          {report.fragments.length === 1 ? "A hint fragment" : `${report.fragments.length} hint fragments`} went into the Grimoire.
+          +{report.fragments.reduce((n, f) => n + f.amount, 0)} insight to spend in the Grimoire.
         </p>
       )}
       {report.omensFound.map((o, i) => (

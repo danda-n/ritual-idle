@@ -50,7 +50,7 @@ Chapter 1 has 3 hidden recipes and 2 secrets. Later chapters get about 3–5 hid
 
 The ritual circle in the sanctum is where experiments happen. **Experiments are instant.** They don't use your action slot, so the loop keeps running while you experiment.
 
-**When they open** *(first patch)*: the Circle tab opens at the start, but only for the Kindling's parts. Experiments open with their own side note (`EXPERIMENTS_NOTE` in `src/content/notes.ts`) when the first hint toward a hidden recipe arrives and the Grimoire is open. That's usually Widow Hana's request (it mentions the Dream pillow) or a page past the story pages. Until then the Grimoire's Next step says experiments open with grandmother's next note.
+**When they open** *(first patch; third patch: with the first insight)*: the Circle tab opens at the start, but only for the Kindling's parts. Experiments open with their own side note (`EXPERIMENTS_NOTE` in `src/content/notes.ts`) with the first insight, once the Grimoire is open. That's usually Widow Hana's request or a page past the story pages. From then on, all hidden recipes show in the Grimoire.
 
 ### 4.1 Attuned experiment (solving a hidden recipe)
 1. Open a silhouette in the Grimoire and choose **Attune the circle**.
@@ -84,29 +84,32 @@ The Grimoire keeps the notes, so the player doesn't have to.
 
 ---
 
-## 6. Escalating hints
+## 6. Hints you buy with insight *(third patch; replaces the escalating thresholds)*
 
-Each hidden recipe has **three hint levels**. Hints are **addressed**: every fragment lands on its own recipe's silhouette, so progress is always visible.
+**Insight is one pool**, counted on the Grimoire (and floated quietly on its tab, never toasted). You spend it on the hint you want, when you want it. That makes it a choice rather than a counter that ticks up by itself, and it gives secrets a way in.
 
-| Level | Style | Example (Dream pillow) | Unlocks at |
+| Hint | For | Example (Dream pillow) | Cost |
 |---|---|---|---|
-| **I. Riddle** | Poetic, in grandmother's voice | *"…for sleep that listens: the bitter dream-herb, the gentle flower, a scrap of cloth."* | When the silhouette appears (1st fragment) |
-| **II. Category** | Names the kind or source of each ingredient | *"A herb from the forest edge · a herb from the garden · something from the attic."* | **6 Insight** |
-| **III. Plain** | Names one ingredient outright, then a second if needed | *"Mugwort."* … *"Chamomile."* | **12 Insight** (+6 for each further name) |
+| **I. Riddle** | hidden recipes | *"…for sleep that listens: the bitter dream-herb, the gentle flower, a scrap of cloth."* | Free, shown once experiments open |
+| **II. Where each thing comes from** | hidden recipes | *"A herb from the forest edge · a herb from the garden · something from the attic."* | **4** |
+| **III. Name one ingredient** | hidden recipes | *"Mugwort."*, then *"Chamomile."* The last ingredient is always yours to find | **6** each |
+| **A clue** | secrets | Honey-light: *"She kept bees for the light, not the honey."* (3 clues each, read in order) | **4** each |
 
-**Sources of Insight** *(draft)*:
+**Sources of insight:**
 
 | Source | Insight |
 |---|---|
-| A failed attuned attempt | +1 |
-| A deciphered page carrying a fragment for this recipe | +3 |
+| A wrong try at the Circle (attuned) | +1 |
+| A deciphered page past the sixth | +2 |
 | A curio story (attic, chest) | +3 |
-| A village request that mentions the recipe (e.g. Hana: *"your grandmother made me a pillow once…"*) | +2 |
+| A village request that mentions a recipe (the aside is a free hint too: *"your grandmother made me a pillow once…"*) | +2 |
+| Marginalia (the Scholarship keystone) | +1 per page |
 | Divination vision (Chapter 3+) | Reveals one item's right/wrong status directly |
 
-**The effect:** a puzzle fan solves it at level I with a few attempts. A player who dislikes puzzles gets plain names within about 10 attempts plus the page fragments they collect anyway. Nobody gets stuck.
-
-**Accessibility setting:** *"Grimoire assist"* doubles Insight gains, for players who want the story without the puzzle.
+- **The effect:** a puzzle fan solves it from the riddle with a few tries, which also earns insight. A player who dislikes puzzles buys names. Nobody gets stuck.
+- **Accessibility:** *"Grimoire assist"* doubles insight gains.
+- **At the Circle,** known ingredients (proven, or named by a bought hint) sort first as gold chips marked ✓.
+- **Older saves:** each recipe's old insight joins the pool, and the hints it had already shown count as bought.
 
 ---
 
@@ -142,7 +145,7 @@ Each hidden recipe has **three hint levels**. Hints are **addressed**: every fra
 - II: *"Something from the midden · a herb from the forest edge · something from the pantry."*
 - III: *"Iron nail."* → *"St John's wort."*
 
-### Secrets (no hints)
+### Secrets (clues you can buy)
 
 | Secret | Recipe | Reward |
 |---|---|---|
@@ -244,7 +247,7 @@ Save state per recipe: `{ discovered, insight, attempts: [{ items, glows }], pro
 ## 13. Guidance (UI feedback round)
 Every screen answers "what is this for, and what do I do next?". Gameplay, not lore. Logic is in `src/ui/guidance.ts` (tested).
 - **Grimoire:**
-  - A three-step strip: *Collect hints → Guess at the Circle → Discover*.
+  - A three-step strip: *Collect insight → Buy a hint → Try it at the Circle* (third patch).
   - Each recipe page leads with **Gives** (the reward, so the player knows why to bother).
   - Then a **Next step** box that follows progress: "Try any 3 things at the Circle" → "2 of 3 known: find the last one" → "You know all 3: make it at the Circle". It has a button that attunes the Circle and goes there.
   - Then *Belongs* (proven, or named by a hint), *Crossed out*, and *Still possible* (things held that aren't ruled out).

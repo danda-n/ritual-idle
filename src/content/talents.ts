@@ -65,6 +65,6 @@ export const KEYSTONES: Record<SkillId, KeystoneDef> = {
   chandlery: { name: "Long-burning", text: "10% of what you pour comes in pairs.", effect: { kind: "double_output", chance: 0.1 } },
   sigilcraft: { name: "Steady hand", text: "15% of workings use no materials.", effect: { kind: "save_inputs", chance: 0.15 } },
   herbalism: { name: "Dew-picked", text: "Every 5th pick gives 1 extra.", effect: { kind: "every_nth", n: 5 } },
-  scholarship: { name: "Marginalia", text: "Each page deciphered gives +1 insight toward a hidden recipe.", effect: { kind: "insight", amount: 1 } },
+  scholarship: { name: "Marginalia", text: "Each page deciphered gives +1 insight.", effect: { kind: "insight", amount: 1 } },
   ritualism: { name: "Devout", text: "Minor rites give 25% more XP.", effect: { kind: "xp_bonus", bonus: 0.25 } },
 };

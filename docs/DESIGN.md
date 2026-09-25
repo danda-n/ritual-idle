@@ -131,13 +131,32 @@ Item names go through `ItemChip` (`src/ui/components/ItemLookup.tsx`), so any it
   - The control column has a fixed minimum height, whether it holds Start or the bar and Tend.
 - **The omen picker:** Release asks "Bless which work?" with a skill-coloured button per open skill, the running one first (marked "now"). Buff chips name the blessed skill.
 
+## Third patch: claim buttons, the picker, the tree, the ceremony
+- **Claim buttons:** gold, full-width in the tracker ("Claim · +2 beeswax"). An XP choice opens the skill picker.
+- **The skill picker** (`components/SkillPicker.tsx`, used for omen blessings and XP choices):
+  - A dialog with the effect line in candle gold on top, then anything already active, then one tile per open skill.
+  - Each tile has a skill-colour stripe, the icon, the name and the level, and "working on it now" or "helps your next step" when that applies.
+- **The omen shelf** is just jars, the effect in one line, one Release button, and the active blessings, each with its skill icon, a draining bar in the skill colour and the time left.
+- **The talent tree of life** (`components/TalentTree.tsx`):
+  - SVG: a stitched trunk from the skill's root to a keystone flower, and four curling limbs with leaves.
+  - Nodes: taken = filled in the skill colour; next = an outline with a slow pulse; locked = dim.
+  - The flower blooms in the skill colour when a branch is full. The caption under it says what the hovered or focused node does.
+- **The ceremony:**
+  - The phase and time left, the phase bar, and a moment box (dashed while waiting; gold and pulsing with a 12-second draining bar when open; ticked when answered).
+  - Quality pips (7) with the outcome so far. The current part's petal pulses on the rosette.
+  - During the rite the top bar shows the phase and, when a moment is open, its button.
+- **Insight** shows as "✦ N insight" in candle gold. Hint buttons read "Name one ingredient · 6 ✦" and are disabled with the shortfall in their tooltip.
+- **Dialogs stack:** Escape closes only the top one.
+
 ## Words (one per thing)
 - **the Circle**: the place (lowercase "circle" only inside lore text)
 - **the Kindling**: the chapter's rite; its five **parts** are *placed* in the Circle
 - **experiments**: optional guesses at the Circle (hidden recipes and secrets)
 - **talents**: per-skill choices bought with **talent points**
 - **Tend**: the hands-on bonus (the button, the meter, the streak)
-- **steps**: the small tasks inside a stage
+- **steps**: the small tasks inside a stage; their **rewards** are *claimed*
+- **insight**: the pool you *spend* on hints; **clues** are secrets' hints
+- **moments**: the rite's prompts to answer
 - **recipe**: a craftable action
 - **hidden recipe**: a Grimoire entry found by hints
 - **secret**: found with no hints

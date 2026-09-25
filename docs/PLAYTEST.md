@@ -3,7 +3,7 @@
 ## Setup
 - **Starting fresh:** use Settings (the gear) → Save, export and import → Reset.
 - **Keep dev tools out of the playtest.** They appear only in `npm run dev`. For a clean run use `npm run build` and then `npm run preview`.
-- **Target times:** about 1.5–2 hours of play to begin the Rite, then 30 minutes for the Rite itself (it runs while you're away). A new skill every 10–15 minutes.
+- **Target times:** about 30–35 minutes for the chapter, the rite included (a 5-minute ceremony you play). A new skill every 4–5 minutes.
 
 ## Try each of these once
 1. **Follow grandmother's notes using only the Go and Place buttons.** Is the next step always obvious?
@@ -27,6 +27,15 @@
 - **Did you use Tend?** When did you stop, and why?
 - **Which skill did you bless with Still Night,** and did it feel worth it?
 - **Did you read grandmother's lines,** or only the steps?
+
+## Third patch: questions
+- **Was there ever a stretch where you waited for a level** with nothing useful to do?
+- **Did anything you made feel pointless?**
+- **Which rewards did you enjoy claiming?** Where did you put the XP choices?
+- **Did omens every few minutes change which skill you worked on?**
+- **Did the rite's moments feel like part of the ceremony,** or a chore?
+- **What did you buy with insight first?** Did the clues make secrets findable?
+- **Is ~30 minutes a good length for this chapter?**
 
 ## Write down
 - **The first moment you didn't know what to do**, and where you were.

@@ -109,7 +109,7 @@ export interface RequestDef<I extends string> {
   trust: number;
   /** Trust needed before this request can appear on the board. */
   minTrust: number;
-  /** An aside when filled, carrying a hint fragment toward a hidden recipe. */
+  /** An aside when filled (a free hint toward a hidden recipe), and some insight. */
   mentions?: { recipe: string; aside: string };
 }
 

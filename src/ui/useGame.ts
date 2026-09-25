@@ -166,7 +166,7 @@ export function useGame() {
       if (dt <= 0) return;
       if (dt > OFFLINE_GAP_MS) {
         const result = catchUp(s, now);
-        // Commit first, so announcements read the new state (e.g. a fragment's new insight).
+        // Commit first, so announcements read the new state.
         commit(result.state);
         if (result.awayMs >= SUMMARY_THRESHOLD_MS) setAway(result);
         else announce(result.report);

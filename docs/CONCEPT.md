@@ -577,3 +577,19 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
 - **Still Night blesses a skill you choose** on release: +50% speed and chance finds ×2 for 15 minutes. It used to bless Scholarship and Ritualism, which rarely mattered.
 - **Notes are task-first.** A new stage shows its steps, rewards, needs and a Go button; grandmother gets one line, and the full note lives in the Grimoire journal. Toasts say what you got; story stays in the rite log, curios and pages.
 - **Rows never change height on hover:** the rates line always takes its space and is only revealed.
+
+### Third patch: no grinding, a played rite, insight you spend
+- **Sequencing rule: no grinding, nothing useless.**
+  - Every step's count earns the level the next step needs, and everything crafted is spent by a later step or a part. The playthrough test enforces both.
+  - Second recipes come at level 2, third at 3.
+  - Gatherers show only once something uses their finds.
+- **The chapter is shorter:** the rite begins at ~22 minutes (efficient idle play), and the chapter is ~27–35 minutes. This follows from the no-grind rule and was chosen over bigger parts. Chapter II carries more length.
+- **Step rewards are claimed and varied:** a Surge (×2 speed for 20s), XP into a skill you pick, items, an omen. Claiming never gates progress.
+- **Omens are a rhythm, not a rarity:** about every 4–5 minutes, ×2 speed and ×2 chance finds on a chosen skill for 2 minutes. The shelf holds 2 (3 with the upgrade).
+- **The keystone blooms free** when a branch is full. Talents are drawn as a folk tree of life.
+- **Insight is spent, not accumulated:** one pool, no toasts. You buy a recipe's categories, an ingredient's name, or a secret's clue, so secrets are findable.
+- **The rite is played, not waited for.** It replaces the 30-minute rite (which asked players to leave) with 5 phases of a minute, each with a 12-second moment to answer. Quality comes from moments answered, the Hearth mark and an omen. It still never fails, and still finishes offline.
+- **Fixed:**
+  - Tend no longer finishes a repetition at once (progress is a fraction now).
+  - Escape closes only the top dialog.
+  - Smoke the rooms states its effect.
