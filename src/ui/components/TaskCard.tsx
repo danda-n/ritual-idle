@@ -2,7 +2,7 @@ import type { ItemId } from "../../content/items";
 import { PART_DEFS, type PartId } from "../../content/rite";
 import type { Note } from "../../engine/progress";
 import type { GameState } from "../../engine/state";
-import { noteUnlocks, rewardText, stepPlace, stepsOf, taskName, taskPlace, type Place } from "../tasks";
+import { noteUnlocks, rewardText, stepPlace, stepProgress, stepsOf, taskName, taskPlace, type Place } from "../tasks";
 import { ItemChip } from "./ItemLookup";
 import { Modal } from "./Modal";
 
@@ -37,7 +37,10 @@ export function TaskCard({ note, state, onClose, onGo }: { note: Note; state: Ga
               <span className="task-step-mark" aria-hidden="true">
                 {done(s) ? "✓" : s === current ? "▶" : "·"}
               </span>
-              <span>{s.label}</span>
+              <span>
+                {s.label}
+                {!done(s) && stepProgress(state, s) && <span className="num muted"> {stepProgress(state, s)}</span>}
+              </span>
               {rewardText(s) && <span className="task-reward num">{rewardText(s)}</span>}
             </li>
           ))}

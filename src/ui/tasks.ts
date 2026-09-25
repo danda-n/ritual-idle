@@ -1,9 +1,8 @@
 import { ACTION_DEFS, type ActionId } from "../content/actions";
-import { NOTES } from "../content/notes";
 import { HEARTH_RITE, PART_DEFS, type PartId } from "../content/rite";
 import { SKILLS } from "../content/skills";
 import type { GoalDef } from "../content/types";
-import type { Note, Step } from "../engine/progress";
+import { revealedNotes, sinceStageStart, stageOrder, type Note, type Step } from "../engine/progress";
 import { ITEMS, type ItemId } from "../content/items";
 import { BUFFS } from "../content/buffs";
 import { OMENS, type OmenId } from "../content/omens";
@@ -14,7 +13,12 @@ import type { GameState } from "../engine/state";
 
 // Chapter steps, derived from grandmother's notes: each note with a goal is one step.
 
-export const STEPS = NOTES.map((n, i) => ({ note: n as Note, index: i })).filter((s) => "goal" in s.note);
+/** The chapter's steps (one per note with a goal), in the order this player meets them. */
+export function chapterSteps(state: GameState): { note: Note; index: number }[] {
+  return stageOrder(state)
+    .map((n, i) => ({ note: n as Note, index: i }))
+    .filter((s) => "goal" in s.note);
+}
 
 /** Short, plain task name for a note's goal. */
 export function taskName(goal: GoalDef<ActionId>): string {
@@ -80,8 +84,7 @@ export function isRareDrop(item: string, threshold = 0.1): boolean {
  */
 export function partState(state: GameState, part: PartId): "placed" | "open" | "later" {
   if (state.kindling.includes(part)) return "placed";
-  const at = NOTES.findIndex((n) => "goal" in n && n.goal.kind === "place" && n.goal.part === part);
-  return at >= 0 && at < state.notesRevealed ? "open" : "later";
+  return revealedNotes(state).some((n) => "goal" in n && n.goal.kind === "place" && n.goal.part === part) ? "open" : "later";
 }
 
 /**
@@ -123,4 +126,13 @@ export function stepsOf(state: GameState, note: Note): { steps: readonly Step[];
   const steps = ("steps" in note ? note.steps : []) as readonly Step[];
   const done = (s: Step) => state.stepsDone.includes(s.id);
   return { steps, done, current: steps.find((s) => !done(s)) ?? null };
+}
+
+/** A step's live progress ("12/40"), or null for steps without a count. */
+export function stepProgress(state: GameState, step: Step): string | null {
+  const g = step.goal;
+  if (g.kind !== "complete") return null;
+  const def = ACTION_DEFS[g.action];
+  const held = Object.keys(def.inputs).length > 0 && def.outputs[0] ? state.inventory[def.outputs[0].item] ?? 0 : 0;
+  return `${Math.min(g.count, Math.max(sinceStageStart(state, g.action), held))}/${g.count}`;
 }

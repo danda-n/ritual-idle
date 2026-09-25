@@ -11,31 +11,31 @@ export const KINDLING_PARTS = {
   light: {
     name: "The Light",
     skill: "chandlery",
-    items: { tallow_candle: 25, beeswax_candle: 6 },
+    items: { tallow_candle: 40, beeswax_candle: 8 },
     placed: "Candles at the four quarters. The chalk under them remembers being warm.",
   },
   ward: {
     name: "The Ward",
     skill: "sigilcraft",
-    items: { salt_line: 25, ash_sigil: 10 },
+    items: { salt_line: 40, ash_sigil: 12 },
     placed: "Salt closes the ring. The draught along the floor stops.",
   },
   smoke: {
     name: "The Smoke",
     skill: "herbalism",
-    items: { smudge: 13, mugwort_incense: 4 },
+    items: { smudge: 16, mugwort_incense: 6 },
     placed: "Smoke settles in the circle and stays there, as if the room had walls inside it.",
   },
   words: {
     name: "The Words",
     skill: "scholarship",
-    items: { deciphered_page: 7, litany: 1 },
+    items: { deciphered_page: 21, litany: 1 },
     placed: "You lay the Litany open in the middle. The ink looks fresher than it did.",
   },
   offering: {
     name: "The Offering",
     skill: "ritualism",
-    items: { bread: 2, salt: 3, consecrated_salt: 10 },
+    items: { bread: 2, salt: 3, consecrated_salt: 15 },
     placed: "Bread and salt at the circle's edge, the way she wrote it. Now it only needs waking.",
   },
 } as const satisfies Record<string, { name: string; skill: SkillId; items: Partial<Record<ItemId, number>>; placed: string }>;
@@ -45,13 +45,13 @@ export const PART_IDS = Object.keys(KINDLING_PARTS) as PartId[];
 export const PART_DEFS: Record<PartId, { name: string; skill: SkillId; items: Partial<Record<ItemId, number>>; placed: string }> = KINDLING_PARTS;
 
 // The Chapter 1 Major Rite (docs/CHAPTER1.md §8): a short rite that runs by itself (offline too).
-// It needs every part placed and Ritualism 2. Five phases, one per part, each with a log line.
+// It needs every part placed and Ritualism 3. Five phases, one per part, each with a log line.
 // It never fails. Its quality comes from optional offerings chosen before it begins, and changes
 // only cosmetics and lore, never power.
 export const HEARTH_RITE = {
   name: "Kindling of the Hearth-Circle",
   description: "Wake the circle grandmother drew in the floor. It has been waiting for you.",
-  skills: { ritualism: 2 } as Partial<Record<SkillId, number>>,
+  skills: { ritualism: 3 } as Partial<Record<SkillId, number>>,
   /** Length of each phase (five phases: about 3 minutes in all). */
   phaseMs: 36_000,
   /** One phase per part, in order, each with the line it adds to the log. */

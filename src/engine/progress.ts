@@ -1,4 +1,4 @@
-import type { ActionId } from "../content/actions";
+import { ACTION_DEFS, type ActionId } from "../content/actions";
 import { EXPERIMENTS_NOTE, NOTES } from "../content/notes";
 import type { PartId } from "../content/rite";
 import { PAGES } from "../content/pages";
@@ -8,8 +8,9 @@ import { levelForXp, xpForLevel } from "./xp";
 import type { GameState } from "./state";
 
 // Chapter 1 onboarding: grandmother's notes unlock skills, deciphered pages unlock recipes.
-// Everything here is derived from `notesRevealed` and lifetime action counts,
-// so editing the notes or pages data never needs a save migration.
+// NOTES is the chapter's stages in their default order. The middle three (the Ward, the Smoke and
+// the Words) can be done in any order: `state.middleOrder` records the player's choices, and
+// `notesRevealed` counts stages reached along that order.
 
 export type Note = (typeof NOTES)[number] | typeof EXPERIMENTS_NOTE;
 export type Page = (typeof PAGES)[number];
@@ -18,13 +19,54 @@ export function completedCount(state: GameState, id: ActionId): number {
   return state.stats.completed[id] ?? 0;
 }
 
-export function revealedNotes(state: GameState): readonly (typeof NOTES)[number][] {
-  return NOTES.slice(0, state.notesRevealed);
+/** Where the free-order stages sit in NOTES (the Ward, the Smoke, the Words). */
+export const MIDDLE_AT = [2, 3, 4] as const;
+
+type StageNote = (typeof NOTES)[number];
+
+function partOf(note: StageNote): PartId | null {
+  return "goal" in note && note.goal.kind === "place" ? (note.goal.part as PartId) : null;
+}
+
+/** The middle parts, in the order the player chose them (the rest in their default order). */
+export function middleParts(state: GameState): PartId[] {
+  const all = MIDDLE_AT.map((i) => partOf(NOTES[i]!)!);
+  return [...state.middleOrder, ...all.filter((p) => !state.middleOrder.includes(p))];
+}
+
+/** The stages in the order this player meets them. */
+export function stageOrder(state: GameState): StageNote[] {
+  const byPart = (p: PartId) => NOTES.find((n) => partOf(n) === p)!;
+  const middle = middleParts(state).map(byPart);
+  return [...NOTES.slice(0, MIDDLE_AT[0]), ...middle, ...NOTES.slice(MIDDLE_AT[2] + 1)];
+}
+
+export function revealedNotes(state: GameState): readonly StageNote[] {
+  return stageOrder(state).slice(0, state.notesRevealed);
 }
 
 /** The newest note, whose goal the player is working on. */
-export function currentNote(state: GameState): (typeof NOTES)[number] {
-  return NOTES[Math.min(state.notesRevealed, NOTES.length) - 1]!;
+export function currentNote(state: GameState): StageNote {
+  return stageOrder(state)[Math.min(state.notesRevealed, NOTES.length) - 1]!;
+}
+
+/**
+ * The middle parts the player can choose between right now: the current stage is done and the
+ * next one is a free choice they haven't made yet. Empty otherwise.
+ */
+export function stageChoices(state: GameState): PartId[] {
+  const next = state.notesRevealed; // index of the next stage
+  if (!(MIDDLE_AT as readonly number[]).includes(next) || state.middleOrder.length > next - MIDDLE_AT[0]) return [];
+  const p = goalProgress(state, currentNote(state));
+  if (!p || p.done < p.target) return [];
+  // The parts not reached yet. When only one is left, there's nothing to choose.
+  const left = middleParts(state).slice(next - MIDDLE_AT[0]);
+  return left.length > 1 ? left : [];
+}
+
+/** How many times an action was done since the current stage began. */
+export function sinceStageStart(state: GameState, id: ActionId): number {
+  return completedCount(state, id) - (state.stageStart[id] ?? 0);
 }
 
 export function goalProgress(state: GameState, note: Note): { done: number; target: number } | null {
@@ -72,8 +114,13 @@ export function currentSteps(state: GameState): readonly Step[] {
 export function isStepMet(state: GameState, step: Step): boolean {
   const g = step.goal;
   switch (g.kind) {
-    case "complete":
-      return completedCount(state, g.action) >= g.count;
+    case "complete": {
+      // Counted from the stage's start; a craft is also met by holding enough already.
+      if (sinceStageStart(state, g.action) >= g.count) return true;
+      const def = ACTION_DEFS[g.action];
+      const main = def.outputs[0];
+      return Object.keys(def.inputs).length > 0 && main !== undefined && (state.inventory[main.item] ?? 0) >= g.count;
+    }
     case "level":
       return levelForXp(state.skills[g.skill].xp, state.levelCap) >= g.level;
     case "requests":
@@ -121,8 +168,9 @@ export function revealNotes(state: GameState, claimed: Step[] = []): Note[] {
   while (state.notesRevealed < NOTES.length) {
     const progress = goalProgress(state, currentNote(state));
     if (!progress || progress.done < progress.target) break;
-    state.notesRevealed++;
-    revealed.push(currentNote(state));
+    // A free-order stage comes next: wait for the player to choose (see `chooseStage`).
+    if (stageChoices(state).length > 0) break;
+    revealed.push(enterNextStage(state));
     claimed.push(...claimSteps(state));
   }
   if (experimentsDue(state)) {
@@ -130,6 +178,13 @@ export function revealNotes(state: GameState, claimed: Step[] = []): Note[] {
     revealed.push(EXPERIMENTS_NOTE);
   }
   return revealed;
+}
+
+/** Move to the next stage along the player's order, remembering where its counts start. */
+export function enterNextStage(state: GameState): StageNote {
+  state.notesRevealed++;
+  state.stageStart = { ...state.stats.completed };
+  return currentNote(state);
 }
 
 /** Experiments open with the first insight, once the Grimoire is open. */

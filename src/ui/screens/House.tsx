@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { ACTION_DEFS, type ActionId } from "../../content/actions";
+import { ACTION_DEFS, tierOf, type ActionId } from "../../content/actions";
 import { ITEMS, type ItemId } from "../../content/items";
 import { SKILL_IDS, SKILLS, type SkillId } from "../../content/skills";
 import { inputsLastMs, outputPerHour, revealedRecipes, timeToCapMs, timeToNextLevelMs, xpPerHour } from "../../engine/estimates";
-import { NOTES } from "../../content/notes";
 import { PART_DEFS, type PartId } from "../../content/rite";
 import type { Result } from "../../engine/commands";
 import { pointsFree } from "../../engine/talents";
@@ -12,7 +11,7 @@ import { BUFFS, type BuffId } from "../../content/buffs";
 import { buffDuration, buffEffects } from "../effects";
 import { taskName } from "../tasks";
 import { actionDurationMs } from "../../engine/modifiers";
-import { isRecipeKnown, isSkillUnlocked } from "../../engine/progress";
+import { isRecipeKnown, isSkillUnlocked, middleParts, MIDDLE_AT, stageChoices, stageOrder } from "../../engine/progress";
 import { blockReason, skillLevel, type StopReason } from "../../engine/simulate";
 import type { GameState } from "../../engine/state";
 import { levelProgress } from "../../engine/xp";
@@ -57,12 +56,32 @@ export function SkillNav({ state, skill, onSelect }: { state: GameState; skill: 
   );
 }
 
-/** One quiet tile for the next skill to arrive, and what brings it. */
+/** One quiet tile for the next skill to arrive, and what brings it (or a choice of them). */
 function NextSkill({ state }: { state: GameState }) {
-  const at = NOTES.findIndex((n, i) => i >= state.notesRevealed && n.unlocks.some((s) => !isSkillUnlocked(state, s)));
+  const choices = stageChoices(state);
+  if (choices.length > 0) {
+    return (
+      <div className="skill-tile next-skill" aria-label="Next: choose a part in the chapter tracker">
+        <span className="skill-tile-name">Next skill</span>
+        <span className="next-skill-when">You choose: see the chapter tracker</span>
+      </div>
+    );
+  }
+  const order = stageOrder(state);
+  const at = order.findIndex((n, i) => i >= state.notesRevealed && n.unlocks.some((s) => !isSkillUnlocked(state, s)));
   if (at < 1) return null;
-  const skill = NOTES[at]!.unlocks[0]!;
-  const before = NOTES[at - 1]!;
+  // The next stage is still one of several free choices: don't pretend to know which.
+  const left = middleParts(state).slice(Math.max(0, at - MIDDLE_AT[0]));
+  if ((MIDDLE_AT as readonly number[]).includes(at) && left.length > 1) {
+    return (
+      <div className="skill-tile next-skill" aria-label="Next: you choose the next part">
+        <span className="skill-tile-name">Next skill</span>
+        <span className="next-skill-when">Your choice, once this part is placed</span>
+      </div>
+    );
+  }
+  const skill = order[at]!.unlocks[0]!;
+  const before = order[at - 1]!;
   if (!("goal" in before)) return null;
   const when = before.goal.kind === "place" ? `once ${PART_DEFS[before.goal.part as PartId].name.replace(/^The /, "the ")} is placed` : `after ${taskName(before.goal).toLowerCase()}`;
   return (
@@ -137,7 +156,7 @@ function ActionRow({ id, state, onStart, fresh }: { id: ActionId; state: GameSta
       <div className="action-name">
         <strong>{def.name}</strong>
         <span className="muted num">
-          Lvl {def.level} · {+(actionDurationMs(state, id) / 1000).toFixed(1)}s · {def.xp} xp
+          Tier {tierOf(def.level)} · Lvl {def.level} · {+(actionDurationMs(state, id) / 1000).toFixed(1)}s · {def.xp} xp
         </span>
       </div>
       <div className="action-io">

@@ -3,11 +3,11 @@ import { ACTION_DEFS } from "../content/actions";
 import { NOTES } from "../content/notes";
 import { PAGES } from "../content/pages";
 import { HEARTH_RITE, PART_DEFS, PART_IDS, QUALITIES, RITE_MS } from "../content/rite";
-import { beginRite, dismissEnding, placePart, releaseOmen, type Result } from "./commands";
+import { beginRite, chooseStage, dismissEnding, placePart, releaseOmen, type Result } from "./commands";
 import { progressOf } from "./grimoire";
 import { actionDurationMs, requestCoin } from "./modifiers";
 import { catchUp } from "./offline";
-import { currentNote, isFeatureOpen, isRiteRevealed, isSkillUnlocked } from "./progress";
+import { currentNote, isFeatureOpen, isRiteRevealed, isSkillUnlocked, stageChoices } from "./progress";
 import { REQUESTS } from "../content/requests";
 import { canOffer, offeringsMet, qualityFor, riteLog, riteShortfall } from "./rite";
 import { deserialize } from "./save";
@@ -71,11 +71,18 @@ describe("placing parts", () => {
     expect(placePart(once, "light").ok).toBe(false);
   });
 
-  it("completes the stage's note and brings the next skill", () => {
+  it("after the Light, you choose which part comes next, and it brings its skill", () => {
     const s = { ...early(), inventory: { ...PART_DEFS.light.items } };
     const r = placePart(s, "light");
-    expect(r.ok && r.notes).toEqual([NOTES[2]]);
-    expect(okay(r).notesRevealed).toBe(3);
+    expect(r.ok && r.notes).toEqual([]);
+    const placed = okay(r);
+    expect(stageChoices(placed)).toEqual(["ward", "smoke", "words"]);
+    expect(chooseStage(placed, "light").ok).toBe(false);
+    const chose = chooseStage(placed, "words");
+    const words = NOTES.find((n) => "goal" in n && n.goal.kind === "place" && n.goal.part === "words")!;
+    expect(chose.ok && chose.notes).toEqual([words]);
+    expect(isSkillUnlocked(okay(chose), "scholarship")).toBe(true);
+    expect(isSkillUnlocked(okay(chose), "sigilcraft")).toBe(false);
   });
 
   it("needs the Circle to be open", () => {

@@ -39,6 +39,8 @@ export function deserialize(json: string): GameState {
     rite: { ...base.rite, ...data.rite },
     kept: { ...base.kept, ...data.kept },
     rewardsWaiting: data.rewardsWaiting ?? [],
+    middleOrder: data.middleOrder ?? [],
+    stageStart: data.stageStart ?? {},
     talents: { ...data.talents },
     version: SAVE_VERSION,
   };

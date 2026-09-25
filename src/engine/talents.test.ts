@@ -143,8 +143,9 @@ describe("keystones", () => {
   });
 
   it("Keen eye: chance finds are 50% more likely", () => {
-    const plain = made(at(8), "search_attic", 4000).inventory.burnt_page!;
-    const keen = made(at(8, "scavenging", key("scavenging")), "search_attic", 4000).inventory.burnt_page!;
+    // Salt from the pantry is a chance find (50%).
+    const plain = made(at(1), "search_pantry", 4000).inventory.salt!;
+    const keen = made(at(1, "scavenging", key("scavenging")), "search_pantry", 4000).inventory.salt!;
     expect(keen / plain).toBeGreaterThan(1.35);
     expect(keen / plain).toBeLessThan(1.65);
   });
@@ -165,7 +166,7 @@ describe("keystones", () => {
   });
 
   it("Marginalia: each page deciphered gives +1 insight", () => {
-    const s = { ...at(1, "scholarship", key("scholarship")), stats: { ...at(1).stats, completed: { decipher_page: 0 } }, inventory: { burnt_page: 2, tallow_candle: 2 } };
+    const s = { ...at(3, "scholarship", key("scholarship")), stats: { ...at(3).stats, completed: { decipher_page: 0 } }, inventory: { burnt_page: 2, tallow_candle: 2 } };
     const { state } = advance(startAction(s, "decipher_page"), 2 * actionDurationMs(s, "decipher_page"));
     expect(state.insight).toBe(2);
   });

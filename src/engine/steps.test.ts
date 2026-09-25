@@ -4,7 +4,8 @@ import { NOTES } from "../content/notes";
 import { claimReward, type Result } from "./commands";
 import { BUFFS } from "../content/buffs";
 import { actionDurationMs } from "./modifiers";
-import { currentSteps, revealNotes, type Step } from "./progress";
+import { currentSteps, revealNotes, stepById, type Step } from "./progress";
+import { PART_DEFS, type PartId } from "../content/rite";
 import { deserialize } from "./save";
 import { advance, startAction } from "./simulate";
 import { newGame, type GameState } from "./state";
@@ -27,26 +28,30 @@ describe("stage steps", () => {
   });
 
   it("an XP choice goes to the skill you pick (an open one), once", () => {
-    const first = NOTES[0].steps[0];
-    const s = { ...newGame(T0, 1), stepsDone: ["start.pantry"], rewardsWaiting: ["start.pantry"] };
-    expect(claimReward(s, "start.pantry").ok).toBe(false);
-    expect(claimReward(s, "start.pantry", "herbalism").ok).toBe(false); // not open yet
-    const claimed = okay(claimReward(s, "start.pantry", "scavenging"));
-    expect(claimed.skills.scavenging.xp).toBe(first.reward.xpChoice.amount);
+    const place = stepById("light.place")!;
+    if (!place.reward || !("xpChoice" in place.reward)) throw new Error("expected an XP choice");
+    const s = { ...newGame(T0, 1), notesRevealed: 2, stepsDone: ["light.place"], rewardsWaiting: ["light.place"] };
+    expect(claimReward(s, "light.place").ok).toBe(false);
+    expect(claimReward(s, "light.place", "herbalism").ok).toBe(false); // not open yet
+    const claimed = okay(claimReward(s, "light.place", "scavenging"));
+    expect(claimed.skills.scavenging.xp).toBe(place.reward.xpChoice.amount);
     expect(claimed.rewardsWaiting).toEqual([]);
-    expect(claimReward(claimed, "start.pantry", "scavenging").ok).toBe(false);
+    expect(claimReward(claimed, "light.place", "scavenging").ok).toBe(false);
   });
 
   it("a Surge doubles speed on everything for its few seconds", () => {
-    const s = okay(claimReward({ ...startAction(newGame(T0, 1), "search_pantry"), notesRevealed: 7, stepsDone: ["perform.smoke"], rewardsWaiting: ["perform.smoke"] }, "perform.smoke"));
+    const s = okay(claimReward({ ...startAction(newGame(T0, 1), "search_pantry"), stepsDone: ["start.pantry"], rewardsWaiting: ["start.pantry"] }, "start.pantry"));
     const base = ACTION_DEFS.search_pantry.seconds * 1000;
     expect(actionDurationMs(s, "search_pantry")).toBeCloseTo(base / 2);
     expect(actionDurationMs(s, "search_pantry", T0 + BUFFS.surge.durationMs)).toBe(base);
   });
 
-  it("an omen reward lands on the shelf even when it's full", () => {
-    const s = { ...newGame(T0, 1), notesRevealed: 2, omens: { still_night: 9 }, stepsDone: ["light.beeswax"], rewardsWaiting: ["light.beeswax"] };
-    expect(okay(claimReward(s, "light.beeswax")).omens.still_night).toBe(10);
+  it("rewards come only with a stage's first or last step, not every step", () => {
+    for (const n of NOTES) {
+      const steps = ("steps" in n ? n.steps : []) as readonly Step[];
+      const rewarded = steps.filter((st) => st.reward);
+      expect(rewarded.length, n.quote).toBeLessThanOrEqual(1);
+    }
   });
 
   it("waiting rewards never hold the chapter up", () => {
@@ -56,11 +61,39 @@ describe("stage steps", () => {
     expect(state.notesRevealed).toBe(2);
   });
 
-  it("use lifetime counts, so steps already done claim at once when their stage arrives", () => {
-    const s: GameState = { ...newGame(T0, 1), notesRevealed: 2, stats: { ...newGame().stats, completed: { tallow_candle: NOTES[1].steps[0].goal.count } } };
+  it("count from the stage's start, so earlier work doesn't count twice", () => {
+    const need = NOTES[1].steps[0].goal.count;
+    // 99 candles poured before this stage began (and none held): the step isn't done.
+    const s: GameState = { ...newGame(T0, 1), notesRevealed: 2, stageStart: { tallow_candle: 99 }, stats: { ...newGame().stats, completed: { tallow_candle: 99 + need - 1 } } };
+    const claimed: Step[] = [];
+    revealNotes(s, claimed);
+    expect(claimed.map((x) => x.id)).toEqual([]);
+    s.stats.completed.tallow_candle = 99 + need;
+    revealNotes(s, claimed);
+    expect(claimed.map((x) => x.id)).toEqual(["light.candles"]);
+  });
+
+  it("a craft step is also met by holding enough already (no pouring 10 more when you have 200)", () => {
+    const need = NOTES[1].steps[0].goal.count;
+    const s: GameState = { ...newGame(T0, 1), notesRevealed: 2, stageStart: { tallow_candle: 500 }, stats: { ...newGame().stats, completed: { tallow_candle: 500 } }, inventory: { tallow_candle: need } };
     const claimed: Step[] = [];
     revealNotes(s, claimed);
     expect(claimed.map((x) => x.id)).toEqual(["light.candles"]);
+  });
+
+  it("step counts match what the part needs, plus what later steps of the stage use", () => {
+    for (const n of NOTES) {
+      if (!("goal" in n) || n.goal.kind !== "place" || !("steps" in n)) continue;
+      const part = PART_DEFS[n.goal.part as PartId];
+      const steps = n.steps as readonly Step[];
+      steps.forEach((st, i) => {
+        if (st.goal.kind !== "complete") return;
+        const made = ACTION_DEFS[st.goal.action].outputs[0]!.item;
+        if (!(made in part.items)) return;
+        const usedLater = steps.slice(i + 1).reduce((sum, later) => (later.goal.kind === "complete" ? sum + (ACTION_DEFS[later.goal.action].inputs[made as never] ?? 0) * later.goal.count : sum), 0);
+        expect(st.goal.count, st.id).toBe((part.items[made as keyof typeof part.items] ?? 0) + usedLater);
+      });
+    }
   });
 
   it("every stage ends with placing its part, and names only open skills' actions", () => {

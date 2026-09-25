@@ -10,6 +10,7 @@ import { EXPERIMENTS_NOTE } from "../content/notes";
 import { PART_DEFS, type PartId } from "../content/rite";
 import { addInsight } from "./grimoire";
 import { newGame, type GameState } from "./state";
+import { xpForLevel } from "./xp";
 
 const T0 = 1_000_000;
 const START_COUNT = NOTES[0].goal.count;
@@ -108,6 +109,7 @@ describe("burnt pages", () => {
     ...newGame(T0, 1),
     notesRevealed: 5,
     inventory: { burnt_page: 10, tallow_candle: 10 },
+    skills: { ...newGame().skills, scholarship: { xp: xpForLevel(3) } },
   });
 
   it("keeps gated recipes unknown until their page is read", () => {

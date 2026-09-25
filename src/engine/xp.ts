@@ -1,11 +1,14 @@
-// XP curve from docs/CHAPTER1.md §10: XP to next level = BASE × GROWTH^(level − 1), eased for levels 1–3.
+// XP curve from docs/CHAPTER1.md §10: XP to next level = BASE × GROWTH^(level − 1).
 
-export const XP_BASE = 612;
-export const XP_GROWTH = 1.14;
+export const XP_BASE = 110;
+export const XP_GROWTH = 1.1;
 export const MAX_LEVEL = 99;
 
-/** The first levels come quicker (a ramp on levels 1–3), so the opening minutes move. */
-export const EARLY_RAMP = [0.35, 0.55, 0.8] as const;
+/**
+ * Optional easing for the first levels (none now: with a new tier every 3 levels, the curve is
+ * flat enough that the opening moves on its own).
+ */
+export const EARLY_RAMP: readonly number[] = [];
 
 export function xpToNext(level: number): number {
   return Math.floor(XP_BASE * XP_GROWTH ** (level - 1) * (EARLY_RAMP[level - 1] ?? 1));

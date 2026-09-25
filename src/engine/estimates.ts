@@ -1,6 +1,5 @@
 import { ACTION_DEFS, type ActionId } from "../content/actions";
 import { PART_DEFS, PART_IDS, type PartId } from "../content/rite";
-import { NOTES } from "../content/notes";
 import { REQUESTS } from "../content/requests";
 import { SHOP } from "../content/shop";
 import { GRIMOIRE_DEFS } from "../content/grimoire";
@@ -8,7 +7,7 @@ import type { ItemId } from "../content/items";
 import type { SkillId } from "../content/skills";
 import { actionDurationMs, chanceMultiplier, criticalChance, extraYieldChance } from "./modifiers";
 import { isDiscovered } from "./grimoire";
-import { currentNote, isRecipeKnown, isSkillUnlocked, type Step } from "./progress";
+import { currentNote, isRecipeKnown, isSkillUnlocked, revealedNotes, type Step } from "./progress";
 import { skillLevel } from "./simulate";
 import type { GameState } from "./state";
 import { xpForLevel } from "./xp";
@@ -58,8 +57,7 @@ function outputWanted(state: GameState, id: ActionId): boolean {
 
 /** A part is open once the note that asks for it has appeared. */
 function partOpen(state: GameState, part: PartId): boolean {
-  const at = NOTES.findIndex((n) => "goal" in n && n.goal.kind === "place" && n.goal.part === part);
-  return at >= 0 && at < state.notesRevealed;
+  return revealedNotes(state).some((n) => "goal" in n && n.goal.kind === "place" && n.goal.part === part);
 }
 
 /**

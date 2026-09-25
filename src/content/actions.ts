@@ -5,30 +5,62 @@ import type { SkillId } from "./skills";
 type Action = ActionDef<SkillId, ItemId>;
 
 // Chapter 1 actions — mirrors docs/CHAPTER1.md §3. Keep the doc in sync when tuning;
-// src/engine/playthrough.test.ts checks the chapter is still finishable, on pace, and that
-// following the steps never needs grinding.
-// Rules (docs/CHAPTER1.md §2): each skill's second recipe comes at level 2, the third at 3;
-// a craft gives about the XP of gathering its inputs.
+// src/engine/playthrough.test.ts checks the chapter is still finishable in every order, on pace,
+// and that following the steps never needs grinding.
+// Rules (docs/CHAPTER1.md §2):
+// - Recipes come in tiers, a new tier every 3 levels: T1 L1, T2 L3, T3 L6, T4 L9, T5 L12, T6 L15.
+// - Each skill owns what its stage needs (Sigilcraft sweeps its ash, Scholarship searches for its
+//   pages, Herbalism binds its smudge), so the middle stages can come in any order.
+// - A craft gives about the XP of gathering its inputs.
 export const ACTIONS = {
-  // Herbalism
-  pick_nettle: { name: "Pick nettle", skill: "herbalism", level: 1, seconds: 3, xp: 4, inputs: {}, outputs: [{ item: "nettle", qty: 1 }] },
-  pick_chamomile: { name: "Pick chamomile", skill: "herbalism", level: 2, seconds: 3, xp: 5, inputs: {}, outputs: [{ item: "chamomile", qty: 1 }] },
-  pick_yarrow: { name: "Pick yarrow", skill: "herbalism", level: 5, seconds: 3, xp: 8, inputs: {}, outputs: [{ item: "yarrow", qty: 1 }] },
-  pick_mugwort: { name: "Pick mugwort", skill: "herbalism", level: 2, seconds: 4, xp: 7, inputs: {}, outputs: [{ item: "mugwort", qty: 1 }] },
-  pick_stjohns: { name: "Pick St John's wort", skill: "herbalism", level: 10, seconds: 4, xp: 12, inputs: {}, outputs: [{ item: "stjohns", qty: 1 }] },
-  cut_juniper: { name: "Cut juniper", skill: "herbalism", level: 14, seconds: 4, xp: 15, inputs: {}, outputs: [{ item: "juniper", qty: 1 }] },
-
-  // Scavenging
-  sweep_hearth: {
-    name: "Sweep the hearth", skill: "scavenging", level: 2, seconds: 3, xp: 4, inputs: {},
-    outputs: [{ item: "ash", qty: 1 }, { item: "charcoal", qty: 1, chance: 0.1 }],
-  },
+  // Scavenging: the house's stores
   search_pantry: {
     name: "Search the pantry", skill: "scavenging", level: 1, seconds: 3, xp: 4, inputs: {},
     outputs: [{ item: "tallow", qty: 1 }, { item: "salt", qty: 1, chance: 0.5 }],
   },
+  rob_hives: { name: "Rob the old hives", skill: "scavenging", level: 3, seconds: 4, xp: 6, inputs: {}, outputs: [{ item: "beeswax", qty: 1 }] },
+  sift_midden: {
+    name: "Sift the village midden", skill: "scavenging", level: 6, seconds: 4, xp: 10, inputs: {},
+    outputs: [{ item: "iron_nail", qty: 1 }, { item: "rags", qty: 1, chance: 0.3 }],
+  },
+  open_chest: {
+    name: "Open grandmother's chest", skill: "scavenging", level: 9, seconds: 4, xp: 13, inputs: {},
+    outputs: [{ item: "chalk", qty: 1 }, { item: "curio", qty: 1, chance: 0.01 }],
+  },
+
+  // Chandlery
+  tallow_candle: { name: "Tallow candle", skill: "chandlery", level: 1, seconds: 4, xp: 8, inputs: { tallow: 2 }, outputs: [{ item: "tallow_candle", qty: 1 }] },
+  beeswax_candle: { name: "Beeswax candle", skill: "chandlery", level: 3, seconds: 5, xp: 12, inputs: { beeswax: 2 }, outputs: [{ item: "beeswax_candle", qty: 1 }] },
+  hearth_candle: { name: "Hearth candle", skill: "chandlery", level: 6, seconds: 5, xp: 25, inputs: { beeswax: 2, stjohns: 1 }, outputs: [{ item: "hearth_candle", qty: 1 }] },
+  juniper_incense: { name: "Juniper incense", skill: "chandlery", level: 9, seconds: 5, xp: 30, inputs: { juniper: 2, ash: 1 }, outputs: [{ item: "juniper_incense", qty: 1 }] },
+
+  // Sigilcraft: salt and ash
+  salt_line: { name: "Salt line", skill: "sigilcraft", level: 1, seconds: 4, xp: 8, inputs: { salt: 1 }, outputs: [{ item: "salt_line", qty: 1 }] },
+  sweep_hearth: {
+    name: "Sweep the hearth", skill: "sigilcraft", level: 1, seconds: 3, xp: 4, inputs: {},
+    outputs: [{ item: "ash", qty: 1 }, { item: "charcoal", qty: 1, chance: 0.1 }],
+  },
+  ash_sigil: { name: "Ash sigil", skill: "sigilcraft", level: 3, seconds: 5, xp: 16, inputs: { ash: 2, salt: 1 }, outputs: [{ item: "ash_sigil", qty: 1 }] },
+  iron_ward: { name: "Iron ward", skill: "sigilcraft", level: 6, seconds: 4, xp: 24, inputs: { iron_nail: 2, salt: 1 }, outputs: [{ item: "iron_ward", qty: 1 }] },
+  chalk_segment: { name: "Chalk segment", skill: "sigilcraft", level: 9, seconds: 4, xp: 24, inputs: { chalk: 1, salt: 1 }, outputs: [{ item: "chalk_segment", qty: 1 }] },
+  hearth_ward: {
+    name: "Hearth ward", skill: "sigilcraft", level: 12, seconds: 5, xp: 60,
+    inputs: { chalk_segment: 2, iron_ward: 1, stjohns: 1 }, outputs: [{ item: "hearth_ward", qty: 1 }],
+  },
+
+  // Herbalism: the garden, and what's bound from it
+  pick_nettle: { name: "Pick nettle", skill: "herbalism", level: 1, seconds: 3, xp: 8, inputs: {}, outputs: [{ item: "nettle", qty: 1 }] },
+  pick_chamomile: { name: "Pick chamomile", skill: "herbalism", level: 3, seconds: 3, xp: 8, inputs: {}, outputs: [{ item: "chamomile", qty: 1 }] },
+  smudge_bundle: { name: "Bind a smudge bundle", skill: "herbalism", level: 3, seconds: 5, xp: 24, inputs: { nettle: 2, chamomile: 1 }, outputs: [{ item: "smudge", qty: 1 }] },
+  pick_mugwort: { name: "Pick mugwort", skill: "herbalism", level: 6, seconds: 4, xp: 10, inputs: {}, outputs: [{ item: "mugwort", qty: 1 }] },
+  mugwort_incense: { name: "Mugwort incense", skill: "herbalism", level: 6, seconds: 5, xp: 24, inputs: { mugwort: 2, tallow: 1 }, outputs: [{ item: "mugwort_incense", qty: 1 }] },
+  pick_yarrow: { name: "Pick yarrow", skill: "herbalism", level: 9, seconds: 3, xp: 9, inputs: {}, outputs: [{ item: "yarrow", qty: 1 }] },
+  pick_stjohns: { name: "Pick St John's wort", skill: "herbalism", level: 9, seconds: 4, xp: 12, inputs: {}, outputs: [{ item: "stjohns", qty: 1 }] },
+  cut_juniper: { name: "Cut juniper", skill: "herbalism", level: 12, seconds: 4, xp: 15, inputs: {}, outputs: [{ item: "juniper", qty: 1 }] },
+
+  // Scholarship: grandmother's pages
   search_attic: {
-    name: "Search the attic", skill: "scavenging", level: 3, seconds: 4, xp: 6, inputs: {},
+    name: "Search the attic", skill: "scholarship", level: 1, seconds: 4, xp: 6, inputs: {},
     outputs: [
       { item: "burnt_page", qty: 1, chance: 0.4 },
       { item: "rags", qty: 1, chance: 0.5 },
@@ -36,41 +68,12 @@ export const ACTIONS = {
       { item: "curio", qty: 1, chance: 0.005 },
     ],
   },
-  rob_hives: { name: "Rob the old hives", skill: "scavenging", level: 2, seconds: 4, xp: 6, inputs: {}, outputs: [{ item: "beeswax", qty: 1 }] },
-  sift_midden: {
-    name: "Sift the village midden", skill: "scavenging", level: 10, seconds: 4, xp: 12, inputs: {},
-    outputs: [{ item: "iron_nail", qty: 1 }, { item: "rags", qty: 1, chance: 0.3 }],
-  },
-  open_chest: {
-    name: "Open grandmother's chest", skill: "scavenging", level: 14, seconds: 4, xp: 15, inputs: {},
-    outputs: [{ item: "chalk", qty: 1 }, { item: "curio", qty: 1, chance: 0.01 }],
-  },
-
-  // Chandlery
-  tallow_candle: { name: "Tallow candle", skill: "chandlery", level: 1, seconds: 4, xp: 8, inputs: { tallow: 2 }, outputs: [{ item: "tallow_candle", qty: 1 }] },
-  smudge_bundle: { name: "Smudge bundle", skill: "chandlery", level: 2, seconds: 5, xp: 13, inputs: { nettle: 2, chamomile: 1 }, outputs: [{ item: "smudge", qty: 1 }] },
-  beeswax_candle: { name: "Beeswax candle", skill: "chandlery", level: 2, seconds: 5, xp: 12, inputs: { beeswax: 2 }, outputs: [{ item: "beeswax_candle", qty: 1 }] },
-  mugwort_incense: { name: "Mugwort incense", skill: "chandlery", level: 3, seconds: 5, xp: 18, inputs: { mugwort: 2, ash: 1 }, outputs: [{ item: "mugwort_incense", qty: 1 }] },
-  hearth_candle: { name: "Hearth candle", skill: "chandlery", level: 10, seconds: 4, xp: 25, inputs: { beeswax: 2, stjohns: 1 }, outputs: [{ item: "hearth_candle", qty: 1 }] },
-  juniper_incense: { name: "Juniper incense", skill: "chandlery", level: 14, seconds: 5, xp: 30, inputs: { juniper: 2, ash: 1 }, outputs: [{ item: "juniper_incense", qty: 1 }] },
-
-  // Sigilcraft
-  salt_line: { name: "Salt line", skill: "sigilcraft", level: 1, seconds: 4, xp: 8, inputs: { salt: 1 }, outputs: [{ item: "salt_line", qty: 1 }] },
-  ash_sigil: { name: "Ash sigil", skill: "sigilcraft", level: 2, seconds: 5, xp: 16, inputs: { ash: 2, salt: 1 }, outputs: [{ item: "ash_sigil", qty: 1 }] },
-  iron_ward: { name: "Iron ward", skill: "sigilcraft", level: 6, seconds: 3, xp: 20, inputs: { iron_nail: 2, salt: 1 }, outputs: [{ item: "iron_ward", qty: 1 }] },
-  chalk_segment: { name: "Chalk segment", skill: "sigilcraft", level: 10, seconds: 4, xp: 20, inputs: { chalk: 1, salt: 1 }, outputs: [{ item: "chalk_segment", qty: 1 }] },
-  hearth_ward: {
-    name: "Hearth ward", skill: "sigilcraft", level: 12, seconds: 5, xp: 40,
-    inputs: { chalk_segment: 2, iron_ward: 1, stjohns: 1 }, outputs: [{ item: "hearth_ward", qty: 1 }],
-  },
-
-  // Scholarship
   decipher_page: {
-    name: "Decipher a burnt page", skill: "scholarship", level: 1, seconds: 5, xp: 22,
+    name: "Decipher a burnt page", skill: "scholarship", level: 3, seconds: 5, xp: 22,
     inputs: { burnt_page: 1, tallow_candle: 1 }, outputs: [{ item: "deciphered_page", qty: 1 }],
   },
   copy_litany: {
-    name: "Copy the Litany", skill: "scholarship", level: 2, seconds: 6, xp: 40,
+    name: "Copy the Litany", skill: "scholarship", level: 6, seconds: 6, xp: 40,
     inputs: { deciphered_page: 3, beeswax_candle: 1 }, outputs: [{ item: "litany", qty: 1 }],
   },
 
@@ -80,7 +83,7 @@ export const ACTIONS = {
     inputs: { salt_line: 1, tallow_candle: 1 }, outputs: [{ item: "consecrated_salt", qty: 1 }],
   },
   smoke_rooms: {
-    name: "Smoke the rooms", skill: "ritualism", level: 2, seconds: 8, xp: 25,
+    name: "Smoke the rooms", skill: "ritualism", level: 3, seconds: 8, xp: 25,
     inputs: { smudge: 1, tallow_candle: 1 }, outputs: [], buff: "blessing",
   },
 } as const satisfies Record<string, Action>;
@@ -89,3 +92,12 @@ export type ActionId = keyof typeof ACTIONS;
 
 /** Widened view for engine code that iterates generically. */
 export const ACTION_DEFS: Record<ActionId, Action> = ACTIONS;
+
+/** Tier N unlocks at TIER_LEVELS[N - 1]: a new tier every 3 levels. */
+export const TIER_LEVELS = [1, 3, 6, 9, 12, 15, 18] as const;
+
+/** A recipe's tier, from its level. */
+export function tierOf(level: number): number {
+  const i = TIER_LEVELS.findIndex((l) => l === level);
+  return i >= 0 ? i + 1 : TIER_LEVELS.filter((l) => l <= level).length;
+}

@@ -8,7 +8,7 @@ import { advance, blockReason, skillLevel, startAction } from "./simulate";
 import { NOTES } from "../content/notes";
 import { PAGES } from "../content/pages";
 import { newGame as freshGame, type GameState } from "./state";
-import { EARLY_RAMP, levelForXp, XP_BASE, xpForLevel, xpToNext } from "./xp";
+import { levelForXp, XP_BASE, xpForLevel, xpToNext } from "./xp";
 
 /** A game past the Chapter 1 onboarding: every skill and recipe open. */
 function newGame(now: number, seed: number): GameState {
@@ -31,9 +31,9 @@ describe("content", () => {
 
 describe("xp curve", () => {
   it("matches the Chapter 1 design numbers", () => {
-    expect(xpToNext(1)).toBe(Math.floor(XP_BASE * EARLY_RAMP[0]));
+    expect(xpToNext(1)).toBe(XP_BASE);
     expect(xpForLevel(2)).toBe(xpToNext(1));
-    expect(xpForLevel(20)).toBeGreaterThan(xpForLevel(10) * 4);
+    expect(xpForLevel(20)).toBeGreaterThan(xpForLevel(10) * 2);
   });
 
   it("respects the level cap", () => {

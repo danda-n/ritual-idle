@@ -11,7 +11,12 @@ import { SkillPicker } from "./SkillPicker";
 import { skillLevel } from "../../engine/simulate";
 import type { GameState } from "../../engine/state";
 import { CircleRiteIcon } from "../art/icons";
-import { rewardText, stepPlace, stepsOf, STEPS, taskName, taskPlace, type Place } from "../tasks";
+import { chapterSteps, rewardText, stepPlace, stepProgress, stepsOf, taskName, taskPlace, type Place } from "../tasks";
+import { stageChoices } from "../../engine/progress";
+import { NOTES } from "../../content/notes";
+import { PART_DEFS as PARTS, type PartId as Part } from "../../content/rite";
+import { SkillIcon } from "../art/icons";
+import { chooseStage } from "../../engine/commands";
 import { Bar } from "./Bar";
 import { ItemChip } from "./ItemLookup";
 
@@ -20,8 +25,11 @@ import { ItemChip } from "./ItemLookup";
  * so a short one offers to start what makes it) and a Go button, and one "???" ahead.
  */
 export function ChapterTracker({ state, onGo, act }: { state: GameState; onGo: (p: Place) => void; act: (c: (s: GameState) => Result) => unknown }) {
+  const STEPS = chapterSteps(state);
+  const choices = stageChoices(state);
   const current = STEPS.findIndex((s) => s.index === state.notesRevealed - 1);
-  const done = state.rite.completed ? STEPS.length : current < 0 ? STEPS.length : current;
+  // While a choice is waiting, the finished stage counts as done.
+  const done = state.rite.completed ? STEPS.length : current < 0 ? STEPS.length : current + (choices.length > 0 ? 1 : 0);
   // A step just finished: draw its tick and surge the bar.
   const prev = useRef(done);
   const [advanced, setAdvanced] = useState(false);
@@ -45,6 +53,7 @@ export function ChapterTracker({ state, onGo, act }: { state: GameState; onGo: (
       </div>
       <Bar value={done / STEPS.length} label="Chapter progress" />
       <RewardsWaiting state={state} act={act} />
+      {choices.length > 0 && <StageChoice state={state} choices={choices} act={act} />}
       <ol className="steps">
         {STEPS.map((s, i) => {
           if (!("goal" in s.note)) return null;
@@ -57,6 +66,8 @@ export function ChapterTracker({ state, onGo, act }: { state: GameState; onGo: (
               </li>
             );
           }
+          // While a choice waits, the next stage is whatever you pick: show nothing for it yet.
+          if (choices.length > 0 && i >= done) return null;
           if (i === done && !state.rite.completed) {
             const p = goalProgress(state, s.note);
             const action = goal.kind === "complete" ? ACTION_DEFS[goal.action] : null;
@@ -93,6 +104,7 @@ export function ChapterTracker({ state, onGo, act }: { state: GameState; onGo: (
                   {now && (
                     <div className="step-now">
                       <span>{now.label}</span>
+                      {stepProgress(state, now) && <span className="num muted">{stepProgress(state, now)}</span>}
                       {rewardText(now) && <span className="task-reward num">{rewardText(now)}</span>}
                     </div>
                   )}
@@ -166,6 +178,26 @@ function RewardsWaiting({ state, act }: { state: GameState; act: (c: (s: GameSta
           onClose={() => setChoosing(null)}
         />
       )}
+    </div>
+  );
+}
+
+/** The free choice after the Light: which part to make next. Each brings its own skill. */
+function StageChoice({ state, choices, act }: { state: GameState; choices: Part[]; act: (c: (s: GameState) => Result) => unknown }) {
+  return (
+    <div className="stage-choice" role="group" aria-label="Choose what to make next">
+      <p className="stage-choice-title">{state.middleOrder.length === 0 ? "Choose what to make next. Any order works." : "Choose the next part."}</p>
+      {choices.map((p) => {
+        const note = NOTES.find((n) => "goal" in n && n.goal.kind === "place" && n.goal.part === p)!;
+        const skill = note.unlocks[0]!;
+        return (
+          <button key={p} data-skill={skill} className="skill-pick stage-pick" onClick={() => act((s) => chooseStage(s, p))}>
+            <SkillIcon skill={skill} size={20} />
+            <span className="skill-pick-name">{PARTS[p].name}</span>
+            <span className="skill-pick-level">brings {SKILLS[skill].name}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }

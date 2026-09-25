@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ACTION_DEFS } from "../content/actions";
+import { ACTION_DEFS, TIER_LEVELS, tierOf } from "../content/actions";
 import { PART_DEFS } from "../content/rite";
 import { ITEM_CATEGORIES, ITEMS } from "../content/items";
 import { NOTES } from "../content/notes";
@@ -111,18 +111,20 @@ describe("item lookup", () => {
 describe("recipe reveal", () => {
   it("shows what's reached plus whatever comes at the next level", () => {
     const s = open();
-    // Beeswax candles and smudge bundles share level 2, so both show.
-    expect(revealedRecipes(s, "chandlery")).toEqual(["tallow_candle", "smudge_bundle", "beeswax_candle"]);
+    // Tier 1 reached, tier 2 (level 3) next.
+    expect(revealedRecipes(s, "chandlery")).toEqual(["tallow_candle", "beeswax_candle"]);
+    // Sigilcraft has two tier-1 recipes; both show, and the tier-2 one after.
+    expect(revealedRecipes(s, "sigilcraft")).toEqual(["salt_line", "sweep_hearth", "ash_sigil"]);
     const lvl5 = { ...s, skills: { ...s.skills, chandlery: { xp: xpForLevel(5) } } };
-    expect(revealedRecipes(lvl5, "chandlery")).toEqual(["tallow_candle", "smudge_bundle", "beeswax_candle", "mugwort_incense", "hearth_candle"]);
+    expect(revealedRecipes(lvl5, "chandlery")).toEqual(["tallow_candle", "beeswax_candle", "hearth_candle"]);
     expect(revealedRecipes({ ...s, notesRevealed: 1 }, "chandlery")).toEqual([]);
   });
 
   it("hides recipes that need an ingredient from a skill not open yet", () => {
-    // Chandlery 6 before Herbalism: smudge (nettle), mugwort incense and hearth candles wait for the Smoke.
+    // Chandlery 6 before Herbalism: hearth candles (St John's wort) wait for the Smoke.
     const s = { ...open(), notesRevealed: 3, skills: { ...open().skills, chandlery: { xp: xpForLevel(6) } } };
     expect(revealedRecipes(s, "chandlery")).toEqual(["tallow_candle", "beeswax_candle"]);
-    expect(revealedRecipes({ ...s, notesRevealed: 4 }, "chandlery")).toEqual(["tallow_candle", "smudge_bundle", "beeswax_candle", "mugwort_incense", "hearth_candle"]);
+    expect(revealedRecipes({ ...s, notesRevealed: 4 }, "chandlery")).toEqual(["tallow_candle", "beeswax_candle", "hearth_candle", "juniper_incense"]);
   });
 
   it("always shows what the current stage asks for (a fresh game shows the pantry)", () => {
@@ -137,18 +139,26 @@ describe("recipe reveal", () => {
   });
 
   it("hides a gatherer until something you can see uses what it finds", () => {
-    // During the Light, nothing wants ash yet, so sweeping stays out of sight; the Ward brings it.
-    const light = { ...newGame(T0, 21), notesRevealed: 2, skills: { ...newGame().skills, scavenging: { xp: xpForLevel(5) } } };
-    expect(revealedRecipes(light, "scavenging")).not.toContain("sweep_hearth");
-    expect(revealedRecipes(light, "scavenging")).not.toContain("search_attic");
-    expect(revealedRecipes({ ...light, notesRevealed: 3 }, "scavenging")).toContain("sweep_hearth");
-    expect(revealedRecipes({ ...light, notesRevealed: 5 }, "scavenging")).toContain("search_attic");
+    // During the Light, nothing wants iron nails yet, so the midden stays out of sight.
+    const light = { ...newGame(T0, 21), notesRevealed: 2, skills: { ...newGame().skills, scavenging: { xp: xpForLevel(8) } } };
+    expect(revealedRecipes(light, "scavenging")).toEqual(["search_pantry", "rob_hives"]);
+  });
+
+  it("lists recipes in tier order: the hives (tier 2) before the midden (tier 3)", () => {
+    const s = { ...open(), skills: { ...open().skills, scavenging: { xp: xpForLevel(9) } } };
+    expect(revealedRecipes(s, "scavenging").slice(0, 2)).toEqual(["search_pantry", "rob_hives"]);
+    expect(tierOf(ACTION_DEFS.rob_hives.level)).toBe(2);
+    expect(tierOf(ACTION_DEFS.sift_midden.level)).toBe(3);
+  });
+
+  it("every recipe sits on a tier level", () => {
+    for (const [id, a] of Object.entries(ACTION_DEFS)) expect((TIER_LEVELS as readonly number[]).includes(a.level), id).toBe(true);
   });
 
   it("skips recipes still in burnt pages", () => {
     const s = { ...open(), stats: { ...open().stats, completed: {} }, skills: { ...open().skills, sigilcraft: { xp: xpForLevel(5) } } };
     // Iron ward, chalk and the hearth ward are all in pages, so nothing is next yet.
-    expect(revealedRecipes(s, "sigilcraft")).toEqual(["salt_line", "ash_sigil"]);
+    expect(revealedRecipes(s, "sigilcraft")).toEqual(["salt_line", "sweep_hearth", "ash_sigil"]);
   });
 });
 
@@ -169,11 +179,11 @@ describe("producers (for item chips)", () => {
 
   it("offers an action that can run, and only ones the player knows", () => {
     const s = open();
-    // Sweeping needs Scavenging 3: still offered, so the menu can say why it can't start yet.
-    expect(producerAction(s, "ash", (id) => blockReason(s, id) === null)).toBe("sweep_hearth");
-    expect(blockReason(s, "sweep_hearth")).toEqual({ kind: "level_too_low", level: ACTION_DEFS.sweep_hearth.level });
+    // The hives need Scavenging 3: still offered, so the menu can say why it can't start yet.
+    expect(producerAction(s, "beeswax", (id) => blockReason(s, id) === null)).toBe("rob_hives");
+    expect(blockReason(s, "rob_hives")).toEqual({ kind: "level_too_low", level: ACTION_DEFS.rob_hives.level });
     const levelled = { ...s, skills: { ...s.skills, scavenging: { xp: xpForLevel(3) } } };
-    expect(producerAction(levelled, "ash", (id) => blockReason(levelled, id) === null)).toBe("sweep_hearth");
+    expect(producerAction(levelled, "beeswax", (id) => blockReason(levelled, id) === null)).toBe("rob_hives");
     const early = { ...open(), notesRevealed: 1 };
     expect(producerAction(early, "nettle", () => true)).toBeNull(); // Herbalism not unlocked yet
   });

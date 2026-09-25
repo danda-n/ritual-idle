@@ -2,7 +2,8 @@ import { useState, type CSSProperties } from "react";
 import type { ItemId } from "../../content/items";
 import { HEARTH_RITE, OFFERINGS, PART_DEFS, PART_IDS, QUALITIES, RITE_MS, type OfferingId, type PartId } from "../../content/rite";
 import { SKILLS } from "../../content/skills";
-import { beginRite, canPlace, placePart, type Result } from "../../engine/commands";
+import { beginRite, canPlace, chooseStage, placePart, type Result } from "../../engine/commands";
+import { stageChoices } from "../../engine/progress";
 import { canBeginRite, canOffer, offeringsMet, riteLog, riteQuality, riteShortfall } from "../../engine/rite";
 import type { GameState } from "../../engine/state";
 import { CircleRiteIcon, SkillIcon } from "../art/icons";
@@ -71,14 +72,20 @@ function PartRow({ part, state, act, fresh }: { part: PartId; state: GameState; 
     );
   }
   if (status === "later") {
+    const choosable = stageChoices(state).includes(part);
     return (
-      <li className="part is-later" data-skill={skill}>
+      <li className={`part is-later ${choosable ? "is-choosable" : ""}`} data-skill={skill}>
         <span className="part-mark" aria-hidden="true">◇</span>
         <div className="part-body">
           <strong>{def.name}</strong>
           <span className="muted part-later">
-            Later · brings <SkillIcon skill={skill} size={12} /> {SKILLS[skill].name}
+            {choosable ? "Yours to choose" : "Later"} · brings <SkillIcon skill={skill} size={12} /> {SKILLS[skill].name}
           </span>
+          {choosable && (
+            <button className="btn btn-ghost part-place" onClick={() => act((s) => chooseStage(s, part))}>
+              Make this next
+            </button>
+          )}
         </div>
       </li>
     );

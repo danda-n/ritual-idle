@@ -13,7 +13,7 @@ import type { BranchId } from "../content/talents";
 import { canSpend, talentsOf } from "./talents";
 import { BUFF_DEFS } from "../content/buffs";
 import { isSkillUnlocked } from "./progress";
-import { grantXp, isFeatureOpen, revealNotes, stepById, type Note, type Step } from "./progress";
+import { enterNextStage, grantXp, isFeatureOpen, middleParts, MIDDLE_AT, revealNotes, stageChoices, stepById, type Note, type Step } from "./progress";
 import type { GameState, Settings } from "./state";
 import { xpForLevel } from "./xp";
 import { emptySlot, refillBoard } from "./village";
@@ -197,6 +197,20 @@ export function setMark(input: GameState, id: GrimoireId, item: ItemId, mark: "s
 
 export function setSetting<K extends keyof Settings>(input: GameState, key: K, value: Settings[K]): Result {
   return ok({ ...input, settings: { ...input.settings, [key]: value } });
+}
+
+// The chapter
+
+/** Choose which free-order part to make next (the Ward, the Smoke or the Words): its stage opens. */
+export function chooseStage(input: GameState, part: PartId): Result {
+  if (!stageChoices(input).includes(part)) return no("That isn't a choice right now.");
+  const state = structuredClone(input);
+  // Earlier middle stages (from an older save, before choosing existed) keep their order.
+  state.middleOrder = [...middleParts(state).slice(0, state.notesRevealed - MIDDLE_AT[0]), part];
+  const steps: Step[] = [];
+  const notes = [enterNextStage(state), ...revealNotes(state, steps)];
+  const gifts = giveNoteGifts(state, notes);
+  return ok(state, notes, { gifts, steps });
 }
 
 // The Kindling

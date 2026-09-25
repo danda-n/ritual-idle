@@ -40,8 +40,12 @@ export interface GameState {
   rngSeed: number;
   /** Wall-clock time (ms) the simulation has been advanced to. Also the sim clock for timers. */
   lastTickAt: number;
-  /** How many of grandmother's notes have appeared (the first shows at the start). */
+  /** How many of grandmother's notes have appeared (the first shows at the start), along the order chosen. */
   notesRevealed: number;
+  /** The free-order middle parts, in the order the player chose them. */
+  middleOrder: PartId[];
+  /** Lifetime action counts when the current stage began (so steps count from there). */
+  stageStart: Partial<Record<ActionId, number>>;
   coin: number;
   trust: number;
   /** Empty until the village opens; then always BOARD_SLOTS long. */
@@ -141,6 +145,8 @@ export function newGame(now: number = Date.now(), seed: number = randomSeed()): 
     rngSeed: seed,
     lastTickAt: now,
     notesRevealed: 1,
+    middleOrder: [],
+    stageStart: {},
     coin: 0,
     trust: 0,
     board: [],

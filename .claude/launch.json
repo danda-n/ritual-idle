@@ -12,7 +12,8 @@
         "5391",
         "--strictPort"
       ],
-      "port": 5391
+      "port": 5391,
+      "url": "http://test.localhost:5391"
     },
     {
       "name": "preview",
@@ -25,7 +26,8 @@
         "5392",
         "--strictPort"
       ],
-      "port": 5392
+      "port": 5392,
+      "url": "http://test.localhost:5392"
     }
   ]
 }

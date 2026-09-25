@@ -22,7 +22,7 @@ function open(extra: Partial<GameState> = {}): GameState {
 describe("inputs used mid-repetition", () => {
   it("never makes something for free or goes negative", () => {
     // Deciphering needs a tallow candle; hand the last candles to Old Tomas halfway through.
-    let s = startAction(open({ inventory: { burnt_page: 5, tallow_candle: 3 } }), "decipher_page");
+    let s = startAction(open({ inventory: { burnt_page: 5, tallow_candle: 3 }, skills: { ...newGame().skills, scholarship: { xp: xpForLevel(3) } } }), "decipher_page");
     s = advance(s, 3000).state;
     s.board = [{ request: "grave_candles", refillAt: 0 }];
     s = okay(fillRequest(s, 0));

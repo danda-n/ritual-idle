@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { ACTION_DEFS } from "../content/actions";
 import { GRIMOIRE, INSIGHT_COST, INSIGHT_GAIN, type GrimoireId } from "../content/grimoire";
 import { ITEMS, type ItemId } from "../content/items";
 import { NOTES } from "../content/notes";
@@ -7,7 +6,7 @@ import { PAGES } from "../content/pages";
 import { REQUESTS } from "../content/requests";
 import { attune, buyHint, experiment, fillRequest, setSetting, type Result, type Success } from "./commands";
 import { addInsight, deduce, hintCost, isDiscovered, isSilhouetteVisible, progressOf } from "./grimoire";
-import { offlineBonus, requestCoin, riteQualitySteps, trustMultiplier } from "./modifiers";
+import { actionDurationMs, offlineBonus, requestCoin, riteQualitySteps, trustMultiplier } from "./modifiers";
 import { catchUp } from "./offline";
 import { deserialize } from "./save";
 import { advance, startAction } from "./simulate";
@@ -99,8 +98,8 @@ describe("insight sources", () => {
   });
 
   it("pages past the story ones bring insight", () => {
-    const s = open({ inventory: { burnt_page: 5, tallow_candle: 5 } });
-    const { state, report } = advance(startAction(s, "decipher_page"), 3 * ACTION_DEFS.decipher_page.seconds * 1000);
+    const s = open({ inventory: { burnt_page: 5, tallow_candle: 5 }, skills: { ...newGame().skills, scholarship: { xp: xpForLevel(3) } } });
+    const { state, report } = advance(startAction(s, "decipher_page"), 3 * actionDurationMs(s, "decipher_page") + 1);
     expect(report.fragments.map((f) => f.source)).toEqual(["page", "page", "page"]);
     expect(state.insight).toBe(3 * INSIGHT_GAIN.page);
   });
