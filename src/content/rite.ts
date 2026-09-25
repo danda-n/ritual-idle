@@ -44,25 +44,24 @@ export type PartId = keyof typeof KINDLING_PARTS;
 export const PART_IDS = Object.keys(KINDLING_PARTS) as PartId[];
 export const PART_DEFS: Record<PartId, { name: string; skill: SkillId; items: Partial<Record<ItemId, number>>; placed: string }> = KINDLING_PARTS;
 
-// The Chapter 1 Major Rite (docs/CHAPTER1.md §8): a short ceremony you play. It needs every
-// part placed and Ritualism 2. Five phases, one per part; each has one moment to answer.
-// It never fails: answering well only makes it better.
+// The Chapter 1 Major Rite (docs/CHAPTER1.md §8): a short rite that runs by itself (offline too).
+// It needs every part placed and Ritualism 2. Five phases, one per part, each with a log line.
+// It never fails. Its quality comes from optional offerings chosen before it begins, and changes
+// only cosmetics and lore, never power.
 export const HEARTH_RITE = {
   name: "Kindling of the Hearth-Circle",
   description: "Wake the circle grandmother drew in the floor. It has been waiting for you.",
   skills: { ritualism: 2 } as Partial<Record<SkillId, number>>,
-  /** Length of each phase. */
-  phaseMs: 60_000,
-  /** How long a moment stays open once it comes. */
-  momentMs: 12_000,
-  /** One phase per part, in order: its log line, and the moment that comes partway through. */
+  /** Length of each phase (five phases: about 3 minutes in all). */
+  phaseMs: 36_000,
+  /** One phase per part, in order, each with the line it adds to the log. */
   phases: [
-    { part: "light", log: "You kneel at the edge, by the bread and salt, and light the first candle.", moment: { at: 0.35, prompt: "A candle gutters.", button: "Tend the flame" } },
-    { part: "ward", log: "Salt closes the ring. The draught along the floor stops.", moment: { at: 0.45, prompt: "The salt line breaks where the floor dips.", button: "Close the line" } },
-    { part: "smoke", log: "Mugwort smoke crawls along the chalk. It will not cross the salt.", moment: { at: 0.3, prompt: "The smoke drifts toward the door.", button: "Call it back" } },
-    { part: "words", log: "You read the Litany aloud. Your voice sounds older than it is.", moment: { at: 0.5, prompt: "You lose your place on the page.", button: "Find the line" } },
-    { part: "offering", log: "A voice that is not grandmother's says your name, pleased, as if it had been waiting.", moment: { at: 0.4, prompt: "Something reaches for the bread.", button: "Hold the offering" } },
-  ] as const satisfies readonly { part: PartId; log: string; moment: { at: number; prompt: string; button: string } }[],
+    { part: "light", log: "You kneel at the edge, by the bread and salt, and light the first candle." },
+    { part: "ward", log: "Salt closes the ring. The draught along the floor stops." },
+    { part: "smoke", log: "Mugwort smoke crawls along the chalk. It will not cross the salt." },
+    { part: "words", log: "You read the Litany aloud. Your voice sounds older than it is." },
+    { part: "offering", log: "A voice that is not grandmother's says your name, pleased, as if it had been waiting." },
+  ] as const satisfies readonly { part: PartId; log: string }[],
   finale: "The circle wakes. The cellar door, nailed shut for years, stands open.",
   rewards: {
     levelCap: 40,
@@ -74,15 +73,25 @@ export const HEARTH_RITE = {
   resplendentCosmetic: "An embroidered circle cloth, red on bone, appears on the table.",
 } as const;
 
-/** The whole ceremony's length. */
+/** The whole rite's length. */
 export const RITE_MS = HEARTH_RITE.phaseMs * HEARTH_RITE.phases.length;
 
 /**
- * Outcome quality, from quality steps: one per moment answered (5), one for the Hearth mark,
- * one for an omen active during the rite (7 in all). 0–2 → Sound, 3–5 → Fine, 6–7 → Resplendent.
- * The rite always succeeds.
+ * Optional offerings, each one quality step. `item` offerings are chosen (and used) when the rite
+ * begins; the others count by themselves if they're true when it runs.
+ */
+export const OFFERINGS = [
+  { id: "hearth_candle", label: "A hearth candle at the heart of the circle", item: "hearth_candle" },
+  { id: "hearth_mark", label: "The Hearth mark (a hidden recipe) is yours" },
+  { id: "still_night", label: "A Still Night blessing active while it runs" },
+] as const satisfies readonly { id: string; label: string; item?: ItemId }[];
+export type OfferingId = (typeof OFFERINGS)[number]["id"];
+
+/**
+ * Outcome quality, from offerings: none → Sound, 1–2 → Fine, all 3 → Resplendent.
+ * Only the lore and a cosmetic differ; the rite always succeeds and its rewards are the same.
  */
 export const QUALITIES = ["Sound", "Fine", "Resplendent"] as const;
 export type Quality = (typeof QUALITIES)[number];
-/** Steps needed for Fine and Resplendent. */
-export const QUALITY_AT = { fine: 3, resplendent: 6 } as const;
+/** Offerings needed for Fine and Resplendent. */
+export const QUALITY_AT = { fine: 1, resplendent: 3 } as const;

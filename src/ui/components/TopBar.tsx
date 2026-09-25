@@ -1,7 +1,6 @@
 import { ACTION_DEFS } from "../../content/actions";
 import { BUFFS } from "../../content/buffs";
 import { HEARTH_RITE, RITE_MS } from "../../content/rite";
-import { openMoment } from "../../engine/rite";
 import { actionDurationMs, activeBuffs } from "../../engine/modifiers";
 import { currentNote, isFeatureOpen } from "../../engine/progress";
 import { taskName, taskPlace, type Place } from "../tasks";
@@ -12,18 +11,16 @@ import { formatClock } from "../format";
 import { buffEffects } from "../effects";
 import { TimedBar } from "./Bar";
 import { useCountUp } from "../useFx";
-import { TendControl } from "./TendControl";
 import { SKILLS } from "../../content/skills";
 
-export function TopBar({ state, onStop, stopNote, onSettings, onGo, onTend, onAnswer }: { state: GameState; onStop: () => void; stopNote?: string; onSettings: () => void; onGo: (p: Place) => void; onTend: () => void; onAnswer: () => void }) {
+export function TopBar({ state, onStop, stopNote, onSettings, onGo }: { state: GameState; onStop: () => void; stopNote?: string; onSettings: () => void; onGo: (p: Place) => void }) {
   return (
     <header className="topbar">
       <div className="brand">
         <Rosette size={26} className="brand-rosette" />
         <h1 className="brand-title">Ritual Idle</h1>
       </div>
-      <Working state={state} onStop={onStop} stopNote={stopNote} onGo={onGo} onAnswer={onAnswer} />
-      {state.active && !state.rite.performing && <TendControl state={state} onTend={onTend} />}
+      <Working state={state} onStop={onStop} stopNote={stopNote} onGo={onGo} />
       {activeBuffs(state).map((b) => (
         <span key={`${b.id}:${b.skill ?? ""}`} className="chip accent buff-chip" title={buffEffects(b.id, b.skill).join(" · ")}>
           {BUFFS[b.id].name}
@@ -43,12 +40,9 @@ export function TopBar({ state, onStop, stopNote, onSettings, onGo, onTend, onAn
   );
 }
 
-function Working({ state, onStop, stopNote, onGo, onAnswer }: { state: GameState; onStop: () => void; stopNote?: string; onGo: (p: Place) => void; onAnswer: () => void }) {
+function Working({ state, onStop, stopNote, onGo }: { state: GameState; onStop: () => void; stopNote?: string; onGo: (p: Place) => void }) {
   const rite = state.rite.performing;
   if (rite) {
-    // The moment can be answered from anywhere, right here in the top bar.
-    const open = openMoment(state);
-    const phase = HEARTH_RITE.phases[Math.min(rite.phase, HEARTH_RITE.phases.length - 1)]!;
     return (
       <div className="working" role="status">
         <CircleRiteIcon size={20} />
@@ -56,13 +50,7 @@ function Working({ state, onStop, stopNote, onGo, onAnswer }: { state: GameState
           Kindling · phase {rite.phase + 1}/{HEARTH_RITE.phases.length}
         </span>
         <TimedBar key={`phase${rite.phase}`} progress={rite.phaseMs / HEARTH_RITE.phaseMs} durationMs={HEARTH_RITE.phaseMs} label="Phase progress" />
-        {open ? (
-          <button className="btn btn-primary moment-top" onClick={onAnswer}>
-            {phase.moment.button}
-          </button>
-        ) : (
-          <span className="muted num">{formatClock(RITE_MS - (rite.phase * HEARTH_RITE.phaseMs + rite.phaseMs))}</span>
-        )}
+        <span className="muted num">{formatClock(RITE_MS - (rite.phase * HEARTH_RITE.phaseMs + rite.phaseMs))}</span>
       </div>
     );
   }

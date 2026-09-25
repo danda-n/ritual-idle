@@ -76,8 +76,6 @@ export function isStepMet(state: GameState, step: Step): boolean {
       return completedCount(state, g.action) >= g.count;
     case "level":
       return levelForXp(state.skills[g.skill].xp, state.levelCap) >= g.level;
-    case "tended":
-      return state.stats.tended >= g.count;
     case "requests":
       return state.stats.requestsFilled >= g.count;
     case "place":

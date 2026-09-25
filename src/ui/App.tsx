@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { ACTION_DEFS } from "../content/actions";
 import type { SkillId } from "../content/skills";
-import { answerMoment, dismissEnding, setSetting } from "../engine/commands";
+import { dismissEnding, setSetting } from "../engine/commands";
 import type { ItemId } from "../content/items";
 import { isFeatureOpen } from "../engine/progress";
 import { BookIcon, CircleRiteIcon, HouseIcon, LanternIcon } from "./art/icons";
@@ -48,19 +48,6 @@ export function App() {
   useEffect(() => {
     document.documentElement.dataset.motion = state.settings.reducedMotion ? "reduced" : "";
   }, [state.settings.reducedMotion]);
-  // Space tends the running work, unless you're typing or on a button/field.
-  const { tend } = game;
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.code !== "Space" || e.repeat) return;
-      const t = e.target as HTMLElement | null;
-      if (t && t.closest("input, textarea, select, button, [contenteditable], [role=dialog]")) return;
-      e.preventDefault();
-      tend();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [tend]);
   const [skill, setSkill] = useState<SkillId>(state.active ? ACTION_DEFS[state.active.id].skill : "scavenging");
   /** Take the player to where a task is done. */
   const goTo = (p: Place) => {
@@ -81,7 +68,7 @@ export function App() {
       <a className="skip-link" href="#main">
         Skip to main content
       </a>
-      <TopBar state={state} onStop={game.stop} stopNote={game.lastStop && formatStop(game.lastStop.reason)} onSettings={() => setSettingsOpen(true)} onGo={goTo} onTend={game.tend} onAnswer={() => game.act(answerMoment)} />
+      <TopBar state={state} onStop={game.stop} stopNote={game.lastStop && formatStop(game.lastStop.reason)} onSettings={() => setSettingsOpen(true)} onGo={goTo} />
       <EmbroideryBand className="band" />
       <Tabs tabs={tabs} value={tab} onChange={setTab} label="Places" />
 
@@ -94,7 +81,7 @@ export function App() {
             <div className="house">
               <Sanctum state={state} />
               <SkillNav state={state} skill={skill} onSelect={setSkill} />
-              <SkillActions state={state} skill={skill} onStart={game.start} act={game.act} onTend={game.tend} />
+              <SkillActions state={state} skill={skill} onStart={game.start} act={game.act} />
             </div>
           )}
         </div>

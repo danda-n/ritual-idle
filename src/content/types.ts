@@ -51,8 +51,6 @@ export type Feature = "grimoire" | "village" | "circle" | "experiments";
 export type StepGoal<S extends string, A extends string> =
   | { kind: "complete"; action: A; count: number }
   | { kind: "level"; skill: S; level: number }
-  /** Repetitions finished while tended. */
-  | { kind: "tended"; count: number }
   | { kind: "requests"; count: number }
   | { kind: "place"; part: string };
 

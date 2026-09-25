@@ -6,13 +6,11 @@ import { OMENS, type OmenId } from "../content/omens";
 import { addInsight, buyHintInto, deduce, GRIMOIRE_IDS, glowCount, hintCost, isDiscovered, isSilhouetteVisible, markDiscovered, matches, progressOf, type Fragment, type HintKind } from "./grimoire";
 import { requestCoin, trustMultiplier } from "./modifiers";
 import { applyBuff, giveNoteGifts, grantOmen } from "./omens";
-import { answerMomentInto, beginRite as startRite, canBeginRite } from "./rite";
-import { PART_DEFS, type PartId } from "../content/rite";
+import { beginRite as startRite, canBeginRite } from "./rite";
+import { PART_DEFS, type OfferingId, type PartId } from "../content/rite";
 import type { SkillId } from "../content/skills";
 import type { BranchId } from "../content/talents";
-import { canSpend, talentsOf, tendMeterMs } from "./talents";
-import { TEND } from "../content/talents";
-import { ACTION_DEFS } from "../content/actions";
+import { canSpend, talentsOf } from "./talents";
 import { BUFF_DEFS } from "../content/buffs";
 import { isSkillUnlocked } from "./progress";
 import { grantXp, isFeatureOpen, revealNotes, stepById, type Note, type Step } from "./progress";
@@ -245,17 +243,6 @@ export function claimReward(input: GameState, stepId: string, skill?: SkillId): 
   return ok(state);
 }
 
-// Tending
-
-/** Tend the running action: the meter refills. Never required; it rewards being present. */
-export function tend(input: GameState): Result {
-  if (!input.active || input.rite.performing) return no("Start something first.");
-  const now = input.lastTickAt;
-  if (now - input.tend.lastAt < TEND.minGapMs) return no("Easy, it's lit.");
-  const skill = ACTION_DEFS[input.active.id].skill;
-  return ok({ ...input, tend: { ...input.tend, endsAt: now + tendMeterMs(input, skill), lastAt: now } });
-}
-
 // Talents
 
 /** Spend a talent point on a branch rank. Filling a branch blooms the keystone for free. */
@@ -279,20 +266,15 @@ export function resetTalents(input: GameState, skill: SkillId): Result {
 
 // The Major Rite
 
-export function beginRite(input: GameState): Result {
+/** Begin the rite, with any item offerings chosen on its card (they're used now). */
+export function beginRite(input: GameState, offer: readonly OfferingId[] = []): Result {
   const reason = canBeginRite(input);
   if (reason) return no(reason);
   const state = structuredClone(input);
-  startRite(state, state.lastTickAt);
+  startRite(state, state.lastTickAt, offer);
   return ok(state);
 }
 
-/** Answer the rite's open moment (one quality step). */
-export function answerMoment(input: GameState): Result {
-  const state = structuredClone(input);
-  if (!answerMomentInto(state)) return no("Nothing to answer right now.");
-  return ok(state);
-}
 
 export function dismissEnding(input: GameState): Result {
   if (!input.rite.completed) return no("Not yet.");

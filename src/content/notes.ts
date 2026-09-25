@@ -15,7 +15,6 @@ export const NOTES = [
     opens: ["circle"],
     steps: [
       { id: "start.pantry", label: "Search the pantry 10 times", goal: { kind: "complete", action: "search_pantry", count: 10 }, reward: { xpChoice: { amount: 30, suggest: "scavenging" } } },
-      { id: "start.tend", label: "Tend your work once (the Tend button)", goal: { kind: "tended", count: 1 }, reward: { surge: true } },
     ],
     goal: { kind: "complete", action: "search_pantry", count: 10 },
   },

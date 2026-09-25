@@ -4,7 +4,7 @@ import type { FollowerId } from "../content/followers";
 import type { GrimoireId } from "../content/grimoire";
 import type { ItemId } from "../content/items";
 import type { OmenId } from "../content/omens";
-import type { PartId } from "../content/rite";
+import type { OfferingId, PartId } from "../content/rite";
 import type { BranchId } from "../content/talents";
 import type { Feature } from "../content/types";
 import type { RequestId } from "../content/requests";
@@ -12,7 +12,7 @@ import type { UpgradeId } from "../content/shop";
 import { SKILL_IDS, type SkillId } from "../content/skills";
 import { randomSeed } from "./rng";
 
-export const SAVE_VERSION = 7;
+export const SAVE_VERSION = 8;
 
 export interface ActiveAction {
   id: ActionId;
@@ -68,8 +68,6 @@ export interface GameState {
   stepsDone: string[];
   /** Steps whose reward waits for the player to claim it. */
   rewardsWaiting: string[];
-  /** The Tend meter (sim clock): lit until `endsAt`; `streak` counts tended repetitions in a row. */
-  tend: { endsAt: number; streak: number; lastAt: number };
   /** Skills and places an older save's notes had opened, kept so nothing earned is taken away. */
   kept: { skills: SkillId[]; features: Feature[] };
   rite: RiteState;
@@ -82,8 +80,6 @@ export interface GameState {
     requestsFilled: number;
     omensSeen: number;
     curiosRead: number;
-    /** Repetitions finished while tended. */
-    tended: number;
   };
 }
 
@@ -106,8 +102,8 @@ export interface RecipeProgress {
 }
 
 export interface RiteState {
-  /** The ceremony under way: which phase, how far into it, which moments were answered. */
-  performing: { phase: number; phaseMs: number; moments: boolean[]; omen: boolean } | null;
+  /** The rite under way: which phase, how far into it, the offerings made, and whether an omen was active. */
+  performing: { phase: number; phaseMs: number; offered: OfferingId[]; omen: boolean } | null;
   completed: { quality: number; endingSeen: boolean } | null;
 }
 
@@ -161,10 +157,9 @@ export function newGame(now: number = Date.now(), seed: number = randomSeed()): 
     talents: {},
     stepsDone: [],
     rewardsWaiting: [],
-    tend: { endsAt: 0, streak: 0, lastAt: 0 },
     kept: { skills: [], features: [] },
     rite: { performing: null, completed: null },
     followers: [],
-    stats: { completed: {}, requestsFilled: 0, omensSeen: 0, curiosRead: 0, tended: 0 },
+    stats: { completed: {}, requestsFilled: 0, omensSeen: 0, curiosRead: 0 },
   };
 }

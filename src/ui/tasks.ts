@@ -98,8 +98,6 @@ export function stepPlace(step: Step, state: GameState): Place {
     }
     case "level":
       return { tab: "house", skill: g.skill };
-    case "tended":
-      return { tab: "house", skill: state.active ? ACTION_DEFS[state.active.id].skill : "scavenging" };
     case "requests":
       return { tab: "village" };
     case "place":

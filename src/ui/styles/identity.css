@@ -359,18 +359,7 @@ input[type="checkbox"] { accent-color: var(--color-accent); width: 16px; height:
 .next-skill.skill-tile[data-skill] { border-left-style: dashed; }
 .next-skill-when { grid-column: 1 / -1; font-size: var(--text-xs); color: var(--color-muted); }
 
-/* ---------- Tending: a flame meter that drains, and a Tend button ---------- */
-.tend { display: inline-flex; align-items: center; gap: var(--space-2); }
-.tend-btn { min-height: 26px; padding: 0 var(--space-3); font-size: var(--text-xs); color: var(--folk-candle); border-color: rgb(232 176 78 / 0.45); }
-.tend.is-lit .tend-btn { background: rgb(232 176 78 / 0.14); }
-.tend-btn:active { transform: scale(0.96); }
-.tend-bar { width: 72px; }
-.tend-bar .bar-fill { background: linear-gradient(90deg, var(--ember-600), var(--folk-candle)); }
-.tend-info { font-size: var(--text-xs); white-space: nowrap; }
-.topbar .tend { flex-shrink: 0; }
-.tend.compact { width: 100%; }
-.tend.compact .tend-bar { flex: 1; width: auto; }
-/* The control column keeps one height whether it shows Start, or the bar and Tend. */
+/* The control column keeps one height. */
 .action-control { min-height: 60px; flex-direction: column; justify-content: center; align-items: stretch; gap: var(--space-1); }
 .action-control .btn:disabled { min-height: 38px; }
 
@@ -385,13 +374,8 @@ input[type="checkbox"] { accent-color: var(--color-accent); width: 16px; height:
 .task-needs { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); font-size: var(--text-sm); }
 .task-quote { font-style: italic; font-size: var(--text-xs); color: var(--color-muted); }
 .step-now { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: baseline; font-size: var(--text-sm); color: var(--color-text); }
-.action-control .tend-btn { width: auto; flex-shrink: 0; }
 /* One line only, so a row is the same height running or not; the full text is in the tooltip. */
 .action-row .rates { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-@media (max-width: 1200px) {
-  .topbar .tend-info { display: none; }
-  .topbar .tend-bar { width: 44px; }
-}
 .chip.buff-out { font-size: var(--text-xs); white-space: normal; }
 
 /* ---------- Skill picker (omen blessings, XP rewards) ---------- */
@@ -460,14 +444,13 @@ input[type="checkbox"] { accent-color: var(--color-accent); width: 16px; height:
 .ceremony { display: flex; flex-direction: column; gap: var(--space-2); }
 .ceremony-head { display: flex; justify-content: space-between; gap: var(--space-2); align-items: baseline; }
 .ceremony-head strong { font-family: var(--font-display); font-weight: 500; }
-.moment { min-height: 72px; display: flex; flex-direction: column; gap: var(--space-1); align-items: flex-start; justify-content: center; padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); border: 1px dashed var(--color-border); }
-.moment.is-open { border-style: solid; border-color: var(--gold-400); background: rgb(232 176 78 / 0.1); animation: rite-ready 1.6s ease-in-out infinite; }
-.moment.is-open .bar { width: 160px; }
-.moment.is-answered { border-style: solid; border-color: var(--color-accent-deep); color: var(--color-accent); }
 .rite-quality { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; font-size: var(--text-sm); }
 .rite-quality .pips { display: inline-flex; gap: 3px; }
 .rite-quality .pip { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--color-border); }
 .rite-quality .pip.on { background: var(--gold-400); border-color: var(--gold-400); }
 .rite-quality-how { flex-basis: 100%; font-size: var(--text-xs); }
 .petal.is-now path { stroke: var(--gold-400); stroke-width: 2; animation: node-pulse 1.4s ease-in-out infinite; }
-.moment-top { min-height: 28px; font-size: var(--text-xs); animation: rite-ready 1.6s ease-in-out infinite; }
+.drain-bar { width: 72px; }
+.drain-bar .bar-fill { background: linear-gradient(90deg, var(--ember-600), var(--folk-candle)); }
+.offerings { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-1); font-size: var(--text-sm); color: var(--color-muted); }
+.offerings li.met { color: var(--color-accent); }

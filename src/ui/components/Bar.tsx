@@ -28,3 +28,13 @@ export function TimedBar({ progress, durationMs, label, thin }: { progress: numb
     </span>
   );
 }
+
+/** Drains from its current level to empty on the compositor, like TimedBar in reverse. */
+export function DrainBar({ leftMs, totalMs }: { leftMs: number; totalMs: number }) {
+  const [start] = useState(() => ({ total: Math.max(1, totalMs), spent: Math.max(0, totalMs - leftMs) }));
+  return (
+    <span className="bar thin drain-bar" role="progressbar" aria-label="Time left" aria-valuenow={Math.round((leftMs / totalMs) * 100)} aria-valuemin={0} aria-valuemax={100}>
+      <span className="bar-fill drain" style={{ animationDuration: `${start.total}ms`, animationDelay: `-${start.spent}ms` }} />
+    </span>
+  );
+}

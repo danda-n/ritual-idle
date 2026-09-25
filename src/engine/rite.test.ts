@@ -3,13 +3,13 @@ import { ACTION_DEFS } from "../content/actions";
 import { NOTES } from "../content/notes";
 import { PAGES } from "../content/pages";
 import { HEARTH_RITE, PART_DEFS, PART_IDS, QUALITIES, RITE_MS } from "../content/rite";
-import { answerMoment, beginRite, dismissEnding, placePart, releaseOmen, type Result } from "./commands";
+import { beginRite, dismissEnding, placePart, releaseOmen, type Result } from "./commands";
 import { progressOf } from "./grimoire";
 import { actionDurationMs, requestCoin } from "./modifiers";
 import { catchUp } from "./offline";
 import { currentNote, isFeatureOpen, isRiteRevealed, isSkillUnlocked } from "./progress";
 import { REQUESTS } from "../content/requests";
-import { openMoment, qualityFor, qualitySteps, riteLog, riteShortfall } from "./rite";
+import { canOffer, offeringsMet, qualityFor, riteLog, riteShortfall } from "./rite";
 import { deserialize } from "./save";
 import { advance, blockReason, startAction } from "./simulate";
 import { newGame, type GameState } from "./state";
@@ -119,49 +119,57 @@ describe("performing", () => {
   });
 });
 
-describe("moments", () => {
-  const momentStart = (i: number) => i * HEARTH_RITE.phaseMs + HEARTH_RITE.phases[i]!.moment.at * HEARTH_RITE.phaseMs;
-  const elapsed = (s: GameState) => s.rite.performing!.phase * HEARTH_RITE.phaseMs + s.rite.performing!.phaseMs;
+describe("offerings", () => {
+  const withCandle = (extra: Partial<GameState> = {}) => ready({ inventory: { hearth_candle: 1 }, ...extra });
 
-  it("open partway through each phase for a few seconds, and count only then", () => {
-    const s = okay(beginRite(ready()));
-    expect(openMoment(s)).toBeNull();
-    expect(answerMoment(s).ok).toBe(false);
-    const at = advance(s, momentStart(0) + 1000).state;
-    expect(openMoment(at)?.phase).toBe(0);
-    const answered = okay(answerMoment(at));
-    expect(answered.rite.performing?.moments[0]).toBe(true);
-    expect(answerMoment(answered).ok).toBe(false); // once per phase
-    const late = advance(s, momentStart(0) + HEARTH_RITE.momentMs + 10).state;
-    expect(openMoment(late)).toBeNull();
+  it("the rite runs by itself; nothing to answer", () => {
+    const { state } = advance(okay(beginRite(ready())), RITE_MS);
+    expect(state.rite.completed).not.toBeNull();
   });
 
-  it("answering them all makes it Fine; with the Hearth mark and Still Night, Resplendent", () => {
-    const playAll = (start: GameState) => {
-      let s = okay(beginRite(start));
-      for (let i = 0; i < HEARTH_RITE.phases.length; i++) {
-        s = advance(s, momentStart(i) + 500 - elapsed(s)).state;
-        s = okay(answerMoment(s));
-      }
-      return advance(s, RITE_MS).state.rite.completed!.quality;
-    };
-    expect(QUALITIES[playAll(ready())]).toBe("Fine");
+  it("a hearth candle is offered only when chosen, and used when the rite begins", () => {
+    const plain = okay(beginRite(withCandle()));
+    expect(plain.inventory.hearth_candle).toBe(1);
+    expect(offeringsMet(plain)).toEqual([]);
+    const offered = okay(beginRite(withCandle(), ["hearth_candle"]));
+    expect(offered.inventory.hearth_candle).toBe(0);
+    expect(offeringsMet(offered)).toEqual(["hearth_candle"]);
+  });
+
+  it("a candle you don't have isn't offered", () => {
+    const s = okay(beginRite(ready(), ["hearth_candle"]));
+    expect(offeringsMet(s)).toEqual([]);
+    expect(canOffer(ready(), "hearth_candle")).not.toBeNull();
+  });
+
+  it("none is Sound, one or two Fine, all three Resplendent", () => {
     const mark = { hearth_mark: { ...progressOf(ready(), "hearth_mark"), discovered: true } };
-    const night = ready({ grimoire: mark, buffs: [{ id: "still_night", endsAt: T0 + MIN, skill: "ritualism" }] });
-    expect(QUALITIES[playAll(night)]).toBe("Resplendent");
+    const night = [{ id: "still_night" as const, endsAt: T0 + MIN, skill: "ritualism" as const }];
+    const finish = (s: GameState, offer: ("hearth_candle")[] = []) => QUALITIES[advance(okay(beginRite(s, offer)), RITE_MS).state.rite.completed!.quality];
+    expect(finish(ready())).toBe("Sound");
+    expect(finish(withCandle(), ["hearth_candle"])).toBe("Fine");
+    expect(finish(withCandle({ grimoire: mark }), ["hearth_candle"])).toBe("Fine");
+    expect(finish(withCandle({ grimoire: mark, buffs: night }), ["hearth_candle"])).toBe("Resplendent");
+  });
+
+  it("quality changes only lore and the keepsake: the rewards are the same", () => {
+    const sound = advance(okay(beginRite(ready())), RITE_MS).state;
+    const mark = { hearth_mark: { ...progressOf(ready(), "hearth_mark"), discovered: true } };
+    const best = advance(okay(beginRite(withCandle({ grimoire: mark, buffs: [{ id: "still_night", endsAt: T0 + MIN, skill: "ritualism" }] }), ["hearth_candle"])), RITE_MS).state;
+    expect([sound.levelCap, sound.followers]).toEqual([best.levelCap, best.followers]);
   });
 });
 
 describe("quality", () => {
-  it("bands: 0–2 steps Sound, 3–5 Fine, 6–7 Resplendent; it never fails", () => {
-    expect([0, 2, 3, 5, 6, 7].map((n) => QUALITIES[qualityFor(n)])).toEqual(["Sound", "Sound", "Fine", "Fine", "Resplendent", "Resplendent"]);
+  it("bands by offerings", () => {
+    expect([0, 1, 2, 3].map((n) => QUALITIES[qualityFor(n)])).toEqual(["Sound", "Fine", "Fine", "Resplendent"]);
   });
 
   it("counts Still Night released while the rite runs", () => {
     const s = okay(beginRite(ready({ omens: { still_night: 1 } })));
     const released = okay(releaseOmen(s, "still_night", "ritualism"));
     expect(released.rite.performing?.omen).toBe(true);
-    expect(qualitySteps(released)).toBe(1);
+    expect(offeringsMet(released)).toEqual(["still_night"]);
   });
 });
 
@@ -206,7 +214,7 @@ describe("save v5", () => {
     expect(loaded.kindling).toEqual(PART_IDS);
     expect(currentNote(loaded)).toBe(NOTES[RITE_NOTE]);
     // 1 of the old 30 minutes is the first phase of five, about a sixth of the way in.
-    expect(loaded.rite.performing).toEqual({ phase: 0, phaseMs: expect.closeTo(HEARTH_RITE.phaseMs / 6, 0), moments: [], omen: false });
+    expect(loaded.rite.performing).toEqual({ phase: 0, phaseMs: expect.closeTo(HEARTH_RITE.phaseMs / 6, 0), offered: [], omen: false });
     expect(advance(loaded, 30 * MIN).state.rite.completed).not.toBeNull();
   });
 

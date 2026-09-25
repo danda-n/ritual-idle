@@ -17,7 +17,6 @@ const CROWN: Pt = [180, 46];
 
 /** Where each branch leaves the trunk and where its three nodes sit. */
 const LAYOUT: Record<BranchId, { from: Pt; nodes: [Pt, Pt, Pt]; label: Pt; anchor: "start" | "end" }> = {
-  tending: { from: [180, 214], nodes: [[136, 204], [98, 184], [66, 154]], label: [52, 132], anchor: "start" },
   swift: { from: [180, 146], nodes: [[138, 132], [104, 108], [80, 76]], label: [66, 56], anchor: "start" },
   plenty: { from: [180, 146], nodes: [[222, 132], [256, 108], [280, 76]], label: [294, 56], anchor: "end" },
   fortune: { from: [180, 214], nodes: [[224, 204], [262, 184], [294, 154]], label: [308, 132], anchor: "end" },

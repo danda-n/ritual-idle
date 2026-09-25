@@ -11,7 +11,7 @@ import { MoonIcon, SkillIcon } from "../art/icons";
 import { formatClock } from "../format";
 import { buffDuration, buffEffects } from "../effects";
 import { SkillPicker } from "./SkillPicker";
-import { DrainBar } from "./TendControl";
+import { DrainBar } from "./Bar";
 
 const OMEN_IDS = Object.keys(OMENS) as OmenId[];
 

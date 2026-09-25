@@ -34,13 +34,11 @@ export function deserialize(json: string): GameState {
       requestsFilled: data.stats?.requestsFilled ?? 0,
       omensSeen: data.stats?.omensSeen ?? 0,
       curiosRead: data.stats?.curiosRead ?? 0,
-      tended: data.stats?.tended ?? 0,
     },
     settings: { ...base.settings, ...data.settings },
     rite: { ...base.rite, ...data.rite },
     kept: { ...base.kept, ...data.kept },
     rewardsWaiting: data.rewardsWaiting ?? [],
-    tend: { ...base.tend, ...data.tend },
     talents: { ...data.talents },
     version: SAVE_VERSION,
   };
@@ -65,6 +63,7 @@ export function deserialize(json: string): GameState {
   // Numbers that must never be missing or broken.
   if (!Number.isFinite(state.insight)) state.insight = 0;
   if (data.version < 7) upgradeToV7(state, data);
+  if (data.version < 8) upgradeToV8(state);
   if (data.version < 6) {
     // v6 added stage steps: every step of a stage already passed counts as done (no rewards).
     state.stepsDone = NOTES.slice(0, state.notesRevealed - 1).flatMap((n) => ("steps" in n ? n.steps.map((st) => st.id) : []));
@@ -142,9 +141,23 @@ function upgradeToV7(state: GameState, data: Partial<GameState>): void {
   if (oldRite && oldRite.elapsedMs !== undefined) {
     const at = Math.min(0.999, oldRite.elapsedMs / (30 * 60_000)) * HEARTH_RITE.phases.length;
     const phase = Math.floor(at);
-    state.rite.performing = { phase, phaseMs: (at - phase) * HEARTH_RITE.phaseMs, moments: Array.from({ length: phase }, () => true), omen: !!oldRite.stillNight };
+    state.rite.performing = { phase, phaseMs: (at - phase) * HEARTH_RITE.phaseMs, offered: [], omen: !!oldRite.stillNight };
   }
   if (pool > 0 && state.kept.features.includes("grimoire")) state.experimentsOpen = true;
+}
+
+/**
+ * v8: Tend is gone (its meter, streak and talent ranks), and the rite has no moments: one under
+ * way keeps its place, with no offerings made.
+ */
+function upgradeToV8(state: GameState): void {
+  delete (state as { tend?: unknown }).tend;
+  for (const t of Object.values(state.talents)) if (t) delete (t.ranks as Record<string, number>).tending;
+  const p = state.rite.performing as (NonNullable<GameState["rite"]["performing"]> & { moments?: boolean[] }) | null;
+  if (p) {
+    delete p.moments;
+    p.offered = p.offered ?? [];
+  }
 }
 
 // Export strings are base64 so they survive being pasted into chats and forums.

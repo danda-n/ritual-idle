@@ -8,7 +8,6 @@ import { PART_DEFS, type PartId } from "../../content/rite";
 import type { Result } from "../../engine/commands";
 import { pointsFree } from "../../engine/talents";
 import { TalentPanel } from "../components/TalentPanel";
-import { TendControl } from "../components/TendControl";
 import { BUFFS, type BuffId } from "../../content/buffs";
 import { buffDuration, buffEffects } from "../effects";
 import { taskName } from "../tasks";
@@ -77,7 +76,7 @@ function NextSkill({ state }: { state: GameState }) {
 
 const pickUnlocked = (e: FxEvent) => (e.kind === "unlocked" ? e.ids : []);
 
-export function SkillActions({ state, skill, onStart, act, onTend }: { state: GameState; skill: SkillId; onStart: (id: ActionId) => void; act: (c: (s: GameState) => Result) => unknown; onTend: () => void }) {
+export function SkillActions({ state, skill, onStart, act }: { state: GameState; skill: SkillId; onStart: (id: ActionId) => void; act: (c: (s: GameState) => Result) => unknown }) {
   const fresh = useRecentFx(pickUnlocked, 5000);
   const level = skillLevel(state, skill);
   const toCap = timeToCapMs(state, skill);
@@ -98,10 +97,10 @@ export function SkillActions({ state, skill, onStart, act, onTend }: { state: Ga
       </header>
       <div className="action-list">
         {open.map((id) => (
-          <ActionRow key={id} id={id} state={state} onStart={() => onStart(id)} fresh={fresh.has(id)} onTend={onTend} />
+          <ActionRow key={id} id={id} state={state} onStart={() => onStart(id)} fresh={fresh.has(id)} />
         ))}
         {nextUp.map((id) => (
-          <ActionRow key={id} id={id} state={state} onStart={() => onStart(id)} onTend={onTend} />
+          <ActionRow key={id} id={id} state={state} onStart={() => onStart(id)} />
         ))}
       </div>
       <TalentPanel state={state} skill={skill} act={act} />
@@ -109,7 +108,7 @@ export function SkillActions({ state, skill, onStart, act, onTend }: { state: Ga
   );
 }
 
-function ActionRow({ id, state, onStart, fresh, onTend }: { id: ActionId; state: GameState; onStart: () => void; fresh?: boolean; onTend: () => void }) {
+function ActionRow({ id, state, onStart, fresh }: { id: ActionId; state: GameState; onStart: () => void; fresh?: boolean }) {
   const def = ACTION_DEFS[id];
   if (!isRecipeKnown(state, id)) {
     return (
@@ -163,15 +162,12 @@ function ActionRow({ id, state, onStart, fresh, onTend }: { id: ActionId; state:
       </div>
       <div className="action-control">
         {running ? (
-          <>
-            <TimedBar
+          <TimedBar
               key={`${id}:${state.stats.completed[id] ?? 0}:${Math.round(actionDurationMs(state, id))}`}
               progress={state.active!.progress}
               durationMs={actionDurationMs(state, id)}
               label={`${def.name} progress`}
             />
-            <TendControl state={state} onTend={onTend} compact />
-          </>
         ) : (
           <button
             className="btn btn-primary"

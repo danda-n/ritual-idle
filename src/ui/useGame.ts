@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ACTION_DEFS, type ActionId } from "../content/actions";
 import { CURIO_STORIES, type GrimoireId } from "../content/grimoire";
-import { tend as tendCommand, type Result, type Success } from "../engine/commands";
+import type { Result, Success } from "../engine/commands";
 import { NOTES } from "../content/notes";
 import { ITEMS, type ItemId } from "../content/items";
 import { SKILL_IDS, SKILLS } from "../content/skills";
@@ -103,7 +103,7 @@ export function useGame() {
 
   // New notes and pages pop up while playing; after an absence they appear in the summary instead.
   const announce = useCallback(
-    (report: Partial<Pick<Report, "notesRevealed" | "pagesRead" | "omensFound" | "omensLost" | "fragments" | "curioStories" | "fellBackTo" | "itemsGained" | "levelUps" | "criticals" | "stepsDone" | "tendFinds">>) => {
+    (report: Partial<Pick<Report, "notesRevealed" | "pagesRead" | "omensFound" | "omensLost" | "fragments" | "curioStories" | "fellBackTo" | "itemsGained" | "levelUps" | "criticals" | "stepsDone">>) => {
       const notes = report.notesRevealed ?? [];
       if (notes.length > 0) setStory((q) => [...q, ...notes.map((note) => ({ note, at: Date.now() }))]);
 
@@ -116,7 +116,6 @@ export function useGame() {
       const insight = (report.fragments ?? []).reduce((n, f) => n + f.amount, 0);
       if (insight > 0) emitFx({ kind: "float", text: `+${insight} insight`, anchors: ["#tab-grimoire", ".tabs"], tone: "good" });
       if (report.criticals) emitFx({ kind: "float", text: "Critical! ×2", anchors: fromWork, tone: "rare" });
-      if (report.tendFinds) emitFx({ kind: "float", text: "Bonus find!", anchors: fromWork, tone: "good" });
       // Placing a part has its own toast; other steps say what they gave.
       const stepToasts = (report.stepsDone ?? []).filter((st) => st.goal.kind !== "place").map((st) => ({ title: `Step done: ${st.label}`, text: st.reward ? `Reward ready to claim: ${rewardText(st)}` : "" }));
       const levelToasts: Omit<Toast, "id">[] = [];
@@ -197,11 +196,6 @@ export function useGame() {
 
   const stop = useCallback(() => commit(stopAction(ref.current)), [commit]);
 
-  /** Tend the running work. Quiet: a too-quick second click just does nothing. */
-  const tendNow = useCallback(() => {
-    const r = tendCommand(ref.current);
-    if (r.ok) commit(r.state);
-  }, [commit]);
 
   const load = useCallback((loaded: GameState) => {
     const result = catchUp(loaded, Date.now());
@@ -250,5 +244,5 @@ export function useGame() {
   const dismissDiscovery = useCallback(() => setDiscovery(null), []);
   const dismissStory = useCallback(() => setStory((q) => q.slice(1)), []);
 
-  return { state, tend: tendNow, away, dismissAway, discovery, dismissDiscovery, story: story[0] && Date.now() - story[0].at >= STORY_DELAY_MS ? story[0].note : null, dismissStory, lastStop, toasts, dismissToast, start, stop, act, load, reset, dev };
+  return { state, away, dismissAway, discovery, dismissDiscovery, story: story[0] && Date.now() - story[0].at >= STORY_DELAY_MS ? story[0].note : null, dismissStory, lastStop, toasts, dismissToast, start, stop, act, load, reset, dev };
 }

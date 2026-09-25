@@ -1,9 +1,9 @@
-import type { CSSProperties } from "react";
+import { useState, type CSSProperties } from "react";
 import type { ItemId } from "../../content/items";
-import { HEARTH_RITE, PART_DEFS, PART_IDS, QUALITIES, QUALITY_AT, RITE_MS, type PartId } from "../../content/rite";
+import { HEARTH_RITE, OFFERINGS, PART_DEFS, PART_IDS, QUALITIES, RITE_MS, type OfferingId, type PartId } from "../../content/rite";
 import { SKILLS } from "../../content/skills";
-import { answerMoment, beginRite, canPlace, placePart, type Result } from "../../engine/commands";
-import { canBeginRite, openMoment, qualitySteps, riteFactors, riteLog, riteQuality, riteShortfall } from "../../engine/rite";
+import { beginRite, canPlace, placePart, type Result } from "../../engine/commands";
+import { canBeginRite, canOffer, offeringsMet, riteLog, riteQuality, riteShortfall } from "../../engine/rite";
 import type { GameState } from "../../engine/state";
 import { CircleRiteIcon, SkillIcon } from "../art/icons";
 import { formatClock } from "../format";
@@ -12,7 +12,6 @@ import type { FxEvent } from "../fx";
 import { partState } from "../tasks";
 import { TimedBar } from "./Bar";
 import { ItemChip } from "./ItemLookup";
-import { DrainBar } from "./TendControl";
 
 type Act = (c: (s: GameState) => Result) => unknown;
 const pickPlaced = (e: FxEvent) => (e.kind === "placed" ? [e.part] : []);
@@ -46,7 +45,7 @@ export function KindlingPanel({ state, act }: { state: GameState; act: Act }) {
         )}
         {(performing || completed) && (
           <div className="kindling-rite">
-            {performing && <Ceremony state={state} act={act} />}
+            {performing && <Running state={state} />}
             <RiteLog lines={riteLog(state)} />
           </div>
         )}
@@ -135,8 +134,11 @@ function Rosette({ state, fresh }: { state: GameState; fresh: Set<string> }) {
 }
 
 function Perform({ state, act }: { state: GameState; act: Act }) {
+  const [candle, setCandle] = useState(false);
   const short = riteShortfall(state).skills;
   const reason = canBeginRite(state);
+  const chosen: OfferingId[] = candle && canOffer(state, "hearth_candle") === null ? ["hearth_candle"] : [];
+  const met = offeringsMet(state, chosen);
   return (
     <div className={`perform ${reason === null ? "is-ready" : ""}`}>
       <h3>Wake it</h3>
@@ -156,24 +158,44 @@ function Perform({ state, act }: { state: GameState; act: Act }) {
           );
         })}
       </ul>
+      <p className="muted">About {Math.round(RITE_MS / 60_000)} minutes. It runs by itself, even while you're away, and never fails.</p>
+      <h3>Offerings (optional)</h3>
+      <ul className="offerings">
+        {OFFERINGS.map((o) => {
+          const on = met.includes(o.id);
+          if ("item" in o) {
+            const blocked = canOffer(state, o.id);
+            return (
+              <li key={o.id} className={on ? "met" : ""}>
+                <label className="toggle">
+                  <input type="checkbox" checked={candle} disabled={blocked !== null} onChange={(e) => setCandle(e.target.checked)} /> {o.label}
+                </label>
+                {blocked && <span className="muted"> · {blocked}</span>}
+              </li>
+            );
+          }
+          return (
+            <li key={o.id} className={on ? "met" : ""}>
+              <span aria-hidden="true">{on ? "✦ " : "◇ "}</span>
+              {o.label}
+            </li>
+          );
+        })}
+      </ul>
       <p className="muted">
-        {HEARTH_RITE.phases.length} phases, about {Math.round(RITE_MS / 60_000)} minutes. Each phase has one moment: answer it for a better outcome. It never fails.
+        Outcome: <strong>{QUALITIES[riteQuality(state, chosen)]}</strong> · none = Sound, 1–2 = Fine, all 3 = Resplendent. Only the lore and a keepsake differ; the rewards are the same.
       </p>
-      <Quality state={state} />
-      <button className="btn btn-primary" disabled={reason !== null} title={reason ?? undefined} onClick={() => act(beginRite)}>
+      <button className="btn btn-primary" disabled={reason !== null} title={reason ?? undefined} onClick={() => act((s) => beginRite(s, chosen))}>
         Begin the rite
       </button>
     </div>
   );
 }
 
-/** The ceremony under way: the phase, its bar, the moment to answer, and the quality so far. */
-function Ceremony({ state, act }: { state: GameState; act: Act }) {
+/** The rite under way: the phase, its bar, and the time left. It needs nothing from you. */
+function Running({ state }: { state: GameState }) {
   const p = state.rite.performing!;
   const phase = HEARTH_RITE.phases[Math.min(p.phase, HEARTH_RITE.phases.length - 1)]!;
-  const open = openMoment(state);
-  const from = phase.moment.at * HEARTH_RITE.phaseMs;
-  const status = p.moments[p.phase] ? "answered" : open ? "open" : p.phaseMs < from ? "coming" : "missed";
   return (
     <div className="ceremony">
       <div className="ceremony-head">
@@ -183,43 +205,9 @@ function Ceremony({ state, act }: { state: GameState; act: Act }) {
         <span className="muted num">{formatClock(RITE_MS - (p.phase * HEARTH_RITE.phaseMs + p.phaseMs))} left</span>
       </div>
       <TimedBar key={`phase${p.phase}`} progress={p.phaseMs / HEARTH_RITE.phaseMs} durationMs={HEARTH_RITE.phaseMs} label="Phase progress" />
-      <div className={`moment is-${status}`} role="status">
-        {status === "open" && (
-          <>
-            <p>{phase.moment.prompt}</p>
-            <button className="btn btn-primary" onClick={() => act(answerMoment)}>
-              {phase.moment.button}
-            </button>
-            <DrainBar key={`m${p.phase}`} leftMs={open!.leftMs} totalMs={HEARTH_RITE.momentMs} />
-          </>
-        )}
-        {status === "coming" && <p className="muted">Watch for this phase's moment…</p>}
-        {status === "answered" && <p>✓ {phase.moment.button}: done.</p>}
-        {status === "missed" && <p className="muted">The moment passed. The rite goes on.</p>}
-      </div>
-      <Quality state={state} />
-    </div>
-  );
-}
-
-/** Quality steps as pips, with the outcome they make and what counts. */
-function Quality({ state }: { state: GameState }) {
-  const factors = riteFactors(state);
-  const steps = qualitySteps(state);
-  const total = factors.reduce((n, f) => n + f.of, 0);
-  return (
-    <div className="rite-quality">
-      <span className="pips" aria-label={`${steps} of ${total} quality steps`}>
-        {Array.from({ length: total }, (_, i) => (
-          <span key={i} className={`pip ${i < steps ? "on" : ""}`} />
-        ))}
-      </span>
-      <span>
-        Outcome so far: <strong>{QUALITIES[riteQuality(state)]}</strong>
-      </span>
-      <span className="muted rite-quality-how">
-        {factors.map((f) => `${f.label}`).join(" · ")}. {QUALITY_AT.fine}+ Fine, {QUALITY_AT.resplendent}+ Resplendent.
-      </span>
+      <p className="muted">
+        Outcome: <strong>{QUALITIES[riteQuality(state)]}</strong> · it runs by itself.
+      </p>
     </div>
   );
 }

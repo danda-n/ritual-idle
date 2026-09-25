@@ -1,15 +1,14 @@
-import { HEARTH_RITE, PART_IDS, QUALITY_AT, RITE_MS, type PartId } from "../content/rite";
+import { HEARTH_RITE, OFFERINGS, PART_IDS, QUALITY_AT, RITE_MS, type OfferingId, type PartId } from "../content/rite";
 import type { SkillId } from "../content/skills";
 import { activeBuffs, riteQualitySteps } from "./modifiers";
 import { isRiteRevealed } from "./progress";
 import type { GameState } from "./state";
 import { levelForXp } from "./xp";
 
-// The Chapter 1 Major Rite, a short played ceremony. Its parts are placed in the Circle one by one
-// (see `placePart`); once all are placed and Ritualism is high enough, it takes the action slot
-// for five phases. Each phase has one moment the player can answer; answered moments, the Hearth
-// mark and an omen active during it set the quality. It never fails, and if you leave it finishes
-// offline without the moments. Helpers mutate `state`.
+// The Chapter 1 Major Rite. Its parts are placed in the Circle one by one (see `placePart`); once
+// all are placed and Ritualism is high enough, it takes the action slot for five short phases and
+// runs by itself, offline too. Optional offerings set its quality, which changes only cosmetics
+// and lore. It never fails. Helpers mutate `state`.
 
 export interface Shortfall {
   /** Kindling parts not yet placed in the Circle. */
@@ -37,54 +36,41 @@ export function canBeginRite(state: GameState): string | null {
 
 const omenActive = (state: GameState, now: number) => activeBuffs(state, now).some((b) => b.id === "still_night");
 
-/** Start the rite (it replaces whatever you were doing). The parts are already in the Circle. */
-export function beginRite(state: GameState, now: number): void {
+/** Offerings that count for this rite right now (for the card before it begins, or while it runs). */
+export function offeringsMet(state: GameState, chosen: readonly OfferingId[] = state.rite.performing?.offered ?? []): OfferingId[] {
+  const p = state.rite.performing;
+  return OFFERINGS.filter((o) => {
+    if (o.id === "hearth_candle") return chosen.includes("hearth_candle");
+    if (o.id === "hearth_mark") return riteQualitySteps(state) > 0;
+    return p?.omen || omenActive(state, state.lastTickAt);
+  }).map((o) => o.id);
+}
+
+/** Why an item offering can't be made right now, or null if it can. */
+export function canOffer(state: GameState, id: OfferingId): string | null {
+  const o = OFFERINGS.find((x) => x.id === id)!;
+  if (!("item" in o)) return "That one counts by itself.";
+  return (state.inventory[o.item] ?? 0) >= 1 ? null : `Needs a ${o.item.replace(/_/g, " ")}.`;
+}
+
+/** Start the rite (it replaces whatever you were doing), using any chosen item offerings. */
+export function beginRite(state: GameState, now: number, offer: readonly OfferingId[] = []): void {
+  const offered = offer.filter((id) => canOffer(state, id) === null);
+  for (const id of offered) {
+    const o = OFFERINGS.find((x) => x.id === id)!;
+    if ("item" in o) state.inventory[o.item] = (state.inventory[o.item] ?? 0) - 1;
+  }
   state.active = null;
-  state.rite.performing = { phase: 0, phaseMs: 0, moments: [], omen: omenActive(state, now) };
+  state.rite.performing = { phase: 0, phaseMs: 0, offered, omen: omenActive(state, now) };
 }
 
-/** The current phase's moment, if it's open right now (and not yet answered). */
-export function openMoment(state: GameState): { phase: number; leftMs: number } | null {
-  const p = state.rite.performing;
-  if (!p) return null;
-  const def = HEARTH_RITE.phases[p.phase];
-  if (!def || p.moments[p.phase]) return null;
-  const from = def.moment.at * HEARTH_RITE.phaseMs;
-  if (p.phaseMs < from || p.phaseMs >= from + HEARTH_RITE.momentMs) return null;
-  return { phase: p.phase, leftMs: from + HEARTH_RITE.momentMs - p.phaseMs };
+/** Quality index into QUALITIES: no offerings → Sound, 1–2 → Fine, all 3 → Resplendent. */
+export function qualityFor(offerings: number): number {
+  return offerings >= QUALITY_AT.resplendent ? 2 : offerings >= QUALITY_AT.fine ? 1 : 0;
 }
 
-/** Answer the open moment: one quality step. Returns false if none is open. */
-export function answerMomentInto(state: GameState): boolean {
-  const m = openMoment(state);
-  if (!m) return false;
-  state.rite.performing!.moments[m.phase] = true;
-  return true;
-}
-
-/** What counts toward the quality, and whether each is met. */
-export function riteFactors(state: GameState) {
-  const p = state.rite.performing;
-  const answered = p ? p.moments.filter(Boolean).length : 0;
-  return [
-    { label: `Moments answered (${answered} of ${HEARTH_RITE.phases.length})`, steps: answered, of: HEARTH_RITE.phases.length },
-    { label: "The Hearth mark is discovered", steps: riteQualitySteps(state) > 0 ? 1 : 0, of: 1 },
-    { label: "Still Night active during the rite", steps: p?.omen || omenActive(state, state.lastTickAt) ? 1 : 0, of: 1 },
-  ];
-}
-
-/** Quality steps so far (0–7). */
-export function qualitySteps(state: GameState): number {
-  return riteFactors(state).reduce((n, f) => n + f.steps, 0);
-}
-
-/** Quality index into QUALITIES: 0–2 steps → Sound, 3–5 → Fine, 6–7 → Resplendent. */
-export function qualityFor(steps: number): number {
-  return steps >= QUALITY_AT.resplendent ? 2 : steps >= QUALITY_AT.fine ? 1 : 0;
-}
-
-export function riteQuality(state: GameState): number {
-  return qualityFor(qualitySteps(state));
+export function riteQuality(state: GameState, chosen?: readonly OfferingId[]): number {
+  return qualityFor(offeringsMet(state, chosen).length);
 }
 
 /**
