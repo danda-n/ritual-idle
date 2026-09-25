@@ -5,7 +5,7 @@ import { OMENS, type OmenId } from "../content/omens";
 import type { BuffId } from "../content/buffs";
 import { INSIGHT_GAIN } from "../content/grimoire";
 import { PAGES } from "../content/pages";
-import { addInsight, fragmentTarget, readCurio, type Fragment } from "./grimoire";
+import { addInsight, readCurio, type Fragment } from "./grimoire";
 import { actionDurationMs, chanceMultiplier, criticalChance, extraYieldChance, xpBonus } from "./modifiers";
 import { isTended, keystoneEffect, tendBonusChance } from "./talents";
 import { applyBuff, giveNoteGifts, grantOmen, pruneBuffs } from "./omens";
@@ -258,7 +258,7 @@ export function advance(input: GameState, ms: number, opts: AdvanceOptions = {})
         for (let i = 0; i < qty; i++) {
           const { story, fragment } = readCurio(state);
           report.curioStories.push(story);
-          if (fragment) report.fragments.push(fragment);
+          report.fragments.push(fragment);
         }
         continue;
       }
@@ -291,14 +291,12 @@ export function advance(input: GameState, ms: number, opts: AdvanceOptions = {})
     report.pagesRead.push(...pagesRead(state).slice(pagesBefore));
     // Past the story pages, each deciphered page carries a hint fragment.
     if (id === "decipher_page" && (state.stats.completed.decipher_page ?? 0) > PAGES.length) {
-      const f = addInsight(state, fragmentTarget(state), INSIGHT_GAIN.page, "page");
-      if (f) report.fragments.push(f);
+      report.fragments.push(addInsight(state, INSIGHT_GAIN.page, "page"));
     }
     // Marginalia (the Scholarship keystone): every page deciphered carries a little insight.
     const keystone = keystoneEffect(state, def.skill);
     if (keystone?.kind === "insight" && id === "decipher_page") {
-      const f = addInsight(state, fragmentTarget(state), keystone.amount, "page");
-      if (f) report.fragments.push(f);
+      report.fragments.push(addInsight(state, keystone.amount, "page"));
     }
     const notes = revealNotes(state, report.stepsDone);
     report.notesRevealed.push(...notes);

@@ -1,13 +1,13 @@
 import { useState, type ReactNode } from "react";
-import { CURIO_STORIES, GRIMOIRE_DEFS, INSIGHT, type GrimoireId } from "../../content/grimoire";
+import { CURIO_STORIES, GRIMOIRE_DEFS, INSIGHT_GAIN, type GrimoireId } from "../../content/grimoire";
 import { PAGES } from "../../content/pages";
-import { attune, type Result } from "../../engine/commands";
-import { GRIMOIRE_IDS, hintTier, isDiscovered, isSilhouetteVisible, nextHintAt, plainNamesShown, progressOf } from "../../engine/grimoire";
+import { attune, buyHint, type Result } from "../../engine/commands";
+import { GRIMOIRE_IDS, hintCost, isDiscovered, isSilhouetteVisible, progressOf, type HintKind } from "../../engine/grimoire";
+import { isFeatureOpen } from "../../engine/progress";
 import { pagesRead, revealedNotes } from "../../engine/progress";
 import { EXPERIMENTS_NOTE } from "../../content/notes";
 import type { GameState } from "../../engine/state";
 import { BookIcon, CircleRiteIcon, ScrollIcon } from "../art/icons";
-import { Bar } from "../components/Bar";
 import { ItemChip } from "../components/ItemLookup";
 import { itemName } from "../format";
 import { INSIGHT_SOURCES, recipeGuide, recipeKnowledge } from "../guidance";
@@ -37,28 +37,32 @@ export function Grimoire({ state, act, onAttuned }: { state: GameState; act: Act
 
   return (
     <div className="grimoire">
-      {discovered.length === 0 && (
+      {discovered.length === 0 && isFeatureOpen(state, "experiments") && (
       <ol className="how-strip" aria-label="How the Grimoire works">
         <li>
-          <strong>1 · Collect hints</strong> Burnt pages, curios and villagers reveal hidden recipes here.
+          <strong>1 · Collect insight</strong> From wrong tries at the Circle, pages past the sixth, curios and some villagers.
         </li>
         <li>
-          <strong>2 · Guess at the Circle</strong> Place things; it glows once per right one.
+          <strong>2 · Buy a hint</strong> Spend it on what you want: a recipe's categories, one ingredient named, or a secret's clue.
         </li>
         <li>
-          <strong>3 · Discover</strong> The right set makes it. Its bonus is yours for good.
+          <strong>3 · Try it at the Circle</strong> It glows once per right thing. The right set makes it, and its bonus is yours for good.
         </li>
       </ol>
       )}
       <nav className="panel grimoire-index" aria-label="Grimoire contents">
+        <p className="insight-pool num" aria-label={`${state.insight} insight to spend`}>
+          <span aria-hidden="true">✦</span> {state.insight} insight
+        </p>
         <h3>Hidden recipes</h3>
         {silhouettes.length === 0 ? (
-          <p className="muted">No shapes yet. Hints turn up in burnt pages, curios, and what the village remembers.</p>
+          <p className="muted">{isFeatureOpen(state, "experiments") ? "None left to find." : "They show here once experiments open at the Circle."}</p>
         ) : (
           <ul>
-            {silhouettes.map((id) =>
-              item({ kind: "recipe", id }, GRIMOIRE_DEFS[id].name, <Bar thin value={Math.min(1, progressOf(state, id).insight / (INSIGHT.plain + INSIGHT.perExtraName))} label="Insight" />),
-            )}
+            {silhouettes.map((id) => {
+              const k = recipeKnowledge(state, id);
+              return item({ kind: "recipe", id }, GRIMOIRE_DEFS[id].name, <span className="muted num">{k.belongs.length}/{k.size} known</span>);
+            })}
           </ul>
         )}
         {discovered.length > 0 && (
@@ -89,7 +93,7 @@ export function Grimoire({ state, act, onAttuned }: { state: GameState; act: Act
                 {Math.min(state.stats.curiosRead, CURIO_STORIES.length)}/{CURIO_STORIES.length}
               </span>
             </div>
-            <p className="muted">Rare finds from the attic (0.5%) and grandmother's chest (1%). Each one also adds 3 insight to a hidden recipe.</p>
+            <p className="muted">Rare finds from the attic (0.5%) and grandmother's chest (1%). Each one also brings {INSIGHT_GAIN.curio} insight.</p>
             <ol className="curios">
               {CURIO_STORIES.map((story, i) => (
                 <li key={i} className={i < state.stats.curiosRead ? "found" : "missing"}>
@@ -123,7 +127,10 @@ export function Grimoire({ state, act, onAttuned }: { state: GameState; act: Act
                 {secretsTotal - secretsLeft}/{secretsTotal}
               </span>
             </div>
-            <p>{secretsLeft > 0 ? `${secretsLeft} left to find. No hints: set the Circle to Free experiment and try sets of 3.` : "You found every secret in this chapter."}</p>
+            <p>{secretsLeft > 0 ? `${secretsLeft} left to find. Read clues with insight, then set the Circle to Free experiment and try sets of 3.` : "You found every secret in this chapter."}</p>
+            {GRIMOIRE_IDS.filter((id) => GRIMOIRE_DEFS[id].kind === "secret").map((id) => (
+              <SecretEntry key={id} state={state} id={id} act={act} />
+            ))}
           </>
         )}
         {sel.kind === "forbidden" && (
@@ -141,12 +148,49 @@ export function Grimoire({ state, act, onAttuned }: { state: GameState; act: Act
   );
 }
 
+/** A "spend insight on this" button: says the cost, and why it can't be bought yet. */
+function BuyHint({ state, id, kind, label, act }: { state: GameState; id: GrimoireId; kind: HintKind; label: string; act: Act }) {
+  const cost = hintCost(state, id, kind);
+  if (cost === null) return null;
+  const short = state.insight < cost;
+  return (
+    <button className="btn btn-ghost buy-hint" disabled={short} title={short ? `Needs ${cost} insight; you have ${state.insight}.` : undefined} onClick={() => act((s) => buyHint(s, id, kind))}>
+      {label} · <span className="num">{cost}</span> ✦
+    </button>
+  );
+}
+
+function SecretEntry({ state, id, act }: { state: GameState; id: GrimoireId; act: Act }) {
+  const def = GRIMOIRE_DEFS[id];
+  const found = isDiscovered(state, id);
+  const read = progressOf(state, id).clues;
+  return (
+    <div className={`secret ${found ? "is-found" : ""}`}>
+      <h3>
+        {def.name} <span className="muted num">({def.ingredients.length} things)</span>
+        {found && <span className="chip accent">Found</span>}
+      </h3>
+      {found ? (
+        <p className="muted">{def.rewardText}</p>
+      ) : (
+        <>
+          {(def.clues ?? []).slice(0, read).map((c) => (
+            <p key={c} className="note-quote">
+              {c}
+            </p>
+          ))}
+          {read === 0 && <p className="muted">No clues read yet.</p>}
+          <BuyHint state={state} id={id} kind="clue" label={read === 0 ? "Read a clue" : "Read another clue"} act={act} />
+        </>
+      )}
+    </div>
+  );
+}
+
 function SilhouettePage({ state, id, act, onAttuned }: { state: GameState; id: GrimoireId; act: Act; onAttuned: () => void }) {
   const def = GRIMOIRE_DEFS[id];
   const p = progressOf(state, id);
-  const tier = hintTier(p.insight);
-  const next = nextHintAt(id, p.insight);
-  const names = def.hints?.plain.slice(0, plainNamesShown(id, p.insight)) ?? [];
+  const names = p.bought.named;
   const guide = recipeGuide(state, id);
   const k = recipeKnowledge(state, id);
 
@@ -206,25 +250,23 @@ function SilhouettePage({ state, id, act, onAttuned }: { state: GameState; id: G
         <span className="hint-num">I</span>
         <p className="note-quote">{def.hints?.riddle}</p>
       </div>
-      <div className={`hint ${tier === "riddle" ? "locked" : ""}`}>
+      <div className={`hint ${p.bought.category ? "" : "locked"}`}>
         <span className="hint-num">II</span>
-        {tier === "riddle" ? <p className="muted">at {INSIGHT.category} insight</p> : <p>{def.hints?.category.join(" · ")}</p>}
+        {p.bought.category ? <p>{def.hints?.category.join(" · ")}</p> : <BuyHint state={state} id={id} kind="category" label="Where each thing comes from" act={act} />}
       </div>
       <div className={`hint ${names.length === 0 ? "locked" : ""}`}>
         <span className="hint-num">III</span>
-        {names.length === 0 ? <p className="muted">at {INSIGHT.plain} insight</p> : <p>{names.map(itemName).join(", ")}.</p>}
+        <div>
+          {names.length > 0 && <p>{names.map(itemName).join(", ")}.</p>}
+          <BuyHint state={state} id={id} kind="name" label={names.length === 0 ? "Name one ingredient" : "Name another"} act={act} />
+        </div>
       </div>
-      <div className="goal">
-        <Bar value={next ? p.insight / next : 1} label="Insight toward the next hint" />
-        <span className="muted num">{next ? `${p.insight}/${next}` : p.insight}</span>
-      </div>
-      {next && (
-        <ul className="insight-sources" aria-label="Where insight comes from">
-          {INSIGHT_SOURCES.map((x) => (
-            <li key={x}>{x}</li>
-          ))}
-        </ul>
-      )}
+      <ul className="insight-sources" aria-label="Where insight comes from">
+        <li className="insight-have num">✦ {state.insight} to spend</li>
+        {INSIGHT_SOURCES.map((x) => (
+          <li key={x}>{x}</li>
+        ))}
+      </ul>
 
       {p.attempts.length > 0 && (
         <details className="attempts">

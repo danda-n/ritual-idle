@@ -3,7 +3,7 @@ import { REQUESTS } from "../content/requests";
 import { SHOP, type ShopId, type UpgradeId } from "../content/shop";
 import type { ItemId } from "../content/items";
 import { OMENS, type OmenId } from "../content/omens";
-import { addInsight, deduce, GRIMOIRE_IDS, glowCount, isDiscovered, isSilhouetteVisible, markDiscovered, matches, progressOf, type Fragment } from "./grimoire";
+import { addInsight, buyHintInto, deduce, GRIMOIRE_IDS, glowCount, hintCost, isDiscovered, isSilhouetteVisible, markDiscovered, matches, progressOf, type Fragment, type HintKind } from "./grimoire";
 import { requestCoin, trustMultiplier } from "./modifiers";
 import { applyBuff, giveNoteGifts, grantOmen } from "./omens";
 import { beginIfPrimed, beginRite as startRite, canBeginRite } from "./rite";
@@ -68,7 +68,7 @@ export function fillRequest(input: GameState, slotIndex: number): Result {
   state.stats.requestsFilled++;
   emptySlot(state, slotIndex, state.lastTickAt);
   const mention: { recipe: string; aside: string } | undefined = "mentions" in req ? req.mentions : undefined;
-  const fragment = mention ? addInsight(state, mention.recipe as GrimoireId, INSIGHT_GAIN.request, "request") : null;
+  const fragment = mention ? addInsight(state, INSIGHT_GAIN.request, "request") : null;
   // After the insight, so a first hint can open experiments.
   const steps: Step[] = [];
   const notes = revealNotes(state, steps);
@@ -165,8 +165,8 @@ export function experiment(input: GameState, items: ItemId[]): Result {
     const p = (state.grimoire[attuned] ??= progressOf(state, attuned));
     p.attempts.push({ items: [...items], glows });
     deduce(p);
-    const f = addInsight(state, attuned, INSIGHT_GAIN.failedAttempt, "attempt");
-    return ok(state, [], { outcome: { kind: "glow", recipe: attuned, glows, of: items.length }, fragments: f ? [f] : [] });
+    const f = addInsight(state, INSIGHT_GAIN.failedAttempt, "attempt");
+    return ok(state, [], { outcome: { kind: "glow", recipe: attuned, glows, of: items.length }, fragments: [f] });
   }
   const almost = GRIMOIRE_IDS.some((id) => GRIMOIRE_DEFS[id].kind === "secret" && !isDiscovered(state, id) && glowCount(id, items) === 2);
   return ok(state, [], { outcome: almost ? { kind: "almost" } : { kind: "nothing" } });
@@ -175,6 +175,17 @@ export function experiment(input: GameState, items: ItemId[]): Result {
 function consolation(state: GameState): void {
   const skill = state.skills.ritualism;
   skill.xp = Math.min(skill.xp + EXPERIMENT_CONSOLATION_XP, xpForLevel(state.levelCap));
+}
+
+/** Spend insight on a hint: a hidden recipe's categories, one more ingredient named, or a secret's next clue. */
+export function buyHint(input: GameState, id: GrimoireId, kind: HintKind): Result {
+  if (!isFeatureOpen(input, "experiments")) return no("Experiments open later.");
+  const cost = hintCost(input, id, kind);
+  if (cost === null) return no("Nothing more to learn there.");
+  if (input.insight < cost) return no(`Needs ${cost} insight (you have ${input.insight}).`);
+  const state = structuredClone(input);
+  buyHintInto(state, id, kind);
+  return ok(state);
 }
 
 /** The player's own pencil marks on a silhouette (purely notes). */

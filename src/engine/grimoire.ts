@@ -1,4 +1,4 @@
-import { CURIO_STORIES, GRIMOIRE_DEFS, INSIGHT, INSIGHT_GAIN, type GrimoireId } from "../content/grimoire";
+import { CURIO_STORIES, GRIMOIRE_DEFS, INSIGHT_COST, INSIGHT_GAIN, type GrimoireId } from "../content/grimoire";
 import type { ItemId } from "../content/items";
 import type { GameState, RecipeProgress } from "./state";
 
@@ -7,16 +7,13 @@ import type { GameState, RecipeProgress } from "./state";
 
 export const GRIMOIRE_IDS = Object.keys(GRIMOIRE_DEFS) as GrimoireId[];
 
-export type HintTier = "riddle" | "category" | "plain";
-
 export interface Fragment {
-  recipe: GrimoireId;
   amount: number;
   source: "page" | "curio" | "request" | "attempt";
 }
 
 export function progressOf(state: GameState, id: GrimoireId): RecipeProgress {
-  return state.grimoire[id] ?? { insight: 0, discovered: false, attempts: [], provenWrong: [], provenRight: [], marks: {} };
+  return state.grimoire[id] ?? { discovered: false, attempts: [], provenWrong: [], provenRight: [], marks: {}, bought: { category: false, named: [] }, clues: 0 };
 }
 
 function entry(state: GameState, id: GrimoireId): RecipeProgress {
@@ -27,54 +24,52 @@ export function isDiscovered(state: GameState, id: GrimoireId): boolean {
   return state.grimoire[id]?.discovered ?? false;
 }
 
-/** A hidden recipe's silhouette shows once its first fragment of insight arrives. */
+/** Hidden recipes show in the Grimoire (and at the Circle) once experiments are open. */
 export function isSilhouetteVisible(state: GameState, id: GrimoireId): boolean {
-  return GRIMOIRE_DEFS[id].kind === "hidden" && (state.grimoire[id] !== undefined || isDiscovered(state, id));
+  return GRIMOIRE_DEFS[id].kind === "hidden" && (state.experimentsOpen || isDiscovered(state, id));
 }
 
-export function hintTier(insight: number): HintTier {
-  return insight >= INSIGHT.plain ? "plain" : insight >= INSIGHT.category ? "category" : "riddle";
-}
-
-/** How many ingredients the plain tier names at this insight (one at 12, another every 6 after). */
-export function plainNamesShown(id: GrimoireId, insight: number): number {
-  const plain = GRIMOIRE_DEFS[id].hints?.plain ?? [];
-  if (insight < INSIGHT.plain) return 0;
-  return Math.min(plain.length, 1 + Math.floor((insight - INSIGHT.plain) / INSIGHT.perExtraName));
-}
-
-/** Insight needed for the next hint, or null when every hint is showing. */
-export function nextHintAt(id: GrimoireId, insight: number): number | null {
-  const plain = GRIMOIRE_DEFS[id].hints?.plain ?? [];
-  if (insight < INSIGHT.category) return INSIGHT.category;
-  if (insight < INSIGHT.plain) return INSIGHT.plain;
-  const shown = plainNamesShown(id, insight);
-  return shown < plain.length ? INSIGHT.plain + shown * INSIGHT.perExtraName : null;
-}
-
-/** Unsolved hidden recipe with the least insight: where loose fragments land. */
-export function fragmentTarget(state: GameState): GrimoireId | null {
-  let best: GrimoireId | null = null;
-  for (const id of GRIMOIRE_IDS) {
-    if (GRIMOIRE_DEFS[id].kind !== "hidden" || isDiscovered(state, id)) continue;
-    if (best === null || progressOf(state, id).insight < progressOf(state, best).insight) best = id;
-  }
-  return best;
-}
-
-/** Add insight (doubled by Grimoire assist). Returns the fragment, or null if nothing to add to. */
-export function addInsight(state: GameState, id: GrimoireId | null, amount: number, source: Fragment["source"]): Fragment | null {
-  if (id === null || isDiscovered(state, id)) return null;
+/** Add insight to the pool (doubled by Grimoire assist). Returns what was gained. */
+export function addInsight(state: GameState, amount: number, source: Fragment["source"]): Fragment {
   const gained = state.settings.grimoireAssist ? amount * 2 : amount;
-  entry(state, id).insight += gained;
-  return { recipe: id, amount: gained, source };
+  state.insight += gained;
+  return { amount: gained, source };
 }
 
-/** A curio drops: read its story and pass a fragment to the neediest recipe. */
-export function readCurio(state: GameState): { story: string; fragment: Fragment | null } {
+/** A curio drops: read its story, and it brings some insight. */
+export function readCurio(state: GameState): { story: string; fragment: Fragment } {
   const story = CURIO_STORIES[state.stats.curiosRead % CURIO_STORIES.length]!;
   state.stats.curiosRead++;
-  return { story, fragment: addInsight(state, fragmentTarget(state), INSIGHT_GAIN.curio, "curio") };
+  return { story, fragment: addInsight(state, INSIGHT_GAIN.curio, "curio") };
+}
+
+// Hints you buy (docs/GRIMOIRE.md §6)
+
+export type HintKind = "category" | "name" | "clue";
+
+/** The ingredient names a hidden recipe's hints can reveal, in order. */
+export function nameable(id: GrimoireId): ItemId[] {
+  return GRIMOIRE_DEFS[id].hints?.plain ?? [];
+}
+
+/** What this hint costs, or null if there's nothing left of that kind to buy. */
+export function hintCost(state: GameState, id: GrimoireId, kind: HintKind): number | null {
+  const def = GRIMOIRE_DEFS[id];
+  const p = progressOf(state, id);
+  if (isDiscovered(state, id)) return null;
+  if (kind === "category") return def.hints && !p.bought.category ? INSIGHT_COST.category : null;
+  if (kind === "name") return p.bought.named.length < nameable(id).length ? INSIGHT_COST.name : null;
+  return p.clues < (def.clues?.length ?? 0) ? INSIGHT_COST.clue : null;
+}
+
+/** Buy a hint: mutates `state`. Callers check `hintCost` and the pool first. */
+export function buyHintInto(state: GameState, id: GrimoireId, kind: HintKind): void {
+  const cost = hintCost(state, id, kind)!;
+  state.insight -= cost;
+  const p = entry(state, id);
+  if (kind === "category") p.bought.category = true;
+  else if (kind === "name") p.bought.named.push(nameable(id)[p.bought.named.length]!);
+  else p.clues++;
 }
 
 /**

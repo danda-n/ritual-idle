@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ACTION_DEFS, type ActionId } from "../content/actions";
-import { CURIO_STORIES, GRIMOIRE_DEFS, type GrimoireId } from "../content/grimoire";
+import { CURIO_STORIES, type GrimoireId } from "../content/grimoire";
 import { tend as tendCommand, type Result, type Success } from "../engine/commands";
-import { nextHintAt, progressOf, type Fragment } from "../engine/grimoire";
 import { NOTES } from "../content/notes";
 import { ITEMS, type ItemId } from "../content/items";
 import { SKILL_IDS, SKILLS } from "../content/skills";
@@ -70,18 +69,6 @@ function celebrateCommand(before: GameState, after: GameState, toast: (t: Omit<T
   if (after.rite.performing && !before.rite.performing) toast([{ title: "The rite begins", text: `The ${HEARTH_RITE.name} has begun. It takes 30 minutes.` }]);
 }
 
-/** "A fragment for the Dream pillow", noting when it unlocked a clearer hint. */
-function fragmentToast(state: GameState, f: Fragment): Omit<Toast, "id"> & { clearer: boolean } {
-  const now = progressOf(state, f.recipe).insight;
-  const threshold = nextHintAt(f.recipe, now - f.amount);
-  const clearer = threshold !== null && now >= threshold;
-  return {
-    clearer,
-    title: `A fragment: ${GRIMOIRE_DEFS[f.recipe].name}`,
-    text: clearer ? "A clearer hint is waiting in the Grimoire." : `Insight ${now}${nextHintAt(f.recipe, now) ? ` of ${nextHintAt(f.recipe, now)}` : ""}.`,
-  };
-}
-
 function boot(): { state: GameState; away: CatchUp | null; fresh: boolean } {
   const saved = loadLocal();
   if (!saved) return { state: newGame(), away: null, fresh: true };
@@ -125,6 +112,9 @@ export function useGame() {
       for (const [item, n] of (Object.entries(report.itemsGained ?? {}) as [ItemId, number][]).slice(0, 3)) {
         if (n > 0) emitFx({ kind: "float", text: `+${n} ${ITEMS[item].name}`, anchors: fromWork, tone: isRareDrop(item) ? "rare" : "item" });
       }
+      // Insight never toasts: a quiet float on the Grimoire tab, where it's spent.
+      const insight = (report.fragments ?? []).reduce((n, f) => n + f.amount, 0);
+      if (insight > 0) emitFx({ kind: "float", text: `+${insight} insight`, anchors: ["#tab-grimoire", ".tabs"], tone: "good" });
       if (report.criticals) emitFx({ kind: "float", text: "Critical! ×2", anchors: fromWork, tone: "rare" });
       if (report.tendFinds) emitFx({ kind: "float", text: "Bonus find!", anchors: fromWork, tone: "good" });
       // Placing a part has its own toast; other steps say what they gave.
@@ -151,11 +141,6 @@ export function useGame() {
         ...(report.fellBackTo ?? []).slice(0, 1).map((id) => ({ title: "Back to gathering", text: `Out of an ingredient, so you went back to ${ACTION_DEFS[id].name.toLowerCase()}.` })),
         ...(report.riteStarted ? [{ title: "The rite begins", text: `Everything was ready. The ${HEARTH_RITE.name} has begun.` }] : []),
         ...(report.curioStories ?? []).map(() => ({ title: `Curio found (${ref.current.stats.curiosRead}/${CURIO_STORIES.length})`, text: "Read it in the Grimoire." })),
-        // Insight from the player's own attempts only toasts when it opens a clearer hint.
-        ...(report.fragments ?? []).flatMap((f) => {
-          const t = fragmentToast(ref.current, f);
-          return f.source === "attempt" && !t.clearer ? [] : [t];
-        }),
         ...(report.pagesRead ?? []).map((p) => ({
           title: `Page deciphered: ${p.title}`,
           text: p.unlocks.length > 0 ? `New recipe: ${p.unlocks.map((a) => ACTION_DEFS[a].name).join(", ")}.` : "Added to the Grimoire.",

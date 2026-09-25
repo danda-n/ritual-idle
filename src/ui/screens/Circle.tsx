@@ -38,9 +38,12 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
 
   const choices = GRIMOIRE_IDS.filter((id) => isSilhouetteVisible(state, id) && !isDiscovered(state, id));
   const step = circleStep(attuned !== null, choices.length > 0, placed.length, slots);
+  // What you hold, known ingredients first (proven at the Circle, or named by a hint you bought).
+  const known = new Set(knowledge?.belongs ?? []);
   const held = (Object.entries(state.inventory) as [ItemId, number][])
     .filter(([id, n]) => n > 0 && !(hideWrong && progress?.provenWrong.includes(id)))
-    .map(([id]) => id);
+    .map(([id]) => id)
+    .sort((a, b) => Number(known.has(b)) - Number(known.has(a)));
 
   // Functional updates, so quick clicks in a row each land (none overwrites the last).
   const place = (item: ItemId) => setPlaced((p) => (p.includes(item) || p.length >= slots ? p : [...p, item]));
@@ -203,10 +206,12 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
             {held.map((id) => (
               <button
                 key={id}
-                className={`chip pick ${placed.includes(id) ? "accent" : ""} ${knowledge?.belongs.includes(id) ? "right" : ""}`}
+                className={`chip pick ${placed.includes(id) ? "accent" : ""} ${known.has(id) ? "right" : ""}`}
                 onClick={() => place(id)}
                 disabled={placed.includes(id) || placed.length >= slots}
+                title={known.has(id) ? "Known: this belongs" : undefined}
               >
+                {known.has(id) && <span aria-label="known">✓ </span>}
                 {itemName(id)} <span className="muted num">{state.inventory[id]}</span>
               </button>
             ))}

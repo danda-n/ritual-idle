@@ -51,6 +51,8 @@ export interface GameState {
   omens: Partial<Record<OmenId, number>>;
   /** Active timed effects, ending at a time on the sim clock. */
   buffs: ActiveBuff[];
+  /** Insight: one pool, spent on the hints you choose. */
+  insight: number;
   /** Progress on each hidden recipe or secret. Missing = never seen. */
   grimoire: Partial<Record<GrimoireId, RecipeProgress>>;
   /** The silhouette the circle is attuned to, or null for free experiments. */
@@ -91,13 +93,16 @@ export interface Attempt {
 }
 
 export interface RecipeProgress {
-  insight: number;
   discovered: boolean;
   attempts: Attempt[];
   provenWrong: ItemId[];
   provenRight: ItemId[];
   /** The player's own pencil marks. */
   marks: Partial<Record<ItemId, "suspect" | "doubt">>;
+  /** Hints bought with insight (hidden recipes). */
+  bought: { category: boolean; named: ItemId[] };
+  /** Clues read (secrets). */
+  clues: number;
 }
 
 export interface RiteState {
@@ -147,6 +152,7 @@ export function newGame(now: number = Date.now(), seed: number = randomSeed()): 
     upgrades: [],
     omens: {},
     buffs: [],
+    insight: 0,
     grimoire: {},
     attunedTo: null,
     settings: { grimoireAssist: false, fallback: "last_gathering", reducedMotion: false, toastSeconds: 8, seenTabs: ["house"] },

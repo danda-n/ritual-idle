@@ -47,6 +47,7 @@ export const GRIMOIRE = {
     name: "Honey-light",
     kind: "secret",
     ingredients: ["beeswax_candle", "chamomile", "glass"],
+    clues: ["She kept bees for the light, not the honey.", "Something from the garden, gentle and yellow.", "Something that holds light, found broken in the attic."],
     reward: { kind: "cosmetic", id: "honey_light" },
     rewardText: "A jar of soft light now glows in the window.",
     reveal: "She kept bees for the light, not the honey. The jar hums when you hold it.",
@@ -55,6 +56,7 @@ export const GRIMOIRE = {
     name: "Hana's soup",
     kind: "secret",
     ingredients: ["nettle", "salt", "bread"],
+    clues: ["A soup for a widow, the way grandmother made it.", "Something from the ditch by the lane. It stings.", "A loaf from the village, and what keeps things in."],
     reward: { kind: "patron_coin", from: "Widow Hana", multiplier: 2 },
     rewardText: "Widow Hana's requests pay double for the rest of the chapter.",
     reveal: "Hana tastes it and cries. \"She made it for me the winter my husband died.\"",
@@ -64,16 +66,19 @@ export const GRIMOIRE = {
 export type GrimoireId = keyof typeof GRIMOIRE;
 export const GRIMOIRE_DEFS: Record<GrimoireId, GrimoireEntryDef<ItemId>> = GRIMOIRE;
 
-/** Insight needed for each hint tier (docs/GRIMOIRE.md §6). */
-export const INSIGHT = { category: 6, plain: 12, perExtraName: 6 } as const;
+/**
+ * Insight is one pool, spent on the hint you want (docs/GRIMOIRE.md §6): a hidden recipe's
+ * categories, one of its ingredients named, or a secret's next clue.
+ */
+export const INSIGHT_COST = { category: 4, name: 6, clue: 4 } as const;
 
 /** Insight from each source. */
-export const INSIGHT_GAIN = { failedAttempt: 1, page: 3, curio: 3, request: 2 } as const;
+export const INSIGHT_GAIN = { failedAttempt: 1, page: 2, curio: 3, request: 2 } as const;
 
 /** Ritualism XP for any experiment that doesn't discover something. */
 export const EXPERIMENT_CONSOLATION_XP = 4;
 
-// Curios are read automatically when they drop: a story line and a fragment of insight.
+// Curios are read automatically when they drop: a story line and some insight.
 export const CURIO_STORIES = [
   "A child's wooden horse, one leg whittled shorter than the others. Someone was learning.",
   "A button of black horn, with a thread of red wool still knotted through it.",

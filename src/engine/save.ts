@@ -1,11 +1,12 @@
 import { ACTION_DEFS } from "../content/actions";
+import { GRIMOIRE_DEFS, type GrimoireId } from "../content/grimoire";
 import { ITEMS } from "../content/items";
 import { NOTES } from "../content/notes";
 import { PAGES } from "../content/pages";
 import { PART_IDS } from "../content/rite";
 import { SKILL_IDS } from "../content/skills";
 import type { Feature } from "../content/types";
-import { SAVE_VERSION, newGame, type GameState } from "./state";
+import { SAVE_VERSION, newGame, type GameState, type RecipeProgress } from "./state";
 
 const STORAGE_KEY = "ritual-idle.save";
 
@@ -61,6 +62,8 @@ export function deserialize(json: string): GameState {
     delete state.inventory.curio;
   }
   if (data.version < 5) upgradeToStagedKindling(state);
+  // Numbers that must never be missing or broken.
+  if (!Number.isFinite(state.insight)) state.insight = 0;
   if (data.version < 7) upgradeToV7(state, data);
   if (data.version < 6) {
     // v6 added stage steps: every step of a stage already passed counts as done (no rewards).
@@ -117,6 +120,22 @@ function upgradeToV7(state: GameState, data: Partial<GameState>): void {
     state.active = { id: old.id, progress: Math.min(0.99, Math.max(0, (old.elapsedMs ?? 0) / full)) };
   }
   for (const t of Object.values(state.talents)) if (t) delete (t as { keystone?: boolean }).keystone;
+  // Insight became one pool spent on hints. Each recipe's old insight joins the pool, and the
+  // hints it had already shown (categories at 6, a name at 12, another every 6) count as bought.
+  let pool = 0;
+  for (const id of Object.keys(state.grimoire) as GrimoireId[]) {
+    const p = state.grimoire[id] as (RecipeProgress & { insight?: number }) | undefined;
+    if (!p) continue;
+    const old = p.insight ?? 0;
+    pool += old;
+    delete p.insight;
+    const plain = GRIMOIRE_DEFS[id].hints?.plain ?? [];
+    const names = old >= 12 ? Math.min(plain.length, 1 + Math.floor((old - 12) / 6)) : 0;
+    p.bought = p.bought ?? { category: old >= 6, named: plain.slice(0, names) };
+    p.clues = p.clues ?? 0;
+  }
+  state.insight = (data.insight ?? 0) + pool;
+  if (pool > 0 && state.kept.features.includes("grimoire")) state.experimentsOpen = true;
 }
 
 // Export strings are base64 so they survive being pasted into chats and forums.

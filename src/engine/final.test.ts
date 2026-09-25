@@ -35,7 +35,7 @@ function everything(): GameState {
     skills: { ...base.skills, ritualism: { xp: 2000 } },
   };
   refillBoard(s, T0);
-  addInsight(s, "dream_pillow", 6, "page");
+  addInsight(s, 6, "page");
   s = okay(attune(s, "dream_pillow"));
   s = okay(experiment(s, ["salt", "ash", "nettle"]));
   s = okay(releaseOmen(s, "still_night", "scavenging"));

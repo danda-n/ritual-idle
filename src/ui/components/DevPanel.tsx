@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ITEMS, type ItemId } from "../../content/items";
 import { NOTES } from "../../content/notes";
 import { PART_DEFS, PART_IDS } from "../../content/rite";
-import { addInsight, fragmentTarget } from "../../engine/grimoire";
+import { addInsight } from "../../engine/grimoire";
 import type { GameState } from "../../engine/state";
 import { SKILL_IDS } from "../../content/skills";
 import { levelForXp, xpForLevel } from "../../engine/xp";
@@ -73,12 +73,12 @@ export function DevPanel({ dev }: { dev: { skip: (ms: number) => void; mutate: (
           className="btn btn-ghost"
           onClick={() =>
             dev.mutate((s) => {
-              addInsight(s, fragmentTarget(s), 3, "page");
+              addInsight(s, 5, "page");
               return s;
             })
           }
         >
-          +fragment
+          +5 insight
         </button>
       </div>
     </details>

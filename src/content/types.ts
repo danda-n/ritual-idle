@@ -157,7 +157,10 @@ export interface GrimoireEntryDef<I extends string> {
   kind: "hidden" | "secret";
   /** Unordered; each ingredient is distinct. */
   ingredients: I[];
+  /** Hidden recipes: a free riddle, categories and names you buy with insight. */
   hints?: { riddle: string; category: string[]; plain: I[] };
+  /** Secrets: written clues you buy with insight, one at a time. */
+  clues?: string[];
   reward: GrimoireReward;
   /** What the reward does, in plain words. */
   rewardText: string;

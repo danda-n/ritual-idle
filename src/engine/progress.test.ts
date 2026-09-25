@@ -88,7 +88,7 @@ describe("the chapter's shape", () => {
 
   it("opens experiments with the first hint, once the Grimoire is open, with its own note", () => {
     const s = { ...newGame(T0, 1), notesRevealed: 5 };
-    addInsight(s, "dream_pillow", 2, "request");
+    addInsight(s, 2, "request");
     const notes = revealNotes(s);
     expect(notes).toEqual([EXPERIMENTS_NOTE]);
     expect(isFeatureOpen(s, "experiments")).toBe(true);
@@ -97,7 +97,7 @@ describe("the chapter's shape", () => {
 
   it("keeps experiments closed before the Grimoire, even with a hint", () => {
     const s = { ...newGame(T0, 1), notesRevealed: 3 };
-    addInsight(s, "dream_pillow", 2, "curio");
+    addInsight(s, 2, "curio");
     expect(revealNotes(s)).toEqual([]);
     expect(s.experimentsOpen).toBe(false);
   });

@@ -445,3 +445,11 @@ input[type="checkbox"] { accent-color: var(--color-accent); width: 16px; height:
 .tree-root circle { fill: color-mix(in srgb, var(--skill) 18%, var(--color-surface)); stroke: var(--skill); stroke-width: 2; }
 .tree-root svg { color: var(--skill); }
 .tree-caption { font-size: var(--text-sm); color: var(--color-text-2); text-align: center; min-height: 2.6em; max-width: 44ch; }
+
+/* ---------- Insight: one pool, spent on hints ---------- */
+.insight-pool { font-family: var(--font-display); color: var(--folk-candle); margin-bottom: var(--space-2); }
+.buy-hint { min-height: 28px; font-size: var(--text-xs); color: var(--folk-candle); border-color: rgb(232 176 78 / 0.45); }
+.secret { border-top: 1px solid var(--color-border-soft); padding-top: var(--space-2); margin-top: var(--space-2); display: flex; flex-direction: column; gap: var(--space-1); align-items: flex-start; }
+.secret h3 { display: flex; gap: var(--space-2); align-items: baseline; font-size: var(--text-sm); }
+.insight-have { color: var(--folk-candle) !important; border-color: rgb(232 176 78 / 0.45) !important; }
+.hint .buy-hint { justify-self: start; width: auto; }

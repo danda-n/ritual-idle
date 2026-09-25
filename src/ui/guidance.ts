@@ -1,7 +1,7 @@
 import { GRIMOIRE_DEFS, INSIGHT_GAIN, type GrimoireId } from "../content/grimoire";
 import type { ItemId } from "../content/items";
 import type { ExperimentOutcome } from "../engine/commands";
-import { plainNamesShown, progressOf } from "../engine/grimoire";
+import { progressOf } from "../engine/grimoire";
 import { isFeatureOpen } from "../engine/progress";
 import type { GameState } from "../engine/state";
 
@@ -20,7 +20,7 @@ export interface RecipeKnowledge {
 export function recipeKnowledge(state: GameState, id: GrimoireId): RecipeKnowledge {
   const def = GRIMOIRE_DEFS[id];
   const p = progressOf(state, id);
-  const named = (def.hints?.plain ?? []).slice(0, plainNamesShown(id, p.insight));
+  const named = p.bought.named;
   const belongs = [...new Set<ItemId>([...p.provenRight, ...named])];
   const held = (Object.entries(state.inventory) as [ItemId, number][]).filter(([, n]) => n > 0).map(([i]) => i);
   const stillPossible = held.filter((i) => !belongs.includes(i) && !p.provenWrong.includes(i));
@@ -45,8 +45,8 @@ export function recipeGuide(state: GameState, id: GrimoireId): Guide {
   }
   if (k.attempts === 0 && k.belongs.length === 0) {
     return {
-      headline: `Try any ${k.size} things at the Circle`,
-      detail: `Use the riddle as a guide. The Circle glows once for each right thing. Wrong tries still give +${INSIGHT_GAIN.failedAttempt} insight toward clearer hints.`,
+      headline: `Try any ${k.size} things at the Circle, or buy a hint`,
+      detail: `Use the riddle as a guide. The Circle glows once for each right thing, and each wrong try gives +${INSIGHT_GAIN.failedAttempt} insight to spend on hints below.`,
       action: "Try at the Circle",
     };
   }
@@ -60,7 +60,7 @@ export function recipeGuide(state: GameState, id: GrimoireId): Guide {
 /** Where insight comes from, as short labels. */
 export const INSIGHT_SOURCES = [
   `Wrong try +${INSIGHT_GAIN.failedAttempt}`,
-  `Burnt page +${INSIGHT_GAIN.page}`,
+  `Page past the sixth +${INSIGHT_GAIN.page}`,
   `Curio +${INSIGHT_GAIN.curio}`,
   `Some villagers +${INSIGHT_GAIN.request}`,
 ];

@@ -5,7 +5,6 @@ import { PAGES } from "../content/pages";
 import type { SkillId } from "../content/skills";
 import { BRANCHES, KEYSTONES } from "../content/talents";
 import { resetTalents, spendTalent, type Result } from "./commands";
-import { progressOf } from "./grimoire";
 import { actionDurationMs, levelSpeed } from "./modifiers";
 import { deserialize } from "./save";
 import { advance, startAction } from "./simulate";
@@ -168,7 +167,7 @@ describe("keystones", () => {
   it("Marginalia: each page deciphered gives +1 insight", () => {
     const s = { ...at(1, "scholarship", key("scholarship")), stats: { ...at(1).stats, completed: { decipher_page: 0 } }, inventory: { burnt_page: 2, tallow_candle: 2 } };
     const { state } = advance(startAction(s, "decipher_page"), 2 * actionDurationMs(s, "decipher_page"));
-    expect(progressOf(state, "dream_pillow").insight + progressOf(state, "hearth_mark").insight).toBe(2);
+    expect(state.insight).toBe(2);
   });
 
   it("Devout: minor rites give 25% more XP", () => {

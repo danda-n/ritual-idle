@@ -5,7 +5,6 @@ import { PAGES } from "../content/pages";
 import type { SkillId } from "../content/skills";
 import type { Feature, GoalDef, StepDef } from "../content/types";
 import { levelForXp, xpForLevel } from "./xp";
-import { GRIMOIRE_IDS, isSilhouetteVisible } from "./grimoire";
 import type { GameState } from "./state";
 
 // Chapter 1 onboarding: grandmother's notes unlock skills, deciphered pages unlock recipes.
@@ -135,9 +134,9 @@ export function revealNotes(state: GameState, claimed: Step[] = []): Note[] {
   return revealed;
 }
 
-/** Experiments open with the first hint toward a hidden recipe, once the Grimoire is open. */
+/** Experiments open with the first insight, once the Grimoire is open. */
 function experimentsDue(state: GameState): boolean {
-  return !state.experimentsOpen && isFeatureOpen(state, "grimoire") && GRIMOIRE_IDS.some((id) => isSilhouetteVisible(state, id));
+  return !state.experimentsOpen && isFeatureOpen(state, "grimoire") && state.insight > 0;
 }
 
 /** The Major Rite is revealed by the note whose goal is to perform it. */

@@ -215,7 +215,7 @@
 .chip.pick { cursor: pointer; background: transparent; min-height: 28px; font-size: var(--text-sm); }
 .chip.pick:hover:not(:disabled) { border-color: var(--color-accent); }
 .chip.pick:disabled { opacity: 0.5; cursor: not-allowed; }
-.chip.pick.right { border-color: var(--color-accent-deep); }
+.chip.pick.right { border-color: var(--gold-400); color: var(--gold-400); background: rgb(232 176 78 / 0.12); font-weight: 600; }
 .chip.pick.doubt { border-style: dashed; }
 .toggle { display: inline-flex; align-items: center; gap: var(--space-1); font-size: var(--text-sm); cursor: pointer; }
 .discovery-mark { display: flex; justify-content: center; color: var(--color-accent); }

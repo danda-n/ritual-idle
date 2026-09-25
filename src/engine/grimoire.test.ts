@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { ACTION_DEFS } from "../content/actions";
-import { GRIMOIRE, INSIGHT, type GrimoireId } from "../content/grimoire";
+import { GRIMOIRE, INSIGHT_COST, INSIGHT_GAIN, type GrimoireId } from "../content/grimoire";
 import { ITEMS, type ItemId } from "../content/items";
 import { NOTES } from "../content/notes";
 import { PAGES } from "../content/pages";
 import { REQUESTS } from "../content/requests";
-import { attune, experiment, fillRequest, setSetting, type Result, type Success } from "./commands";
-import { addInsight, deduce, fragmentTarget, hintTier, isDiscovered, isSilhouetteVisible, nextHintAt, plainNamesShown, progressOf } from "./grimoire";
+import { attune, buyHint, experiment, fillRequest, setSetting, type Result, type Success } from "./commands";
+import { addInsight, deduce, hintCost, isDiscovered, isSilhouetteVisible, progressOf } from "./grimoire";
 import { offlineBonus, requestCoin, riteQualitySteps, trustMultiplier } from "./modifiers";
 import { catchUp } from "./offline";
 import { deserialize } from "./save";
@@ -28,8 +28,8 @@ function okay(r: Result): Success {
 }
 
 const plenty = (items: readonly ItemId[]) => Object.fromEntries(items.map((i) => [i, 10])) as Partial<Record<ItemId, number>>;
-const withInsight = (s: GameState, id: GrimoireId, n: number) => {
-  addInsight(s, id, n, "page");
+const withInsight = (s: GameState, _id: GrimoireId, n: number) => {
+  addInsight(s, n, "page");
   return s;
 };
 
@@ -46,42 +46,63 @@ describe("content", () => {
   });
 });
 
-describe("hint tiers", () => {
-  it("escalate at 6 and 12 insight, then name one more ingredient every 6", () => {
-    expect(hintTier(0)).toBe("riddle");
-    expect(hintTier(INSIGHT.category)).toBe("category");
-    expect(hintTier(INSIGHT.plain)).toBe("plain");
-    expect(plainNamesShown("dream_pillow", 11)).toBe(0);
-    expect(plainNamesShown("dream_pillow", 12)).toBe(1);
-    expect(plainNamesShown("dream_pillow", 18)).toBe(2);
-    expect(plainNamesShown("dream_pillow", 99)).toBe(2);
-    expect(nextHintAt("dream_pillow", 0)).toBe(6);
-    expect(nextHintAt("dream_pillow", 12)).toBe(18);
-    expect(nextHintAt("dream_pillow", 18)).toBeNull();
+describe("spending insight on hints", () => {
+  it("buys a recipe's categories, then its names one at a time, for their cost", () => {
+    const s = open({ insight: INSIGHT_COST.category + 2 * INSIGHT_COST.name });
+    const a = okay(buyHint(s, "dream_pillow", "category")).state;
+    expect(progressOf(a, "dream_pillow").bought.category).toBe(true);
+    expect(a.insight).toBe(2 * INSIGHT_COST.name);
+    expect(buyHint(a, "dream_pillow", "category").ok).toBe(false); // already bought
+    const b = okay(buyHint(okay(buyHint(a, "dream_pillow", "name")).state, "dream_pillow", "name")).state;
+    expect(progressOf(b, "dream_pillow").bought.named).toEqual(GRIMOIRE.dream_pillow.hints.plain);
+    expect(b.insight).toBe(0);
+    expect(hintCost(b, "dream_pillow", "name")).toBeNull(); // the last one is yours to find
   });
 
-  it("Grimoire assist doubles insight", () => {
+  it("refuses when short, and says how short", () => {
+    const r = buyHint(open({ insight: 1 }), "dream_pillow", "name");
+    expect(!r.ok && r.reason).toMatch(/Needs 6 insight/);
+  });
+
+  it("reads a secret's clues in order", () => {
+    const s = okay(buyHint(open({ insight: 99 }), "honey_light", "clue")).state;
+    expect(progressOf(s, "honey_light").clues).toBe(1);
+    expect(hintCost(s, "dream_pillow", "clue")).toBeNull(); // hidden recipes have no clues
+    let t = s;
+    for (let i = 1; i < GRIMOIRE.honey_light.clues.length; i++) t = okay(buyHint(t, "honey_light", "clue")).state;
+    expect(hintCost(t, "honey_light", "clue")).toBeNull();
+  });
+
+  it("Grimoire assist doubles insight gains", () => {
     const s = open({ settings: { ...newGame().settings, grimoireAssist: true } });
-    addInsight(s, "dream_pillow", 3, "page");
-    expect(progressOf(s, "dream_pillow").insight).toBe(6);
+    addInsight(s, 3, "page");
+    expect(s.insight).toBe(6);
   });
 });
 
-describe("fragments", () => {
-  it("silhouettes appear with the first fragment, and go to the neediest recipe", () => {
-    const s = open();
-    expect(isSilhouetteVisible(s, "dream_pillow")).toBe(false);
-    expect(fragmentTarget(s)).toBe("dream_pillow");
-    withInsight(s, "dream_pillow", 3);
-    expect(isSilhouetteVisible(s, "dream_pillow")).toBe(true);
-    expect(fragmentTarget(s)).toBe("hearth_mark");
+describe("older saves", () => {
+  it("pool each recipe's old insight, and keep the hints it had shown as bought", () => {
+    const old = { ...open(), version: 6, insight: undefined, grimoire: { dream_pillow: { insight: 13, discovered: false, attempts: [], provenWrong: [], provenRight: [], marks: {} }, hearth_mark: { insight: 4, discovered: false, attempts: [], provenWrong: [], provenRight: [], marks: {} } } };
+    const loaded = deserialize(JSON.stringify(old));
+    expect(loaded.insight).toBe(17);
+    expect(loaded.grimoire.dream_pillow?.bought).toEqual({ category: true, named: ["mugwort"] });
+    expect(loaded.grimoire.hearth_mark?.bought).toEqual({ category: false, named: [] });
+    expect("insight" in loaded.grimoire.dream_pillow!).toBe(false);
+  });
+});
+
+describe("insight sources", () => {
+  it("hidden recipes show once experiments are open", () => {
+    expect(isSilhouetteVisible({ ...open(), experimentsOpen: false }, "dream_pillow")).toBe(false);
+    expect(isSilhouetteVisible(open(), "dream_pillow")).toBe(true);
+    expect(isSilhouetteVisible(open(), "honey_light")).toBe(false); // secrets never show as shapes
   });
 
-  it("pages past the story ones carry fragments", () => {
+  it("pages past the story ones bring insight", () => {
     const s = open({ inventory: { burnt_page: 5, tallow_candle: 5 } });
     const { state, report } = advance(startAction(s, "decipher_page"), 3 * ACTION_DEFS.decipher_page.seconds * 1000);
-    expect(report.fragments.map((f) => f.recipe)).toEqual(["dream_pillow", "hearth_mark", "threshold_nail"]);
-    for (const id of ["dream_pillow", "hearth_mark", "threshold_nail"] as const) expect(progressOf(state, id).insight).toBe(3);
+    expect(report.fragments.map((f) => f.source)).toEqual(["page", "page", "page"]);
+    expect(state.insight).toBe(3 * INSIGHT_GAIN.page);
   });
 
   it("curios are read automatically and carry a fragment", () => {
@@ -97,7 +118,7 @@ describe("fragments", () => {
     s.board = [{ request: "hana_soup", refillAt: 0 }];
     const r = okay(fillRequest(s, 0));
     expect(r.aside).toBe(REQUESTS.hana_soup.mentions.aside);
-    expect(progressOf(r.state, "dream_pillow").insight).toBe(2);
+    expect(r.state.insight).toBe(INSIGHT_GAIN.request);
   });
 });
 
@@ -105,8 +126,8 @@ describe("attuned experiments", () => {
   const attuned = (extra: Partial<GameState> = {}) =>
     okay(attune(withInsight(open({ inventory: plenty(["mugwort", "chamomile", "rags", "salt", "ash", "nettle"]), ...extra }), "dream_pillow", 3), "dream_pillow")).state;
 
-  it("can't attune to a silhouette not yet seen", () => {
-    expect(attune(open(), "dream_pillow").ok).toBe(false);
+  it("can't attune before experiments open", () => {
+    expect(attune({ ...open(), experimentsOpen: false }, "dream_pillow").ok).toBe(false);
   });
 
   it("shows how many items glow, uses one of each, and gives consolation", () => {
@@ -114,7 +135,7 @@ describe("attuned experiments", () => {
     expect(r.outcome).toEqual({ kind: "glow", recipe: "dream_pillow", glows: 1, of: 3 });
     expect(r.state.inventory.mugwort).toBe(9);
     expect(r.state.skills.ritualism.xp).toBeGreaterThan(0);
-    expect(progressOf(r.state, "dream_pillow").insight).toBe(4);
+    expect(r.state.insight).toBe(3 + INSIGHT_GAIN.failedAttempt);
     expect(progressOf(r.state, "dream_pillow").attempts).toEqual([{ items: ["mugwort", "nettle", "salt"], glows: 1 }]);
   });
 

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { NOTES } from "../content/notes";
 import { PAGES } from "../content/pages";
 import { attune, experiment, type Result } from "../engine/commands";
-import { addInsight } from "../engine/grimoire";
+import { addInsight, progressOf } from "../engine/grimoire";
 import { newGame, type GameState } from "../engine/state";
 import { circleStep, outcomeHelp, recipeGuide, recipeKnowledge } from "./guidance";
 
@@ -13,7 +13,7 @@ const okay = (r: Result) => {
 function open(extra: Partial<GameState> = {}): GameState {
   const b = newGame(1, 1);
   const s = { ...b, notesRevealed: NOTES.length, experimentsOpen: true, stats: { ...b.stats, completed: { decipher_page: PAGES.length } }, ...extra };
-  addInsight(s, "dream_pillow", 3, "page");
+  addInsight(s, 3, "page");
   return s;
 }
 
@@ -23,7 +23,7 @@ describe("Grimoire guidance", () => {
   });
 
   it("first step: try anything at the Circle", () => {
-    expect(recipeGuide(open(), "dream_pillow").headline).toBe("Try any 3 things at the Circle");
+    expect(recipeGuide(open(), "dream_pillow").headline).toBe("Try any 3 things at the Circle, or buy a hint");
   });
 
   it("after tries, tracks what's known and what's still possible", () => {
@@ -38,7 +38,7 @@ describe("Grimoire guidance", () => {
 
   it("when all are known, says to make it", () => {
     const s = open();
-    addInsight(s, "dream_pillow", 20, "page"); // plain hints name mugwort and chamomile
+    s.grimoire.dream_pillow = { ...progressOf(s, "dream_pillow"), bought: { category: true, named: ["mugwort", "chamomile"] } };
     s.grimoire.dream_pillow!.provenRight = ["rags"];
     expect(recipeGuide(s, "dream_pillow").action).toBe("Make it at the Circle");
   });
