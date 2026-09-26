@@ -2,7 +2,7 @@ import type { ActionId } from "./actions";
 import type { ItemId } from "./items";
 import type { SkillId } from "./skills";
 
-// Skill talents (docs/CHAPTER1.md §13): builds, not small percentages. At levels 3, 6, 9 and 12
+// Skill talents (docs/CHAPTER1.md §11): builds, not small percentages. At levels 3, 6, 9 and 12
 // each skill offers a pair, and you take one side of each pair. The sides pull different ways,
 // and some help another skill. Switching sides is free, any time.
 

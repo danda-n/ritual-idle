@@ -1,7 +1,8 @@
-# Ritual Idle — Core Concept (v0.2)
+# Ritual Idle — Core Concept (v0.3)
 
 > Working title. This document fixes the **core idea**: fantasy, pillars, loops, skill shape and constraints.
-> v0.2: all 10 open questions from v0.1 are decided. See the decision log at the end.
+> v0.2: all 10 open questions from v0.1 are decided. v0.3: the main sections describe the game as it is after four playtest patches, and are kept current after every patch.
+> The decision log at the end records what changed and why; Chapter 1's own changelog is at the end of [CHAPTER1.md](CHAPTER1.md#changelog).
 > Anything marked *(draft)* is a starting point for the next brainstorm, not a decision.
 > Evidence behind the choices lives in [RESEARCH.md](RESEARCH.md).
 
@@ -24,16 +25,16 @@ Every skill feeds the ritual circle. Followers take over the work you have maste
 | Parallel work | You do one action at a time, plus 4 (up to ~6) low-management followers |
 | Structure | A finite main story with a real ending, then Patron Cycles as the prestige endgame |
 | Discovery | Forgiving and permanent: the Grimoire fills itself and hints are generous. Major Rite recipes are listed; discovery lives in side rites, hidden recipes, forbidden variants and lore |
-| Challenge | Major Rites and summonings take the place of bosses. No auto-combat, and rites never fail; preparation sets the outcome quality |
+| Challenge | Major Rites and summonings take the place of bosses. No auto-combat, and rites never fail; they run by themselves, and optional offerings set the outcome quality |
 | Visuals | A readable UI plus one illustrated "living sanctum" scene |
 | Business | Premium one-time purchase, with paid expansions later |
 | Core systems | Omens and invoked moons (never a time-lock), Taint |
-| Time scale | 3–6s actions; rites 30 min–8h; offline cap 24h, raised to 72h and then 7 days by upgrades |
+| Time scale | 3–6s actions. The Chapter 1 rite is about 3 minutes and runs by itself; longer rites (30 min–8h) are the target for later chapters. Offline cap 24h, raised to 72h and then 7 days by upgrades |
 | Pacing | About 4 weeks of real time to the Great Rite; the first session reaches the Chapter 1 Rite |
 | Endgame | New Game+ Patron cycles; the Moon and the Hunger at launch |
 | Art | Folk-art / woodcut style; placeholders until the loop is proven |
 | Tech | TypeScript web + Electron; local saves + Steam Cloud + export |
-| Currency | Village coin, earned only from villagers' contracts. Buys basics (bread, tallow). House upgrades are built from items, not bought (fourth patch). No free-sell market |
+| Currency | Village coin, earned only from villagers' contracts. Buys provisions (bread, tallow); later also some exclusive or rare projects and rare rewards. House projects are built from items, not bought. No free-sell market |
 | Skill unlocks | Ch1: 6 skills · Ch2: +4 · Ch3: +3 (Taint arrives) · Ch4–5: depth only |
 
 ---
@@ -132,7 +133,7 @@ Every skill feeds the ritual circle. Followers take over the work you have maste
 - **What happens:** pick one action ("Gather nightshade", "Pour tallow candles", "Translate folio III"). It runs on a timer and repeats.
 - **Output:** skill XP and materials.
 - **Occasional drops:**
-  - *Grimoire hints*: fragments pointing at an undiscovered recipe.
+  - *Insight* toward undiscovered recipes (from pages past the story ones, and from curios).
   - *Omen tokens*.
   - Very rarely, a *curio*: a unique item that starts a story thread.
 - **Mastery:** each action levels on its own, like Melvor's mastery. A mastered action can be handed to a follower.
@@ -145,18 +146,15 @@ Every skill feeds the ritual circle. Followers take over the work you have maste
 
 ### 5.3 Rite loop (days): the boss equivalent *(decided in Q5)*
 - **Major Rites** are the milestones of the game, one per Chapter.
-- **The recipe is fully listed upfront.** You always know what a Rite needs; the challenge is producing it. Components come from 3–4 different skills, for example:
-  - candles
-  - a warded circle
+- **The recipe is fully listed upfront.** You always know what a Rite needs; the challenge is producing it. Components come from several skills. In Chapter 1 the rite is the **Kindling**, built in five parts (candles, a ward, smoke, words, an offering), one per stage of the chapter, each placed in the Circle as you make it. Later rites may also ask for, for example:
   - a focus
-  - an offering
   - a follower to assist
-- **Rites never fail.** Once the requirements are met, a Rite succeeds. **Preparation sets the outcome quality** (Chapter 1: *Sound → Fine → Resplendent*):
-  - Higher quality comes from better component grades (consecrated materials), followers assisting, a matching omen or invoked moon, low Taint, and a high Ritualism level.
-  - A better outcome brings bonus rewards, extra lore and sanctum cosmetics.
-  - A weaker outcome still advances the story.
-- **Rites can be performed at any time.** **Priming** queues a prepared rite so it runs automatically, even offline.
-- **Rites are presented as events:** a short illustrated log plays while it runs ("the third candle gutters… the ward holds").
+- **Rites run by themselves.** Once the requirements are met, you begin it (or let it begin by itself) and it runs in the action slot, offline too. There's nothing to answer while it runs, and it never fails.
+- **Quality comes from optional offerings, never from failure.** In Chapter 1 there are three: a hearth candle, a discovered hidden recipe (the Hearth mark) and an active Still Night blessing. None = *Sound*, 1–2 = *Fine*, all 3 = *Resplendent*.
+  - Later chapters can add more kinds of offering: consecrated materials, followers assisting, a matching omen or invoked moon, low Taint.
+  - In Chapter 1 quality changes only the lore and a keepsake (sanctum cosmetics), never the rewards. A plain outcome still advances the story.
+- **Length:** the Chapter 1 rite is about 3 minutes. Longer rites (30 minutes to 8 hours) are the target for later chapters, which is where **priming** (queueing a prepared rite so it begins by itself, even offline) matters most.
+- **Rites are presented as events:** a short log plays while it runs ("the third candle gutters… the ward holds").
 - **Rewards of a Major Rite:**
   - all skill caps raised
   - the next material tier
@@ -182,7 +180,7 @@ Every skill feeds the ritual circle. Followers take over the work you have maste
 
 | Chapter | Real time | Offline cap by then |
 |---|---|---|
-| 1 Hearth | **First session, 1–2h active.** The first Rite lands before the player leaves | 24h |
+| 1 Hearth | **First session:** about 30–35 min for an efficient idle player, about 45–60 with side projects. The first Rite lands before the player leaves | 24h |
 | 2 Grave | Days 2–5 | 24h → 72h upgrade |
 | 3 Fern | About week 2 | 72h |
 | 4 Drowned | Weeks 2–3.5 | 72h |
@@ -288,15 +286,26 @@ We deliberately **do not** use:
 
 - **Grimoire and discovery** *(full model in [GRIMOIRE.md](GRIMOIRE.md))*
   - **Attune the circle** to a hidden recipe's silhouette and experiment instantly. The glow count shows how many items are right. Items proven wrong are crossed out automatically.
-  - **Hints escalate** from riddle to category to plain names. Failed attempts, pages, curios and requests all add Insight, so nobody gets stuck.
+  - **Hints escalate** from riddle to category to plain names. **Insight** is one pool, filled by failed attempts, pages, curios and village contracts, and **spent on the hint you choose** (a recipe's categories, one ingredient named, a secret's next clue), so nobody gets stuck.
   - **Each attempt costs 1 of each item** and always gives a little consolation XP.
-  - **Hint-less secrets** turn up by free experimenting (1–2 per chapter).
+  - **Secrets** turn up by free experimenting (1–2 per chapter); insight can buy their written clues.
   - **Divination** (Chapter 3) gives per-item feedback.
 - **Omens and moons** *(decided in Q1)*
   - There is **no lunar calendar and no time-locks.** Everything is always available.
-  - **Omens** (Blood Moon, Eclipse, Still Night…) drop like rare loot from actions, online or offline. A *captured* omen is stored (a jar of moonlight, a black candle) and **released when the player chooses**, giving a temporary boost to certain skills or rites and occasionally a rare material.
+  - **Omens** (Blood Moon, Eclipse, Still Night…) drop from actions, online or offline, about every few minutes of work. A *captured* omen is stored (a jar of moonlight, a black candle) and **spent when the player chooses**, giving a temporary boost and occasionally a rare material. In Chapter 1, Still Night blesses one skill you choose with ×2 speed and ×2 chance finds for 2 minutes.
+  - **Omens need somewhere to be kept:** none turn up until you build the **omen shelf** (a house project). The game points the player to it once the first part of the Kindling is placed.
   - **Invoked moons:** later, Astrology lets you *draw down* a moon state on demand for reagents. The moon becomes a tool, not a clock.
   - Omens that drop offline are collected automatically, so nothing is ever missed.
+- **Talents: small builds** *(Chapter 1 onwards)*
+  - At levels 3, 6, 9 and 12 each skill offers a **pair of talents, and you pick one side**. The sides pull different ways (speed, bulk, thrift, chance finds, doubles, insight, help for another skill).
+  - Switching and resetting are free. Each level also makes its own skill 1% faster.
+- **The village and the house** *(Chapter 1 onwards)*
+  - **Village contracts:** the board holds **2 contracts** at a time, each asking for a good amount of one or two things. You can **deliver in parts** (what's delivered stays delivered), and finishing one pays coin and trust. Trust opens better-paying contracts. A contract can be turned away at no cost.
+  - **Coin buys provisions** (bread, tallow). Later it's meant to buy some exclusive or rare projects and rare rewards too. There's no "sell anything" market.
+  - **House projects** are side work built once from items you make, with no coin: the omen shelf, a reading lamp, a drying rack, mended shutters (a longer offline cap) and so on. Nothing on the main path needs them; they give deeper recipes and odds and ends a use.
+- **Calm feedback**
+  - Routine events (steps done, plain level-ups, omens, claims) go to a quiet **activity feed** under the top bar. **Toasts are kept for big moments** (a part placed, a project built, a contract done, a new tier, rare finds, the rite beginning).
+  - The inventory has its own **Stores** tab, and every item has its own woodcut icon.
 - **Taint and afflictions** *(decided in Q4; numbers are draft)*
   - **Sources:** forbidden recipe variants, some bound entities, and rites performed with forbidden components.
   - **Scale:** 0–100, with thresholds at 25 *Touched*, 50 *Marked* and 75 *Hollowed*.
@@ -384,21 +393,21 @@ We deliberately **do not** use:
 ## 13. Status of the v0.1 open questions
 
 1. ~~**Time scale**~~ → *decided, see the decision log.*
-2. ~~**Skills**~~ → *decided, see the decision log.* Exact per-tier item lists come later, in a content pass.
+2. ~~**Skills**~~ → *decided, see the decision log.* Chapter 1's items and recipes are in [CHAPTER1.md](CHAPTER1.md); later tiers come in their chapters' content passes.
 3. ~~**Followers**~~ → *decided, see the decision log.* The trait list and rank-up costs come later.
 4. ~~**Taint**~~ → *decided, see the decision log.* The affliction list and exact numbers come later.
-5. ~~**Rites**~~ → *decided, see the decision log.* Exact recipes come in the content pass.
+5. ~~**Rites**~~ → *decided, see the decision log.* The Chapter 1 rite is built and playtested (it runs by itself, with optional offerings); later rites come with their chapters.
 6. ~~**Patrons**~~ → *decided, see the decision log.* The Boon tree and Offerings math come later.
 7. ~~**Setting and lore**~~ → *decided, see the decision log.* The detailed story bible comes later.
-8. ~~**Pacing**~~ → *decided, see the decision log.*
+8. ~~**Pacing**~~ → *decided, see the decision log.* Chapter 1 was re-tuned in playtests to about 30–35 minutes of efficient idle play.
 9. ~~**Art direction**~~ → *decided, see the decision log.*
 10. ~~**Tech**~~ → *decided, see §14 and the decision log.*
 11. **Deferred ideas:** Notoriety and investigators (outside pressure on the cult), a desktop-corner mode, a cosmetic real-moon sync option.
 
 **Next layer: detail passes, now that the core is set**
-- ~~**Chapter 1 content pass**~~ → done, see [CHAPTER1.md](CHAPTER1.md).
+- ~~**Chapter 1 content pass**~~ → done and built, see [CHAPTER1.md](CHAPTER1.md). It's now in playtest rounds (four patches so far; see its changelog).
 - ~~**The Grimoire hint model**~~ → done, see [GRIMOIRE.md](GRIMOIRE.md).
-- **Economy math:** XP curve, action times, tithe rates, and Offerings → Boons.
+- **Economy math:** tithe rates and Offerings → Boons. (Chapter 1's XP curve and action times are set; see [CHAPTER1.md](CHAPTER1.md) §3 and §10.)
 - **Afflictions and follower traits:** first lists.
 - **Story bible:** grandmother, the village, the Patrons, and chapter beats.
 - **Sanctum layout:** what's in the scene, and how it grows by Chapter.
@@ -430,7 +439,7 @@ We deliberately **do not** use:
    - the Hearth-Circle Rite
    - offline progress
    Goal: **is the core loop fun?** Everything else waits for that answer.
-2. **Chapter 1 complete** (done): the full chapter, polished and tested. Show it to a small group (the r/incremental_games feedback threads, friends).
+2. **Chapter 1 complete** (done, now in playtest rounds): the full chapter, polished and tested, re-tuned after each playtest. Show it to a small group (the r/incremental_games feedback threads, friends).
 3. **Chapters 2–5, then Patron cycles.** Commission art once the loop is proven.
 4. **Steam wrapper, Steam Cloud and achievements.** Free browser demo (Chapter 1) as marketing, then the premium release.
 
@@ -491,6 +500,8 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
 - **The first session (1–2h active) reaches the Chapter 1 Rite.**
 - **Active play only helps through decisions.** No click bonuses.
 
+*Revised after playtests: Chapter 1 ≈ 30–35 min idle (third and fourth patch).*
+
 ### Q9: Art direction (decided)
 - **Folk-art / woodcut style** (woodcut, papercut, embroidery), with a limited palette and the same motifs used in the UI.
 - **Placeholders first.** Commission art once the loop is proven fun.
@@ -506,7 +517,7 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
   - Ch2: Gravetending, Alchemy, Binding-craft, Summoning.
   - Ch3: Astrology, Divination, Purification. Taint also arrives in Ch3.
   - Ch4–5 add depth, not skills.
-- **Village coin:** earned only through village requests (plus trust). It buys basic supplies and sanctum upgrades, including offline-cap upgrades. There's no "sell anything" market. *(Fourth patch: upgrades became house projects built from items; coin buys only provisions.)*
+- **Village coin:** earned only through village requests (plus trust). It buys basic supplies and sanctum upgrades, including offline-cap upgrades. There's no "sell anything" market. *(→ changed; see Fourth patch)*
 - **Onboarding** runs through grandmother's margin notes, which unlock the skills one by one over the first 20–30 minutes.
 
 ### Grimoire hint model (decided)
@@ -560,7 +571,7 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
 - **Within a skill,** only what you've reached plus the next recipe shows. A recipe stays hidden while one of its ingredients comes from a skill that isn't open yet.
 - **Experiments come mid-chapter,** introduced by their own note when the first hint arrives. They're optional, with the Dream pillow as the stated goal.
 - **Levels speed up their skill:** +1% per level, compounding.
-- **Talents** *(replaced by pick-one-of-two builds in the fourth patch)*:
+- **Talents** *(→ replaced; see Fourth patch)*:
   - 1 point every 3 levels.
   - Three shared branches (Swift / Plenty / Fortune, 3 ranks each) and a skill-specific keystone after 3 points in one branch.
   - Resetting is free.
@@ -568,7 +579,7 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
 - **Old saves:** skills and places an older save had opened stay open (`kept` in the save). The chapter resumes at the first part not yet placed, and a finished chapter counts every part as placed.
 
 ### Second patch: hands-on start, a useful omen, task-first notes
-- **Changes a logged decision** (Q8: "active play = decisions only"). Active play is now decisions **plus optional tending** *(Tend was removed in the fourth patch, which restores Q8)*:
+- **Changes a logged decision** (Q8: "active play = decisions only"). Active play is now decisions **plus optional tending** *(→ removed; see Fourth patch)*:
   - Clicking **Tend** lights a draining meter: +50% speed while lit, and a streak that grows a bonus-find chance (up to 20%).
   - A fourth talent branch, **Tending**, improves it.
   - It's never required. The pacing test plays idle, so the chapter is ~90 minutes without it.
@@ -586,9 +597,9 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
 - **The chapter is shorter:** the rite begins at ~22 minutes (efficient idle play), and the chapter is ~27–35 minutes. This follows from the no-grind rule and was chosen over bigger parts. Chapter II carries more length.
 - **Step rewards are claimed and varied:** a Surge (×2 speed for 20s), XP into a skill you pick, items, an omen. Claiming never gates progress.
 - **Omens are a rhythm, not a rarity:** about every 4–5 minutes, ×2 speed and ×2 chance finds on a chosen skill for 2 minutes. The shelf holds 2 (3 with the upgrade).
-- **The keystone blooms free** when a branch is full. Talents are drawn as a folk tree of life. *(Replaced by talent pairs, drawn as a vine, in the fourth patch.)*
+- **The keystone blooms free** when a branch is full. Talents are drawn as a folk tree of life. *(→ replaced; see Fourth patch)*
 - **Insight is spent, not accumulated:** one pool, no toasts. You buy a recipe's categories, an ingredient's name, or a secret's clue, so secrets are findable.
-- **The rite is played, not waited for** *(replaced in the fourth patch: the rite runs by itself, with optional offerings)*. It replaces the 30-minute rite (which asked players to leave) with 5 phases of a minute, each with a 12-second moment to answer. Quality comes from moments answered, the Hearth mark and an omen. It still never fails, and still finishes offline.
+- **The rite is played, not waited for** *(→ replaced; see Fourth patch)*. It replaces the 30-minute rite (which asked players to leave) with 5 phases of a minute, each with a 12-second moment to answer. Quality comes from moments answered, the Hearth mark and an omen. It still never fails, and still finishes offline.
 - **Fixed:**
   - Tend no longer finishes a repetition at once (progress is a fraction now).
   - Escape closes only the top dialog.
@@ -611,3 +622,8 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
 - **Calm UI:** loot floats queue and stack instead of overlapping; rows never change size on hover and a click anywhere on a row starts it; task cards close only with their button or Escape; Go leads to where the missing ingredient is made; text is one step larger.
 - **Item icons:** every item has its own code-drawn woodcut glyph, coloured by the skill that makes it, on chips, Stores, contracts, projects and the Circle.
 - **Old saves** (save version 8): Tend and in-progress rite moments are dropped; anyone who had met an omen keeps an omen shelf, the old bought shelf becomes the carved shelf, and the board trims to 2.
+
+### After the fourth patch
+- **Coin later buys exclusive or rare things:** house projects stay built from items, but later on coin is meant to come in for some exclusive or rare projects and rare rewards. A note for the future; nothing in Chapter 1 yet.
+- **The omen shelf is highlighted to the player,** because omens start only with it and playtesters could miss it: once the Light is placed, a one-time card from grandmother (her shelf is bare; house projects are optional, built from what you make, kept for good) with a Go button; an optional tracker line with have/need chips; a "New" tag and a soft glow on its row; and a one-time toast when it can first be built.
+- **The docs stay current:** after every patch, CONCEPT and CHAPTER1 are rewritten to describe the current game. History lives in this decision log and in CHAPTER1's changelog, not in the main sections.

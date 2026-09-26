@@ -166,6 +166,12 @@ Item names go through `ItemChip` (`src/ui/components/ItemLookup.tsx`), so any it
   - Each project card has its icon, name, effect line, and item chips with have/need, and a **Build** button (gold only when everything is there; otherwise disabled, with the reason in its tooltip). The effect takes the helped skill's colour.
   - Built projects fold into one "In the house:" line at the bottom.
   - Building the omen shelf opens a short note on what omens do.
+  - While anything can be built, the panel header says "N ready to build" in candle gold instead.
+- **Pointing out the omen shelf** (`components/ShelfCard.tsx`, the tracker, the Projects panel), once the Light is placed and until the shelf is built:
+  - A one-time card in grandmother's voice ("My omen shelf is bare…"), with the shelf's item chips, **Show me the projects** (scrolls to the panel) and **Later**. It never shows over another card.
+  - A quiet "Side project · The omen shelf" block under the tracker's steps: muted label, item chips, and **Go** (it reads **Build it** once everything is there).
+  - The shelf's project row carries a gold **New** tag and a slow glow (the `invite` animation).
+  - A one-time toast when it could first be built. One-time pointers are remembered in `settings.introsSeen`.
 - **Contract cards** (`screens/Village.tsx`), on vellum:
   - Who's asking, their line, then one row per item: a chip for what's still needed (✓ once done), "n/N delivered" and a thin bar.
   - "Pays N coin · +N trust", then **Deliver what I have** (gold when you hold any of it), which becomes **Deliver and finish** when it would complete, and **Turn away** (ghost).

@@ -1,14 +1,14 @@
-# Chapter 1: Hearth. Content Pass (v0.5, fourth patch)
+# Chapter 1: Hearth. Content Pass (v0.6)
 
 > This is the detail layer beneath [CONCEPT.md](CONCEPT.md). It covers the first session: from arriving at the cold house to the **Kindling of the Hearth-Circle**.
-> The numbers are a first pass. They're checked by the headless playthrough test ([src/engine/playthrough.test.ts](../src/engine/playthrough.test.ts), see §10) and will be tuned in playtests.
-> Item and action names are draft flavour.
+> It describes the chapter **as it is now**. What changed in each round is in the [Changelog](#changelog) at the end, and the reasons are in [CONCEPT.md's decision log](CONCEPT.md#decision-log).
+> The numbers are checked by the headless playthrough test ([src/engine/playthrough.test.ts](../src/engine/playthrough.test.ts), see §10) and are tuned in playtests. Item and action names are draft flavour.
 
 ---
 
 ## 1. Goals for Chapter 1
 
-- **Hook within the first session.** The Rite lands in about 30–35 minutes of active play (the length chosen in the third patch, §10) and gives a big payoff: the first follower, raised caps, the cellar.
+- **Hook within the first session.** The Rite lands in about 30–35 minutes for an efficient idle player (§10) and gives a big payoff: the first follower, raised caps, the cellar.
 - **Teach every core system once, gently:**
   - timed actions
   - skills feeding each other
@@ -20,7 +20,7 @@
 - **Visible progress in the sanctum:** the room goes from cold and dark to candlelit and warded.
 - **No Taint, no followers, no failure.** Taint is only hinted at.
 
-**Skill unlocks across the game** *(decided)*
+**Skill unlocks across the game**
 
 | Chapter | New skills | Total |
 |---|---|---|
@@ -31,17 +31,17 @@
 
 ---
 
-## 2. The chapter's spine: the Kindling, built in five parts *(first patch; re-sized in the third; free order in the fourth)*
+## 2. The chapter's spine: the Kindling, built in five parts
 
 The Kindling is visible from the first minute, on the Circle tab. It has **five parts**, and each part is one stage of the chapter. A stage's note from grandmother brings **one new skill**. You make that part from what the new skill teaches and **place it in the Circle**. The rosette lights one petal per part, in the skill's colour. The last stage is performing the rite.
 
-**Free order** *(fourth patch)*: the Light always comes first and the Offering always comes last. In between, **you choose the order of the Ward, the Smoke and the Words**: when the Light is placed, the tracker (or the Circle) asks which part to make next, and again after the next one. Each choice brings that part's skill (and its place: the Grimoire comes with the Words). The choices are saved (`middleOrder` in the save).
+**Free order:** the Light always comes first and the Offering always comes last. In between, **you choose the order of the Ward, the Smoke and the Words**: when the Light is placed, the tracker (or the Circle) asks which part to make next, and again after the next one. Each choice brings that part's skill (and its place: the Grimoire comes with the Words). The choices are saved (`middleOrder` in the save).
 
-**Sequencing rules** *(third patch; re-laid in the fourth; checked by the playthrough test)*:
+**Sequencing rules** (checked by the playthrough test):
 1. **Every step's count earns the level the next step needs.** You never grind a level with nothing to do; the bot follows the steps literally, in every order, and fails if it ever has to.
 2. **Nothing made without a use.** Everything a step asks you to craft is spent by a later step or a part (the bot checks leftovers at the rite).
-3. **Recipes come in tiers, a new tier every 3 levels** *(fourth patch)*: Tier 1 at level 1, Tier 2 at 3, Tier 3 at 6, then 9, 12, 15 and 18 (`TIER_LEVELS` in `src/content/actions.ts`). Each recipe row shows "Tier N · Lvl L". A stage uses Tiers 1–3 of its skill; deeper tiers are for the village, house projects, trust and Chapter II.
-4. **Each middle skill owns its gatherer** *(fourth patch)*, so any order works: Sigilcraft sweeps its own ash, Scholarship searches the attic for its own pages, and Herbalism binds its own smudge bundles and makes the mugwort incense.
+3. **Recipes come in tiers, a new tier every 3 levels:** Tier 1 at level 1, Tier 2 at 3, Tier 3 at 6, then 9, 12, 15 and 18 (`TIER_LEVELS` in `src/content/actions.ts`). Each recipe row shows "Tier N · Lvl L". A stage uses Tiers 1–3 of its skill; deeper tiers are for the village, house projects, trust and Chapter II.
+4. **Each middle skill owns its gatherer,** so any order works: Sigilcraft sweeps its own ash, Scholarship searches the attic for its own pages, and Herbalism binds its own smudge bundles and makes the mugwort incense.
 5. **A craft gives about the XP of gathering its inputs,** so crafting also levels the gatherer that feeds it.
 6. **A gatherer shows only once something uses its finds:** a revealed recipe, an open part, a contract on the board, or the current stage's steps.
 
@@ -57,26 +57,35 @@ The table shows the stages in the default order (Ward, Smoke, Words); the middle
 | 5 Offering | **Ritualism** (+ the Village) | Finish a contract for a villager · Lay 15 salt lines · Pour 17 tallow candles · Bless the threshold ×15 | 2 bread, 3 salt, 15 consecrated salt | +60 XP (Ritualism suggested) |
 | 6 Perform | | Bind 2 smudge bundles · Smoke the rooms ×2 (Ritualism 3) · begin the rite (Ritualism 3) | | |
 
-- **Small steps** *(second patch; made honest in the fourth)*: they're in `steps` on each note in `src/content/notes.ts`.
+- **Small steps:** they're in `steps` on each note in `src/content/notes.ts`.
   - **Steps count from the stage's start.** What you did before the stage doesn't count, so a step always means the work in front of you. The tracker shows live progress.
   - **A craft step is also met by holding enough** of what it makes (for example, candles you already poured).
   - **Step counts match the part's needs exactly** (40 salt lines for a part that needs 40).
   - Once done, a step stays done. They can be met in any order; the stage ends when its part is placed.
-- **Step rewards** *(third patch; one per stage since the fourth)*: at most one reward per stage, on its *place* step, plus the Surge for the Start step. A reward waits for a gold **Claim** button in the tracker; progress never waits on it. Kinds:
+- **Step rewards:** at most one reward per stage, on its *place* step, plus the Surge for the Start step. A reward waits for a gold **Claim** button in the tracker; progress never waits on it. Kinds:
   - items for the next step
   - XP into a skill you pick (the one the next step needs is suggested)
   - a **Surge** (×2 speed on everything for 20 seconds)
-- **Task-first cards** *(second patch)*: a new stage pops a card with its steps and reward, what the part needs, and a Go button to the current step. Grandmother gets one short line (`quote`); her full note is in the Grimoire journal. *(Fourth patch)* The card closes only with its button or Escape, never by a stray click beside it.
-- **Go** *(fourth patch)* leads to the skill that makes the current step's **first missing ingredient**, not just the stage's skill.
+- **Task-first cards:** a new stage pops a card with its steps and reward, what the part needs, and a **Go** button to the current step. Grandmother gets one short line (`quote`); her full note is in the Grimoire journal. The card closes only with its button or Escape, never by a stray click beside it.
+- **Go** leads to the skill that makes the current step's **first missing ingredient**, not just the stage's skill.
+- **The chapter tracker** (in the sidebar) shows done steps, the current step with live progress and its needs as item chips, and one "???" ahead. A **short chip** offers to start what makes that item. When you're idle, the **top bar shows the next task**.
 - **Parts that aren't reached yet** show only their name and the skill they bring. No part asks for anything from a skill that isn't open (a test checks this).
 - **Recipes show only when they matter:** each skill lists what you've reached plus what comes at the next tier. A recipe also stays hidden while one of its ingredients comes from a skill that hasn't opened yet.
 - **Placing:** from the Circle, or straight from the chapter tracker once a part is ready.
 - **Experiments** open with their own side note with the first insight, once the Grimoire is open. They're optional.
 - **Burnt pages** (`src/content/pages.ts`) teach only recipes off the main path: iron ward, chalk segment, hearth candle, hearth ward and juniper incense. The sixth page is the black-page teaser.
+- **Feedback** (details in [DESIGN.md](DESIGN.md), "Feedback kit"):
+  - item, level and coin floats, which queue and stack instead of overlapping
+  - an **activity feed**, one quiet line under the top bar, for routine events (steps done, plain level-ups, omens, claims, talent picks, partial deliveries); click it for the last 30
+  - **toasts only for big moments:** a part placed, a project built, a contract done, a new tier or talent at a level-up, a new recipe from a page, rare finds, curios, the rite beginning
+  - "New" badges on fresh recipes, the helped stamp, the tracker tick
+  - staggered Circle glows, "Closer!", the discovery burst
+  - the framed room at the chapter end
+- **Stores:** the inventory has its own tab, and every item has its own woodcut icon, coloured by the skill that makes it.
 
 ---
 
-## 3. Skills and actions *(re-laid in tiers in the fourth patch)*
+## 3. Skills and actions
 
 The columns are: the tier and level required · time per action · XP per action · inputs → outputs. The level cap in Chapter 1 is **20**. A new tier comes every 3 levels (§2).
 *Italic outputs are chance-based.* Some recipes also need a **deciphered page** before they unlock (marked 📜).
@@ -134,13 +143,17 @@ After the six story pages, each deciphered page brings 2 insight.
 | Bless the threshold | 1 · 1 | 6s | 20 | 1 salt line + 1 tallow candle → Consecrated salt |
 | Smoke the rooms | 2 · 3 | 8s | 25 | 1 smudge bundle + 1 tallow candle → *Blessing* (a 15-minute +10% speed buff to all Chapter 1 skills; the row says so) |
 
-## 4. The village and the house: coin, contracts and projects *(decided: Village coin; contracts and projects in the fourth patch)*
+**Curios** (from grandmother's chest and the attic) aren't kept in the Stores. Each is read when found and joins a collection (Grimoire → Curios n/5) with its story, and each brings 3 insight.
 
-- **The contract board** shows **2 contracts** at a time *(fourth patch: it was 3 smaller requests)*. Each asks for a good amount of one or two things. Finishing one pays **coin** plus **trust**, and a new contract knocks after a short delay.
-- **Delivery in parts** *(fourth patch)*: "Deliver what I have" hands over whatever you hold of what's still needed. What's delivered stays delivered (kept per slot, with a bar per item); the last delivery ("Deliver and finish") pays.
+---
+
+## 4. The village and the house: coin, contracts and projects
+
+- **The contract board** shows **2 contracts** at a time. Each asks for a good amount of one or two things. Finishing one pays **coin** plus **trust**, and a new contract knocks after a short delay.
+- **Delivery in parts:** "Deliver what I have" hands over whatever you hold of what's still needed. What's delivered stays delivered (kept per slot, with a bar per item); the last delivery ("Deliver and finish") pays.
 - **Trust** unlocks better-paying contracts (at 2, 3, 4 and 5). The board shows when the next ones start.
 - **There's no "sell anything" market.** Coin comes only from contracts, so the resource chains stay meaningful.
-- **Build details** *(M1)*:
+- **Board rules:**
   - An emptied slot refills after **30 seconds** of game time, including offline.
   - Any contract can be **turned away** at no cost (what was delivered to it is gone), so a contract you can't fill never blocks the board.
   - The village opens with the Offering stage, when every skill but Ritualism is already open. Its first step is to finish one contract. Trust-0 contracts use early items only (nettle and chamomile, ash, tallow candles, salt lines).
@@ -160,14 +173,15 @@ After the six story pages, each deciphered page brings 2 insight.
 | "Iron by the cradle" | 3 iron wards + 6 salt lines | 70 coin, +2 trust | 5 |
 | "A ward for the church door" | 1 hearth ward + 4 chalk segments | 110 coin, +2 trust | 5 |
 
-- **What coin buys in Chapter 1** (`src/content/shop.ts`) *(fourth patch: only provisions)*:
+- **What coin buys in Chapter 1** (`src/content/shop.ts`): provisions only.
 
 | Purchase | Cost | Why |
 |---|---|---|
 | Bread (for bread and salt) | 5 coin | Needed for the Offering |
 | Tallow ×10 | 8 coin | Backup when the pantry runs short |
 
-- **House projects** *(fourth patch; they replace the coin upgrades)*: side work you build once, from things you make, with no coin. Nothing on the main path needs them; they give the deeper recipes (the midden, the chest, iron wards) and the attic's odds and ends a use. A **Projects** panel on the House tab shows them once Chandlery is open (`src/content/upgrades.ts`):
+- **Coin later:** coin is meant to come in later for some exclusive or rare projects and rare rewards (not in Chapter 1 yet).
+- **House projects:** side work you build once, from things you make, with no coin. Nothing on the main path needs them; they give the deeper recipes (the midden, the chest, iron wards) and the attic's odds and ends a use. A **Projects** panel on the House tab shows them once Chandlery is open (`src/content/upgrades.ts`):
 
 | Project | Built from | Effect |
 |---|---|---|
@@ -177,16 +191,21 @@ After the six story pages, each deciphered page brings 2 insight.
 | **Mended shutters** | 20 iron nails + 15 rags + 10 salt lines | Offline cap 24h → 36h *(the first taste of the cap upgrades; 72h comes in Chapter 2)* |
 | **Carved omen shelf** (after the omen shelf) | 6 chalk + 2 iron wards | Omen storage 2 → 3 |
 
-- **Old saves** *(fourth patch)*: anyone who had met an omen keeps an omen shelf; the old bought shelf (3 omens) becomes the carved shelf; the board trims to 2 contracts.
+- **The omen shelf is highlighted** until it's built, since it's the way into omens:
+  - Once the Light is placed, a one-time card in grandmother's voice says her omen shelf is bare and explains house projects in a line (optional, built from what you make, kept for good), with a **Go** button to the House projects panel.
+  - The chapter tracker shows a quiet optional line, **"Side project: the omen shelf"**, with have/need chips and Go.
+  - In the Projects panel, the omen shelf row carries a **"New"** tag and a soft glow, and the panel title says how many projects are ready to build.
+  - A one-time toast says when you could first build it.
+- **Old saves:** anyone who had met an omen keeps an omen shelf; the old bought shelf (3 omens) becomes the carved shelf; the board trims to 2 contracts.
 
 ---
 
-## 5. Omen: Still Night *(the only omen in Chapter 1; re-tuned in the third patch; behind the omen shelf since the fourth)*
+## 5. Omen: Still Night (the only omen in Chapter 1)
 
-- **Omens need the omen shelf** *(fourth patch)*. None turn up until you build it (a house project, §4). Building it brings the **first Still Night** and a short note on what omens do.
-- **Drop:** after that, about 1 in 100 actions (roughly every 4–5 minutes of work), online or offline. The Ritualism talent *Omen-sense* doubles it (§13).
+- **Omens need the omen shelf.** None turn up until you build it (a house project, §4, highlighted to the player from the Light onwards). Building it brings the **first Still Night** and a short note on what omens do.
+- **Drop:** after that, about 1 in 100 actions (roughly every 4–5 minutes of work), online or offline. The Ritualism talent *Omen-sense* doubles it (§11).
 - **Storage:** the omen shelf holds 2; the carved omen shelf holds 3.
-- **Bless a skill (2 minutes)** *(fourth patch: it was "Release")*: a dialog asks which open skill to bless, with the one you're running first. That skill gets **×2 speed and ×2 chance finds**. Blessings on different skills run side by side; the same skill again adds 2 minutes. The dialog lists what's already active.
+- **Bless a skill (2 minutes):** a dialog asks which open skill to bless, with the one you're running first. That skill gets **×2 speed and ×2 chance finds**. Blessings on different skills run side by side; the same skill again adds 2 minutes. The dialog lists what's already active.
 - **Its lesson:** save omens for the skill you want to rush.
 - **During the rite:** Still Night active at any point during the rite is one of the rite's offerings (§8).
 - **An omen that drops on a full shelf** passes unseen, and the player is told why.
@@ -197,14 +216,15 @@ After the six story pages, each deciphered page brings 2 insight.
 
 There are three hidden recipes in Chapter 1. None unlock by level. You find them with **insight** and by **experimenting at the Circle**.
 
-- **Insight** *(third patch)* is one pool, counted on the Grimoire. It comes from wrong tries at the Circle (+1), pages past the sixth (+2), curios (+3) and the three contracts that mention a recipe (+2). There are no toasts, just a float on the Grimoire tab.
+- **Insight** is one pool, counted on the Grimoire. It comes from wrong tries at the Circle (+1), pages past the sixth (+2), curios (+3) and the three contracts that mention a recipe (+2). There are no toasts, just a float on the Grimoire tab.
 - **You spend it on the hint you want** (see [GRIMOIRE.md](GRIMOIRE.md) §6):
   - a hidden recipe's categories (4)
   - one more ingredient named (6)
   - a secret's next written clue (4)
 - **Experimenting:** attune the Circle to a hidden recipe. The glow count shows how many items are right, wrong items are crossed out automatically, and known ingredients sort first as gold chips.
+- **The free Circle** takes exactly 3 things; every Chapter 1 hidden recipe and secret is 3 things.
 - **There are also 2 secrets** (Honey-light and Hana's soup), each with 3 written clues you can buy.
-- **The Grimoire list shows what each hidden recipe gives** *(fourth patch)*, so you know what you're hunting for.
+- **The Grimoire list shows what each hidden recipe gives,** so you know what you're hunting for.
 
 | Hidden recipe | Riddle (free) | Recipe | Effect |
 |---|---|---|---|
@@ -222,11 +242,11 @@ There are three hidden recipes in Chapter 1. None unlock by level. You find them
 
 ---
 
-## 8. The Major Rite: Kindling the Hearth-Circle *(it runs by itself since the fourth patch)*
+## 8. The Major Rite: Kindling the Hearth-Circle
 
 **The rite needs its five parts placed in the Circle** (§2) and **Ritualism 3**.
 
-- **Performing it:** **five phases of 36 seconds each** (about 3 minutes in all), one per part, each adding a line to the rite's log (content: `HEARTH_RITE.phases` in `src/content/rite.ts`). It takes the action slot and **runs by itself**: there's nothing to answer, and it carries on offline if you step away. *(Fourth patch: the third patch's played moments are gone.)*
+- **Performing it:** **five phases of 36 seconds each** (about 3 minutes in all), one per part, each adding a line to the rite's log (content: `HEARTH_RITE.phases` in `src/content/rite.ts`). It takes the action slot and **runs by itself**: there's nothing to answer, and it carries on offline if you step away. It can be begun by hand or set to begin by itself.
 - **Offerings (optional):** chosen on the rite's card before you begin. Each is one quality step (`OFFERINGS` in `src/content/rite.ts`):
   - **a hearth candle** at the heart of the circle (an item, used when the rite begins; §3)
   - **the Hearth mark** discovered (a hidden recipe, §6; counts by itself)
@@ -255,9 +275,9 @@ There are three hidden recipes in Chapter 1. None unlock by level. You find them
 ## 10. Pacing check (headless playthrough)
 
 [src/engine/playthrough.test.ts](../src/engine/playthrough.test.ts) plays Chapter 1 as an efficient idle player, on the real game engine and content.
-- It follows each stage's steps literally, claims rewards (XP where suggested), places parts, takes a side of every talent pair as it comes (§13), fills contracts for bread, and lets the rite run.
-- No omens, no offerings and no experiments.
-- *(Fourth patch)* It plays **all 6 orders** of the free middle parts on 2 seeds each (all "A" talents), plus the **other build** (all "B" talents) in two orders.
+- It follows each stage's steps literally, claims rewards (XP where suggested), places parts, takes a side of every talent pair as it comes (§11), fills contracts for bread, and lets the rite run.
+- No omens, no offerings, no experiments and no house projects.
+- It plays **all 6 orders** of the free middle parts on 2 seeds each (all "A" talents), plus the **other build** (all "B" talents) in two orders.
 - It runs as part of `npm test`. It fails if, in any run:
   - the chapter can't be finished, or a note soft-locks
   - **anything needs a level the steps didn't earn** (grinding)
@@ -266,60 +286,23 @@ There are three hidden recipes in Chapter 1. None unlock by level. You find them
   - two skills open **less than 3 minutes apart** (after the tutorial pair)
   - a skill's stage takes **less than 3 or more than 12 minutes**
 - `npm run pacing` prints each step's time.
-- **XP curve** *(fourth patch)*: XP to the next level = **110 × 1.1^(level − 1)**, with no easing: 110 XP for level 2, 121 for 3, 133 for 4. With a new tier every 3 levels, the flatter curve keeps tiers coming.
-  - *History:* 25 × 1.18^(L−1), then 165 × 1.14 (first patch), then 245 × 1.14 with the ease (second), then 612 × 1.14 with the ease (third).
-  - The third patch set the chapter's length by the rule "no grinding", and the designer chose about 30–35 minutes.
+- **XP curve:** XP to the next level = **110 × 1.1^(level − 1)**, with no easing: 110 XP for level 2, 121 for 3, 133 for 4. With a new tier every 3 levels, the flatter curve keeps tiers coming.
+- **Length:** the chapter's length follows from the "no grinding" rule; the designer chose about 30–35 minutes.
 - **Level speed:** each level makes its own skill 1% faster, compounding.
-- **Result** (fourth patch; 6 orders × 2 seeds): the rite begins at **30–32 minutes**, and it takes about 3, so the chapter is about **33–35 minutes** for an efficient idle player. Stage lengths (seed 1, Ward → Smoke → Words): Light 7.0, Ward 5.2, Smoke 4.1, Words 7.1, Offering 5.7, Perform 0.5 minutes.
+- **Result** (6 orders × 2 seeds): the rite begins at **30–32 minutes**, and it takes about 3, so the chapter is about **33–35 minutes** for an efficient idle player (about 45–60 with side projects). Stage lengths (seed 1, Ward → Smoke → Words): Light 7.0, Ward 5.2, Smoke 4.1, Words 7.1, Offering 5.7, Perform 0.5 minutes.
 
 **Things to tune in playtests:**
 - **Whether ~30 minutes feels right.** Longer means bigger parts (every item still has a use) and slower levels, together.
-- **The Smoke is now the shortest stage,** and the Light and the Words the longest.
+- **The Smoke is the shortest stage,** and the Light and the Words the longest.
 - **Surges, omens and talents** make everything faster for active players. Watch whether the chapter becomes too quick for them.
 
 ---
 
-## 11. What the vertical slice needs from this document
-
-> **Status: complete** (milestones M0–M7). Everything below is built, tested and played through; see the README.
-> Open tuning items: §10 and [PLAYTEST.md](PLAYTEST.md).
-
-### Original checklist
-
-The first build needs:
-- all of §2–§8: 6 skills, 27 actions, the notes sequence, the request board, 1 omen, 3 hidden recipes, the Rite
-- offline progress
-- save/load
-- a placeholder sanctum with visible states (dark → candlelit → warded → circle awake → cellar door)
-
-Everything after the Rite can be a "to be continued" screen.
-
----
-
-## 12. Playtest-readiness round (review → fix → polish → joy)
-- **Curios** are a collection (Grimoire → Curios n/5) with their stories. They no longer sit in the pantry.
-- **Requests:** 8 in total. *Ash for the soapmaker* (trust 0) makes the early board vary; *juniper smoke for the sickroom* (trust 3) gives juniper incense a use.
-- **The free Circle** takes exactly 3 things; every Chapter 1 secret is 3 things.
-- **First ten minutes:**
-  - Each note ends with a **Go** button that takes you to the task.
-  - The tracker's current step shows what it needs as chips; a short chip offers to start what makes it.
-  - An idle top bar shows the next task.
-  - Locked recipes collapse into one summary line per skill *(replaced in the first patch: only the next recipe shows)*.
-- **Feedback:**
-  - item, level and coin floats
-  - unlock toasts and "New" badges
-  - the helped stamp, the tracker tick
-  - staggered Circle glows, "Closer!", the discovery burst
-  - the framed room at the chapter end
-- **Pacing** (bot, 5 seeds): 89–91 minutes of active play, including the 30-minute Rite.
-
----
-
-## 13. Talents as builds, and level speed *(fourth patch; replaces the first patch's branches)*
+## 11. Talents as builds, and level speed
 
 - **A pair at levels 3, 6, 9 and 12** (one per tier): at each, a skill offers two talents and **you take one side, A or B**. The sides pull different ways, and some help another skill. By the Chapter 1 cap of 20, every skill has all four pairs open.
 - **Switching is free,** any time: click the other side. **Reset is free** too.
-- **Old saves:** the first patch's branch ranks are dropped on load; you choose again.
+- **Old saves:** older talent ranks are dropped on load; you choose again.
 - **Effects** (`TalentEffect` in `src/content/talents.ts`):
   - **speed:** this skill, or another skill, is faster
   - **xp:** more XP in this skill, or another
@@ -366,3 +349,18 @@ Everything after the Rite can be a "to be continued" screen.
 - **Where:** a vine under each skill's recipes on the House tab: the skill at the root, level 3 nearest the root, and a pair of leaves at each talent level. The taken leaf fills in the skill's colour and the other dims; pairs not reached yet stay stitched outlines. A skill tile shows a "+N" badge when N choices are waiting.
 - **Level speed:** each level also makes its own skill 1% faster, compounding.
 - **All rolls use the seeded RNG,** and only for bonuses the player has, so offline progress applies them the same way.
+
+---
+
+## Changelog
+
+One short entry per round, oldest first. The reasons behind each change are in [CONCEPT.md's decision log](CONCEPT.md#decision-log).
+
+- **Vertical slice (M0–M7):** Chapter 1 playable end to end: 6 skills, grandmother's notes, a village request board, Still Night, 3 hidden recipes and a 30-minute Rite, with offline progress, save/load, the fallback, ETAs, item lookup and the living sanctum. A headless bot plays the chapter as a test.
+- **UI feedback round:** a chapter tracker replaces the notes panel, and each note is a one-time story card (all kept in the Grimoire journal). Effects are stated plainly from the data. The ink-and-paper look with a folk colour per skill.
+- **Playtest-readiness round:** curios became a collection; the free Circle takes 3 things; 8 requests; notes end with Go, short chips offer to start their maker, and an idle top bar shows the next task. The feedback kit (floats, "New" badges, stamps, Circle glows, the discovery burst). Rite quality counts three factors. The chapter took about 90 minutes.
+- **First patch:** the staged Kindling: five parts, one new skill per stage, only the next recipe showing. Talents in three branches with keystones; +1% speed per level; a slower XP curve.
+- **Second patch:** small steps inside every stage, Tend (an optional speed meter), a faster start, Still Night blessing a skill you choose, and task-first cards with a Go button.
+- **Third patch:** no grinding and nothing made without a use, so the chapter became about 30–35 minutes. Step rewards you claim (Surge, XP where you choose, items, omens); omens every few minutes; talents drawn as a tree of life; insight spent on the hints you choose; the rite played as five short moments.
+- **Fourth patch:** calm UI (stacked floats, rows that stay put and start on click). Tend removed; the rite runs by itself in about 3 minutes, with optional offerings for quality. Recipes in tiers every 3 levels and a flatter XP curve; a free order for the Ward, the Smoke and the Words; honest steps. Talents as pick-one-of-two pairs at 3, 6, 9 and 12. House projects built from items; 2 contracts delivered in parts; omens need the omen shelf. An activity feed, fewer toasts, a Stores tab, and an icon for every item.
+- **After the fourth patch:** the omen shelf is highlighted to the player (a one-time card, a tracker line, a "New" tag, a one-time toast). Coin is planned for exclusive or rare projects and rare rewards later. The docs now describe the current game, with this changelog.

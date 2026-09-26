@@ -70,7 +70,7 @@ export interface GameState {
   kindling: PartId[];
   /** Experiments at the Circle open with the first hint toward a hidden recipe. */
   experimentsOpen: boolean;
-  /** The side taken at each talent level, per skill (docs/CHAPTER1.md §13). */
+  /** The side taken at each talent level, per skill (docs/CHAPTER1.md §11). */
   talents: Partial<Record<SkillId, Talents>>;
   /** Stage steps already done (their goals met). */
   stepsDone: string[];

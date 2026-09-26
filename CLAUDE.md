@@ -29,6 +29,9 @@ Vite + React + TypeScript, Vitest. Electron (Steam) and PixiJS (sanctum scene) c
 - `src/ui/`: React. `useGame` owns the tick loop, autosave and commands. `screens/` are the tabbed places, `components/` are shared pieces, `art/` holds code-drawn SVG icons and ornaments, and `styles/` has tokens, components and layout.
 
 ## Rules
+- **The docs stay current.** Every patch or playtest round ends with the docs updated in the same series of commits as the code:
+  - `docs/CONCEPT.md`: its main sections describe the game as it is now, and the decision log gets an entry saying what changed and why.
+  - `docs/CHAPTER1.md` (we iterate on Chapter 1 the most): its sections describe the current chapter only, with no "(replaced in patch N)" history, and its **Changelog** at the bottom gets one short entry per patch.
 - Engine functions are pure and deterministic: randomness comes from `state.rngSeed` via `engine/rng.ts`, never `Math.random()` inside the simulation.
 - Every engine behavior gets a test in `src/engine/*.test.ts`.
 - Save format changes: bump `SAVE_VERSION` and make `deserialize` upgrade older saves. Never break existing saves.
