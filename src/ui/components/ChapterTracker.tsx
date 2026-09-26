@@ -20,6 +20,9 @@ import { SkillIcon } from "../art/icons";
 import { chooseStage } from "../../engine/commands";
 import { Bar } from "./Bar";
 import { ItemChip } from "./ItemLookup";
+import { KeepsakePick } from "./KeepsakePick";
+import { Modal } from "./Modal";
+import { keepsakePicksLeft } from "../../engine/keepsakes";
 import { UPGRADES } from "../../content/upgrades";
 import { omenShelfSuggested, projectsReady } from "../../engine/projects";
 
@@ -56,6 +59,7 @@ export function ChapterTracker({ state, onGo, act }: { state: GameState; onGo: (
       </div>
       <Bar value={done / STEPS.length} label="Chapter progress" />
       <RewardsWaiting state={state} act={act} />
+      <KeepsakesWaiting state={state} act={act} />
       {choices.length > 0 && <StageChoice state={state} choices={choices} act={act} />}
       <ol className="steps">
         {STEPS.map((s, i) => {
@@ -167,6 +171,28 @@ export function ChapterTracker({ state, onGo, act }: { state: GameState; onGo: (
       )}
       {state.rite.completed && <p className="step-hint">Chapter complete. Janko has joined you.</p>}
     </section>
+  );
+}
+
+/** Keepsakes still to choose after the rite (if the chapter-end card was closed first). */
+function KeepsakesWaiting({ state, act }: { state: GameState; act: (c: (s: GameState) => Result) => unknown }) {
+  const [open, setOpen] = useState(false);
+  const left = keepsakePicksLeft(state);
+  if (left === 0 || !state.rite.completed?.endingSeen) return null;
+  return (
+    <div className="rewards-waiting">
+      <button className="btn btn-primary claim-btn" onClick={() => setOpen(true)}>
+        Choose {left === 1 ? "a keepsake" : "two keepsakes"}
+      </button>
+      {open && (
+        <Modal title="Keepsakes" onClose={() => setOpen(false)}>
+          <KeepsakePick state={state} act={act} later={false} />
+          <button className="btn btn-primary" onClick={() => setOpen(false)}>
+            Done
+          </button>
+        </Modal>
+      )}
+    </div>
   );
 }
 

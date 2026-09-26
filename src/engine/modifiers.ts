@@ -9,6 +9,7 @@ import { discoveredRewards } from "./grimoire";
 import type { GameState } from "./state";
 import type { TalentEffect } from "../content/talents";
 import { talentEffects } from "./talents";
+import { keepsakeEffects } from "./keepsakes";
 import { levelForXp } from "./xp";
 
 // Every bonus in the game is computed here, so balance lives in one place.
@@ -95,9 +96,11 @@ export function byproducts(state: GameState, id: ActionId): { item: ItemId; chan
   return talentsOn(state, "byproduct", id).map((t) => ({ item: t.item, chance: t.chance }));
 }
 
-/** Insight from each repetition (Marginalia, Footnotes). */
+/** Insight from each repetition (Marginalia, Footnotes, her reading glasses). */
 export function insightPerRep(state: GameState, id: ActionId): number {
-  return talentsOn(state, "insight", id).reduce((n, t) => n + t.amount, 0);
+  let amount = talentsOn(state, "insight", id).reduce((n, t) => n + t.amount, 0);
+  if (id === "decipher_page") for (const k of keepsakeEffects(state)) if (k.kind === "page_insight") amount += k.amount;
+  return amount;
 }
 
 /** Chance a repetition comes doubled, outputs and XP (Scavenger's luck, Steady flame…). */
@@ -161,6 +164,8 @@ export function offlineCapMs(state: GameState): number {
 export function omenCapacity(state: GameState): number {
   let cap = 0;
   for (const e of effects(state)) if (e.kind === "omen_capacity") cap = Math.max(cap, e.capacity);
+  // A jar of embers (a keepsake) adds a place, once there's a shelf to put it on.
+  if (cap > 0) for (const k of keepsakeEffects(state)) if (k.kind === "omen_slot") cap += k.extra;
   return cap;
 }
 
@@ -170,6 +175,7 @@ export function omenCapacity(state: GameState): number {
 export function offlineBonus(state: GameState): number {
   let bonus = 0;
   for (const r of discoveredRewards(state)) if (r.kind === "offline_bonus") bonus += r.bonus;
+  for (const k of keepsakeEffects(state)) if (k.kind === "offline_bonus") bonus += k.bonus;
   return bonus;
 }
 

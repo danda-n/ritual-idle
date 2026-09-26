@@ -190,7 +190,7 @@ function Perform({ state, act }: { state: GameState; act: Act }) {
         })}
       </ul>
       <p className="muted">
-        Outcome: <strong>{QUALITIES[riteQuality(state, chosen)]}</strong> · none = Sound, 1–2 = Fine, all 3 = Resplendent. Only the lore and a keepsake differ; the rewards are the same.
+        Outcome: <strong>{QUALITIES[riteQuality(state, chosen)]}</strong> · none = Sound, 1–2 = Fine (choose a keepsake), all 3 = Resplendent (choose two, and more lore). The story rewards are the same either way.
       </p>
       <button className="btn btn-primary" disabled={reason !== null} title={reason ?? undefined} onClick={() => act((s) => beginRite(s, chosen))}>
         Begin the rite

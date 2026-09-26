@@ -5,8 +5,10 @@ import { EmbroideryBand } from "../art/ornaments";
 import { Sanctum } from "../art/Sanctum";
 import { Modal } from "./Modal";
 import { followerEffects } from "../effects";
+import { KeepsakePick } from "./KeepsakePick";
+import type { Result } from "../../engine/commands";
 
-export function ChapterEnd({ state, onClose }: { state: GameState; onClose: () => void }) {
+export function ChapterEnd({ state, onClose, act }: { state: GameState; onClose: () => void; act: (c: (s: GameState) => Result) => unknown }) {
   const quality = state.rite.completed!.quality;
   const janko = FOLLOWERS.janko;
   return (
@@ -38,6 +40,7 @@ export function ChapterEnd({ state, onClose }: { state: GameState; onClose: () =
           </li>
         )}
       </ul>
+      <KeepsakePick state={state} act={act} />
       <p className="note-quote">{HEARTH_RITE.rewards.lore}</p>
       {quality === QUALITIES.length - 1 && <p className="note-quote">{HEARTH_RITE.resplendentLore}</p>}
       <EmbroideryBand className="band" />

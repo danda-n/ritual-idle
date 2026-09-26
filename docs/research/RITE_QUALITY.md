@@ -6,6 +6,8 @@
 
 ---
 
+> **Decided on 2026-09-26** (see [CONCEPT.md's decision log](../CONCEPT.md#decision-log), "Rite quality: the kiss and the curse"): Proposal B with A's ladder, named **"The Circle Asks"**. Chapter 1 gets **only the keepsake pick** (Fine 1, Resplendent 2); bargains start in Chapter 2. Answers to §7: Q1 (c) · Q2 any work · Q3 a gentle blessing on the same skill (−25% for ~150 repetitions → +3%) · Q4 a choice of 2–3 per rite · Q5 (b) · Q6 (c) swap at Ascension · Q7 vows reworked as Promises (bonus goals, never restrictions) · Q8 (a) no steeping · Q9 "The Circle Asks".
+
 ## 1. Summary (the one-screen answer)
 
 **Yes, quality should change rewards, but sideways and lastingly, never the story reward.** A plain (Sound) rite always gives the full Chapter reward. Quality adds *extra* things that last: a pick of one small permanent gift, Offerings for the endgame, a step up for a follower. A player who skips quality is never blocked, only a little less decorated and a little slower.

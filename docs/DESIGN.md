@@ -199,11 +199,12 @@ The code: `src/ui/fx.ts`, `components/Floats.tsx`, `useFx.ts`, `components/Activ
 ### The rite card (the Kindling panel's **Wake it** block)
 - The Ritualism level needed, then "About 3 minutes. It runs by itself, even while you're away, and never fails."
 - **Offerings (optional):** the hearth candle as a checkbox (disabled with the reason when you have none), and the Hearth mark and Still Night as ✦ (met) or ◇ (not yet).
-- The outcome line names the quality ("none = Sound, 1–2 = Fine, all 3 = Resplendent") and says only the lore and a keepsake differ. Then **Begin the rite**.
+- The outcome line names the quality and what each gives ("none = Sound, 1–2 = Fine (choose a keepsake), all 3 = Resplendent (choose two, and more lore)"), and that the story rewards are the same either way. Then **Begin the rite**.
 - While it runs: the phase and its part, its bar and the time left, the outcome, and the rite log in grandmother's voice.
 
 ### The chapter end (`components/ChapterEnd.tsx`)
-- A dialog: the sanctum as a painting, the finale line, "The Kindling was <quality>", a ledger of what it brought (skill caps for Chapter II, Janko and his effect, the cellar, the embroidered cloth for Resplendent), the lore, "Chapter II · Grave comes in a later build", and **Back to the house**.
+- A dialog: the sanctum as a painting, the finale line, "The Kindling was <quality>", a ledger of what it brought (skill caps for Chapter II, Janko and his effect, the cellar, the embroidered cloth for Resplendent), the **keepsake pick** after a Fine or Resplendent rite, the lore, "Chapter II · Grave comes in a later build", and **Back to the house**.
+- **Keepsake pick** (`components/KeepsakePick.tsx`): "The circle leaves something behind: choose one / two", then three vellum cards (name in gold, effect, an italic line of lore). A chosen card turns solid gold with a ✓; once the choices are made, the rest dim. Nothing forces a choice: if the card is closed first, the tracker shows a gold **Choose a keepsake** button that opens the same pick in a dialog.
 
 ---
 
@@ -240,3 +241,4 @@ One short entry per round, oldest first. The reasons are in [CONCEPT.md's decisi
 - **Third patch:** claim buttons, the skill picker, talents drawn as a tree of life, a played rite ceremony, insight shown as "✦ N"; stacked dialogs.
 - **Fourth patch:** the activity feed and fewer toasts; floats that queue; rows that stay put and start on click; "Tier N · Lvl L" rows; the stage choice; the talent vine; House projects; contracts delivered in parts; the idle rite card with offerings; a Stores tab; an icon for every item; text one step larger. Tend, the tree of life, the ceremony and the shop's one-time items are gone.
 - **After the fourth patch:** pointers to the omen shelf (a one-time card, a tracker block, a "New" tag and glow, a one-time toast). This doc was reorganised by topic, describing the current UI.
+- **Rite quality pays:** the keepsake pick on the chapter-end card (and its tracker button); the rite card says what each quality gives.

@@ -12,6 +12,8 @@ import { PART_DEFS, type OfferingId, type PartId } from "../content/rite";
 import type { SkillId } from "../content/skills";
 import type { Side, TalentLevel } from "../content/talents";
 import { canChoose } from "./talents";
+import type { KeepsakeId } from "../content/keepsakes";
+import { keepsakePicksLeft } from "./keepsakes";
 import { BUFF_DEFS } from "../content/buffs";
 import { isSkillUnlocked } from "./progress";
 import { enterNextStage, grantXp, isFeatureOpen, middleParts, MIDDLE_AT, revealNotes, stageChoices, stepById, type Note, type Step } from "./progress";
@@ -292,6 +294,13 @@ export function chooseTalent(input: GameState, skill: SkillId, level: TalentLeve
   const state = structuredClone(input);
   state.talents[skill] = { ...state.talents[skill], [level]: side };
   return ok(state);
+}
+
+/** Choose a keepsake after a Fine or Resplendent rite. It's kept for good. */
+export function chooseKeepsake(input: GameState, id: KeepsakeId): Result {
+  if (keepsakePicksLeft(input) < 1) return no("There's no keepsake to choose.");
+  if (input.keepsakes.includes(id)) return no("You already keep that one.");
+  return ok({ ...input, keepsakes: [...input.keepsakes, id] });
 }
 
 /** Clear every talent choice in a skill. Free, any time. */

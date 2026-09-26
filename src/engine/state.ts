@@ -9,10 +9,11 @@ import type { Side, TalentLevel } from "../content/talents";
 import type { Feature } from "../content/types";
 import type { RequestId } from "../content/requests";
 import type { UpgradeId } from "../content/upgrades";
+import type { KeepsakeId } from "../content/keepsakes";
 import { SKILL_IDS, type SkillId } from "../content/skills";
 import { randomSeed } from "./rng";
 
-export const SAVE_VERSION = 8;
+export const SAVE_VERSION = 9;
 
 export interface ActiveAction {
   id: ActionId;
@@ -89,6 +90,8 @@ export interface GameState {
     omensSeen: number;
     curiosRead: number;
   };
+  /** Keepsakes chosen after a Fine or Resplendent rite (docs/CHAPTER1.md §8). */
+  keepsakes: KeepsakeId[];
 }
 
 export interface Attempt {
@@ -170,6 +173,7 @@ export function newGame(now: number = Date.now(), seed: number = randomSeed()): 
     rewardsWaiting: [],
     kept: { skills: [], features: [] },
     rite: { performing: null, completed: null },
+    keepsakes: [],
     followers: [],
     stats: { completed: {}, requestsFilled: 0, omensSeen: 0, curiosRead: 0 },
   };

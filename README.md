@@ -35,7 +35,7 @@ From the cold house to the Kindling of the Hearth-Circle:
   - three hidden recipes, with hints you buy using insight
   - two secrets, with clues you buy
   - automatic deduction
-- **The Major Rite:** about 3 minutes in five phases, running by itself (offline too). It never fails; optional offerings (a hearth candle, the Hearth mark, Still Night) set its quality, which changes only lore and a keepsake. Afterwards: Janko, the first follower, and the chapter-end screen.
+- **The Major Rite:** about 3 minutes in five phases, running by itself (offline too). It never fails; optional offerings (a hearth candle, the Hearth mark, Still Night) set its quality: a Fine rite lets you choose a lasting keepsake, a Resplendent one two (the story rewards never change). Afterwards: Janko, the first follower, and the chapter-end screen.
 - **Offline progress** (24h, 36h with the mended shutters) with a "while you were away" summary. A fallback when work stops.
 - **Saving:** autosave, immediate saves on every choice, save export/import, and upgrades for older saves.
 - **The living sanctum:** a code-drawn woodcut scene that changes as you progress.

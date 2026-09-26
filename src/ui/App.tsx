@@ -124,7 +124,7 @@ export function App() {
       {game.away && <AwaySummary away={game.away} onClose={game.dismissAway} />}
       {game.discovery && !game.away && <DiscoveryModal id={game.discovery} onClose={game.dismissDiscovery} />}
       {state.rite.completed && !state.rite.completed.endingSeen && !game.away && !game.discovery && (
-        <ChapterEnd state={state} onClose={() => game.act(dismissEnding)} />
+        <ChapterEnd state={state} act={game.act} onClose={() => game.act(dismissEnding)} />
       )}
       {game.story && !game.away && !game.discovery && (!state.rite.completed || state.rite.completed.endingSeen) && (
         <TaskCard note={game.story} state={state} onClose={game.dismissStory} onGo={goTo} />

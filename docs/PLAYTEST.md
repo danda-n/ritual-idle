@@ -53,7 +53,8 @@ What to try and what to note in a Chapter 1 playtest, for the game as it is now 
 
 ## The Rite
 - **Was the idle rite satisfying** to watch, or an anticlimax?
-- **Did you bring any offerings,** and did you try for Resplendent? Did the Sound / Fine / Resplendent outcome matter to you?
+- **Did you bring any offerings,** and did you try for Resplendent? Did the keepsakes make it feel worth the effort?
+- **Which keepsake(s) did you choose,** and why? Did any feel like the only right answer, or like no reward at all?
 
 ## Feedback and screens
 - **Was the activity feed enough,** or did you miss toasts for anything? Did any toast feel like noise?
@@ -77,3 +78,4 @@ One short entry per round, oldest first.
 - **Third patch:** questions on waiting for levels, pointless items, claimed rewards, omens, insight, and the chapter's length.
 - **Fourth patch:** questions on the free order, talent pairs, House projects, the feed, the idle rite, contracts in parts, and Stores.
 - **After the fourth patch:** one checklist by topic for the current game; the omen-shelf pointers added; priming and other removed features dropped.
+- **Rite quality pays:** questions on whether keepsakes make offerings worth it, and which ones players choose.

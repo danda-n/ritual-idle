@@ -3,9 +3,10 @@ import { ACTION_DEFS } from "../content/actions";
 import { NOTES } from "../content/notes";
 import { PAGES } from "../content/pages";
 import { HEARTH_RITE, PART_DEFS, PART_IDS, QUALITIES, RITE_MS } from "../content/rite";
-import { beginRite, chooseStage, dismissEnding, placePart, releaseOmen, type Result } from "./commands";
+import { beginRite, chooseKeepsake, chooseStage, dismissEnding, placePart, releaseOmen, type Result } from "./commands";
 import { progressOf } from "./grimoire";
-import { actionDurationMs, requestCoin } from "./modifiers";
+import { actionDurationMs, insightPerRep, offlineBonus, omenCapacity, requestCoin } from "./modifiers";
+import { keepsakePicksLeft } from "./keepsakes";
 import { catchUp } from "./offline";
 import { currentNote, isFeatureOpen, isRiteRevealed, isSkillUnlocked, stageChoices } from "./progress";
 import { REQUESTS } from "../content/requests";
@@ -159,11 +160,63 @@ describe("offerings", () => {
     expect(finish(withCandle({ grimoire: mark, buffs: night }), ["hearth_candle"])).toBe("Resplendent");
   });
 
-  it("quality changes only lore and the keepsake: the rewards are the same", () => {
+  it("quality never changes the story rewards: the level cap and Janko are the same", () => {
     const sound = advance(okay(beginRite(ready())), RITE_MS).state;
     const mark = { hearth_mark: { ...progressOf(ready(), "hearth_mark"), discovered: true } };
     const best = advance(okay(beginRite(withCandle({ grimoire: mark, buffs: [{ id: "still_night", endsAt: T0 + MIN, skill: "ritualism" }] }), ["hearth_candle"])), RITE_MS).state;
     expect([sound.levelCap, sound.followers]).toEqual([best.levelCap, best.followers]);
+  });
+});
+
+describe("keepsakes", () => {
+  const mark = { hearth_mark: { ...progressOf(ready(), "hearth_mark"), discovered: true } };
+  const night = [{ id: "still_night" as const, endsAt: T0 + MIN, skill: "ritualism" as const }];
+  const sound = () => advance(okay(beginRite(ready())), RITE_MS).state;
+  const fine = () => advance(okay(beginRite(ready({ inventory: { hearth_candle: 1 } }), ["hearth_candle"])), RITE_MS).state;
+  const resplendent = () => advance(okay(beginRite(ready({ inventory: { hearth_candle: 1 }, grimoire: mark, buffs: night }), ["hearth_candle"])), RITE_MS).state;
+
+  it("none to choose before the rite, or after a Sound one", () => {
+    expect(keepsakePicksLeft(ready())).toBe(0);
+    expect(keepsakePicksLeft(sound())).toBe(0);
+    expect(chooseKeepsake(sound(), "quilt").ok).toBe(false);
+  });
+
+  it("a Fine rite lets you choose one, a Resplendent one two, each only once", () => {
+    const f = okay(chooseKeepsake(fine(), "quilt"));
+    expect(f.keepsakes).toEqual(["quilt"]);
+    expect(keepsakePicksLeft(f)).toBe(0);
+    expect(chooseKeepsake(f, "glasses").ok).toBe(false);
+    let r = resplendent();
+    expect(keepsakePicksLeft(r)).toBe(2);
+    r = okay(chooseKeepsake(r, "embers"));
+    expect(chooseKeepsake(r, "embers").ok).toBe(false);
+    r = okay(chooseKeepsake(r, "glasses"));
+    expect(keepsakePicksLeft(r)).toBe(0);
+  });
+
+  it("the quilt speeds up time away by 10%", () => {
+    const s = okay(chooseKeepsake(fine(), "quilt"));
+    expect(offlineBonus(s) - offlineBonus(fine())).toBeCloseTo(0.1);
+  });
+
+  it("the jar of embers adds an omen place, once there's a shelf", () => {
+    const s = okay(chooseKeepsake(fine(), "embers"));
+    expect(omenCapacity(s)).toBe(0);
+    expect(omenCapacity({ ...s, upgrades: ["omen_shelf"] })).toBe(3);
+  });
+
+  it("her reading glasses add insight to every page deciphered", () => {
+    const s = okay(chooseKeepsake(fine(), "glasses"));
+    expect(insightPerRep(s, "decipher_page")).toBe(1);
+    expect(insightPerRep(s, "search_attic")).toBe(0);
+  });
+
+  it("keepsakes round-trip, and older saves have none", () => {
+    const s = okay(chooseKeepsake(fine(), "quilt"));
+    expect(deserialize(JSON.stringify(s)).keepsakes).toEqual(["quilt"]);
+    const old = { ...ready(), version: 8 } as Partial<GameState>;
+    delete old.keepsakes;
+    expect(deserialize(JSON.stringify(old)).keepsakes).toEqual([]);
   });
 });
 

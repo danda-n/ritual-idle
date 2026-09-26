@@ -46,8 +46,8 @@ export const PART_DEFS: Record<PartId, { name: string; skill: SkillId; items: Pa
 
 // The Chapter 1 Major Rite (docs/CHAPTER1.md §8): a short rite that runs by itself (offline too).
 // It needs every part placed and Ritualism 3. Five phases, one per part, each with a log line.
-// It never fails. Its quality comes from optional offerings chosen before it begins, and changes
-// only cosmetics and lore, never power.
+// It never fails. Its quality comes from optional offerings chosen before it begins: a better rite
+// adds lore, a cosmetic and keepsakes to choose (content/keepsakes.ts), never the story rewards.
 export const HEARTH_RITE = {
   name: "Kindling of the Hearth-Circle",
   description: "Wake the circle grandmother drew in the floor. It has been waiting for you.",
@@ -89,7 +89,8 @@ export type OfferingId = (typeof OFFERINGS)[number]["id"];
 
 /**
  * Outcome quality, from offerings: none → Sound, 1–2 → Fine, all 3 → Resplendent.
- * Only the lore and a cosmetic differ; the rite always succeeds and its rewards are the same.
+ * The rite always succeeds with the same story rewards; Fine adds a keepsake to choose, and
+ * Resplendent two, plus lore and the embroidered cloth.
  */
 export const QUALITIES = ["Sound", "Fine", "Resplendent"] as const;
 export type Quality = (typeof QUALITIES)[number];

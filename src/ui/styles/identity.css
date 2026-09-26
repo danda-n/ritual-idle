@@ -505,3 +505,17 @@ input[type="checkbox"] { accent-color: var(--color-accent); width: 16px; height:
 .side-project { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px dotted var(--color-border-soft); }
 .side-project .step-head { display: flex; align-items: baseline; gap: var(--space-2); font-size: var(--text-sm); }
 .side-project .step-go { align-self: flex-start; }
+
+/* ---------- Keepsakes (after a Fine or Resplendent rite) ---------- */
+.keepsakes { display: flex; flex-direction: column; gap: var(--space-2); margin: var(--space-3) 0; }
+.keepsakes h3 { font-family: var(--font-display); font-size: var(--text-md); color: var(--color-accent); }
+.keepsake-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--space-2); }
+.keepsake { display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-3); text-align: left; font: inherit; color: var(--color-text); background: var(--color-raised); border: 1px dashed var(--color-border); border-radius: var(--radius-md); cursor: pointer; transition: border-color var(--dur-med) var(--ease-out), background var(--dur-med) var(--ease-out), opacity var(--dur-med) var(--ease-out); }
+.keepsake:hover:not(:disabled), .keepsake:focus-visible { border-color: var(--color-accent); background: color-mix(in srgb, var(--gold-400) 8%, var(--color-raised)); }
+.keepsake:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.keepsake:disabled { cursor: default; }
+.keepsake.is-kept { border-style: solid; border-color: var(--color-accent); background: color-mix(in srgb, var(--gold-400) 16%, var(--color-raised)); }
+.keepsake.is-other { opacity: 0.5; }
+.keepsake-name { font-family: var(--font-display); color: var(--color-accent); }
+.keepsake-text { font-size: var(--text-sm); }
+.keepsake-flavour { font-size: var(--text-xs); font-style: italic; color: var(--color-text-2); }

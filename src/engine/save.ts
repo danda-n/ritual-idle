@@ -6,6 +6,7 @@ import { PAGES } from "../content/pages";
 import { HEARTH_RITE, PART_IDS } from "../content/rite";
 import { SKILL_IDS, type SkillId } from "../content/skills";
 import { TALENT_LEVELS } from "../content/talents";
+import { KEEPSAKES } from "../content/keepsakes";
 import { BOARD_SLOTS } from "../content/requests";
 import { UPGRADE_IDS, UPGRADES, type UpgradeId } from "../content/upgrades";
 import type { Feature } from "../content/types";
@@ -45,6 +46,7 @@ export function deserialize(json: string): GameState {
     middleOrder: data.middleOrder ?? [],
     stageStart: data.stageStart ?? {},
     talents: loadTalents(data.talents),
+    keepsakes: (data.keepsakes ?? []).filter((k) => k in KEEPSAKES),
     // Contracts: two slots now, each remembering what's been delivered.
     board: (data.board ?? []).slice(0, BOARD_SLOTS).map((b) => ({ ...b, delivered: { ...b.delivered } })),
     version: SAVE_VERSION,

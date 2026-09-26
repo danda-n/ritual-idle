@@ -252,8 +252,16 @@ There are three hidden recipes in Chapter 1. None unlock by level. You find them
   - **the Hearth mark** discovered (a hidden recipe, §6; counts by itself)
   - **a Still Night blessing** active at any point while it runs (§5; counts by itself)
 - **It never fails.** Quality counts offerings (`QUALITY_AT`): none = **Sound**, 1–2 = **Fine**, all 3 = **Resplendent**.
-- **Quality changes only cosmetics and lore,** never the rewards.
-- **Rewards (the same at every quality):**
+- **Quality adds keepsakes, never the story rewards.** A **Fine** rite lets you choose **one keepsake** of three, a **Resplendent** one **two** (`KEEPSAKES` and `KEEPSAKE_PICKS` in `src/content/keepsakes.ts`). They're kept for good (swapping them comes with Ascension):
+
+| Keepsake | Effect |
+|---|---|
+| Grandmother's quilt | The house works 10% faster while you're away |
+| A jar of embers | The omen shelf holds one more omen (once it's built) |
+| Her reading glasses | +1 insight from every page deciphered |
+
+  The choice is on the chapter-end card; close it without choosing and the tracker keeps a **Choose a keepsake** button. The rite's card says what each quality gives.
+- **Story rewards (the same at every quality):**
   - All caps rise to **40** (the content for it comes with Chapter II).
   - **Follower 1** arrives. *(draft)* A village orphan who "heard the circle wake", with the trait *Hearth-born: +20% Chandlery*.
   - The **cellar** opens in the sanctum.
@@ -364,3 +372,4 @@ One short entry per round, oldest first. The reasons behind each change are in [
 - **Third patch:** no grinding and nothing made without a use, so the chapter became about 30–35 minutes. Step rewards you claim (Surge, XP where you choose, items, omens); omens every few minutes; talents drawn as a tree of life; insight spent on the hints you choose; the rite played as five short moments.
 - **Fourth patch:** calm UI (stacked floats, rows that stay put and start on click). Tend removed; the rite runs by itself in about 3 minutes, with optional offerings for quality. Recipes in tiers every 3 levels and a flatter XP curve; a free order for the Ward, the Smoke and the Words; honest steps. Talents as pick-one-of-two pairs at 3, 6, 9 and 12. House projects built from items; 2 contracts delivered in parts; omens need the omen shelf. An activity feed, fewer toasts, a Stores tab, and an icon for every item.
 - **After the fourth patch:** the omen shelf is highlighted to the player (a one-time card, a tracker line, a "New" tag, a one-time toast). Coin is planned for exclusive or rare projects and rare rewards later. The docs now describe the current game, with this changelog.
+- **Rite quality pays:** a Fine rite lets you choose a keepsake, a Resplendent one two (quilt, jar of embers, reading glasses). The kiss/curse bargains ("The Circle Asks") are planned from Chapter 2.

@@ -152,7 +152,14 @@ Every skill feeds the ritual circle. Followers take over the work you have maste
 - **Rites run by themselves.** Once the requirements are met, you begin it (or let it begin by itself) and it runs in the action slot, offline too. There's nothing to answer while it runs, and it never fails.
 - **Quality comes from optional offerings, never from failure.** In Chapter 1 there are three: a hearth candle, a discovered hidden recipe (the Hearth mark) and an active Still Night blessing. None = *Sound*, 1–2 = *Fine*, all 3 = *Resplendent*.
   - Later chapters can add more kinds of offering: consecrated materials, followers assisting, a matching omen or invoked moon, low Taint.
-  - In Chapter 1 quality changes only the lore and a keepsake (sanctum cosmetics), never the rewards. A plain outcome still advances the story.
+  - **Quality adds lasting extras, never the story rewards.** A plain (Sound) rite always gives the whole story reward. In Chapter 1 a Fine rite lets you choose **one keepsake** of three, a Resplendent one **two** (small lasting perks: faster time away, one more omen place, insight from pages), plus lore and a cosmetic. Keepsakes are kept for good and can be swapped at Ascension. Later, quality also adds a capped share of Offerings (§5.5).
+- **The Circle Asks** *(from Chapter 2; the kiss/curse)*: before a rite, the circle offers a choice of 2–3 bargains, each written for that rite and shown in full. Take any, or none. Each is one quality step.
+  - **The bite:** a curse on one skill you choose, e.g. *"The house goes cold: Chandlery 25% slower."* It counts down with **any work you do** (online or offline), about 150 repetitions (~10 minutes of play), so you simply work on something else meanwhile. It never takes a skill below half speed, never stops work, and never touches the rite. Nothing is random.
+  - **The kiss:** when it runs out, the curse turns into a small permanent blessing on the same skill (e.g. *Hearth-hardened*: +3% Chandlery), up to +15% per skill across the game.
+  - The kinds of price grow with the chapters: skill curses first, then a follower keeping vigil (Chapter 2), then Taint (Chapter 3).
+  - Research behind it: [docs/research/RITE_QUALITY.md](research/RITE_QUALITY.md). The numbers are starting points for playtests.
+- **Promises** *(later chapters)*: optional bonus goals you can take on before a rite, e.g. *"Before the next rite, finish two contracts."* Keeping one pays at the next rite; breaking one costs nothing. Promises never restrict or block play.
+- **No time as a price.** Nothing asks you to wait or leave a rite "steeping"; the only time-like price is a curse, and it passes by working, not waiting.
 - **Length:** the Chapter 1 rite is about 3 minutes. Longer rites (30 minutes to 8 hours) are the target for later chapters, which is where **priming** (queueing a prepared rite so it begins by itself, even offline) matters most.
 - **Rites are presented as events:** a short log plays while it runs ("the third candle gutters… the ward holds").
 - **Rewards of a Major Rite:**
@@ -199,7 +206,7 @@ Every skill feeds the ritual circle. Followers take over the work you have maste
 - **What carries over:**
   - **the Grimoire and lore.** Nothing needs re-discovering.
   - **Follower roster.** Followers stay with you, back at Initiate rank. You can still *sacrifice* one at Ascension for extra Offerings; that slot is refilled by a new recruit at the next Chapter Rite.
-  - **Offerings → Boons.** Offerings are the prestige currency, earned from rite outcome quality and sacrifices. They're spent on permanent Boons: XP and speed, a starting kit, faster early chapters.
+  - **Offerings → Boons.** Offerings are the prestige currency, earned mostly from finishing rites and from sacrifices, with rite quality as a capped extra (about a third at most). They're spent on permanent Boons: XP and speed, a starting kit, faster early chapters.
   - follower presets and sanctum cosmetics.
 - **Two Patrons at launch.** They're clear opposites, and each changes the rules rather than adding a multiplier. *(draft twists)*
   - **The Moon (the Pale Mother):**
@@ -609,7 +616,7 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
 - **Tend is removed** (the meter, the Space key, the Tending talent branch and the "Tend once" step). Active play is choices, not clicking. This **restores Q8** ("active play only helps through decisions"), which the second patch had changed.
 - **The Major Rite runs by itself.** Five phases of 36 seconds (about 3 minutes), no moments to answer, and it carries on offline. It needs Ritualism 3.
   - **Quality comes only from optional offerings** chosen before beginning: a hearth candle (an item, used when the rite begins), the Hearth mark (a discovered hidden recipe) and an active Still Night blessing. None = Sound, 1–2 = Fine, all 3 = Resplendent.
-  - **Quality is cosmetic:** it changes only the lore and a keepsake, never the rewards. It still never fails.
+  - **Quality is cosmetic:** it changes only the lore and a keepsake, never the rewards. It still never fails. *(→ changed; see Rite quality, after the fourth patch)*
 - **Free order of the middle parts.** After the Light, the player chooses the order of the Ward, the Smoke and the Words; the Offering stays last. Each middle skill gathers for itself (Sigilcraft sweeps its ash, Scholarship searches the attic, Herbalism binds smudge and makes mugwort incense), so every order works without grinding. The playthrough bot plays all six orders.
 - **Honest steps:** steps count from the stage's start, a craft step is also met by holding enough, step counts match each part's needs, and there's at most one reward per stage (on placing its part, plus the Start Surge).
 - **Recipes come in tiers, a new tier every 3 levels** (Tier 1 at level 1, then 3, 6, 9, 12, 15, 18), shown on each row. The XP curve is flatter to match: 110 × 1.1^(level − 1), with no easing. The rite begins at about 30–32 minutes for an efficient idle player.
@@ -627,3 +634,17 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
 - **Coin later buys exclusive or rare things:** house projects stay built from items, but later on coin is meant to come in for some exclusive or rare projects and rare rewards. A note for the future; nothing in Chapter 1 yet.
 - **The omen shelf is highlighted to the player,** because omens start only with it and playtesters could miss it: once the Light is placed, a one-time card from grandmother (her shelf is bare; house projects are optional, built from what you make, kept for good) with a Go button; an optional tracker line with have/need chips; a "New" tag and a soft glow on its row; and a one-time toast when it can first be built.
 - **The docs stay current:** after every patch, CONCEPT and CHAPTER1 are rewritten to describe the current game. History lives in this decision log and in CHAPTER1's changelog, not in the main sections.
+
+### Rite quality: the kiss and the curse (after the fourth patch)
+- **Research:** [docs/research/RITE_QUALITY.md](research/RITE_QUALITY.md) looked at how other games price a better outcome (Hades' Chaos boons and Heat, Slay the Spire's Neow, Risk of Rain 2's Shrine of the Mountain, Monster Train's pact shards, idle-game challenges). A price feels worth it when it's shown up front, temporary, aimed by the player, and pays something of a different kind.
+- **Changes a logged decision** (Chapter 1 quality was cosmetic only): **quality now adds lasting extras**, never the story rewards. Chapter 1 gets the **keepsake pick** (Fine: choose 1 of 3; Resplendent: choose 2): Grandmother's quilt (+10% speed while away), a jar of embers (+1 omen place once the shelf is built), her reading glasses (+1 insight per page deciphered).
+- **The Circle Asks** (the kiss/curse bargains) starts in **Chapter 2**, not Chapter 1, so the chapter still being tuned doesn't gain a system. The designer's answers to the research's questions:
+  - A curse counts down with **any work** (can't be dodged, no puzzle, no break in the flow).
+  - It turns into a small blessing on the **same skill**. Starting numbers, gentle on purpose: −25% on one skill for about 150 repetitions, becoming +3% for good; capped at +15% per skill.
+  - A **choice of 2–3 bargains** per rite, written for that rite and shown before you accept.
+  - **Offerings** come mostly from finishing rites and sacrifices; quality is a capped extra.
+  - **Keepsakes swap at Ascension** (they're kept, and collected across chapters, until then).
+  - **Vows became Promises:** optional bonus goals that pay if kept and cost nothing if not. Nothing may block progress.
+  - **Steeping is dropped:** no waiting as a price.
+  - **Name:** "The Circle Asks" (Tithe is already the followers' upkeep).
+- **Save version 9** adds the chosen keepsakes.
