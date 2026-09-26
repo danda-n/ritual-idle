@@ -131,7 +131,11 @@ export interface Settings {
   seenTabs: string[];
   /** One-time pointers already shown (e.g. the omen shelf card), so they never repeat. */
   introsSeen: string[];
+  /** Row density: roomy 46px rows (the default), comfortable 36px, compact 32px. */
+  density: Density;
 }
+
+export type Density = "roomy" | "comfortable" | "compact";
 
 /** The side taken at each talent level. */
 export type Talents = Partial<Record<TalentLevel, Side>>;
@@ -164,7 +168,7 @@ export function newGame(now: number = Date.now(), seed: number = randomSeed()): 
     insight: 0,
     grimoire: {},
     attunedTo: null,
-    settings: { grimoireAssist: false, fallback: "last_gathering", reducedMotion: false, toastSeconds: 8, seenTabs: ["house"], introsSeen: [] },
+    settings: { grimoireAssist: false, fallback: "last_gathering", reducedMotion: false, toastSeconds: 8, seenTabs: ["house"], introsSeen: [], density: "roomy" },
     lastGathering: null,
     kindling: [],
     experimentsOpen: false,
