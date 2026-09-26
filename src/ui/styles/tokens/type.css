@@ -1,0 +1,25 @@
+/* Typography (docs/research/VISUAL_DIRECTION.md §6). A dense-UI scale; rows at 15px. No italics anywhere. */
+:root {
+  --font-ui: "Alegreya Sans", system-ui, sans-serif;       /* everything interactive and numeric */
+  --font-lore: "Alegreya", Georgia, serif;                 /* grandmother's notes, Grimoire prose */
+  --font-display: "Alegreya SC", Georgia, serif;           /* column headers, chapter titles, brand */
+  --font-title: "Alegreya SC", Georgia, serif;             /* wordmark placeholder (IM Fell has no Cyrillic) */
+
+  --text-2xs: 12px;  /* column headers, micro-labels — the only tracked text */
+  --text-xs: 13px;   /* meta, units */
+  --text-sm: 14px;   /* chips, secondary cells, buttons */
+  --text-md: 15px;   /* table rows, body UI */
+  --text-lg: 17px;   /* panel titles, skill header */
+  --text-xl: 21px;   /* screen titles */
+  --text-2xl: 28px;  /* chapter title */
+  --text-lore: 17px;
+
+  --leading-tight: 1.15;
+  --leading-ui: 1.35;
+  --leading-lore: 1.5;
+  --tracking-label: 0.06em;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-bold: 700;
+}

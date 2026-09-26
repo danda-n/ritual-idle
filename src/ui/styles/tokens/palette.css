@@ -1,0 +1,73 @@
+/* Raw palette: direction A "Soot & Linen" (docs/research/VISUAL_DIRECTION.md §5A, §8.1), with the
+   "Hearth" grounds and the "Folk" brass from the design handoff (docs/design_handoff/).
+   Components never use these directly; they use tokens/semantic.css. */
+:root {
+  /* Soot: near-neutral, faintly cool grounds (chroma <= 0.01) */
+  --soot-950: #090b0e;
+  --soot-900: #111417;
+  --soot-800: #1b1e22;
+  --soot-700: #272a2e;
+  --soot-650: #2d3134;
+  --soot-600: #3f4347;
+
+  /* Linen: warm text (hue ~85°) */
+  --linen-100: #ede7db;
+  --linen-300: #bfbaaf;
+  --linen-500: #99958c;
+
+  /* Cinnabar: the one red that means "act here" */
+  --cinnabar-600: #b63325;
+  --cinnabar-700: #a1271e;
+  --cinnabar-300: #ef816b;
+  --stitch-red: #c93126;
+  --oxblood: #7f2119;
+
+  /* Roles */
+  --verdigris-400: #5ebaaf;
+  --slate-300: #92b3cb;
+  --gold-400: #edb345;
+
+  /* Folk colours, one per skill — spread in lightness for colour-blind separation */
+  --folk-lichen: #94be58;   /* Herbalism   74.9% */
+  --folk-river: #469bd1;    /* Scavenging  66.0% */
+  --folk-beeswax: #ebd56a;  /* Chandlery   87.0% */
+  --folk-poppy: #ee694f;    /* Sigilcraft  68.0% */
+  --folk-lilac: #cdaef2;    /* Scholarship 80.1% */
+  --folk-rowan: #db6ea5;    /* Ritualism   68.1% */
+
+  /* Hearth: warm grounds (these replace the soot values in the game) */
+  --hearth-bg: #0e0c0a;
+  --hearth-band: #16130f;
+  --hearth-surface: #1f1b17;
+  --hearth-raised: #2b2621;
+  --hearth-sunken: #0b0908;
+  --hearth-border-soft: #342e28;
+  --hearth-border: #4b433b;
+  --hearth-vellum: #2c251d;
+
+  /* Folk: brass corner marks and arrows, the pressable red, the place colours */
+  --brass: #9a7a45;
+  --brass-light: #b39463;
+  --cinnabar-top: #c73a2b;
+  --cinnabar-bottom: #a8291f;
+  --cinnabar-shadow: #5c150f;
+  --ember-place: #e2703f;
+  --pill-short-bg: #6a2a1d;
+  --pill-short-text: #ffdcd2;
+
+  /* Art palette: the code-drawn woodcut Sanctum scene only (src/ui/art/Sanctum.tsx), kept as it is.
+     UI components never use these. */
+  --ink-950: #120e0b;
+  --ink-900: #1c1611;
+  --ink-800: #271f18;
+  --ink-700: #33291f;
+  --ink-600: #4a3b2f;
+  --bone-100: #efe6d6;
+  --bone-300: #c9bba3;
+  --bone-500: #a39580;
+  --gold-600: #b3842c;
+  --ember-300: #e57a62;
+  --ember-600: #9e3524;
+  --folk-moss: #8cba5f;
+  --folk-candle: #e8b04e;
+}
