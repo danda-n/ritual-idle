@@ -46,7 +46,8 @@ export function noteUnlocks(note: Note): string[] {
   return out;
 }
 
-export type Place = { tab: "house"; skill: keyof typeof SKILLS } | { tab: "village" } | { tab: "circle" };
+/** Where a Go button leads. On the House tab: a skill's recipes, or the House projects panel. */
+export type Place = { tab: "house"; skill: keyof typeof SKILLS } | { tab: "house"; anchor: "projects" } | { tab: "village" } | { tab: "circle" };
 
 /** Where a task is done, so a "Go" button can take the player there. */
 export function taskPlace(goal: GoalDef<ActionId>): Place {

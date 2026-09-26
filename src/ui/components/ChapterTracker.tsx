@@ -20,6 +20,8 @@ import { SkillIcon } from "../art/icons";
 import { chooseStage } from "../../engine/commands";
 import { Bar } from "./Bar";
 import { ItemChip } from "./ItemLookup";
+import { UPGRADES } from "../../content/upgrades";
+import { omenShelfSuggested, projectsReady } from "../../engine/projects";
 
 /**
  * The chapter as a checklist: done steps, the current task with what it needs (as chips,
@@ -146,6 +148,23 @@ export function ChapterTracker({ state, onGo, act }: { state: GameState; onGo: (
           return null;
         })}
       </ol>
+      {omenShelfSuggested(state) && (
+        // Optional side work, pointed out quietly under the chapter's own steps.
+        <div className="side-project">
+          <div className="step-head">
+            <span className="muted">Side project</span>
+            <strong>The omen shelf</strong>
+          </div>
+          <div className="step-needs">
+            {(Object.entries(UPGRADES.omen_shelf.items) as [ItemId, number][]).map(([item, qty]) => (
+              <ItemChip key={item} item={item} need={qty} />
+            ))}
+          </div>
+          <button className="btn btn-ghost step-go" onClick={() => onGo({ tab: "house", anchor: "projects" })}>
+            {projectsReady(state).includes("omen_shelf") ? "Build it" : "Go"}
+          </button>
+        </div>
+      )}
       {state.rite.completed && <p className="step-hint">Chapter complete. Janko has joined you.</p>}
     </section>
   );

@@ -6,6 +6,7 @@ import { BOARD_SLOTS, REFILL_MS, REQUESTS } from "../content/requests";
 import { build, buy, canBuild, canBuy, declineRequest, deliver } from "./commands";
 import { actionDurationMs, offlineCapMs, omenCapacity } from "./modifiers";
 import { UPGRADES } from "../content/upgrades";
+import { omenShelfSuggested, projectsReady } from "./projects";
 import { catchUp } from "./offline";
 import { isFeatureOpen } from "./progress";
 import { deserialize } from "./save";
@@ -154,6 +155,28 @@ describe("house projects", () => {
     const s = { ...newGame(T0, 3), inventory: { ...UPGRADES.carved_shelf.items } };
     expect(canBuild(s, "carved_shelf")).toMatch(/omen shelf first/);
     expect(canBuild({ ...s, upgrades: ["omen_shelf" as const] }, "carved_shelf")).toBeNull();
+  });
+});
+
+describe("pointing to projects", () => {
+  it("suggests the omen shelf once the Light is placed, until it's built", () => {
+    const s = newGame(T0, 3);
+    expect(omenShelfSuggested(s)).toBe(false);
+    const lit = { ...s, kindling: ["light" as const] };
+    expect(omenShelfSuggested(lit)).toBe(true);
+    expect(omenShelfSuggested({ ...lit, upgrades: ["omen_shelf" as const] })).toBe(false);
+  });
+
+  it("lists the projects that could be built right now", () => {
+    const s = newGame(T0, 3);
+    expect(projectsReady(s)).toEqual([]);
+    expect(projectsReady({ ...s, inventory: { ...UPGRADES.omen_shelf.items } })).toEqual(["omen_shelf"]);
+  });
+
+  it("older saves start with no one-time pointers seen", () => {
+    const old = { ...newGame(T0, 3), settings: { ...newGame().settings } } as GameState;
+    delete (old.settings as Partial<GameState["settings"]>).introsSeen;
+    expect(deserialize(JSON.stringify(old)).settings.introsSeen).toEqual([]);
   });
 });
 

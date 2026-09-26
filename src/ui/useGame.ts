@@ -277,5 +277,5 @@ export function useGame() {
   const dismissDiscovery = useCallback(() => setDiscovery(null), []);
   const dismissStory = useCallback(() => setStory((q) => q.slice(1)), []);
 
-  return { state, away, dismissAway, discovery, dismissDiscovery, story: story[0] && Date.now() - story[0].at >= STORY_DELAY_MS ? story[0].note : null, dismissStory, lastStop, toasts, dismissToast, feed, start, stop, act, load, reset, dev };
+  return { state, away, dismissAway, discovery, dismissDiscovery, story: story[0] && Date.now() - story[0].at >= STORY_DELAY_MS ? story[0].note : null, dismissStory, lastStop, toasts, dismissToast, notify: pushToasts, feed, start, stop, act, load, reset, dev };
 }

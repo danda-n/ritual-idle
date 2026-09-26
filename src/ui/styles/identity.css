@@ -497,3 +497,11 @@ input[type="checkbox"] { accent-color: var(--color-accent); width: 16px; height:
 /* ---------- Stores tab ---------- */
 .stores .ledger { columns: 2 220px; column-gap: var(--space-6); }
 .stores .ledger li { break-inside: avoid; }
+
+/* ---------- Pointing out the omen shelf ---------- */
+.new-tag { display: inline-block; margin-left: var(--space-2); padding: 0 7px; vertical-align: 2px; font: 500 var(--text-xs) var(--font-display); letter-spacing: 0.06em; color: var(--ink-950); background: var(--folk-candle); border-radius: 999px; }
+.project.is-new { margin: 0 calc(-1 * var(--space-2)); padding-left: var(--space-2); padding-right: var(--space-2); border-radius: var(--radius-md); animation: invite 2.8s ease-in-out infinite; }
+.projects-ready { color: var(--folk-candle); font-family: var(--font-display); font-weight: 500; }
+.side-project { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px dotted var(--color-border-soft); }
+.side-project .step-head { display: flex; align-items: baseline; gap: var(--space-2); font-size: var(--text-sm); }
+.side-project .step-go { align-self: flex-start; }

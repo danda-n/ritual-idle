@@ -2,6 +2,7 @@ import { useState, type ReactNode } from "react";
 import type { ItemId } from "../../content/items";
 import { UPGRADE_DEFS, UPGRADE_IDS, type UpgradeId } from "../../content/upgrades";
 import { build, canBuild, type Result } from "../../engine/commands";
+import { omenShelfSuggested, projectsReady } from "../../engine/projects";
 import type { GameState } from "../../engine/state";
 import { CandleIcon, HouseIcon, LeafIcon, MoonIcon } from "../art/icons";
 import { upgradeEffect } from "../effects";
@@ -24,6 +25,7 @@ const ICONS: Record<UpgradeId, (p: { size?: number }) => ReactNode> = {
  */
 export function Projects({ state, act }: { state: GameState; act: Act }) {
   const [omenNote, setOmenNote] = useState(false);
+  const ready = projectsReady(state);
   const built = UPGRADE_IDS.filter((id) => state.upgrades.includes(id));
   const open = UPGRADE_IDS.filter((id) => !built.includes(id) && (!UPGRADE_DEFS[id].requires || built.includes(UPGRADE_DEFS[id].requires as UpgradeId)));
   return (
@@ -31,7 +33,7 @@ export function Projects({ state, act }: { state: GameState; act: Act }) {
       <div className="panel-title">
         <HouseIcon size={18} />
         <h2 id="projects-heading">House projects</h2>
-        <span className="muted panel-aside">Optional · built once, kept for good</span>
+        <span className="muted panel-aside">{ready.length > 0 ? <strong className="projects-ready">{ready.length} ready to build</strong> : "Optional · built once, kept for good"}</span>
       </div>
       <ul className="project-list">
         {open.map((id) => {
@@ -40,12 +42,15 @@ export function Projects({ state, act }: { state: GameState; act: Act }) {
           const reason = canBuild(state, id);
           const skill = "skill" in def.effect ? def.effect.skill : undefined;
           return (
-            <li key={id} className={`project ${reason === null ? "ready" : ""}`} data-skill={skill}>
+            <li key={id} className={`project ${reason === null ? "ready" : ""} ${id === "omen_shelf" && omenShelfSuggested(state) ? "is-new" : ""}`} data-skill={skill}>
               <span className="project-icon" aria-hidden="true">
                 <Icon size={20} />
               </span>
               <div className="project-info">
-                <strong>{def.name}</strong>
+                <strong>
+                  {def.name}
+                  {id === "omen_shelf" && omenShelfSuggested(state) && <span className="new-tag">New</span>}
+                </strong>
                 <p className="muted">{def.description}</p>
                 <div className="action-io">
                   {(Object.entries(def.items) as [ItemId, number][]).map(([item, qty]) => (

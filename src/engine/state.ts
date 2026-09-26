@@ -126,6 +126,8 @@ export interface Settings {
   toastSeconds: number;
   /** Tabs the player has visited (for the "new" dot). */
   seenTabs: string[];
+  /** One-time pointers already shown (e.g. the omen shelf card), so they never repeat. */
+  introsSeen: string[];
 }
 
 /** The side taken at each talent level. */
@@ -159,7 +161,7 @@ export function newGame(now: number = Date.now(), seed: number = randomSeed()): 
     insight: 0,
     grimoire: {},
     attunedTo: null,
-    settings: { grimoireAssist: false, fallback: "last_gathering", reducedMotion: false, toastSeconds: 8, seenTabs: ["house"] },
+    settings: { grimoireAssist: false, fallback: "last_gathering", reducedMotion: false, toastSeconds: 8, seenTabs: ["house"], introsSeen: [] },
     lastGathering: null,
     kindling: [],
     experimentsOpen: false,
