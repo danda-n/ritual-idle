@@ -250,12 +250,12 @@ button.chip:hover { background: var(--color-raised); }
    Shell: top bar → embroidery band → one dark L of band (top + sidebar)
    ===================================================================== */
 .app { min-height: 100dvh; display: flex; flex-direction: column; }
-.shell { display: grid; grid-template-columns: minmax(0, 1fr) 320px; align-items: stretch; flex: 1; }
+/* The sidebar's band runs the full height (drawn on the shell), while the sidebar itself sticks
+   as one column, so its panels never slide under each other. */
+.shell { --side-w: 320px; display: grid; grid-template-columns: minmax(0, 1fr) var(--side-w); align-items: start; flex: 1; background: linear-gradient(90deg, transparent calc(100% - var(--side-w)), var(--color-band) 0); }
 .shell:focus { outline: none; }
 .shell-main { padding: 0 var(--space-5) var(--space-5); display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
-.shell-side { background: var(--color-band); padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3); }
-.shell-side > * { position: sticky; top: var(--space-4); }
-.shell-side > * + * { position: static; }
+.shell-side { position: sticky; top: 0; max-height: 100dvh; overflow-y: auto; padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3); }
 .tabs-row { display: flex; align-items: center; gap: var(--space-5); min-width: 0; }
 .tabs-row .tabs { flex-shrink: 0; }
 .tabs-row .feed { flex: 1; display: flex; justify-content: flex-end; }
@@ -522,7 +522,7 @@ button.chip:hover { background: var(--color-raised); }
    ===================================================================== */
 @media (max-width: 1280px) { .buff-chip .buff-skill { display: none; } }
 @media (max-width: 1100px) {
-  .shell { grid-template-columns: minmax(0, 1fr) 280px; }
+  .shell { --side-w: 280px; }
   .house { grid-template-columns: minmax(0, 1fr); }
   .skill-list { flex-direction: row; overflow-x: auto; padding: 0; }
   .skill-item { min-width: 200px; }
@@ -531,7 +531,8 @@ button.chip:hover { background: var(--color-raised); }
 }
 @media (max-width: 860px) {
   .shell { grid-template-columns: 1fr; }
-  .shell-side > * { position: static; }
+  .shell { background: none; }
+  .shell-side { position: static; max-height: none; overflow: visible; background: var(--color-band); }
   .topbar { flex-wrap: wrap; padding: var(--space-2) var(--space-4); }
   .working .bar { display: none; }
   .shell-main { padding: 0 var(--space-4) var(--space-4); }
