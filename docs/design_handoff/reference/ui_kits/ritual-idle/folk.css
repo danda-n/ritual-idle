@@ -1,0 +1,85 @@
+/* "Folk" flair — Hearth grounds, more life. Scoped to [data-flair="folk"].
+   Ornament does a job: embroidery marks places, brass corners mark cards, glow marks what is running. */
+[data-flair="folk"] {
+  --brass: #9a7a45;
+  --brass-soft: color-mix(in oklch, #9a7a45 45%, transparent);
+  --emb: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='12'%3E%3Cg stroke='%23000' stroke-width='1.2' fill='none'%3E%3Cpath d='M0 6h3M21 6h3'/%3E%3Cpath d='M12 1.5 16.5 6 12 10.5 7.5 6Z'/%3E%3Cpath d='M4.5 3.5l1.5 1.5M4.5 8.5 6 7M19.5 3.5 18 5M19.5 8.5 18 7' stroke-width='1'/%3E%3C/g%3E%3Cpath d='M12 4.2 13.8 6 12 7.8 10.2 6Z' fill='%23000'/%3E%3C/svg%3E");
+}
+[data-flair="folk"] body { background: radial-gradient(ellipse 60% 40% at 40% -6%, rgb(237 179 69 / 0.07), transparent 70%) fixed, radial-gradient(ellipse 50% 60% at 100% 100%, rgb(127 33 25 / 0.10), transparent 70%) fixed, var(--color-bg); }
+
+/* Embroidery: a real band under the top bar, tinted per skill under the skill header */
+[data-flair="folk"] .embroidery { display: block; height: 12px; background: var(--color-stitch); -webkit-mask: var(--emb) round left center / 24px 12px; mask: var(--emb) round left center / 24px 12px; opacity: 0.85; }
+[data-flair="folk"] .skill-head { position: relative; padding-bottom: 22px; }
+[data-flair="folk"] .skill-head::after { content: ""; position: absolute; left: 16px; right: 16px; bottom: 6px; height: 12px; background: var(--skill); opacity: 0.55; -webkit-mask: var(--emb) round left center / 24px 12px; mask: var(--emb) round left center / 24px 12px; }
+
+/* Cards: warm hairline + brass corner marks */
+[data-flair="folk"] .panel {
+  --cm: var(--brass-soft);
+  background:
+    linear-gradient(var(--cm), var(--cm)) top left / 12px 1px no-repeat, linear-gradient(var(--cm), var(--cm)) top left / 1px 12px no-repeat,
+    linear-gradient(var(--cm), var(--cm)) top right / 12px 1px no-repeat, linear-gradient(var(--cm), var(--cm)) top right / 1px 12px no-repeat,
+    linear-gradient(var(--cm), var(--cm)) bottom left / 12px 1px no-repeat, linear-gradient(var(--cm), var(--cm)) bottom left / 1px 12px no-repeat,
+    linear-gradient(var(--cm), var(--cm)) bottom right / 12px 1px no-repeat, linear-gradient(var(--cm), var(--cm)) bottom right / 1px 12px no-repeat,
+    linear-gradient(180deg, color-mix(in oklch, var(--color-surface) 100%, #fff 3%), var(--color-surface));
+  box-shadow: inset 0 0 0 1px rgb(255 235 200 / 0.05), 0 2px 0 rgb(0 0 0 / 0.35);
+}
+[data-flair="folk"] .tracker { --cm: var(--brass); background-color: var(--color-vellum); }
+[data-flair="folk"] .tracker { background:
+    linear-gradient(var(--cm), var(--cm)) top left / 14px 1px no-repeat, linear-gradient(var(--cm), var(--cm)) top left / 1px 14px no-repeat,
+    linear-gradient(var(--cm), var(--cm)) top right / 14px 1px no-repeat, linear-gradient(var(--cm), var(--cm)) top right / 1px 14px no-repeat,
+    linear-gradient(var(--cm), var(--cm)) bottom left / 14px 1px no-repeat, linear-gradient(var(--cm), var(--cm)) bottom left / 1px 14px no-repeat,
+    linear-gradient(var(--cm), var(--cm)) bottom right / 14px 1px no-repeat, linear-gradient(var(--cm), var(--cm)) bottom right / 1px 14px no-repeat,
+    radial-gradient(ellipse 90% 60% at 50% -10%, rgb(237 179 69 / 0.10), transparent 70%), var(--color-vellum);
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--brass) 35%, transparent), 0 6px 18px rgb(0 0 0 / 0.35); }
+[data-flair="folk"] .panel-title .icon { color: var(--brass); }
+
+/* Sanctum: framed like a painting */
+[data-flair="folk"] .sanctum { box-shadow: inset 0 0 0 1px var(--brass-soft), 0 6px 18px rgb(0 0 0 / 0.4); }
+[data-flair="folk"] .sanctum-art { box-shadow: inset 0 0 70px rgb(0 0 0 / 0.8); }
+
+/* Buttons: pressable */
+[data-flair="folk"] .btn-primary { background: linear-gradient(180deg, #c73a2b, #a8291f); box-shadow: inset 0 1px 0 rgb(255 210 190 / 0.25), 0 2px 0 #5c150f; }
+[data-flair="folk"] .btn-primary:hover { background: linear-gradient(180deg, #d4412f, #b12c21); }
+[data-flair="folk"] .btn-primary:active { transform: translateY(1px); box-shadow: inset 0 1px 0 rgb(255 210 190 / 0.2), 0 1px 0 #5c150f; }
+[data-flair="folk"] .btn-ghost, [data-flair="folk"] .btn-start { background: rgb(255 240 215 / 0.03); box-shadow: inset 0 1px 0 rgb(255 240 215 / 0.05); }
+[data-flair="folk"] .recipe .btn-start:hover { background: color-mix(in oklch, var(--skill) 22%, var(--color-raised)); border-color: var(--skill); color: var(--color-text); }
+/* A blocked Start states its reason plainly — no dashed box */
+[data-flair="folk"] .ctl .btn:disabled { border: 0; background: var(--color-sunken); color: var(--color-text-3); font-weight: 400; }
+
+/* Item tokens: a tinted glyph badge; counts as pills */
+[data-flair="folk"] .chip { gap: 7px; padding: 2px 8px 2px 2px; border: 0; background: rgb(255 240 215 / 0.04); border-radius: 4px; }
+[data-flair="folk"] .chip .icon { width: 20px; height: 20px; padding: 3px; border-radius: 3px; background: color-mix(in oklch, var(--skill, var(--color-text-3)) 20%, transparent); }
+[data-flair="folk"] .chip .count { font-size: var(--text-xs); padding: 0 6px; border-radius: 999px; background: var(--color-sunken); color: var(--color-text-2); }
+[data-flair="folk"] .chip.short { border: 0; background: rgb(182 51 37 / 0.14); }
+[data-flair="folk"] .chip.short .count { background: #6a2a1d; color: #ffdcd2; }
+[data-flair="folk"] .chip.out { background: transparent; }
+[data-flair="folk"] .chip.rare { background: rgb(237 179 69 / 0.10); padding-left: 8px; }
+[data-flair="folk"] .io-arrow { color: #b39463; }
+
+/* Running recipe: the whole row fills with its colour, and glows */
+[data-flair="folk"] .recipe { position: relative; }
+[data-flair="folk"] .recipe > * { position: relative; z-index: 1; }
+[data-flair="folk"] .recipe.is-running::before { content: ""; position: absolute; inset: 0; z-index: 0; background: linear-gradient(90deg, color-mix(in oklch, var(--skill) 4%, transparent), color-mix(in oklch, var(--skill) 20%, transparent)); transform-origin: left; animation: sweep var(--dur, 4s) linear infinite; }
+@keyframes sweep { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+[data-flair="folk"] .recipe.is-running { box-shadow: inset 3px 0 0 var(--skill), 0 0 0 1px color-mix(in oklch, var(--skill) 55%, transparent), 0 0 28px -6px color-mix(in oklch, var(--skill) 60%, transparent); }
+[data-flair="folk"] .recipe.is-running .ctl .bar { height: 8px; }
+[data-flair="folk"] .working.is-on { box-shadow: inset 3px 0 0 var(--skill), 0 0 0 1px color-mix(in oklch, var(--skill) 40%, transparent), 0 0 24px -8px var(--skill); }
+[data-flair="folk"] .skill-item[aria-current="page"] { box-shadow: inset 4px 0 0 var(--skill), inset 0 0 0 1px color-mix(in oklch, var(--skill) 30%, transparent); }
+[data-flair="folk"] .skill-item .run { border-radius: 50%; box-shadow: 0 0 8px var(--skill); animation: ember 1.8s ease-in-out infinite; }
+@keyframes ember { 50% { opacity: 0.5; } }
+[data-flair="folk"] .brand .rosette { filter: drop-shadow(0 0 8px rgb(201 49 38 / 0.5)); }
+[data-flair="folk"] .tab[aria-selected="true"] { text-shadow: 0 0 14px rgb(201 49 38 / 0.45); }
+
+/* Stock: two ledgers, full names, count on the right */
+[data-flair="folk"] .stock { background: rgb(0 0 0 / 0.18); }
+.stock-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.stock-list li { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto auto; gap: 8px; align-items: center; min-height: 32px; border-bottom: 1px solid var(--color-border-soft); font-size: var(--text-sm); }
+.stock-list li:last-child { border-bottom: 0; }
+.stock-list .icon { width: 22px; height: 22px; padding: 3px; border-radius: 3px; color: var(--skill); background: color-mix(in oklch, var(--skill) 18%, transparent); }
+.stock-list .nm { color: var(--color-text); }
+.stock-list .need { font-size: var(--text-xs); color: var(--color-text-3); }
+.stock-list b { min-width: 3ch; text-align: right; font: 500 var(--text-md) / 1 var(--font-ui); }
+.stock-list li.is-short b { color: #ffdcd2; background: #6a2a1d; padding: 3px 7px; border-radius: 999px; min-width: 0; }
+.stock-list li.is-short .need { color: var(--color-danger); }
+.stock-list li.is-zero .nm, .stock-list li.is-zero b { color: var(--color-text-3); }
+.stock-all { margin-top: 6px; }

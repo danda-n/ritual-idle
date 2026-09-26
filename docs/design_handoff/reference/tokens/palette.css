@@ -1,0 +1,36 @@
+/* Raw palette — direction A "Soot & Linen" (uploads/VISUAL_DIRECTION.md §5A, §8.1).
+   Components never use these directly; they use tokens/semantic.css. */
+:root {
+  /* Soot: near-neutral, faintly cool grounds (chroma <= 0.01) */
+  --soot-950: #090b0e;
+  --soot-900: #111417;
+  --soot-800: #1b1e22;
+  --soot-700: #272a2e;
+  --soot-650: #2d3134;
+  --soot-600: #3f4347;
+
+  /* Linen: warm text (hue ~85°) */
+  --linen-100: #ede7db;
+  --linen-300: #bfbaaf;
+  --linen-500: #99958c;
+
+  /* Cinnabar: the one red that means "act here" */
+  --cinnabar-600: #b63325;
+  --cinnabar-700: #a1271e;
+  --cinnabar-300: #ef816b;
+  --stitch-red: #c93126;
+  --oxblood: #7f2119;
+
+  /* Roles */
+  --verdigris-400: #5ebaaf;
+  --slate-300: #92b3cb;
+  --gold-400: #edb345;
+
+  /* Folk colours, one per skill — spread in lightness for colour-blind separation */
+  --folk-lichen: #94be58;   /* Herbalism   74.9% */
+  --folk-river: #469bd1;    /* Scavenging  66.0% */
+  --folk-beeswax: #ebd56a;  /* Chandlery   87.0% */
+  --folk-poppy: #ee694f;    /* Sigilcraft  68.0% */
+  --folk-lilac: #cdaef2;    /* Scholarship 80.1% */
+  --folk-rowan: #db6ea5;    /* Ritualism   68.1% */
+}

@@ -1,0 +1,74 @@
+/* Semantic roles. Each hue has one job (VISUAL_DIRECTION.md §4, §8.2). */
+:root {
+  /* Value ladder: room < band < panel < raised < border < text */
+  --color-bg: var(--soot-950);          /* room, sunken, bar tracks */
+  --color-band: var(--soot-900);        /* top bar, sidebar column */
+  --color-surface: var(--soot-800);     /* panels */
+  --color-raised: var(--soot-700);      /* hover, selected row, inputs, dialogs */
+  --color-sunken: var(--soot-950);
+  --color-border-soft: var(--soot-650); /* row dividers */
+  --color-border: var(--soot-600);      /* inputs, ghost buttons, interactive chips */
+  --color-vellum: oklch(27% 0.02 85);   /* Grimoire pages and the chapter-end card only */
+
+  --color-text: var(--linen-100);
+  --color-text-2: var(--linen-300);
+  --color-text-3: var(--linen-500);     /* meta, units, column headers (>= 13px) */
+
+  /* Action: primary fills only. Red fill always carries a text label. */
+  --color-action: var(--cinnabar-600);
+  --color-action-hover: var(--cinnabar-700);
+  --color-on-action: var(--linen-100);
+
+  --color-selected: var(--verdigris-400); /* markers, links, checkboxes */
+  --color-success: var(--verdigris-400);
+  --color-danger: var(--cinnabar-300);    /* text / outline only: warnings, "short" */
+  --color-info: var(--slate-300);
+  --color-rare: var(--gold-400);          /* rare finds, Resplendent, keepsakes, chapter end */
+  --color-stitch: var(--stitch-red);      /* ornaments only */
+  --color-oxblood: var(--oxblood);
+
+  --color-focus: var(--linen-100);
+  --color-scrim: rgb(5 6 8 / 0.72);
+
+  color-scheme: dark;
+}
+
+/* Skill identity: set --skill from data-skill. Icons, stripes and bars only. */
+[data-skill="herbalism"] { --skill: var(--folk-lichen); }
+[data-skill="scavenging"] { --skill: var(--folk-river); }
+[data-skill="chandlery"] { --skill: var(--folk-beeswax); }
+[data-skill="sigilcraft"] { --skill: var(--folk-poppy); }
+[data-skill="scholarship"] { --skill: var(--folk-lilac); }
+[data-skill="ritualism"] { --skill: var(--folk-rowan); }
+
+/* Direction C "Vyshyvanka" — a light linen theme (experimental, §5C). Same roles, new values. */
+:root[data-theme="linen"], [data-theme="linen"] {
+  --color-bg: #ebe6db;
+  --color-band: #f4f0e7;
+  --color-surface: #fcfaf5;
+  --color-raised: #e3ddd1;
+  --color-sunken: #e3ddd1;
+  --color-border-soft: #d7d0c4;
+  --color-border: #b2a99d;
+  --color-vellum: #f4f0e7;
+  --color-text: #1f1915;
+  --color-text-2: #4e4640;
+  --color-text-3: #69625b;
+  --color-action: #b3241f;
+  --color-action-hover: #9a1e1a;
+  --color-on-action: #fcfaf5;
+  --color-selected: #254582;
+  --color-success: #246e3a;
+  --color-danger: #a9231e;
+  --color-info: #2e4b83;
+  --color-rare: #94680f;
+  --color-focus: #1f1915;
+  --color-scrim: rgb(31 25 21 / 0.45);
+  color-scheme: light;
+}
+[data-theme="linen"] [data-skill="herbalism"], [data-theme="linen"][data-skill="herbalism"] { --skill: #1d6835; }
+[data-theme="linen"] [data-skill="scavenging"], [data-theme="linen"][data-skill="scavenging"] { --skill: #0a71b1; }
+[data-theme="linen"] [data-skill="chandlery"], [data-theme="linen"][data-skill="chandlery"] { --skill: #a06616; }
+[data-theme="linen"] [data-skill="sigilcraft"], [data-theme="linen"][data-skill="sigilcraft"] { --skill: #a52014; }
+[data-theme="linen"] [data-skill="scholarship"], [data-theme="linen"][data-skill="scholarship"] { --skill: #5b2987; }
+[data-theme="linen"] [data-skill="ritualism"], [data-theme="linen"][data-skill="ritualism"] { --skill: #a72a68; }

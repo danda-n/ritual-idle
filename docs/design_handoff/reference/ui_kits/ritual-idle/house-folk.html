@@ -1,0 +1,253 @@
+<!-- @dsCard group="Ritual Idle" viewport="1440x900" name="House screen (Hearth + Folk)" subtitle="Embroidery bands, brass corners, item tokens, running row that fills" -->
+<!doctype html>
+<html lang="en" data-look="hearth" data-flair="folk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ritual Idle — House (Hearth + Folk)</title>
+<link rel="stylesheet" href="../../styles.css">
+<link rel="stylesheet" href="looks.css">
+<link rel="stylesheet" href="folk.css">
+<script src="../../assets/icons.js"></script>
+<style>
+  .floats { position: fixed; inset: 0; pointer-events: none; z-index: 90; }
+  .floats .float { position: fixed; transform: translate(-50%, -100%); animation: float-up 1.1s var(--ease-out) forwards; }
+  @keyframes float-up { 0% { opacity: 0; transform: translate(-50%, -60%); } 15% { opacity: 1; transform: translate(-50%, -110%); } 100% { opacity: 0; transform: translate(-50%, -240%); } }
+  .empty { display: grid; place-items: center; gap: 12px; padding: 64px 16px; text-align: center; }
+  .empty .rosette { color: var(--color-oxblood); }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="floats" id="floats"></div>
+<script>
+const I = (n, s) => RI.icon(RI.skillIcon[n] || n, s);
+const ITEMS = {
+  nettle:["Nettle","herbalism"], chamomile:["Chamomile","herbalism"], mugwort:["Mugwort","herbalism"], yarrow:["Yarrow","herbalism"],
+  ash:["Ash","scavenging"], charcoal:["Charcoal","scavenging"], tallow:["Tallow","scavenging"], salt:["Salt","scavenging"], beeswax:["Beeswax","scavenging"],
+  burnt_page:["Burnt page","scavenging"], rags:["Rags","scavenging"], glass:["Glass shard","scavenging"], curio:["Curio","scavenging"], iron_nail:["Iron nail","scavenging"],
+  tallow_candle:["Tallow candle","chandlery"], smudge:["Smudge bundle","chandlery"], beeswax_candle:["Beeswax candle","chandlery"], mugwort_incense:["Mugwort incense","chandlery"], hearth_candle:["Hearth candle","chandlery"],
+  salt_line:["Salt line","sigilcraft"], ash_sigil:["Ash sigil","sigilcraft"], iron_ward:["Iron ward","sigilcraft"]
+};
+const CAT = { garden:["Garden & forest",["nettle","chamomile","mugwort"]], house:["House & village",["ash","charcoal","tallow","salt","beeswax","rags"]], candles:["Candles & incense",["tallow_candle"]], sigils:["Sigils & wards",["salt_line"]], pages:["Pages & texts",["burnt_page"]] };
+const SKILLS = {
+  scavenging:{name:"Scavenging", lvl:6, xp:.42, recipes:[
+    ["Search the pantry",1,3,4,{},[["tallow",1],["salt",1,.5]]],
+    ["Sweep the hearth",2,3,4,{},[["ash",1],["charcoal",1,.1]]],
+    ["Rob the old hives",2,4,6,{},[["beeswax",1]]],
+    ["Search the attic",3,4,6,{},[["burnt_page",1,.4],["rags",1,.5],["glass",1,.3],["curio",1,.005]]],
+    ["Sift the village midden",10,4,12,{},[["iron_nail",1],["rags",1,.3]]]]},
+  chandlery:{name:"Chandlery", lvl:4, xp:.65, recipes:[
+    ["Tallow candle",1,4,8,{tallow:2},[["tallow_candle",1]]],
+    ["Smudge bundle",2,5,13,{nettle:2,chamomile:1},[["smudge",1]]],
+    ["Beeswax candle",2,5,12,{beeswax:2},[["beeswax_candle",1]]],
+    ["Mugwort incense",3,5,18,{mugwort:2,ash:1},[["mugwort_incense",1]],"new"],
+    ["Hearth candle",10,4,25,{beeswax:2,stjohns:1},[["hearth_candle",1]]],
+    null]},
+  sigilcraft:{name:"Sigilcraft", lvl:3, xp:.2, pts:1, recipes:[
+    ["Salt line",1,4,8,{salt:1},[["salt_line",1]]],
+    ["Ash sigil",2,5,16,{ash:2,salt:1},[["ash_sigil",1]]],
+    ["Iron ward",6,3,20,{iron_nail:2,salt:1},[["iron_ward",1]]]]},
+  herbalism:{name:"Herbalism", lvl:2, xp:.8, recipes:[
+    ["Pick nettle",1,3,4,{},[["nettle",1]]],
+    ["Pick chamomile",2,3,5,{},[["chamomile",1]]],
+    ["Pick mugwort",2,4,7,{},[["mugwort",1]]],
+    ["Pick yarrow",5,3,8,{},[["yarrow",1]]]]}
+};
+ITEMS.stjohns = ["St John's wort","herbalism"];
+const S = {
+  tab:"house", skill:"chandlery", running:["chandlery",0], cap:15, coin:42, streak:3,
+  inv:{tallow:7,salt:4,ash:3,nettle:5,chamomile:1,beeswax:1,tallow_candle:3,salt_line:2,burnt_page:2,rags:2,charcoal:1},
+  settings:false, density:"roomy", theme:"soot", look: document.documentElement.dataset.look || "hearth", shelvesOpen:false
+};
+const secs = (sk, r) => +(r[2] * (1 - 0.01 * SKILLS[sk].lvl)).toFixed(1);
+const k = n => n >= 1000 ? (n/1000).toFixed(1) + "k" : String(Math.round(n));
+
+function chip(id, {need, qty, chance}={}) {
+  const [name, sk] = ITEMS[id]; const have = S.inv[id] || 0;
+  if (need != null) {
+    const short = have < need;
+    return `<button class="chip ${short ? "short" : "enough"}" data-skill="${sk}" title="${name}: have ${have}, need ${need}">${I(sk,14)}${name}<span class="count num">${have}/${need}</span></button>`;
+  }
+  const rare = chance != null && chance < 0.05;
+  const pct = chance != null && chance < 1 ? `<span class="chance num">${chance < .01 ? (chance*100).toFixed(1) : Math.round(chance*100)}%</span>` : "";
+  return `<button class="chip out ${rare ? "rare" : ""}" data-skill="${sk}">${rare ? "" : I(sk,14)}${qty > 1 ? qty + " " : ""}${name}${pct}</button>`;
+}
+function blocked(sk, r) {
+  if (SKILLS[sk].lvl < r[1]) return `Level ${r[1]}`;
+  for (const [id, n] of Object.entries(r[4])) if ((S.inv[id]||0) < n) return `Needs ${n - (S.inv[id]||0)} ${ITEMS[id][0].toLowerCase()}`;
+  return null;
+}
+function row(sk, r, i) {
+  if (!r) return `<div class="recipe is-unknown"><span>${I("scroll",16)}</span><span class="span">Unknown recipe · <span class="num">Lvl 6</span> · learned from a burnt page</span></div>`;
+  const run = S.running && S.running[0] === sk && S.running[1] === i;
+  const b = blocked(sk, r); const locked = SKILLS[sk].lvl < r[1];
+  const t = secs(sk, r); const ins = Object.entries(r[4]);
+  const io = ins.map(([id,n]) => chip(id,{need:n})).join("") + (ins.length ? `<span class="io-arrow" aria-label="makes">→</span>` : "") + r[5].map(([id,q,c]) => chip(id,{qty:q,chance:c})).join("");
+  const ctl = run
+    ? `<span class="bar timed" data-skill="${sk}"><span class="bar-fill" style="animation-duration:${t}s"></span></span><button class="btn btn-ghost btn-sm" data-stop>Stop</button>`
+    : b ? `<button class="btn btn-sm" disabled style="width:100%">${b}</button>` : `<button class="btn btn-start btn-sm" data-start="${i}">Start</button>`;
+  return `<div class="recipe ${run ? "is-running" : ""} ${locked ? "is-locked" : ""}" data-skill="${sk}" data-row="${i}" style="--dur:${t}s">
+    ${I(sk,18)}<span class="name">${r[0]}${r[6] ? `<span class="new">New</span>` : ""}</span>
+    <span class="r num">${r[1]}</span><span class="r num">${t}<span class="unit">s</span></span><span class="r num">${r[3]}</span>
+    <span class="io">${io}</span><span class="r num col-rate">${locked ? "" : k(r[3] / t * 3600)}</span><span class="ctl">${ctl}</span></div>`;
+}
+function topbar() {
+  let w;
+  if (S.running) {
+    const [sk, i] = S.running; const r = SKILLS[sk].recipes[i];
+    w = `<div class="working is-on" data-skill="${sk}" role="status">${I(sk,22)}<span class="working-what"><span class="working-skill">${SKILLS[sk].name}</span><span class="working-name">${r[0]}</span></span>
+      <span class="bar timed"><span class="bar-fill" style="animation-duration:${secs(sk,r)}s"></span></span>
+      <span class="working-time num">${secs(sk,r)}s</span><button class="btn btn-ghost btn-sm" data-stop>Stop</button></div>
+      <div class="tend" data-skill="${sk}"><button class="btn btn-ghost btn-sm" data-tend>Tend</button><span class="bar thin drain"><span class="bar-fill" style="--v:.62"></span></span><span class="tend-info num">+50% · bonus 6% (streak ${S.streak})</span></div>`;
+  } else {
+    w = `<div class="working" role="status"><span class="t-3">Next:</span><span class="working-name">Make 3 tallow candles</span><button class="btn btn-ghost btn-sm" data-go>Go</button></div>`;
+  }
+  return `<header class="topbar"><div class="brand">${RI.rosette(24)}<h1 class="brand-title">Ritual Idle</h1></div>${w}
+    <span class="buff-chip" data-skill="chandlery" title="×2 speed and XP on Chandlery">${I("moon",16)}Still Night<span class="buff-skill"> · Chandlery</span> <span class="num t-3">1:42</span></span>
+    <div class="purse" aria-label="${S.coin} coin">${I("coin",18)}<span class="num">${S.coin}</span></div>
+    <button class="btn btn-ghost icon-btn" aria-label="Settings" data-settings>${I("cog",18)}</button></header><span class="embroidery" aria-hidden="true"></span>`;
+}
+function runNow(id) {
+  if (!S.running || S.running[0] !== id) return "";
+  const r = SKILLS[id].recipes[S.running[1]], t = secs(id, r);
+  return `<span class="now" role="status"><span class="now-name">${r[0]}</span><span class="bar timed"><span class="bar-fill" style="animation-duration:${t}s"></span></span><span class="now-time num">${t}s</span></span>`;
+}
+function strip(sk) {
+  const ins = new Map(), outs = new Set();
+  SKILLS[sk].recipes.forEach(r => { if (!r || SKILLS[sk].lvl < r[1]) return;
+    Object.entries(r[4]).forEach(([i, n]) => ins.set(i, Math.max(ins.get(i) || 0, n)));
+    r[5].forEach(([i, , c]) => { if (!(c < .05)) outs.add(i); }); });
+  const made = [...outs].filter(i => !ins.has(i)).map(i => [i]);
+  const have = i => S.inv[i] || 0;
+  const needs = [...ins].sort((x, y) => (have(x[0]) >= x[1]) - (have(y[0]) >= y[1]) || have(x[0]) - have(y[0]));
+  const LIMIT = 5;
+  const li = ([id, need]) => { const [n, s] = ITEMS[id]; const v = have(id); const short = need != null && v < need;
+    return `<li class="${short ? "is-short" : ""} ${v === 0 && !short ? "is-zero" : ""}" data-skill="${s}">${I(s,16)}<span class="nm">${n}</span><span class="need num">${short ? "need " + need : ""}</span><b class="num">${v}</b></li>`; };
+  const col = (label, list, key) => {
+    if (!list.length) return "";
+    const open = S.stockOpen === key, shown = open ? list : list.slice(0, LIMIT), more = list.length - LIMIT;
+    return `<div class="stock-col"><div class="stock-head"><span class="label">${label}</span><span class="meta num">${list.length}</span></div>
+      <ul class="stock-list">${shown.map(li).join("")}</ul>${more > 0 ? `<button class="btn btn-text btn-sm stock-all" data-more="${key}">${open ? "Show fewer" : "Show all " + list.length}</button>` : ""}</div>`;
+  };
+  const shortN = needs.filter(([i, n]) => have(i) < n).length;
+  return `<section class="stock" aria-label="${SKILLS[sk].name} stock">${col(shortN ? `Inputs · <span class="warn">${shortN} short</span>` : "Inputs", needs, "in")}${col("Made here", made, "out")}</section>`;
+}
+function house() {
+  const sk = S.skill, d = SKILLS[sk];
+  const nav = Object.entries(SKILLS).map(([id, s]) => `<button class="skill-item" data-skill="${id}" data-pick="${id}" ${id === sk ? 'aria-current="page"' : ""}>
+      ${I(id,20)}<span class="name">${s.name}${s.pts ? `<span class="pts num" title="Talent points to spend">+${s.pts}</span>` : ""}</span>
+      <span class="num"><span class="lvl">${s.lvl}</span><span class="cap">/${S.cap}</span></span>
+      <span class="bar thin"><span class="bar-fill" style="--v:${s.xp}"></span></span>${runNow(id)}</button>`).join("")
+    + `<div class="skill-item is-next" data-skill="scholarship">${I("scholarship",20)}<span class="name">Scholarship</span><span></span><span class="when">Next · with grandmother's next note</span></div>`;
+  const rec = S.running && S.running[0] === sk ? SKILLS[sk].recipes[S.running[1]] : null;
+  const xph = rec ? k(rec[3] / secs(sk, rec) * 3600) : "—";
+  return `<div class="house">
+    <nav class="panel flush skill-list" aria-label="Skills">${nav}</nav>
+    <section class="panel flush" aria-labelledby="skill-heading">
+      <header class="skill-head" data-skill="${sk}">${I(sk,24)}<div><h2 id="skill-heading">${d.name}</h2><p class="meta num">Level ${d.lvl} of ${S.cap} · about 18m to the cap</p></div>
+        <div class="stats"><span class="stat"><span class="label">XP/h now</span><b class="num">${xph}</b></span><span class="stat"><span class="label">Next level</span><b class="num">2m 10s</b></span></div></header>
+      <div class="recipes">
+        <div class="recipes-head"><span></span><span class="label">Recipe</span><span class="label r">Lvl</span><span class="label r">Time</span><span class="label r">XP</span><span class="label col-io">Inputs → makes</span><span class="label r col-rate">XP/h</span><span></span></div>
+        ${d.recipes.map((r, i) => row(sk, r, i)).join("")}
+      </div>
+      ${strip(sk)}
+    </section></div>`;
+}
+function side() {
+  const stitches = Array.from({length:12}, (_, i) => `<span class="stitch ${i < 3 ? "is-done" : i === 3 ? "is-current" : "is-ahead"}"></span>`).join("");
+  const shelves = Object.entries(CAT).map(([c, [name, ids]]) => {
+    const rows = ids.filter(id => S.inv[id]).map(id => `<li><span class="item" data-skill="${ITEMS[id][1]}">${I(ITEMS[id][1],14)}${ITEMS[id][0]}</span><span class="n num">${S.inv[id]}</span></li>`).join("");
+    return rows ? `<div class="section"><span class="label">${name}</span><ul class="ledger">${rows}</ul></div>` : "";
+  }).join("");
+  return `<aside class="shell-side">
+    <section class="panel tracker" aria-labelledby="tracker-h">
+      <div class="panel-title"><h2 id="tracker-h" class="label" style="font-size:var(--text-lg);letter-spacing:.02em;color:var(--color-text)">Chapter I · Hearth</h2><span class="panel-aside num">3/12</span></div>
+      <div class="stitch-row" aria-label="3 of 12 steps done">${stitches}</div>
+      <div class="step-now">
+        <div class="step-head"><strong>Make 3 tallow candles</strong><span class="meta num">step 2 of 3</span></div>
+        <span class="bar thin"><span class="bar-fill" style="--v:.33"></span></span>
+        <div class="step-head"><span class="t-2" style="font-size:var(--text-sm)">Make a tallow candle</span><span class="reward num">+1 salt</span></div>
+        <div class="needs">${chip("tallow",{need:2})}</div>
+        <div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm" data-go>Go</button></div>
+      </div>
+      <div style="margin-top:12px"><button class="btn btn-primary btn-block btn-sm">Claim · +2 beeswax</button></div>
+      <ul class="done-list"><li><span class="stitch is-done"></span>Search the pantry</li><li><span class="stitch is-done"></span>Sweep the hearth</li><li><span class="stitch is-done"></span>Light the first candle</li></ul>
+    </section>
+    <section class="panel" aria-labelledby="omen-h">
+      <div class="panel-title">${I("moon",18)}<h2 id="omen-h" style="font-size:inherit">Omens &amp; blessings</h2><span class="panel-aside num">1/2</span></div>
+      <div class="omen"><span class="omen-jars">${I("moon",22)}</span><span class="omen-what"><strong style="font-weight:500">Still Night</strong><span class="meta">×2 on one skill · 2 min</span></span><button class="btn btn-ghost btn-sm btn-invite">Release</button></div>
+      <ul class="active-buffs"><li data-skill="chandlery">${I("chandlery",14)}<span>Still Night · Chandlery</span><span class="bar thin drain"><span class="bar-fill" style="--v:.85"></span></span><span class="num r">1:42</span></li></ul>
+    </section>
+    <details class="panel shelves" ${S.shelvesOpen ? "open" : ""}>
+      <summary class="panel-title" data-shelves>${I("lantern",18)}<h2 id="shelves-h" style="font-size:inherit">All shelves</h2><span class="panel-aside num">${Object.values(S.inv).filter(Boolean).length} items</span></summary>
+      <div class="filters"><button class="chip is-on btn-sm">All</button>${["leaf","house","candle","sigil","scroll"].map(n => `<button class="chip" aria-label="${n}">${RI.icon(n,14)}</button>`).join("")}</div>
+      ${shelves}
+    </details></aside>`;
+}
+function placeholder(name, icon) {
+  return `<section class="panel empty">${RI.rosette(48)}<h2 class="screen-title">${name}</h2><p class="t-3" style="max-width:40ch">Not rebuilt in this kit yet. The House tab shows the full system; ${name} follows the same rules.</p></section>`;
+}
+function settings() {
+  if (!S.settings) return "";
+  const seg = (key, opts) => `<span class="seg">${opts.map(([v,l]) => `<button data-set="${key}:${v}" aria-pressed="${S[key] === v}">${l}</button>`).join("")}</span>`;
+  return `<div class="scrim" data-close><div class="dialog" role="dialog" aria-modal="true" aria-labelledby="set-h">
+    <h2 id="set-h">Settings</h2>
+    <div class="setting"><span>Look</span>${seg("look",[["quiet","Quiet"],["hearth","Hearth"],["lantern","Lantern"]])}</div>
+    <div class="setting"><span>Row density</span>${seg("density",[["roomy","Roomy"],["comfortable","36px"],["compact","32px"]])}</div>
+    <div class="setting"><span>Theme <span class="meta">(Linen is a preview)</span></span>${seg("theme",[["soot","Soot"],["linen","Linen"]])}</div>
+    <label class="setting"><span>Reduced motion</span><input type="checkbox"></label>
+    <label class="setting"><span>Fallback when work stops</span><input type="checkbox" checked></label>
+    <div class="actions"><button class="btn btn-ghost" data-close>Close</button></div></div></div>`;
+}
+function render() {
+  document.documentElement.dataset.theme = S.theme === "linen" ? "linen" : "";
+  document.documentElement.dataset.density = S.density === "comfortable" ? "" : S.density;
+  if (S.look === "quiet") delete document.documentElement.dataset.look; else document.documentElement.dataset.look = S.look;
+  const tabs = [["house","House","house"],["grimoire","Grimoire","book"],["village","Village","lantern"],["circle","Circle","circleRite"]];
+  const main = S.tab === "house" ? `<figure class="sanctum" style="margin:0"><div class="sanctum-art">Sanctum scene · code-drawn woodcut (src/ui/art/Sanctum.tsx), unchanged</div><figcaption class="sanctum-caption lore sm">A candle burns on the table; the hearth is still cold.</figcaption></figure>` + house() : placeholder(tabs.find(t => t[0] === S.tab)[1]);
+  document.getElementById("app").innerHTML = topbar() + `<div class="shell"><div class="shell-main">
+    <div class="tabs" role="tablist" aria-label="Places">${tabs.map(([id,l,ic]) => `<button class="tab" role="tab" data-tab="${id}" aria-selected="${S.tab === id}">${RI.icon(ic,18)}${l}${id === "circle" ? '<span class="dot" aria-label="new"></span>' : ""}</button>`).join("")}</div>
+    ${main}</div>${side()}</div>` + settings();
+  schedule();
+}
+let timer;
+function schedule() {
+  clearTimeout(timer);
+  if (!S.running) return;
+  const [sk, i] = S.running; const r = SKILLS[sk].recipes[i];
+  timer = setTimeout(() => {
+    if (blocked(sk, r)) { S.running = null; return render(); }
+    for (const [id, n] of Object.entries(r[4])) S.inv[id] -= n;
+    const out = r[5][0]; S.inv[out[0]] = (S.inv[out[0]] || 0) + out[1];
+    const el = document.querySelector(`.recipe[data-row="${i}"] .ctl`) || document.querySelector(".working");
+    float(el, `+${out[1]} ${ITEMS[out[0]][0].toLowerCase()}`, "tone-item");
+    render();
+  }, secs(sk, r) * 1000);
+}
+function float(el, text, tone) {
+  if (!el) return; const b = el.getBoundingClientRect();
+  const f = document.createElement("span"); f.className = `float ${tone}`; f.textContent = text;
+  f.style.left = b.left + b.width / 2 + "px"; f.style.top = b.top + "px";
+  document.getElementById("floats").appendChild(f); setTimeout(() => f.remove(), 1200);
+}
+document.addEventListener("click", e => {
+  const mo = e.target.closest("[data-more]"); if (mo) { S.stockOpen = S.stockOpen === mo.dataset.more ? null : mo.dataset.more; return render(); }
+  const sh = e.target.closest("[data-shelves]"); if (sh) { e.preventDefault(); S.shelvesOpen = !S.shelvesOpen; return render(); }
+  const t = e.target.closest("[data-tab],[data-pick],[data-start],[data-stop],[data-go],[data-settings],[data-set],[data-close],[data-tend]");
+  if (!t) return;
+  if (t.dataset.tab) S.tab = t.dataset.tab;
+  else if (t.dataset.pick) S.skill = t.dataset.pick;
+  else if (t.dataset.start != null) S.running = [S.skill, +t.dataset.start];
+  else if (t.hasAttribute("data-stop")) S.running = null;
+  else if (t.hasAttribute("data-go")) { S.tab = "house"; S.skill = "chandlery"; }
+  else if (t.hasAttribute("data-tend")) { S.streak++; return float(t, "Tended", "tone-good"); }
+  else if (t.hasAttribute("data-settings")) S.settings = true;
+  else if (t.dataset.set) { const [k2, v] = t.dataset.set.split(":"); S[k2] = v; }
+  else if (t.hasAttribute("data-close")) { if (e.target !== t && !e.target.closest("button")) return; S.settings = false; }
+  render();
+});
+render();
+</script>
+</body>
+</html>

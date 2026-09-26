@@ -1,0 +1,39 @@
+/* Space, shape, elevation, motion, layers. */
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  --row-h: 36px;          /* comfortable; [data-density="compact"] sets 32px */
+
+  --radius-sm: 3px;       /* buttons, chips */
+  --radius-md: 4px;       /* panels */
+  --radius-lg: 6px;       /* dialogs */
+  --border-w: 1px;
+
+  /* Elevation is lightness, not shadow. Shadow only for popovers and dialogs. */
+  --shadow-2: 0 8px 24px rgb(0 0 0 / 0.5);
+
+  --icon-sm: 16px;
+  --icon-md: 20px;
+  --icon-lg: 24px;
+
+  --dur-fast: 120ms;
+  --dur-med: 220ms;
+  --dur-slow: 420ms;
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-in: cubic-bezier(0.6, 0, 0.8, 0.3);
+
+  --z-base: 0;
+  --z-sticky: 10;
+  --z-toast: 40;
+  --z-modal: 100;
+}
+[data-density="compact"] { --row-h: 32px; }
+[data-density="roomy"] { --row-h: 46px; }
+@media (prefers-reduced-motion: reduce) { :root { --dur-fast: 0ms; --dur-med: 0ms; --dur-slow: 0ms; } }
+:root[data-motion="reduced"] { --dur-fast: 0ms; --dur-med: 0ms; --dur-slow: 0ms; }
