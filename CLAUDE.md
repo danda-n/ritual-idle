@@ -27,7 +27,7 @@ Vite + React + TypeScript, Vitest. Electron (Steam) and PixiJS (sanctum scene) c
 - `src/content/`: **game data only** (skills, items, actions, the Kindling's parts, talents). Balance and naming changes go here. Keep `docs/CHAPTER1.md` in sync when numbers change, and run `npm test` (the playthrough fails if the chapter becomes unfinishable or leaves its pacing band).
 - `src/engine/`: pure game logic, with no React or DOM (except guarded localStorage in `save.ts`). `advance(state, ms)` is the single simulation step; offline progress is the same function run over the time away, capped.
 - `src/engine/` also has `commands.ts` (every player command), `modifiers.ts` (every bonus), `estimates.ts` (UI-only rates and lookups) and `devtools.ts` (`rewind` for the dev time skip).
-- `src/ui/`: React. `useGame` owns the tick loop, autosave and commands. `screens/` are the tabbed places, `components/` are shared pieces, `art/` holds code-drawn SVG icons and ornaments, and `styles/` has tokens, components and layout.
+- `src/ui/`: React. `useGame` owns the tick loop, autosave and commands. `screens/` are the tabbed places, `components/` are shared pieces, `art/` holds code-drawn SVG icons and ornaments, and `styles/` has `tokens/` (palette, semantic roles, type, space), `base.css`, `components.css` and `places.css` (the per-tab colour, hero and material). The design handoff these come from is in `docs/design_handoff/`.
 
 ## Rules
 - **The docs stay current.** Every patch or playtest round ends with *all* the docs (`docs/*.md` and `README.md`) updated in the same series of commits as the code:

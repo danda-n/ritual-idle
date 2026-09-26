@@ -351,8 +351,8 @@ We deliberately **do not** use:
   - Prestige cosmetics show up here.
 - **Art direction** *(decided in Q9)*: **folk-art / woodcut.**
   - Inspired by woodcut prints, papercuts (*wycinanki*), embroidery motifs and painted folk icons.
-  - Limited palette: bone, ink black, ember red, candle gold.
-  - The same motifs decorate the UI (borders, sigils, item frames), so the whole game reads as one crafted object.
+  - Limited palette: bone (linen), ink black (soot), ember red, candle gold. Since design system v0.4 each colour has **one job**: red = act here, verdigris = selected or done, gold = rare only, and a folk colour per skill for identity. The grounds are warm near-black with real lightness steps, so panels separate by value, not frames.
+  - The flavour lives in the visuals, not in prose: an embroidery band under the top bar, cross-stitch under titles and tabs, brass corner marks, papercut rosettes, and a colour, hero band and material for each place (the house by the hearth, the Grimoire as a book, the village's pinned notices, the Circle at night). The full system is in [DESIGN.md](DESIGN.md).
   - Flat, layered art is cheaper to produce and animate than painting. Candle flicker, drifting smoke and swaying herbs come from simple layer motion.
   - **Production:** build with **placeholders** until the core loop is proven fun, then commission an artist and lock the style. Keep placeholders flat and layered so they match the final pipeline.
 - **Stretch goal:** a compact desktop-corner mode (the Rusty's Retirement and Cast n Chill trend).
@@ -648,3 +648,9 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
   - **Steeping is dropped:** no waiting as a price.
   - **Name:** "The Circle Asks" (Tithe is already the followers' upkeep).
 - **Save version 9** adds the chosen keepsakes.
+
+### Design system v0.4: "Hearth + Folk" (after the fourth patch)
+- **Why:** playtest screenshots read as "one big brown and gold blob" and "too AI": every ground, text colour and accent sat in one warm hue family, panels barely separated from the room, gold did a dozen jobs, and small caps, frames and glows were everywhere ([research/VISUAL_DIRECTION.md](research/VISUAL_DIRECTION.md)).
+- **What:** the design handoff ([design_handoff/](design_handoff/README.md)) applied to the whole game: "Soot & Linen" roles (red acts, verdigris selects or marks done, gold only for rare things, skill colours only on icons, stripes and bars) on warm "Hearth" grounds; Alegreya Sans for the UI and numbers, the SC face only for titles and column headers, Alegreya roman for lore, **no italics** and no dashed outlines; "Folk" ornament that does a job (the embroidery band, brass corners, item tokens, the running row that fills as it works); and a colour, hero band and material per tab. Recipes are a real table with XP/h, and each skill shows its own Inputs and Made-here stock.
+- **Kept on purpose:** the Stores tab (a logged decision from the fourth patch) instead of the handoff's collapsed "All shelves" in the sidebar; Tend stays removed; the shop sells only provisions (house upgrades are projects).
+- **New setting:** row density (roomy 46px, comfortable 36px, compact 32px).

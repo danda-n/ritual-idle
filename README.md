@@ -39,8 +39,9 @@ From the cold house to the Kindling of the Hearth-Circle:
 - **Offline progress** (24h, 36h with the mended shutters) with a "while you were away" summary. A fallback when work stops.
 - **Saving:** autosave, immediate saves on every choice, save export/import, and upgrades for older saves.
 - **The living sanctum:** a code-drawn woodcut scene that changes as you progress.
-- **Calm feedback:** an activity feed under the top bar for routine events; toasts only for big moments.
-- **Settings:** fallback, Grimoire assist, reduced motion, message duration.
+- **Calm feedback:** an activity feed beside the tabs for routine events; toasts only for big moments.
+- **The look (design system v0.4, "Hearth + Folk"):** warm soot grounds with one job per colour (red acts, verdigris selects, gold is rare), a colour, hero band and material per tab, a now-working band in the top bar, recipes as a table whose running row fills as it works, and per-skill stock lists. See [DESIGN](docs/DESIGN.md).
+- **Settings:** fallback, Grimoire assist, reduced motion, row density, message duration.
 
 Dev builds have a **Dev tools** panel at the bottom of the page (time skip, give items, +omen, next note, items for the next part, +5 levels, +5 insight) for playtesting.
 
