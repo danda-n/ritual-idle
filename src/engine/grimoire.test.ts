@@ -119,6 +119,14 @@ describe("insight sources", () => {
     expect(r.aside).toBe(REQUESTS.hana_soup.mentions.aside);
     expect(r.state.insight).toBe(INSIGHT_GAIN.request);
   });
+
+  it("keeps what the villager said on the recipe's page", () => {
+    const s = open({ trust: 0, inventory: { ...REQUESTS.hana_soup.needs } });
+    s.board = [{ request: "hana_soup", refillAt: 0, delivered: {} }];
+    const r = okay(deliver(s, 0));
+    expect(r.state.grimoire.dream_pillow?.heard).toBe(true);
+    expect(deserialize(JSON.stringify(r.state)).grimoire.dream_pillow?.heard).toBe(true);
+  });
 });
 
 describe("attuned experiments", () => {

@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { CURIO_STORIES, GRIMOIRE_DEFS, INSIGHT_GAIN, type GrimoireId } from "../../content/grimoire";
 import { PAGES } from "../../content/pages";
+import { REQUESTS } from "../../content/requests";
 import { attune, buyHint, type Result } from "../../engine/commands";
 import { GRIMOIRE_IDS, hintCost, isDiscovered, isSilhouetteVisible, progressOf, type HintKind } from "../../engine/grimoire";
 import { isFeatureOpen } from "../../engine/progress";
@@ -270,6 +271,18 @@ function SilhouettePage({ state, id, act, onAttuned }: { state: GameState; id: G
         <span className="hint-num">I</span>
         <p className="note-quote">{def.hints?.riddle}</p>
       </div>
+      {p.heard && heardFrom(id) && (
+        <div className="hint heard">
+          <span className="hint-num" aria-hidden="true">
+            ✦
+          </span>
+          <p>
+            <span className="gives-label">Heard in the village · {heardFrom(id)!.from}</span>
+            <br />
+            <span className="note-quote">{heardFrom(id)!.aside}</span>
+          </p>
+        </div>
+      )}
       <div className={`hint ${p.bought.category ? "" : "locked"}`}>
         <span className="hint-num">II</span>
         {p.bought.category ? <p>{def.hints?.category.join(" · ")}</p> : <BuyHint state={state} id={id} kind="category" label="Where each thing comes from" act={act} />}
@@ -303,6 +316,12 @@ function SilhouettePage({ state, id, act, onAttuned }: { state: GameState; id: G
       )}
     </>
   );
+}
+
+/** The villager who mentioned this recipe, and what they said. */
+function heardFrom(id: GrimoireId): { from: string; aside: string } | null {
+  for (const r of Object.values(REQUESTS)) if ("mentions" in r && r.mentions.recipe === id) return { from: r.from, aside: r.mentions.aside };
+  return null;
 }
 
 /** Glow dots. `staggered` lights them one after another, for a fresh result. */

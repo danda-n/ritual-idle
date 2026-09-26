@@ -110,6 +110,8 @@ export interface RecipeProgress {
   bought: { category: boolean; named: ItemId[] };
   /** Clues read (secrets). */
   clues: number;
+  /** A villager mentioned it (their words stay on the recipe's page). */
+  heard?: boolean;
 }
 
 export interface RiteState {

@@ -80,6 +80,11 @@ export function deliver(input: GameState, slotIndex: number): Result {
   emptySlot(state, slotIndex, state.lastTickAt);
   const mention: { recipe: string; aside: string } | undefined = "mentions" in req ? req.mentions : undefined;
   const fragment = mention ? addInsight(state, INSIGHT_GAIN.request, "request") : null;
+  // Keep what they said on the recipe's page, so the hint can't be missed.
+  if (mention && mention.recipe in GRIMOIRE_DEFS) {
+    const id = mention.recipe as GrimoireId;
+    state.grimoire[id] = { ...progressOf(state, id), heard: true };
+  }
   // After the insight, so a first hint can open experiments.
   const steps: Step[] = [];
   const notes = revealNotes(state, steps);
