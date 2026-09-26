@@ -49,7 +49,7 @@ export function ChapterTracker({ state, onGo, act }: { state: GameState; onGo: (
     prev.current = done;
   }, [done]);
   return (
-    <section className={`panel paper tracker ${advanced ? "advanced" : ""}`} aria-labelledby="tracker-heading">
+    <section className={`panel tracker ${advanced ? "advanced" : ""}`} aria-labelledby="tracker-heading">
       <div className="panel-title">
         <CircleRiteIcon size={18} />
         <h2 id="tracker-heading">Chapter I · Hearth</h2>
@@ -57,7 +57,12 @@ export function ChapterTracker({ state, onGo, act }: { state: GameState; onGo: (
           {done}/{STEPS.length}
         </span>
       </div>
-      <Bar value={done / STEPS.length} label="Chapter progress" />
+      {/* The chapter's stages, counted as cross-stitches */}
+      <div className="stitch-row" role="img" aria-label={`${done} of ${STEPS.length} stages done`}>
+        {STEPS.map((_, i) => (
+          <span key={i} className={`stitch ${i < done ? "is-done" : i === done ? "is-current" : "is-ahead"}`} />
+        ))}
+      </div>
       <RewardsWaiting state={state} act={act} />
       <KeepsakesWaiting state={state} act={act} />
       {choices.length > 0 && <StageChoice state={state} choices={choices} act={act} />}

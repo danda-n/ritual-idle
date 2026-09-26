@@ -1,210 +1,157 @@
-# Design System
+# Design System (v0.4: "Hearth + Folk" on "Soot & Linen")
 
-The folk-art / woodcut direction from [CONCEPT.md §9](CONCEPT.md): one candlelit dark theme, drawn entirely in code (there is no bitmap art yet). This doc describes the UI as it is now; how it got here is in the [Changelog](#changelog).
+How Ritual Idle looks and behaves on screen. Follow it for every UI change. The source is the design handoff in [design_handoff/](design_handoff/README.md) (its `reference/ui_kits/ritual-idle/places.html` is the target for all tabs) and the audit behind it, [research/VISUAL_DIRECTION.md](research/VISUAL_DIRECTION.md). How the look got here is in the [Changelog](#changelog).
 
----
-
-## 1. Tokens and type: `src/ui/styles/tokens.css`
-- **Palette:**
-  - ink (backgrounds, 950 → 600)
-  - bone (text, 100 / 300 / 500)
-  - candle gold (accent, focus, progress)
-  - ember (danger, ornaments, warnings)
-- **Contrast:** checked at ≥ 4.5:1 for every text token on every surface.
-- **Components use semantic tokens only** (`--color-text`, `--color-accent`…), never raw hex.
-- **Type:**
-  - *IM Fell English SC* for the title only (woodcut-era print)
-  - *Alegreya SC* for headings, labels, buttons and tabs
-  - *Alegreya* for body text and grandmother's notes (in italics)
-  - All three are self-hosted through `@fontsource`, so they work offline and in Electron. Alegreya covers Latin-extended and Cyrillic for Slavic names.
-  - Numbers use the `.num` class (tabular figures).
-  - **Sizes:** `--text-xs` 14, `sm` 15, `md` 17, `lg` 19, `xl` 23, `2xl` 29 px.
-- **Space and shape:** 4px rhythm (`--space-1` to `--space-7`); small radii (3 / 5 / 8px), because woodcut blocks are square-ish.
-- **Motion tokens:** `--dur-fast/med/slow` (120 / 220 / 420ms). The OS reduced-motion preference and the in-game setting (`html[data-motion="reduced"]`) both set every duration to 0.
-
-### Two materials (`src/ui/styles/identity.css`)
-- The **room** is dark wood with a faint grain. Controls and lists sit on carved-wood panels.
-- **Vellum** is for what you read or act on: the chapter tracker, the Kindling panel, Grimoire pages, contracts and every dialog. It's warm, lifted dark vellum lit by a candle from above, framed in gold with an inner gold rule.
-- Vellum stands out by warmth, light and frame, not brightness (bright bone paper glared at 15:1 against the room).
-- It works by re-mapping the semantic tokens inside `.paper` / `.modal`. Text contrast on it: bone 10.7:1, muted ≥ 5.2:1, gold ≥ 6.2:1.
-
-### Folk colour per skill
-`data-skill` sets `--skill`:
-- Herbalism: moss
-- Scavenging: cornflower
-- Chandlery: candle gold
-- Sigilcraft: poppy
-- Scholarship: lilac-indigo
-- Ritualism: plum
-
-They're used on tile stripes, icons, XP bars, item chips and icons, Start outlines, the running row's glow, talent leaves, project effects and the blessed-skill bars. All are ≥ 5:1 on the dark surfaces.
+- **Base: "Soot & Linen".** Each colour has one job: red = act here, verdigris = selected or done, slate = info, gold = rare, skill colours = identity.
+- **Look: "Hearth".** Warm grounds, small-caps headings, and the running work is the one thing that glows.
+- **Flair: "Folk".** Embroidery bands, brass corner marks on cards, item tokens, a running row that fills as it works, and pressable buttons. Ornament always does a job.
+- **Places:** each tab has its own colour, hero band and material, on one shared shell.
 
 ---
 
-## 2. Components: `src/ui/styles/components.css`
-`btn` (primary / ghost / danger), `panel`, `bar`, `chip` (`short` = missing input, `enough`, `accent` = output), `tabs`, `toast`, `modal`, `ledger` (item/count lists), `note-quote`, `field`.
+## 1. Hard rules
 
-- **Item chips** (`ItemChip`, `src/ui/components/ItemLookup.tsx`): every item name goes through it, so any item is clickable for a lookup. Add `plain` for text-style links in lists.
-  - A chip is always coloured and marked with the icon of the item it names, in the colour of the skill that *makes* the item, wherever it appears. Tallow is cornflower (Scavenging) even inside a Chandlery row. Bought items (bread) stay bone.
-  - Inputs show have/need. **Enough** has a solid border and a quiet count. **Short** has a dashed border and a warning pill.
-  - Clicking a short chip opens a small menu. It offers to start the action that makes the item, or says why it can't start yet, and has "Look up".
-- **Buttons:** the primary gold is kept for one decision at a time (Place, Claim, Build when ready, Begin the rite, a card's Go). Start buttons on recipe rows are quiet skill-coloured outlines until hovered. Disabled buttons say what's missing, on the button ("Needs 2 beeswax", "Level 8") or in its tooltip.
-- **The skill picker** (`components/SkillPicker.tsx`, used for omen blessings and XP choices): a dialog with the effect line in candle gold on top, then anything already active, then one tile per open skill. Each tile has a skill-colour stripe, the icon, the name and the level, and "working on it now" or "helps your next step" when that applies.
-- **Dialogs** (`components/Modal.tsx`) stack: Escape closes only the top one. Cards that carry a task (task cards, the omen-shelf card) close only with their button or Escape, never with a stray click on the backdrop.
-
----
-
-## 3. Art and icons: `src/ui/art/`
-- **Icons:** 24px grid, 1.75 stroke, round joins, `currentColor`, with a few solid "ink" fills. Decorative icons get `aria-hidden`; pass `title` when an icon carries meaning on its own.
-- **Item icons:** one woodcut glyph per item (`src/ui/art/items.tsx`, `ItemIcon`), on the same grid and stroke. They take `currentColor`, so a chip colours each with the skill that makes it. They appear on item chips (recipe rows, tracker, task cards), in Stores, on contracts and projects, and in the Circle's picker and slots. **Add a glyph whenever you add an item.**
-- **Ornaments:** embroidery band, papercut rosette and sigil divider. All decorative.
-- **No emoji as icons.** Only SVG.
+1. **No italics anywhere.** Lore uses Alegreya roman; the serif alone marks it.
+2. **No dashed or dotted outlines** on items or disabled buttons. "Short" is a red-tinted chip with a red count pill. Disabled is a solid dark ground with the reason in words ("Needs 2 beeswax", "Level 6").
+3. **Red fill only on the one thing to press** (Claim, Place in the Circle, Begin the rite, a card's Go). Row Start buttons are neutral until you hover them; the omen's "Bless a skill" is a ghost button with the invite outline.
+4. **Gold only means rare:** rare finds (✦), Resplendent, keepsakes, step rewards, insight ✦. Never coin, level-ups, frames or headings.
+5. **Skill colours** go on icons, stripes, bars and the running row only. Item chips are neutral with a coloured icon badge.
+6. **Contrast:** text ≥ 4.5:1 (≥ 3:1 at ≥ 24px). Run the design audit on every tab after a UI change (see §9). It should report 0 contrast fails, 0 italics and nothing under 12px.
+7. **Colour is never the only signal:** every colour has a glyph or words beside it (✓ done, ✦ rare, "need 4", a skill name next to its stripe).
+8. **Reduced motion** (the OS setting, or `html[data-motion="reduced"]` from Settings) stops every loop except progress bars, which carry information.
 
 ---
 
-## 4. The living sanctum: `src/ui/art/Sanctum.tsx`
-- **One code-drawn SVG scene** at the top of the House tab, woodcut and papercut in style: hatch-pattern shadows, flat ink shapes, bone highlights, ember and gold light.
-- **Its state is derived only from progress** (`sanctumView`). The five Chapter 1 states:
-  1. dark and cold (moonlight only)
-  2. candlelit (first tallow candle)
-  3. warded (salt line, then iron nails over the door)
-  4. circle awake (the Ward placed)
-  5. cellar open (after the Rite)
-- **Props appear as you earn them:**
-  - drying rack, reading lamp, omen shelf (stored omens glow) — the house projects
-  - dream pillow, honey-light jar
-  - Janko by the fire
-  - the embroidered cloth for a Resplendent rite
-  - Blessing smoke
-- **Accessibility:** a caption and `aria-label` describe the room in one sentence.
-- **Motion:** candle and hearth flicker, drifting smoke, and a bright circle while the rite runs. The OS reduced-motion preference and the in-game setting stop all of it.
+## 2. Tokens: `src/ui/styles/tokens/`
+
+Components use the semantic tokens only (`--color-text`, `--color-action`…), never raw values. The raw palette lives in `palette.css`; roles in `semantic.css`.
+
+### Colour
+| Role | Token | Value |
+|---|---|---|
+| Room | `--color-bg` | `#0e0c0a` |
+| Band (top bar, sidebar) | `--color-band` | `#16130f` |
+| Panel | `--color-surface` | `#1f1b17` |
+| Raised (hover, selection, dialogs) | `--color-raised` | `#2b2621` |
+| Sunken (bar tracks, disabled) | `--color-sunken` | `#0b0908` |
+| Row divider / input border | `--color-border-soft` / `--color-border` | `#342e28` / `#4b433b` |
+| Vellum (the tracker, Grimoire pages, the chapter end) | `--color-vellum` | `#2c251d` |
+| Text 1 / 2 / 3 | `--color-text` / `-2` / `-3` | `#ede7db` / `#bfbaaf` / `#99958c` |
+| Action (red fill) | `--color-action` | `#b63325`, hover `#a1271e`; the pressable button is a `#c73a2b → #a8291f` gradient on a 2px `#5c150f` base |
+| Danger text, "short" | `--color-danger` | `#ef816b` |
+| Selected, success, done | `--color-selected` / `--color-success` | `#5ebaaf` (verdigris) |
+| Info (omens) | `--color-info` | `#92b3cb` |
+| Rare | `--color-rare` | `#edb345` |
+| Stitch (ornament only) / oxblood | `--color-stitch` / `--color-oxblood` | `#c93126` / `#7f2119` |
+| Brass corner marks / arrows | `--color-brass` / `--color-arrow` | `#9a7a45` / `#b39463` |
+
+**Skills** (`[data-skill]` sets `--skill`): Herbalism lichen `#94be58` · Scavenging river `#469bd1` · Chandlery beeswax `#ebd56a` · Sigilcraft poppy `#ee694f` · Scholarship lilac `#cdaef2` · Ritualism rowan `#db6ea5`. They're spread in lightness so they stay apart for colour-blind players.
+
+**Places** (`[data-place]` sets `--place` and `--place-deep`): House ember `#e2703f` · Stores brass `#b39463` · Grimoire lilac · Village verdigris · Circle rowan.
+
+**Linen theme** (`[data-theme="linen"]`): a light alternative with the same roles, kept opt-in for a future setting.
+
+The code-drawn **Sanctum** scene keeps its own art palette (`--ink-*`, `--bone-*`, `--gold-*`, `--ember-*` in `palette.css`); UI components never use those.
+
+### Type (`type.css`)
+- **Alegreya Sans** (`--font-ui`): everything interactive and every number. Tabular lining figures everywhere.
+- **Alegreya SC** (`--font-display`): panel titles, tab labels, hero titles, column headers, the wordmark. Column headers and micro-labels are 12px with +0.06em tracking, the only tracked text.
+- **Alegreya** (`--font-lore`), roman only: grandmother's lines, notes, hero lore lines.
+- **Scale:** 12 / 13 / 14 / 15 / 17 / 21 / 28px (`--text-2xs` … `--text-2xl`); hero titles 30px; table rows 15px; lore 17 / 1.5.
+- All three are self-hosted through `@fontsource` (Latin-extended and Cyrillic).
+
+### Space, shape, motion (`space.css`)
+- **Space:** 4 / 8 / 12 / 16 / 24 / 32 / 48px.
+- **Row height** `--row-h`: 46px (roomy, the default), 36px (`data-density="comfortable"`) or 32px (`"compact"`), set from Settings → Row density.
+- **Radii:** 3px buttons and chips · 4px panels · 6px dialogs · 0 for bars (woodcut, not pills).
+- **Elevation is lightness.** `--shadow-2` only for dialogs and popovers.
+- **Motion:** 120 / 220 / 420ms, `cubic-bezier(0.2, 0.7, 0.2, 1)`. Fades and small rises. Only rare floats glow.
 
 ---
 
-## 5. Motion
-- **Timed progress** (actions, rite phases) uses `TimedBar` (`src/ui/components/Bar.tsx`). It reads the progress once per repetition, then a CSS `scaleX` animation runs on the compositor, so it moves every frame at no cost to the game loop. Key it per repetition.
-- **Stepwise progress** (XP, goals, steps, insight, deliveries) uses `Bar`, which eases between values.
-- **Progress bars keep filling under reduced motion**, because they carry information. Everything decorative stops.
-- **Transform, opacity and box-shadow only**, for every animation.
-- **Live touches:** the running row breathes, skill tiles flash on level-up, items that just arrived get a short highlight in Stores, and the purse counts up.
-- **The Circle fills with feeling:** the glow and inner ring brighten, the marker dots light in order, the outer ring's drift speeds up, items settle into their slots, and the Circle flares when it answers.
-- **Invitations:** a slow gold glow (the `invite` animation) marks something worth a look: the omen shelf's project row while it's pointed out, and the Bless button when an omen is stored.
-- **Modifier classes are prefixed** (`is-glow`, `is-discovered`…) so a state can never collide with a component class. That collision once squashed the Circle's result line into a 10px dot.
+## 3. Components: `src/ui/styles/components.css`
+
+- **Buttons:** `btn-primary` (the pressable red; it drops 1px when pressed), `btn-ghost` (1px border), `btn-start` (a row's Start: neutral, then the skill's tint on hover), `btn-text`, `btn-sm`, `icon-btn`. `btn-invite` adds a stitch-red outline that pulses three times, then stays. Disabled buttons say why.
+- **Panels:** separated by value, not frames: a faint top-light gradient, a warm hairline and **brass corner marks**. Panel titles are small caps with a short cross-stitch underneath.
+- **Vellum** only where it means a written page: the chapter tracker (the lit card, with brass corners), Grimoire pages, and the chapter-end card.
+- **Progress bars:** square ends, flat fills on a sunken track. Action timers and XP take the skill colour; done is verdigris; the rite is stitch red; buff drains are the skill at 70%. Timed bars run on the compositor (`TimedBar`, keyed per repetition).
+- **Item chips** (`ItemChip`): a neutral token with the item's glyph on a tinted badge in the producing skill's colour; counts are pills. Short = red tint and a red pill; clicking a short chip offers to start what makes it. `plain` is a text link for lists.
+- **Tabs:** Alegreya SC 16px in text-3. The active tab gets text-1, its icon in the place colour, a soft glow in the place colour and a stitched red underline.
+- **Dialogs** stack (Escape closes the top one). Task cards and the omen-shelf card close only with their button or Escape. Dialogs are the raised colour; the chapter end is vellum.
+- **Toasts** (bottom-left): raised, with a 3px edge (verdigris; gold for rare).
+- **The skill picker:** tiles with the skill stripe; the one you're working on is outlined.
+- **Settings:** fields and a segmented control (`seg`) for choices like Row density.
 
 ---
 
-## 6. Feedback
-The code: `src/ui/fx.ts`, `components/Floats.tsx`, `useFx.ts`, `components/ActivityFeed.tsx`.
+## 4. Icons and ornament: `src/ui/art/`
 
-### Floats
-- `emitFx({ kind: "float", text, anchors, tone })` sends a label rising from the first matching element. The tones are item, rare (gold with ✦), coin, level and good.
-- **Floats queue per anchor:** floats from the same spot leave 220ms apart and stack upward instead of overlapping.
-- Insight never toasts: it floats quietly on the Grimoire tab.
-
-### The feed and toasts
-- **The activity feed** is one quiet line under the top bar with the latest routine event. It fades in, never changes height, and announces politely. Click it for the last 30 (Escape or a click outside closes the list).
-- **Routine events go to the feed:** steps done, plain level-ups, omens found or lost, claims, talent picks, partial deliveries, a fallback switch, pages that teach nothing new.
-- **Toasts are only for big moments:** a part placed, a project built, a contract done, a level-up that opens a new tier or recipe or a talent choice, a page that teaches a recipe, rare finds, curios, the rite beginning, and refusals ("why that didn't work"). Toasts announce politely and never steal focus.
-
-### Moments
-- The `unlocked` event puts a "New" badge on fresh recipe rows; `helped` stamps "Helped ✓" on a finished contract's slot; `placed` blooms a petal on the Kindling rosette.
-- The tracker ticks and surges when a step completes, and the next task card waits 800ms.
-- At the Circle: glows light one by one, "Closer!" appears when a try beats your best, and a discovery gives a spark ring and a blooming rosette.
+- **Icons** (`icons.tsx`): 24px grid, 1.75 stroke, round joins, `currentColor`, a few solid ink fills. Skill icons take the skill colour; panel icons take brass or text-3.
+- **Item icons** (`items.tsx`, `ItemIcon`): one glyph per item on the same grid, coloured by the producing skill. **Add a glyph whenever you add an item.**
+- **Ornament, few places, big impact:**
+  - the **embroidery band** (12px, stitch red, a CSS mask repeated with `round` so it never ends on half a diamond) under the top bar, under each hero (in the place colour) and under the skill header (in the skill colour)
+  - the **cross-stitch** under panel titles and the active tab, and the tracker's stages counted as stitches
+  - the papercut **rosette** in the wordmark
+  - brass corner marks on panels
+- **No emoji.** Unicode only as marks: `→` inputs to outputs, `·` separators, `✦` rare, `×` multipliers, `✓` done.
 
 ---
 
-## 7. Layout rules
-- **Rows never shift.**
-  - Hover changes only the **border and background tint**: no lift, no size change.
-  - Action rows keep one height. The rates line always takes a single line (ellipsis, full text in the tooltip), and hover or focus only reveals it (`visibility` / `opacity`).
-  - The control column has a fixed minimum height, whether it holds Start or the bar.
-  - The top bar's action name has a fixed slot; the feed line never changes height.
-- **Click anywhere on a row to start its recipe.** The Start button stays for the keyboard; chips and their menus keep their own clicks.
-- **Hierarchy:** the running action is the brightest thing on the House screen.
-- **Structure:**
-  - The top bar is its own dark band, with the feed under it, then an embroidery band and the tabs.
-  - Tabs are ribbons with a stitched top; the active one is vellum. New tabs show a dot until first visited.
-  - Section titles carry a red cross-stitch underline.
-- **Main and sidebar:** the tab's content on the left; the chapter tracker and the omen shelf in the sidebar.
-- **Narrow screens:** below 860px, the main content comes before the sidebar, and skills become a horizontal strip. A skip link jumps to the main content.
-- **Accessibility:**
-  - visible gold focus ring on everything
-  - tabs support arrow keys, Home and End
-  - modals move focus inside, close with Escape, and restore focus afterwards
-- **Colour is never the only signal.** A missing input is ember *and* its chip keeps the count; a locked recipe says "Level N".
-- **Writing rule:** effects lead, in plain numbers generated from the data (`src/ui/effects.ts`). Flavour is one short line at most.
+## 5. The shell (every tab)
+
+- **Top bar** (60px, band colour): rosette and "Ritual Idle" (Alegreya SC 24px), the **now-working band**, active buff chips, the purse and the settings cog. The now-working band has the skill's colour at 14% over the band, a 3px skill edge, a ring and a glow, a 12px small-caps skill label over the recipe name (SC 17px), an 8px timer bar, the time left and Stop. Idle, it reads "Next: <task>" with Go. The rite shows its phase the same way.
+- **Embroidery band** directly under the top bar.
+- **Tabs** with the **activity feed** beside them: one quiet line with the latest routine event; click it for the last 30.
+- **Sidebar** (320px, band colour): the chapter tracker (stages as stitches, Claim buttons, the stage choice, the current step with its chips and Go, the side-project line), then **Omens & blessings** (stored omens and active blessings with draining bars).
+- **Room light:** a radial wash in the place colour at the top of the main column.
 
 ---
 
-## 8. Screens and panels
+## 6. Places (each tab)
 
-### The top bar (`components/TopBar.tsx`)
-- The title with a rosette, then what's running: the skill icon, the action's name, its bar, the seconds left and **Stop**.
-- During the rite: "Kindling · phase n/5", the phase bar and the time left.
-- When idle: "Next:" with the current task and a **Go** button (or why work stopped).
-- Active blessings as chips naming the blessed skill and the time left, the purse (once the village is open), and the Settings gear.
+Every tab adds four things and nothing more: a **place colour**, a **hero band** (big mark, the place name in SC 30px, one lore line, 2–3 key numbers, an embroidery band in the place colour; `PlaceHero`), a **material**, and **one signature glow**.
 
-### The chapter tracker (`components/ChapterTracker.tsx`)
-- Vellum, at the top of the sidebar: "Chapter I · Hearth", done/total and a bar.
-- Done tasks with ✓; the current one with ▶, "step k of n", a thin bar, the current step with its reward in candle gold, and the needs as chips (a skill level short shows as a short chip). There's no hint paragraph. One "???" ahead.
-- Its button is **Place in the Circle** (gold) once the part is ready, and **Go** otherwise. Go leads to the skill that makes the current step's first missing ingredient.
-- **Claim buttons:** gold and full-width ("Claim · +2 beeswax"). An XP choice opens the skill picker.
-- **The stage choice:** after the Light, the tracker shows "Choose what to make next. Any order works." with one skill-coloured tile per remaining part (the part's name and "brings <skill>").
-- **The omen-shelf pointer:** see House projects below.
+- **House** (ember): the Sanctum scene is the hero, behind a dark gradient with a slow hearth flicker; stats Skills, Working on, Away cap.
+  - **Skill list:** a 3px skill stripe on each item; the selected skill gets an 11% skill tint and a skill-coloured name; the **running skill** also shows its recipe, an animated timer bar and the time.
+  - **Skill header:** a 12% skill tint, the name in SC 24px, XP/h now and Next level, and an embroidery band in the skill colour.
+  - **Recipe table:** fixed columns `icon | recipe | Tier | Time | XP | inputs → makes | XP/h | control`, small-caps column labels, tabular numbers. The whole row starts the recipe. The **running row** fills left to right with the skill colour over one repetition (a `::before` with `sweep`, restarted per repetition), with a 3px edge, a 1px ring and a glow. Rows never change size on hover (only their background changes). Under 820px the inputs move under the name and XP/h hides.
+  - **Stock:** two lists per skill, **Inputs** (short ones first, a red pill and "need N") and **Made here**; five rows each, then "Show all N".
+  - Then the talent vine and House projects (with the omen-shelf pointers: a New tag and the invite outline).
+- **Stores** (brass): hero with Kinds and Things; the inventory grouped by category, with icons.
+- **Grimoire** (lilac): hero with Insight to spend (✦), Hidden recipes, Secrets. An **open book**: a ribbon index (the active entry marked by a lilac gradient and a 3px edge; insight in a box at the top) and a **vellum page** (title in SC 30px, a "Gives" line, a "Next step" callout with a lilac edge, the proofs grid Belongs / Crossed out / Still possible, hints with glowing roman numerals, your tries with lit glow dots).
+- **Village** (verdigris): hero with Trust (and its bar) and Coin. **Knocks at the door** as pinned notices: daylight paper (`#c9bda6 → #b9ab92`, text `#1a1512`), a red pin and a slight tilt; item icons on dark badges; delivered/needed per item with a bar; a notice you can finish gets a verdigris ring and glow; an empty slot shows the Helped stamp and the refill time. The **shop** is a ledger with a 34px icon tile per item: "Buy · (coin) N", or "Need N more".
+- **Circle** (rowan): hero with Parts placed and Ritualism. The **night stage**: the five-petal Kindling rosette as hero art (the outer ring drifts; a placed petal is filled in its skill colour and glows; the next pulses with a dashed stroke), and the parts beside it (placed: a filled disc and its line; open: skill tint, ring, chips, Place or "Not ready yet"; later: an outlined disc and "Later · brings X"). The rite card with offerings and its outcome sits under the parts. Below: **Experiments** (slots that glow in the place colour when filled) and "Pick from what you hold".
 
-### Task cards (`components/TaskCard.tsx`)
-- The title is "New: <task>", followed by what opened and the steps. The current step is bold with ▶; done steps get ✓. Each step's reward sits on the right in candle gold.
-- Then the part's needs as chips, and a primary **Go: <current step>** button.
-- Grandmother's quote comes last, in small muted italics. The full note lives in the Grimoire journal.
+---
 
-### The House tab (`screens/House.tsx`)
-- **The sanctum**, then the **skill list:** only unlocked skills, plus one dashed **Next** tile that names the next skill and what brings it (or says it's your choice while the next part is still yours to pick). A tile shows "+N" in its skill colour while talent choices wait.
-- **The skill header:** the icon, the name and "About Xm to level N".
-- **Recipe rows:** the name and "Tier N · Lvl L · time · XP", input chips → output chips, the rates line, and Start or the running bar. Only what you've reached plus the next tier shows. A recipe not yet learned from a page reads "Unknown recipe · Learned from a burnt page".
-- **Talents as a vine** (`components/TalentPanel.tsx`, `components/TalentTree.tsx`), under the recipes:
-  - An embroidered vine from the skill at the root; level 3 is nearest the root, then 6, 9 and 12.
-  - Each level has a pair of leaves, one on each side, each with the talent's name and its effect in plain words.
-  - Taken = filled in the skill colour; the other side dims (click it to switch, free); not reached yet = a stitched outline, disabled, with "Opens at level N".
-  - The panel header says "A talent to choose" or "Next choice at level N", with a free Reset.
-- **House projects** (`components/Projects.tsx`): a panel at the bottom of the House tab, shown once Chandlery is open, marked "Optional · built once, kept for good" (or "N ready to build" in candle gold while anything can be built).
-  - Each project card has its icon, name, effect line, item chips with have/need, and a **Build** button (gold only when everything is there; otherwise disabled, with the reason in its tooltip). The effect takes the helped skill's colour.
-  - Built projects fold into one "In the house:" line at the bottom.
-  - Building the omen shelf opens a short note on what omens do.
-- **Pointing out the omen shelf** (`components/ShelfCard.tsx`, the tracker, the Projects panel), once the Light is placed and until the shelf is built:
-  - A one-time card in grandmother's voice ("My omen shelf is bare…"), with the shelf's item chips, **Show me the projects** (scrolls to the panel) and **Later**. It never shows over another card.
-  - A quiet "Side project · The omen shelf" block under the tracker's steps: muted label, item chips, and **Go** (it reads **Build it** once everything is there).
-  - The shelf's project row carries a gold **New** tag and the slow `invite` glow.
-  - A one-time toast when it could first be built. One-time pointers are remembered in `settings.introsSeen`.
+## 7. Feedback
 
-### The omen shelf (`components/OmenShelf.tsx`)
-- In the sidebar, once the shelf is built: a jar per stored omen, the effect in one line, one **Bless a skill** button (it opens the skill picker, running skill first, marked "working on it now"), and the active blessings, each with its skill icon, a draining bar in the skill colour and the time left.
+- **Floats** (`emitFx`): rise from their anchor and queue per anchor (220ms apart). Coin and items are linen, a level uses the skill colour, good is verdigris, rare is gold with ✦ (the only one that glows).
+- **The feed vs toasts:** routine events (steps, plain level-ups, omens, claims, talent picks, partial deliveries) go to the feed. Toasts are for big moments: a part placed, a project built, a contract done, a new tier or talent, a new recipe, rare finds, curios, the rite beginning.
+- **Small moments:** the level number pops, a skill item flashes on level-up, a new recipe row gets a "New" mark, the Helped stamp, the tracker's stitch pops, staggered Circle glows, "Closer!", the discovery bloom.
 
-### Stores (`screens/Stores.tsx`, a jar icon)
-- The inventory on its own tab, grouped by where things come from, with filter chips. There's no separate "needed now" strip, because the tracker's chips already show what the current step needs.
+---
 
-### The Village (`screens/Village.tsx`)
-- **Contracts**, on vellum: who's asking, their line, then one row per item: a chip for what's still needed (✓ once done), "n/N delivered" and a thin bar. Then "Pays N coin · +N trust", **Deliver what I have** (gold when you hold any of it), which becomes **Deliver and finish** when it would complete, and **Turn away** (ghost). The panel header shows trust and "better work at N".
-- **The shop:** repeatable provisions only (bread, tallow). Each row says what you get, what it's for and how many you hold. The button reads "Buy · N" when you can afford it, and "Need N more" when you can't.
+## 8. Layout rules
 
-### The Grimoire (`screens/Grimoire.tsx`)
-- Insight shows as "✦ N insight" in candle gold. Hint buttons read "Name one ingredient · 6 ✦" and are disabled with the shortfall in their tooltip.
-- Page layout and guidance are in [GRIMOIRE.md §9](GRIMOIRE.md).
+- **Nothing shifts.** Hover changes only background, border or tint; fixed columns and fixed slots keep rows and the top bar still while numbers change.
+- **Click the row** to start a recipe; the Start button is there for the keyboard. Chips inside keep their own menus.
+- **The screen should work in greyscale:** room < band < panel < raised in lightness.
+- **Narrow screens:** under 1100px the skill list runs across the top and the sidebar narrows; under 860px everything stacks into one column.
+- **Accessibility:** focus is a 2px linen outline with a 2px offset; every icon that carries meaning has a label; tabs use arrow keys; dialogs trap focus and restore it.
 
-### The Circle (`screens/Circle.tsx`, `components/KindlingPanel.tsx`)
-- **The Kindling panel** is vellum and sits at the top of the Circle tab.
-  - A **rosette of five petals**, one per part. A petal is dashed until its part is placed, then filled in its skill's colour, with a bloom as it lands. While the rite runs the heart lights, the ring drifts, and the current phase's petal pulses.
-  - **Part rows:** placed = a tick and the one-line "placed" text; open = skill-coloured border, item chips with have/need and a **Place in the Circle** button (gold only when ready); later = the name and "Later · brings <skill>", or "Yours to choose" with **Make this next** during the stage choice.
-- **Experiments** are a separate panel below, marked optional (see [GRIMOIRE.md §9](GRIMOIRE.md)).
+---
 
-### The rite card (the Kindling panel's **Wake it** block)
-- The Ritualism level needed, then "About 3 minutes. It runs by itself, even while you're away, and never fails."
-- **Offerings (optional):** the hearth candle as a checkbox (disabled with the reason when you have none), and the Hearth mark and Still Night as ✦ (met) or ◇ (not yet).
-- The outcome line names the quality and what each gives ("none = Sound, 1–2 = Fine (choose a keepsake), all 3 = Resplendent (choose two, and more lore)"), and that the story rewards are the same either way. Then **Begin the rite**.
-- While it runs: the phase and its part, its bar and the time left, the outcome, and the rite log in grandmother's voice.
+## 9. Checking a change
 
-### The chapter end (`components/ChapterEnd.tsx`)
-- A dialog: the sanctum as a painting, the finale line, "The Kindling was <quality>", a ledger of what it brought (skill caps for Chapter II, Janko and his effect, the cellar, the embroidered cloth for Resplendent), the **keepsake pick** after a Fine or Resplendent rite, the lore, "Chapter II · Grave comes in a later build", and **Back to the house**.
-- **Keepsake pick** (`components/KeepsakePick.tsx`): "The circle leaves something behind: choose one / two", then three vellum cards (name in gold, effect, an italic line of lore). A chosen card turns solid gold with a ✓; once the choices are made, the rest dim. Nothing forces a choice: if the card is closed first, the tracker shows a gold **Choose a keepsake** button that opens the same pick in a dialog.
+1. `npm run dev`, then open the game on a test origin (e.g. `http://test.localhost:5391`), never the designer's `localhost` save.
+2. Check every tab at 1440px and 1000px.
+3. In the console, load and run the audit on each tab:
+   ```js
+   eval(await (await fetch("/docs/design_handoff/reference/ui_kits/ritual-idle/audit.js")).text());
+   RIAudit.run("House");
+   ```
+   Expect 0 contrast fails, 0 italics and nothing under 12px. Known false positives: floats caught mid-fade, and item icons on the Village notices (the audit measures them against the paper, but they sit on their own dark badge).
 
 ---
 
@@ -217,14 +164,15 @@ The code: `src/ui/fx.ts`, `components/Floats.tsx`, `useFx.ts`, `components/Activ
 - **insight**: the pool you *spend* on hints; **clues** are secrets' hints
 - **offerings**: the rite's optional extras that set its quality
 - **tier**: a group of recipes that opens together, every 3 levels
-- **contracts**: the village's asks, *delivered* (in parts or whole) and *finished*
+- **contracts**: the village's asks ("knocks at the door"), *delivered* (in parts or whole) and *finished*
 - **projects**: house upgrades you *build* from items
 - **bless a skill**: what you do with an omen (not "release")
 - **the feed**: the one-line log of routine events; **toasts** are for big moments
 - **recipe**: a craftable action
 - **hidden recipe**: a Grimoire entry found by hints
 - **secret**: found with no hints
-- **Stores**: the tab with the inventory (its panel is headed "Stores" too; "the pantry" is only the Search the pantry action, and "the omen shelf" is the project)
+- **Stores**: the tab with the inventory ("the pantry" is only the Search the pantry action, and "the omen shelf" is the project)
+- **Omens & blessings**: the sidebar panel with stored omens and active blessings
 - **insight** and **trust** are always shown together with what they unlock
 
 ---
@@ -242,3 +190,4 @@ One short entry per round, oldest first. The reasons are in [CONCEPT.md's decisi
 - **Fourth patch:** the activity feed and fewer toasts; floats that queue; rows that stay put and start on click; "Tier N · Lvl L" rows; the stage choice; the talent vine; House projects; contracts delivered in parts; the idle rite card with offerings; a Stores tab; an icon for every item; text one step larger. Tend, the tree of life, the ceremony and the shop's one-time items are gone.
 - **After the fourth patch:** pointers to the omen shelf (a one-time card, a tracker block, a "New" tag and glow, a one-time toast). This doc was reorganised by topic, describing the current UI.
 - **Rite quality pays:** the keepsake pick on the chapter-end card (and its tracker button); the rite card says what each quality gives.
+- **Design system v0.4, "Hearth + Folk":** from the design handoff. The brown-and-gold "candlelit vellum" look is replaced: Soot & Linen roles (red acts, verdigris selects, gold is rare) on warm Hearth grounds, Alegreya Sans for the UI, no italics or dashed outlines, brass corner marks, the embroidery band, a now-working band in the top bar, a real recipe table with a filling running row, per-skill stock lists, a place colour and hero band per tab (the Grimoire as a book, Village notices, the Circle at night), and a Row density setting.

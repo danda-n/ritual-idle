@@ -6,7 +6,7 @@ import { beginRite, canPlace, chooseStage, placePart, type Result } from "../../
 import { stageChoices } from "../../engine/progress";
 import { canBeginRite, canOffer, offeringsMet, riteLog, riteQuality, riteShortfall } from "../../engine/rite";
 import type { GameState } from "../../engine/state";
-import { CircleRiteIcon, SkillIcon } from "../art/icons";
+import { SkillIcon } from "../art/icons";
 import { formatClock } from "../format";
 import { useRecentFx } from "../useFx";
 import type { FxEvent } from "../fx";
@@ -29,14 +29,18 @@ export function KindlingPanel({ state, act }: { state: GameState; act: Act }) {
   const allPlaced = placed === PART_IDS.length;
 
   return (
-    <section className={`panel paper kindling ${performing ? "performing" : ""} ${completed ? "done" : ""}`} aria-labelledby="kindling-heading">
-      <div className="panel-title">
-        <CircleRiteIcon size={20} />
-        <h2 id="kindling-heading">{HEARTH_RITE.name}</h2>
-        <span className="panel-aside num">{completed ? `Performed: ${QUALITIES[completed.quality]}` : `${placed}/${PART_IDS.length} placed`}</span>
-      </div>
-      <div className="kindling-body">
+    <section className={`circle-stage ${performing ? "is-performing" : ""} ${completed ? "is-done" : ""}`} aria-labelledby="kindling-heading">
+      <div>
         <Rosette state={state} fresh={fresh} />
+        <p className="kindle-caption">
+          <span className="label">{HEARTH_RITE.name}</span>
+        </p>
+      </div>
+      <div className="stage-side">
+        <div className="stage-head">
+          <h2 id="kindling-heading">The Kindling</h2>
+          <span className="meta num">{completed ? `Performed: ${QUALITIES[completed.quality]}` : `${placed}/${PART_IDS.length} placed`}</span>
+        </div>
         {!performing && !completed && (
           <ol className="parts">
             {PART_IDS.map((p) => (
@@ -45,13 +49,13 @@ export function KindlingPanel({ state, act }: { state: GameState; act: Act }) {
           </ol>
         )}
         {(performing || completed) && (
-          <div className="kindling-rite">
+          <>
             {performing && <Running state={state} />}
             <RiteLog lines={riteLog(state)} />
-          </div>
+          </>
         )}
+        {allPlaced && !performing && !completed && <Perform state={state} act={act} />}
       </div>
-      {allPlaced && !performing && !completed && <Perform state={state} act={act} />}
     </section>
   );
 }
@@ -63,10 +67,10 @@ function PartRow({ part, state, act, fresh }: { part: PartId; state: GameState; 
   if (status === "placed") {
     return (
       <li className={`part is-placed ${fresh ? "is-fresh" : ""}`} data-skill={skill}>
-        <span className="part-mark" aria-hidden="true">✓</span>
+        <span className="ic" aria-hidden="true">✓</span>
         <div className="part-body">
           <strong>{def.name}</strong>
-          <p className="part-line">{def.placed}</p>
+          <p className="lore">{def.placed}</p>
         </div>
       </li>
     );
@@ -75,14 +79,16 @@ function PartRow({ part, state, act, fresh }: { part: PartId; state: GameState; 
     const choosable = stageChoices(state).includes(part);
     return (
       <li className={`part is-later ${choosable ? "is-choosable" : ""}`} data-skill={skill}>
-        <span className="part-mark" aria-hidden="true">◇</span>
+        <span className="ic" aria-hidden="true">
+          <SkillIcon skill={skill} size={16} />
+        </span>
         <div className="part-body">
           <strong>{def.name}</strong>
           <span className="muted part-later">
             {choosable ? "Yours to choose" : "Later"} · brings <SkillIcon skill={skill} size={12} /> {SKILLS[skill].name}
           </span>
           {choosable && (
-            <button className="btn btn-ghost part-place" onClick={() => act((s) => chooseStage(s, part))}>
+            <button className="btn btn-ghost btn-sm part-place" onClick={() => act((s) => chooseStage(s, part))}>
               Make this next
             </button>
           )}
@@ -93,7 +99,9 @@ function PartRow({ part, state, act, fresh }: { part: PartId; state: GameState; 
   const reason = canPlace(state, part);
   return (
     <li className={`part is-open ${reason === null ? "is-ready" : ""}`} data-skill={skill}>
-      <span className="part-mark" aria-hidden="true">▶</span>
+      <span className="ic" aria-hidden="true">
+        <SkillIcon skill={skill} size={16} />
+      </span>
       <div className="part-body">
         <strong>{def.name}</strong>
         <div className="part-needs">
@@ -101,7 +109,7 @@ function PartRow({ part, state, act, fresh }: { part: PartId; state: GameState; 
             <ItemChip key={item} item={item} need={need} />
           ))}
         </div>
-        <button className={`btn ${reason === null ? "btn-primary" : "btn-ghost"} part-place`} disabled={reason !== null} onClick={() => act((s) => placePart(s, part))}>
+        <button className={`btn btn-sm ${reason === null ? "btn-primary" : ""} part-place`} disabled={reason !== null} onClick={() => act((s) => placePart(s, part))}>
           {reason === null ? "Place in the Circle" : "Not ready yet"}
         </button>
       </div>
@@ -114,27 +122,33 @@ function Rosette({ state, fresh }: { state: GameState; fresh: Set<string> }) {
   const fill = state.kindling.length / PART_IDS.length;
   const lit = !!state.rite.performing || !!state.rite.completed;
   return (
-    <div className={`kindling-rosette ${lit ? "is-lit" : ""}`} style={{ "--fill": fill } as CSSProperties} aria-label={`The Kindling: ${state.kindling.length} of ${PART_IDS.length} parts placed`} role="img">
+    <div className={`kindle ${lit ? "is-lit" : ""}`} style={{ "--fill": fill } as CSSProperties} aria-label={`The Kindling: ${state.kindling.length} of ${PART_IDS.length} parts placed`} role="img">
       <svg viewBox="-60 -60 120 120" aria-hidden="true">
         <defs>
           <radialGradient id="kindling-glow">
-            <stop offset="0.3" stopColor="var(--gold-400)" stopOpacity="0.5" />
-            <stop offset="1" stopColor="var(--gold-400)" stopOpacity="0" />
+            <stop offset="0.25" stopColor="var(--place)" stopOpacity="0.45" />
+            <stop offset="1" stopColor="var(--place)" stopOpacity="0" />
           </radialGradient>
         </defs>
-        <circle className="kindling-glow" r="58" fill="url(#kindling-glow)" />
-        <circle r="50" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="2 3" className="kindling-ring" />
+        <circle r="58" fill="url(#kindling-glow)" opacity={0.25 + fill * 0.55} />
+        <g className="ring-out">
+          <circle r="52" fill="none" stroke="#6b5a50" strokeWidth="0.8" strokeDasharray="2 3" />
+          {Array.from({ length: 10 }, (_, i) => (
+            <circle key={i} r="1.4" cx={52 * Math.cos((i * Math.PI) / 5)} cy={52 * Math.sin((i * Math.PI) / 5)} fill={i < Math.round(fill * 10) ? "var(--place)" : "#4b433b"} />
+          ))}
+        </g>
+        <circle r="45" fill="none" stroke="#4b433b" strokeWidth="0.5" />
         {PART_IDS.map((p, i) => {
           const a = (i * 2 * Math.PI) / PART_IDS.length - Math.PI / 2;
           const on = state.kindling.includes(p);
           const now = state.rite.performing && HEARTH_RITE.phases[state.rite.performing.phase]?.part === p;
           return (
-            <g key={p} data-skill={PART_DEFS[p].skill} className={`petal ${on ? "is-on" : ""} ${now ? "is-now" : ""} ${fresh.has(p) ? "is-fresh" : ""}`} transform={`translate(${34 * Math.cos(a)} ${34 * Math.sin(a)}) rotate(${(a * 180) / Math.PI + 90})`}>
+            <g key={p} data-skill={PART_DEFS[p].skill} className={`petal ${on ? "is-on" : ""} ${!on && partState(state, p) === "open" ? "is-next" : ""} ${now ? "is-now" : ""} ${fresh.has(p) ? "is-fresh" : ""}`} transform={`translate(${34 * Math.cos(a)} ${34 * Math.sin(a)}) rotate(${(a * 180) / Math.PI + 90})`}>
               <path d="M0 -14 C 9 -8, 9 8, 0 14 C -9 8, -9 -8, 0 -14 Z" />
             </g>
           );
         })}
-        <circle r="12" className="kindling-heart" />
+        <circle r="11" className="heart" />
       </svg>
     </div>
   );

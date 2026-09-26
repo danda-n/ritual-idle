@@ -5,7 +5,7 @@ import { actionDurationMs, activeBuffs } from "../../engine/modifiers";
 import { currentNote, isFeatureOpen } from "../../engine/progress";
 import { taskName, taskPlace, type Place } from "../tasks";
 import type { GameState } from "../../engine/state";
-import { CircleRiteIcon, CoinIcon, CogIcon, SkillIcon } from "../art/icons";
+import { CircleRiteIcon, CoinIcon, CogIcon, MoonIcon, SkillIcon } from "../art/icons";
 import { Rosette } from "../art/ornaments";
 import { formatClock } from "../format";
 import { buffEffects } from "../effects";
@@ -17,14 +17,15 @@ export function TopBar({ state, onStop, stopNote, onSettings, onGo }: { state: G
   return (
     <header className="topbar">
       <div className="brand">
-        <Rosette size={26} className="brand-rosette" />
+        <Rosette size={24} className="brand-rosette" />
         <h1 className="brand-title">Ritual Idle</h1>
       </div>
       <Working state={state} onStop={onStop} stopNote={stopNote} onGo={onGo} />
       {activeBuffs(state).map((b) => (
-        <span key={`${b.id}:${b.skill ?? ""}`} className="chip accent buff-chip" title={buffEffects(b.id, b.skill).join(" · ")}>
+        <span key={`${b.id}:${b.skill ?? ""}`} className="buff-chip" data-skill={b.skill} title={buffEffects(b.id, b.skill).join(" · ")}>
+          <MoonIcon size={16} />
           {BUFFS[b.id].name}
-          {b.skill && ` · ${SKILLS[b.skill].name}`} <span className="num">{formatClock(b.endsAt - state.lastTickAt)}</span>
+          {b.skill && <span className="buff-skill"> · {SKILLS[b.skill].name}</span>} <span className="num muted">{formatClock(b.endsAt - state.lastTickAt)}</span>
         </span>
       ))}
       {isFeatureOpen(state, "village") && (
@@ -44,10 +45,13 @@ function Working({ state, onStop, stopNote, onGo }: { state: GameState; onStop: 
   const rite = state.rite.performing;
   if (rite) {
     return (
-      <div className="working" role="status">
-        <CircleRiteIcon size={20} />
-        <span className="working-name">
-          Kindling · phase {rite.phase + 1}/{HEARTH_RITE.phases.length}
+      <div className="working is-on is-rite" role="status" data-skill="ritualism">
+        <CircleRiteIcon size={22} />
+        <span className="working-what">
+          <span className="working-skill">The Kindling</span>
+          <span className="working-name">
+            Phase {rite.phase + 1}/{HEARTH_RITE.phases.length}
+          </span>
         </span>
         <TimedBar key={`phase${rite.phase}`} progress={rite.phaseMs / HEARTH_RITE.phaseMs} durationMs={HEARTH_RITE.phaseMs} label="Phase progress" />
         <span className="muted num">{formatClock(RITE_MS - (rite.phase * HEARTH_RITE.phaseMs + rite.phaseMs))}</span>
@@ -65,7 +69,7 @@ function Working({ state, onStop, stopNote, onGo }: { state: GameState; onStop: 
           <>
             <span className="muted">Next:</span>
             <span className="working-name">{taskName(goal)}</span>
-            <button className="btn btn-ghost" onClick={() => onGo(taskPlace(goal))}>
+            <button className="btn btn-ghost btn-sm" onClick={() => onGo(taskPlace(goal))}>
               Go
             </button>
           </>
@@ -79,9 +83,12 @@ function Working({ state, onStop, stopNote, onGo }: { state: GameState; onStop: 
   const duration = actionDurationMs(state, state.active.id);
   const left = Math.max(0, ((1 - state.active.progress) * duration) / 1000);
   return (
-    <div className="working" role="status" data-skill={def.skill}>
-      <SkillIcon skill={def.skill} size={20} />
-      <span className="working-name">{def.name}</span>
+    <div className="working is-on" role="status" data-skill={def.skill}>
+      <SkillIcon skill={def.skill} size={22} />
+      <span className="working-what">
+        <span className="working-skill">{SKILLS[def.skill].name}</span>
+        <span className="working-name">{def.name}</span>
+      </span>
       <TimedBar
         key={`${state.active.id}:${state.stats.completed[state.active.id] ?? 0}:${Math.round(duration)}`}
         progress={state.active.progress}
@@ -89,7 +96,7 @@ function Working({ state, onStop, stopNote, onGo }: { state: GameState; onStop: 
         label={`${def.name} progress`}
       />
       <span className="muted num working-time">{left.toFixed(1)}s</span>
-      <button className="btn btn-ghost" onClick={onStop}>
+      <button className="btn btn-ghost btn-sm" onClick={onStop}>
         Stop
       </button>
     </div>

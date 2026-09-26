@@ -6,6 +6,9 @@ import { GRIMOIRE_IDS, isDiscovered, isSilhouetteVisible, progressOf } from "../
 import type { GameState } from "../../engine/state";
 import { CircleRiteIcon } from "../art/icons";
 import { KindlingPanel } from "../components/KindlingPanel";
+import { PlaceHero } from "../components/PlaceHero";
+import { HEARTH_RITE, PART_IDS } from "../../content/rite";
+import { skillLevel } from "../../engine/simulate";
 import { isFeatureOpen } from "../../engine/progress";
 import { itemName } from "../format";
 import { ItemIcon } from "../art/items";
@@ -63,15 +66,22 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
 
   const experiments = isFeatureOpen(state, "experiments");
   return (
-    <div className="circle-screen">
-      <div className="circle-rite">
-        <KindlingPanel state={state} act={act} />
-      </div>
+    <>
+      <PlaceHero
+        icon={<CircleRiteIcon size={34} />}
+        title="The Circle"
+        line="Grandmother drew it in the floor. It has been waiting for you."
+        stats={[
+          { label: "Parts placed", value: <>{state.kindling.length}<span className="unit">/{PART_IDS.length}</span></>, accent: true },
+          { label: "Ritualism", value: <>{skillLevel(state, "ritualism")}<span className="unit">/{HEARTH_RITE.skills.ritualism} needed</span></> },
+        ]}
+      />
+      <KindlingPanel state={state} act={act} />
       {!experiments && (
-        <p className="muted circle-later">Later, the Circle will answer smaller workings too.</p>
+        <p className="circle-later">Later, the Circle will answer smaller workings too.</p>
       )}
       {experiments && (
-      <>
+      <div className="exp-grid">
       <section className="panel circle-panel" aria-labelledby="circle-heading">
         <div className="panel-title">
           <CircleRiteIcon size={18} />
@@ -129,8 +139,8 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
           <svg viewBox="-60 -60 120 120" className="ring-art" aria-hidden="true">
             <defs>
               <radialGradient id="ring-glow">
-                <stop offset="0.35" stopColor="var(--gold-400)" stopOpacity="0.35" />
-                <stop offset="1" stopColor="var(--gold-400)" stopOpacity="0" />
+                <stop offset="0.35" stopColor="var(--place)" stopOpacity="0.35" />
+                <stop offset="1" stopColor="var(--place)" stopOpacity="0" />
               </radialGradient>
             </defs>
             <circle className="ring-glow" r="58" fill="url(#ring-glow)" />
@@ -182,11 +192,11 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
         )}
 
         <div className="row">
-          <button className="btn btn-primary" disabled={placed.length < slots} onClick={run}>
+          <button className="btn btn-primary btn-sm" disabled={placed.length < slots} onClick={run}>
             Place in the Circle · uses 1 of each
           </button>
           {placed.length > 0 && (
-            <button className="btn btn-ghost" onClick={() => setPlaced([])}>
+            <button className="btn btn-ghost btn-sm" onClick={() => setPlaced([])}>
               Clear
             </button>
           )}
@@ -235,8 +245,8 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
           </div>
         )}
       </section>
-      </>
+      </div>
       )}
-    </div>
+    </>
   );
 }

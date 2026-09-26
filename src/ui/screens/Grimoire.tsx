@@ -9,6 +9,7 @@ import { EXPERIMENTS_NOTE } from "../../content/notes";
 import type { GameState } from "../../engine/state";
 import { BookIcon, CircleRiteIcon, ScrollIcon } from "../art/icons";
 import { ItemChip } from "../components/ItemLookup";
+import { PlaceHero } from "../components/PlaceHero";
 import { itemName } from "../format";
 import { INSIGHT_SOURCES, recipeGuide, recipeKnowledge } from "../guidance";
 
@@ -23,20 +24,35 @@ export function Grimoire({ state, act, onAttuned }: { state: GameState; act: Act
   const blackPageRead = pagesRead(state).length >= PAGES.length;
   const [sel, setSel] = useState<Selection>(silhouettes[0] ? { kind: "recipe", id: silhouettes[0] } : { kind: "pages" });
 
-  const item = (s: Selection, label: string, extra?: ReactNode) => {
+  const item = (s: Selection, label: string, meta?: ReactNode, extra?: ReactNode) => {
     const active = JSON.stringify(s) === JSON.stringify(sel);
     return (
       <li key={JSON.stringify(s)}>
-        <button className={`index-entry ${active ? "selected" : ""}`} aria-current={active ? "true" : undefined} onClick={() => setSel(s)}>
-          <span>{label}</span>
+        <button className="ribbon" aria-current={active ? "true" : undefined} onClick={() => setSel(s)}>
+          <span className="ribbon-row">
+            <span>{label}</span>
+            {meta && <span className="meta num">{meta}</span>}
+          </span>
           {extra}
         </button>
       </li>
     );
   };
 
+  const hidden = GRIMOIRE_IDS.filter((id) => GRIMOIRE_DEFS[id].kind === "hidden").length;
+  const found = GRIMOIRE_IDS.filter((id) => GRIMOIRE_DEFS[id].kind === "hidden" && isDiscovered(state, id)).length;
   return (
-    <div className="grimoire">
+    <>
+      <PlaceHero
+        icon={<BookIcon size={34} />}
+        title="The Grimoire"
+        line="What's left of her book, and what you add to it."
+        stats={[
+          { label: "Insight to spend", value: `✦ ${state.insight}`, accent: true },
+          { label: "Hidden recipes", value: <>{found}<span className="unit">/{hidden}</span></> },
+          { label: "Secrets", value: <>{secretsTotal - secretsLeft}<span className="unit">/{secretsTotal}</span></> },
+        ]}
+      />
       {discovered.length === 0 && isFeatureOpen(state, "experiments") && (
       <ol className="how-strip" aria-label="How the Grimoire works">
         <li>
@@ -50,11 +66,13 @@ export function Grimoire({ state, act, onAttuned }: { state: GameState; act: Act
         </li>
       </ol>
       )}
-      <nav className="panel grimoire-index" aria-label="Grimoire contents">
-        <p className="insight-pool num" aria-label={`${state.insight} insight to spend`}>
-          <span aria-hidden="true">✦</span> {state.insight} insight
+      <div className="book">
+      <nav className="book-index" aria-label="Grimoire contents">
+        <p className="insight num" aria-label={`${state.insight} insight to spend`}>
+          <b>✦ {state.insight}</b>
+          <span className="meta">insight to spend</span>
         </p>
-        <h3>Hidden recipes</h3>
+        <span className="label">Hidden recipes</span>
         {silhouettes.length === 0 ? (
           <p className="muted">{isFeatureOpen(state, "experiments") ? "None left to find." : "They show here once experiments open at the Circle."}</p>
         ) : (
@@ -62,34 +80,27 @@ export function Grimoire({ state, act, onAttuned }: { state: GameState; act: Act
             {silhouettes.map((id) => {
               const k = recipeKnowledge(state, id);
               // What it gives, up front: a reason to chase it before you've put in any work.
-              return item(
-                { kind: "recipe", id },
-                GRIMOIRE_DEFS[id].name,
-                <>
-                  <span className="index-gives">Gives: {GRIMOIRE_DEFS[id].rewardText}</span>
-                  <span className="muted num">{k.belongs.length}/{k.size} known</span>
-                </>,
-              );
+              return item({ kind: "recipe", id }, GRIMOIRE_DEFS[id].name, `${k.belongs.length}/${k.size} known`, <span className="index-gives">Gives: {GRIMOIRE_DEFS[id].rewardText}</span>);
             })}
           </ul>
         )}
         {discovered.length > 0 && (
           <>
-            <h3>Discovered</h3>
+            <span className="label">Discovered</span>
             <ul>{discovered.map((id) => item({ kind: "recipe", id }, GRIMOIRE_DEFS[id].name))}</ul>
           </>
         )}
-        <h3>The rest of the book</h3>
+        <span className="label">The rest of the book</span>
         <ul>
-          {item({ kind: "notes" }, `Grandmother's notes (${state.notesRevealed})`)}
-          {item({ kind: "pages" }, `Deciphered pages (${pagesRead(state).length})`)}
-          {item({ kind: "curios" }, `Curios (${Math.min(state.stats.curiosRead, CURIO_STORIES.length)}/${CURIO_STORIES.length})`)}
+          {item({ kind: "notes" }, "Grandmother's notes", state.notesRevealed)}
+          {item({ kind: "pages" }, "Deciphered pages", pagesRead(state).length)}
+          {item({ kind: "curios" }, "Curios", `${Math.min(state.stats.curiosRead, CURIO_STORIES.length)}/${CURIO_STORIES.length}`)}
           {item({ kind: "secrets" }, "Secrets")}
           {blackPageRead && item({ kind: "forbidden" }, "The black page")}
         </ul>
       </nav>
 
-      <section className="panel paper grimoire-page" aria-live="polite">
+      <section className="page" aria-live="polite">
         {sel.kind === "recipe" && (isDiscovered(state, sel.id) ? <DiscoveredPage id={sel.id} /> : <SilhouettePage state={state} id={sel.id} act={act} onAttuned={onAttuned} />)}
         {sel.kind === "pages" && <PagesPage state={state} />}
         {sel.kind === "curios" && (
@@ -152,7 +163,8 @@ export function Grimoire({ state, act, onAttuned }: { state: GameState; act: Act
           </>
         )}
       </section>
-    </div>
+      </div>
+    </>
   );
 }
 
@@ -162,7 +174,7 @@ function BuyHint({ state, id, kind, label, act }: { state: GameState; id: Grimoi
   if (cost === null) return null;
   const short = state.insight < cost;
   return (
-    <button className="btn btn-ghost buy-hint" disabled={short} title={short ? `Needs ${cost} insight; you have ${state.insight}.` : undefined} onClick={() => act((s) => buyHint(s, id, kind))}>
+    <button className="btn btn-ghost btn-sm buy-hint" disabled={short} title={short ? `Needs ${cost} insight; you have ${state.insight}.` : undefined} onClick={() => act((s) => buyHint(s, id, kind))}>
       {label} · <span className="num">{cost}</span> ✦
     </button>
   );
@@ -176,7 +188,7 @@ function SecretEntry({ state, id, act }: { state: GameState; id: GrimoireId; act
     <div className={`secret ${found ? "is-found" : ""}`}>
       <h3>
         {def.name} <span className="muted num">({def.ingredients.length} things)</span>
-        {found && <span className="chip accent">Found</span>}
+        {found && <span className="good">✓ Found</span>}
       </h3>
       {found ? (
         <p className="muted">{def.rewardText}</p>
@@ -218,7 +230,7 @@ function SilhouettePage({ state, id, act, onAttuned }: { state: GameState; id: G
         <strong>{guide.headline}</strong>
         <p>{guide.detail}</p>
         {guide.action && (
-          <button className="btn btn-primary" onClick={() => act((s) => attune(s, id)) && onAttuned()}>
+          <button className="btn btn-primary btn-sm" onClick={() => act((s) => attune(s, id)) && onAttuned()}>
             <CircleRiteIcon size={16} /> {guide.action}
           </button>
         )}
@@ -311,7 +323,7 @@ function DiscoveredPage({ id }: { id: GrimoireId }) {
       <div className="panel-title">
         <BookIcon size={18} />
         <h2>{def.name}</h2>
-        <span className="chip accent panel-aside">Discovered</span>
+        <span className="panel-aside good">✓ Discovered</span>
       </div>
       <p className="note-quote">{def.reveal}</p>
       <div className="action-io">

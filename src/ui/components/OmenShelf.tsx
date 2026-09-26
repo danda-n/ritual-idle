@@ -30,7 +30,7 @@ export function OmenShelf({ state, act }: { state: GameState; act: (c: (s: GameS
     <section className="panel omen-shelf" aria-labelledby="omens-heading">
       <div className="panel-title">
         <MoonIcon size={18} />
-        <h2 id="omens-heading">Omen shelf</h2>
+        <h2 id="omens-heading">Omens &amp; blessings</h2>
         <span className="muted panel-aside num">
           {stored}/{capacity}
         </span>
@@ -49,7 +49,7 @@ export function OmenShelf({ state, act }: { state: GameState; act: (c: (s: GameS
               {buffEffects(OMENS[id].buff).join(", ")} · {buffDuration(OMENS[id].buff)}
             </span>
           </div>
-          <button className="btn btn-primary" onClick={() => (BUFF_DEFS[OMENS[id].buff].blessSkill ? setChoosing(id) : act((s) => releaseOmen(s, id)))}>
+          <button className="btn btn-ghost btn-sm btn-invite" onClick={() => (BUFF_DEFS[OMENS[id].buff].blessSkill ? setChoosing(id) : act((s) => releaseOmen(s, id)))}>
             {BUFF_DEFS[OMENS[id].buff].blessSkill ? "Bless a skill" : "Use it"}
           </button>
         </div>

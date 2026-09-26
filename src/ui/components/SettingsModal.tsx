@@ -2,9 +2,15 @@ import { ACTION_DEFS, type ActionId } from "../../content/actions";
 import { SKILLS } from "../../content/skills";
 import { setSetting, type Result } from "../../engine/commands";
 import { isRecipeKnown, isSkillUnlocked } from "../../engine/progress";
-import type { Fallback, GameState } from "../../engine/state";
+import type { Density, Fallback, GameState } from "../../engine/state";
 import { Modal } from "./Modal";
 import { SaveTools } from "./SaveTools";
+
+const DENSITIES: [Density, string][] = [
+  ["roomy", "Roomy"],
+  ["comfortable", "Comfortable"],
+  ["compact", "Compact"],
+];
 
 const GATHERING = (Object.keys(ACTION_DEFS) as ActionId[]).filter((id) => ["herbalism", "scavenging"].includes(ACTION_DEFS[id].skill));
 
@@ -56,6 +62,19 @@ export function SettingsModal({
           <span className="muted"> Turn off flicker, glows and slide-ins.</span>
         </span>
       </label>
+
+      <div className="setting">
+        <span className="field-label" id="density-label">
+          Row density
+        </span>
+        <span className="seg" role="group" aria-labelledby="density-label">
+          {DENSITIES.map(([d, label]) => (
+            <button key={d} type="button" aria-pressed={s.density === d} onClick={() => act((st) => setSetting(st, "density", d))}>
+              {label}
+            </button>
+          ))}
+        </span>
+      </div>
 
       <div className="setting">
         <label className="field-label" htmlFor="toasts">

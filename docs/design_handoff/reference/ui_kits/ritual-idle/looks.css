@@ -1,0 +1,69 @@
+/* Exploration: three levels of "life" on the same system.
+   quiet   = Soot & Linen as specced (no attribute)
+   hearth  = warm grounds, SC headings, one glow on the running work, the tracker as the lit card
+   lantern = hearth + candlelight from above, ribbon tabs, breathing running row, gold rewards */
+
+/* ---------- Hearth ---------- */
+[data-look="hearth"], [data-look="lantern"] {
+  --color-bg: #0e0c0a;
+  --color-band: #16130f;
+  --color-surface: #1f1b17;
+  --color-raised: #2b2621;
+  --color-sunken: #0b0908;
+  --color-border-soft: #342e28;
+  --color-border: #4b433b;
+  --color-vellum: #2c251d;
+}
+[data-look="hearth"] .brand-title, [data-look="lantern"] .brand-title { font-size: 24px; }
+[data-look="hearth"] .topbar, [data-look="lantern"] .topbar { box-shadow: inset 0 -1px 0 rgb(0 0 0 / 0.5); }
+
+/* Headings get their voice back: small caps + a short stitch under each panel title */
+[data-look="hearth"] .panel-title, [data-look="lantern"] .panel-title { font-family: var(--font-display); letter-spacing: 0.02em; position: relative; padding-bottom: 10px; }
+[data-look="hearth"] .panel-title::after, [data-look="lantern"] .panel-title::after {
+  content: ""; position: absolute; left: 0; bottom: 0; width: 56px; height: 6px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='6'%3E%3Cpath d='M1.5 1l4 4M5.5 1l-4 4' stroke='%23c93126' stroke-width='1.3' stroke-linecap='round'/%3E%3C/svg%3E") round left center / 8px 6px;
+}
+[data-look="hearth"] .tab, [data-look="lantern"] .tab { font: 500 16px / 1 var(--font-display); letter-spacing: 0.03em; }
+[data-look="hearth"] .tab[aria-selected="true"] .icon, [data-look="lantern"] .tab[aria-selected="true"] .icon { color: var(--color-stitch); }
+
+/* "Where am I": the selected skill carries its colour through list, header and running row */
+[data-look="hearth"] .skill-item[aria-current="page"], [data-look="lantern"] .skill-item[aria-current="page"] { background: color-mix(in oklch, var(--skill) 11%, var(--color-raised)); box-shadow: inset 4px 0 0 var(--skill); }
+[data-look="hearth"] .skill-item[aria-current="page"] .name, [data-look="lantern"] .skill-item[aria-current="page"] .name { color: var(--skill); }
+[data-look="hearth"] .skill-head, [data-look="lantern"] .skill-head { background: color-mix(in oklch, var(--skill) 12%, var(--color-surface)); box-shadow: inset 0 -1px 0 color-mix(in oklch, var(--skill) 35%, transparent); }
+[data-look="hearth"] .skill-head h2, [data-look="lantern"] .skill-head h2 { font: 500 24px / 1.1 var(--font-display); letter-spacing: 0.02em; }
+
+/* "What is happening": the running work is the one thing that glows */
+[data-look="hearth"] .recipe.is-running, [data-look="lantern"] .recipe.is-running {
+  position: relative; z-index: 1;
+  background: color-mix(in oklch, var(--skill) 9%, var(--color-raised));
+  box-shadow: inset 3px 0 0 var(--skill), 0 0 0 1px color-mix(in oklch, var(--skill) 45%, transparent), 0 0 22px -6px color-mix(in oklch, var(--skill) 45%, transparent);
+}
+[data-look="hearth"] .recipe.is-running .name, [data-look="lantern"] .recipe.is-running .name { color: var(--skill); }
+[data-look="hearth"] .working-name, [data-look="lantern"] .working-name { color: var(--skill, var(--color-text)); }
+
+/* "What next": the tracker is the lit card in the sidebar */
+[data-look="hearth"] .tracker, [data-look="lantern"] .tracker { background: var(--color-vellum); box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--color-rare) 24%, transparent); }
+[data-look="hearth"] .tracker .reward, [data-look="lantern"] .tracker .reward { color: var(--color-rare); }
+
+/* ---------- Lantern (adds on top of hearth) ---------- */
+[data-look="lantern"] body { background: radial-gradient(ellipse 70% 45% at 45% -8%, rgb(237 179 69 / 0.06), transparent 65%) fixed, var(--color-bg); }
+[data-look="lantern"] .panel { box-shadow: inset 0 1px 0 rgb(255 240 210 / 0.04), 0 1px 0 rgb(0 0 0 / 0.5); }
+[data-look="lantern"] .panel-title .icon { color: var(--color-rare); }
+[data-look="lantern"] .tabs { gap: 6px; }
+[data-look="lantern"] .tab { padding: 11px 16px 13px; background: var(--color-band); border-radius: 4px 4px 0 0; color: var(--color-text-2); }
+[data-look="lantern"] .tab:hover { background: var(--color-surface); }
+[data-look="lantern"] .tab[aria-selected="true"] { background: var(--color-surface); color: var(--color-text); }
+[data-look="lantern"] .tab[aria-selected="true"]::after { left: 10px; right: 10px; bottom: 3px; }
+[data-look="lantern"] .recipe.is-running { animation: breathe 2.8s ease-in-out infinite; }
+@keyframes breathe { 50% { box-shadow: inset 3px 0 0 var(--skill), 0 0 0 1px color-mix(in oklch, var(--skill) 60%, transparent), 0 0 30px -4px color-mix(in oklch, var(--skill) 55%, transparent); } }
+[data-look="lantern"] .skill-item .run { border-radius: 50%; box-shadow: 0 0 8px var(--skill); animation: flicker 1.8s ease-in-out infinite; }
+@keyframes flicker { 50% { opacity: 0.45; } }
+[data-look="hearth"] .tracker .panel-title::after, [data-look="lantern"] .tracker .panel-title::after { display: none; }
+[data-look="lantern"] .tracker { position: relative; }
+[data-look="lantern"] .tracker::before { display: none;
+  content: ""; position: absolute; left: 12px; right: 12px; top: 8px; height: 6px; opacity: 0.9;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='6'%3E%3Cpath d='M1.5 1l4 4M5.5 1l-4 4' stroke='%23c93126' stroke-width='1.3' stroke-linecap='round'/%3E%3C/svg%3E") round left center / 8px 6px;
+}
+[data-look="lantern"] .omen-jars { color: var(--color-rare); filter: drop-shadow(0 0 6px rgb(237 179 69 / 0.35)); }
+[data-look="lantern"] .brand .rosette { filter: drop-shadow(0 0 8px rgb(201 49 38 / 0.45)); }
+[data-look="lantern"] .purse .icon { color: var(--color-rare); }

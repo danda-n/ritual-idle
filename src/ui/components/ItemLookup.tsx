@@ -17,9 +17,9 @@ import { Modal } from "./Modal";
  * - `qty` alone: an output ("1 Ash"), with an optional drop `chance`.
  * - `need`: an input; shows have/need. Enough is quiet; short is dashed with a warning pill,
  *   and clicking it offers to start the action that makes it.
- * - `plain`: text-style link for lists.
+ * - `plain`: text-style link for lists (`bare` drops its icon, where the list draws its own).
  */
-export function ItemChip({ item, qty, need, chance, plain }: { item: ItemId; qty?: number; need?: number; chance?: number; plain?: boolean }) {
+export function ItemChip({ item, qty, need, chance, plain, bare }: { item: ItemId; qty?: number; need?: number; chance?: number; plain?: boolean; bare?: boolean }) {
   const { state, lookup, start } = useChipActions();
   const [menu, setMenu] = useState(false);
   const wrap = useRef<HTMLSpanElement>(null);
@@ -66,7 +66,7 @@ export function ItemChip({ item, qty, need, chance, plain }: { item: ItemId; qty
         }}
         title={`Look up ${itemName(item)}`}
       >
-        <ItemIcon item={item} size={15} />
+        {!bare && <ItemIcon item={item} size={15} />}
         {itemName(item)}
       </button>
     );

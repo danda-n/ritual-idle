@@ -60,6 +60,7 @@ What to try and what to note in a Chapter 1 playtest, for the game as it is now 
 - **Was the activity feed enough,** or did you miss toasts for anything? Did any toast feel like noise?
 - **Did the Stores tab and item icons help** you find things?
 - **Did anything move or jump** under the mouse?
+- **The look:** is it clear what to press (the red button), what's running (the glowing row and the top-bar band) and which tab you're in (its colour and hero)? Is anything hard to read? Try Settings → Row density.
 
 ## Write down
 - **The first moment you didn't know what to do**, and where you were.
@@ -79,3 +80,4 @@ One short entry per round, oldest first.
 - **Fourth patch:** questions on the free order, talent pairs, House projects, the feed, the idle rite, contracts in parts, and Stores.
 - **After the fourth patch:** one checklist by topic for the current game; the omen-shelf pointers added; priming and other removed features dropped.
 - **Rite quality pays:** questions on whether keepsakes make offerings worth it, and which ones players choose.
+- **Design system v0.4:** a question on the new look (what to press, what's running, which tab you're in) and row density.

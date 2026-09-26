@@ -1,0 +1,57 @@
+/* Base: the page, type roles and small utilities (docs/DESIGN.md).
+   No italics anywhere; tabular lining figures on every number. */
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font: var(--weight-regular) var(--text-md) / var(--leading-ui) var(--font-ui);
+  font-variant-numeric: lining-nums tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3 { margin: 0; font-weight: var(--weight-medium); line-height: var(--leading-tight); }
+h2 { font-size: var(--text-lg); }
+h3 { font-size: var(--text-md); }
+p { margin: 0; }
+a { color: var(--color-selected); text-underline-offset: 3px; }
+a:hover { color: var(--color-text); }
+:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+button { font: inherit; }
+input[type="checkbox"] { accent-color: var(--color-selected); width: 16px; height: 16px; }
+
+/* ---------- Type roles ---------- */
+.num { font-variant-numeric: tabular-nums lining-nums; }
+.label { font: var(--text-2xs) / 1.2 var(--font-display); letter-spacing: var(--tracking-label); color: var(--color-text-3); }
+.title { font: var(--weight-medium) var(--text-2xl) / var(--leading-tight) var(--font-display); letter-spacing: 0.01em; }
+.screen-title { font: var(--weight-medium) var(--text-xl) / 1.25 var(--font-ui); }
+.lore { font: var(--weight-regular) var(--text-lore) / var(--leading-lore) var(--font-lore); color: var(--color-text-2); }
+.lore.sm { font-size: var(--text-sm); }
+.meta { font-size: var(--text-xs); color: var(--color-text-3); }
+/* Grandmother's hand: the serif alone marks it, never italics */
+.note-quote { font: var(--weight-regular) var(--text-md) / var(--leading-lore) var(--font-lore); color: var(--color-text-2); }
+
+/* ---------- Utilities ---------- */
+.muted { color: var(--color-text-3); }
+.text-2 { color: var(--color-text-2); }
+.warn { color: var(--color-danger); }
+.good { color: var(--color-success); }
+.r { text-align: right; }
+.row { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.icon, .rosette { flex-shrink: 0; display: block; }
+
+.skip-link { position: absolute; left: var(--space-4); top: -60px; z-index: var(--z-modal); background: var(--color-action); color: var(--color-on-action); padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); font-weight: var(--weight-medium); }
+.skip-link:focus { top: var(--space-2); }
+
+details > summary { cursor: pointer; color: var(--color-text-2); font-size: var(--text-sm); list-style: none; display: inline-flex; align-items: center; gap: var(--space-1); }
+details > summary::-webkit-details-marker { display: none; }
+details > summary::before { content: "›"; display: inline-block; transition: transform var(--dur-fast) var(--ease-out); }
+details[open] > summary::before { transform: rotate(90deg); }
+details > summary:hover { color: var(--color-text); }
+
+/* ---------- Reduced motion: the OS setting or html[data-motion="reduced"] stops every loop except progress bars ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *:not(.bar-fill), *::before, *::after { animation: none !important; transition: none !important; }
+}
+:root[data-motion="reduced"] *:not(.bar-fill), :root[data-motion="reduced"] *::before, :root[data-motion="reduced"] *::after { animation: none !important; transition: none !important; }
