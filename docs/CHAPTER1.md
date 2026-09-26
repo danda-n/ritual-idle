@@ -74,7 +74,7 @@ The table shows the stages in the default order (Ward, Smoke, Words); the middle
 - **Placing:** from the Circle, or straight from the chapter tracker once a part is ready.
 - **Experiments** open with their own side note with the first insight, once the Grimoire is open. They're optional.
 - **Burnt pages** (`src/content/pages.ts`) teach only recipes off the main path: iron ward, chalk segment, hearth candle, hearth ward and juniper incense. The sixth page is the black-page teaser.
-- **Feedback** (details in [DESIGN.md](DESIGN.md), "Feedback kit"):
+- **Feedback** (details in [DESIGN.md §6](DESIGN.md#6-feedback)):
   - item, level and coin floats, which queue and stack instead of overlapping
   - an **activity feed**, one quiet line under the top bar, for routine events (steps done, plain level-ups, omens, claims, talent picks, partial deliveries); click it for the last 30
   - **toasts only for big moments:** a part placed, a project built, a contract done, a new tier or talent at a level-up, a new recipe from a page, rare finds, curios, the rite beginning
@@ -246,7 +246,7 @@ There are three hidden recipes in Chapter 1. None unlock by level. You find them
 
 **The rite needs its five parts placed in the Circle** (§2) and **Ritualism 3**.
 
-- **Performing it:** **five phases of 36 seconds each** (about 3 minutes in all), one per part, each adding a line to the rite's log (content: `HEARTH_RITE.phases` in `src/content/rite.ts`). It takes the action slot and **runs by itself**: there's nothing to answer, and it carries on offline if you step away. It can be begun by hand or set to begin by itself.
+- **Performing it:** **five phases of 36 seconds each** (about 3 minutes in all), one per part, each adding a line to the rite's log (content: `HEARTH_RITE.phases` in `src/content/rite.ts`). It takes the action slot and **runs by itself**: there's nothing to answer, and it carries on offline if you step away. You begin it by hand from the rite's card (priming, which begins a rite by itself, comes with the longer rites of later chapters).
 - **Offerings (optional):** chosen on the rite's card before you begin. Each is one quality step (`OFFERINGS` in `src/content/rite.ts`):
   - **a hearth candle** at the heart of the circle (an item, used when the rite begins; §3)
   - **the Hearth mark** discovered (a hidden recipe, §6; counts by itself)

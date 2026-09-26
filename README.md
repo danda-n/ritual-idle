@@ -17,7 +17,7 @@ Then open the URL it prints.
 - `npm run pacing` prints how long that playthrough takes.
 - `npm run build` makes a production build in `dist/`.
 
-## Status: the Chapter 1 vertical slice is complete
+## Status: Chapter 1 is playable end to end, in playtest rounds
 
 From the cold house to the Kindling of the Hearth-Circle:
 - **The staged Kindling:** the chapter's rite is built in five parts, placed in the Circle one by one. Each stage's note from grandmother brings the one new skill it needs. Deciphered burnt pages teach extra recipes.
@@ -45,3 +45,7 @@ From the cold house to the Kindling of the Hearth-Circle:
 Dev builds have a **Dev tools** panel at the bottom of the page (time skip, give items, +omen, next note, items for the next part, +5 levels, +5 insight) for playtesting.
 
 Design docs: [CONCEPT](docs/CONCEPT.md), [CHAPTER1](docs/CHAPTER1.md), [GRIMOIRE](docs/GRIMOIRE.md), [DESIGN](docs/DESIGN.md), [PLAYTEST](docs/PLAYTEST.md), [RESEARCH](docs/RESEARCH.md).
+
+## Changelog
+
+What changed in each round is in [CHAPTER1's changelog](docs/CHAPTER1.md#changelog); the reasons are in [CONCEPT's decision log](docs/CONCEPT.md#decision-log).

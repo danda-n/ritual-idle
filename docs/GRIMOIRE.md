@@ -1,7 +1,7 @@
-# The Grimoire and the Hint Model (v0.1)
+# The Grimoire and the Hint Model
 
 > Detail layer beneath [CONCEPT.md](CONCEPT.md) (Pillar 2: *Knowledge you keep*). Chapter 1 content is in [CHAPTER1.md](CHAPTER1.md).
-> Numbers are draft and get tuned in playtests.
+> Numbers are draft and get tuned in playtests. This doc describes the game as it is now; its history is in the [Changelog](#changelog).
 
 ---
 
@@ -50,7 +50,7 @@ Chapter 1 has 3 hidden recipes and 2 secrets. Later chapters get about 3–5 hid
 
 The ritual circle in the sanctum is where experiments happen. **Experiments are instant.** They don't use your action slot, so the loop keeps running while you experiment.
 
-**When they open** *(first patch; third patch: with the first insight)*: the Circle tab opens at the start, but only for the Kindling's parts. Experiments open with their own side note (`EXPERIMENTS_NOTE` in `src/content/notes.ts`) with the first insight, once the Grimoire is open. That's usually Widow Hana's request or a page past the story pages. From then on, all hidden recipes show in the Grimoire.
+**When they open:** the Circle tab opens at the start, but only for the Kindling's parts. Experiments open with their own side note (`EXPERIMENTS_NOTE` in `src/content/notes.ts`) with the first insight, once the Grimoire is open. That's usually Widow Hana's contract or a page past the story pages. From then on, all hidden recipes show in the Grimoire.
 
 ### 4.1 Attuned experiment (solving a hidden recipe)
 1. Open a silhouette in the Grimoire and choose **Attune the circle**.
@@ -68,7 +68,7 @@ The ritual circle in the sanctum is where experiments happen. **Experiments are 
 - **Each attempt uses 1 of each placed item.** Common items are cheap, so experimenting stays low-stakes.
 - **Every failed attempt pays a consolation:**
   - a little **Ritualism XP**
-  - **+1 Insight** toward that recipe's next hint level (attuned attempts only)
+  - **+1 insight** into the pool (attuned attempts only)
 - Nothing is ever fully wasted.
 
 ---
@@ -84,7 +84,7 @@ The Grimoire keeps the notes, so the player doesn't have to.
 
 ---
 
-## 6. Hints you buy with insight *(third patch; replaces the escalating thresholds)*
+## 6. Hints you buy with insight
 
 **Insight is one pool**, counted on the Grimoire (and floated quietly on its tab, never toasted). You spend it on the hint you want, when you want it. That makes it a choice rather than a counter that ticks up by itself, and it gives secrets a way in.
 
@@ -102,14 +102,13 @@ The Grimoire keeps the notes, so the player doesn't have to.
 | A wrong try at the Circle (attuned) | +1 |
 | A deciphered page past the sixth | +2 |
 | A curio story (attic, chest) | +3 |
-| A village request that mentions a recipe (the aside is a free hint too: *"your grandmother made me a pillow once…"*) | +2 |
+| A village contract that mentions a recipe (the aside is a free hint too: *"your grandmother made me a pillow once…"*) | +2 |
 | Marginalia (a Scholarship talent at level 6; *Footnotes* at 12 gives +2) | +1 per page |
 | Divination vision (Chapter 3+) | Reveals one item's right/wrong status directly |
 
 - **The effect:** a puzzle fan solves it from the riddle with a few tries, which also earns insight. A player who dislikes puzzles buys names. Nobody gets stuck.
 - **Accessibility:** *"Grimoire assist"* doubles insight gains.
 - **At the Circle,** known ingredients (proven, or named by a bought hint) sort first as gold chips marked ✓.
-- **Older saves:** each recipe's old insight joins the pool, and the hints it had already shown count as bought.
 
 ---
 
@@ -154,30 +153,46 @@ The Grimoire keeps the notes, so the player doesn't have to.
 
 ---
 
-## 9. Screens (wireframe)
+## 9. Screens
+Every screen answers "what is this for, and what do I do next?". Gameplay, not lore. The logic is in `src/ui/guidance.ts` (tested); the screens are `src/ui/screens/Grimoire.tsx` and `Circle.tsx`.
 
-**Grimoire: silhouette page**
+### 9.1 The Grimoire
+- **A three-step strip** at the top until the first discovery: *1 · Collect insight → 2 · Buy a hint → 3 · Try it at the Circle*.
+- **The pool:** "✦ N insight" in candle gold.
+- **The index:** *Hidden recipes* (each with what it **gives** and "n/3 known"), *Discovered*, then *The rest of the book*: grandmother's notes, deciphered pages, curios (n/5), secrets, and the black page once every page is read.
+- **A hidden recipe's page:**
+  - **Gives** first (the reward, so the player knows why to bother).
+  - Then a **Next step** box that follows progress: "Try any 3 things at the Circle, or buy a hint" → "2 of 3 known: find the last one" → "You know all 3: make it at the Circle". Its button attunes the Circle and goes there.
+  - Then *Belongs* (proven, or named by a hint), *Crossed out*, and *Still possible* (things held that aren't ruled out).
+  - The hints come last: the riddle, then buy buttons ("Name one ingredient · 6 ✦", disabled with the shortfall in their tooltip), and one line on where insight comes from.
+  - Your tries, folded, each with its glow dots.
+- **Secrets:** how many are left, each with its clues to buy, and "set the Circle to Free experiment and try sets of 3".
+
 ```
-┌─────────────────────────────┬──────────────────────────────────┐
-│ SILHOUETTES · Chapter 1     │  ░░ DREAM PILLOW ░░   (3 things) │
-│  ◌ Dream pillow      ▮▮▮▯▯  │                                  │
-│  ◌ Hearth mark       ▮▯▯▯▯  │  I  "…for sleep that listens:    │
-│  ◌ Threshold nail    ▯▯▯▯▯  │      the bitter dream-herb, the  │
-│                             │      gentle flower, a scrap of   │
-│ RECIPES · MATERIALS · LORE  │      cloth."                     │
-│ OMENS · ▓ FORBIDDEN         │  II ▮▮▮▯▯▯  Insight 3 / 6        │
-│                             │                                  │
-│                             │  Proven wrong:  ̶S̶a̶l̶t̶  ̶A̶s̶h̶  ̶T̶a̶l̶l̶o̶w̶  │
-│                             │  Suspected:     Mugwort ?        │
-│                             │  Attempts:                       │
-│                             │   Mugwort·Nettle·Rags   ◉◉○      │
-│                             │   Salt·Ash·Tallow       ○○○      │
-│                             │                                  │
-│                             │        [ Attune the circle ]     │
-└─────────────────────────────┴──────────────────────────────────┘
+┌──────────────────────────────┬──────────────────────────────────────┐
+│ ✦ 7 insight                  │  DREAM PILLOW              3 things  │
+│ HIDDEN RECIPES               │  Gives  +10% speed while you're away │
+│  Dream pillow   1/3 known    │ ┌ Next step ───────────────────────┐ │
+│   Gives: +10% speed away…    │ │ 1 of 3 known: find the last 2    │ │
+│  Hearth mark    0/3 known    │ │          [ Attune the circle ]   │ │
+│  Threshold nail 0/3 known    │ └──────────────────────────────────┘ │
+│ DISCOVERED                   │  Belongs:        Mugwort (1/3)       │
+│ THE REST OF THE BOOK         │  Crossed out:    Salt · Ash · Tallow │
+│  Grandmother's notes (5)     │  Still possible: Chamomile · Rags …  │
+│  Deciphered pages (4)        │  HINTS                               │
+│  Curios (1/5)                │   I   "…for sleep that listens…"     │
+│  Secrets                     │   II  [ Where each comes from · 4 ✦ ]│
+│                              │   III Mugwort. [ Name another · 6 ✦ ]│
+│                              │  ▸ Your tries (2)                    │
+└──────────────────────────────┴──────────────────────────────────────┘
 ```
 
-**Circle: attuned to Dream pillow**
+### 9.2 The Circle
+- **The Kindling panel comes first** (the chapter's parts and the rite; see [DESIGN.md](DESIGN.md)). Experiments are a separate panel below it, marked optional, once they open.
+- A step strip (① choose what to work on → ② pick things → ③ place them), with the current step lit.
+- A "Working on" line showing the reward and what's known.
+- A plain explanation under every result, honest that the glow is a count ("2 of 3 right, but not which. Swap one thing at a time…"). "Closer!" appears when a try beats your best.
+
 ```
             ·  ˚  ·
         ·   [ Mugwort ]   ·
@@ -195,66 +210,64 @@ The Grimoire keeps the notes, so the player doesn't have to.
 - 2: *"The circle stirs twice."*
 - all: *"The circle drinks it in."*
 
+A discovery opens its own reveal dialog with the lore line and the reward.
+
 ---
 
 ## 10. Data shape (for the build)
 
 ```ts
 // src/content/grimoire.ts (as built)
-{
-  id: "dream_pillow",
-  kind: "hidden",              // "hidden" | "secret" | "scripted" | "forbidden"
-  chapter: 1,
+dream_pillow: {
+  name: "Dream pillow",
+  kind: "hidden",              // "hidden" | "secret"
   ingredients: ["mugwort", "chamomile", "rags"],   // unordered
   hints: {
     riddle:   "…for sleep that listens: the bitter dream-herb, the gentle flower, a scrap of cloth.",
     category: ["A herb from the forest edge", "A herb from the garden", "Something from the attic"],
-    plain:    ["mugwort", "chamomile"],            // revealed in this order
+    plain:    ["mugwort", "chamomile"],            // named in this order
   },
   reward: { kind: "offline_bonus", bonus: 0.1 },   // +10% speed while away
   rewardText: "+10% speed on everything while you're away.",
   reveal: "The pillow smells of her. …",
 }
-// Insight thresholds are shared: INSIGHT = { category: 6, plain: 12, perExtraName: 6 }
+// Secrets have `clues: [three lines]` instead of `hints`.
+// INSIGHT_COST = { category: 4, name: 6, clue: 4 }
+// INSIGHT_GAIN = { failedAttempt: 1, page: 2, curio: 3, request: 2 }
 ```
-Save state per recipe: `{ discovered, insight, attempts: [{ items, glows }], provenWrong, provenRight, marks }` (marks are no longer shown).
+Save state: one `insight` pool, and per recipe `{ discovered, attempts: [{ items, glows }], provenWrong, provenRight, marks, bought: { category, named }, clues }`. `marks` (the player's pencil marks) is kept in the save but not shown.
 
 ---
 
 ## 11. Open tuning questions
 
-- Insight thresholds (6 / 12). Test with players who dislike puzzles, and check they never feel stuck for more than about 10 minutes.
+- Hint costs (4 / 6 / 4). Test with players who dislike puzzles, and check they never feel stuck for more than about 10 minutes.
 - Should the circle limit candidates to items the player has *discovered*? (Yes by default. That keeps the pool at about 15–20 items in Chapter 1.)
 - The "almost answered" flicker in free experiments might make secrets too easy. Test with and without it.
-- Whether a discovery reveal should pause the action loop. Probably not: show it as a toast plus a Grimoire highlight.
 
 ---
 
-## 12. Build notes (Chapter 1, M3)
-- **Silhouettes appear with their first fragment.** Fragments come from:
-  - deciphered pages past the 6 story pages (+3)
-  - curios, read automatically (+3, with a short story)
-  - three village requests that mention a recipe (+2, with the villager's aside)
-  - failed attuned attempts (+1)
-  Loose fragments (pages, curios) go to the unsolved hidden recipe with the least Insight.
+## 12. Build notes
+- **Hidden recipes show once experiments open** (or once discovered). Before that, the Grimoire says they'll show then.
 - **Proven right:** when an attempt's not-yet-crossed-out items equal its glow count, they're all marked as belonging.
 - **Discovery grants the effect at once.** The successful experiment *is* the making.
   - The Dream pillow makes time away count 10% extra (applied after the cap).
   - Threshold nail trust is kept as a fraction internally.
-- **Toasts:** Insight from your own attempts only pops up a toast when it unlocks a clearer hint; otherwise the Grimoire page shows it.
-- Content lives in `src/content/grimoire.ts` and logic in `src/engine/grimoire.ts`; the screens are `src/ui/screens/Grimoire.tsx` and `Circle.tsx`.
+- **Insight never toasts.** It floats quietly on the Grimoire tab and shows on the Grimoire's pages.
+- **Pencil marks** (the player's own suspect/doubt marks) aren't shown: they added noise on top of the automatic tracking.
+- **Saves from before insight was one pool:** each recipe's old insight joins the pool, and the hints it had already shown count as bought.
+- Content lives in `src/content/grimoire.ts` and logic in `src/engine/grimoire.ts` (hint buying) and `src/engine/commands.ts` (experiments).
 
-## 13. Guidance (UI feedback round)
-Every screen answers "what is this for, and what do I do next?". Gameplay, not lore. Logic is in `src/ui/guidance.ts` (tested).
-- **Grimoire:**
-  - A three-step strip: *Collect insight → Buy a hint → Try it at the Circle* (third patch).
-  - Each recipe page leads with **Gives** (the reward, so the player knows why to bother). *(Fourth patch)* The list of hidden recipes also shows what each one gives.
-  - Then a **Next step** box that follows progress: "Try any 3 things at the Circle" → "2 of 3 known: find the last one" → "You know all 3: make it at the Circle". It has a button that attunes the Circle and goes there.
-  - Then *Belongs* (proven, or named by a hint), *Crossed out*, and *Still possible* (things held that aren't ruled out).
-  - The hints come last, with one line on where Insight comes from.
-- **Circle:**
-  - The Kindling panel comes first (the chapter's parts). Experiments are a separate panel below it, marked optional.
-  - A step strip (① choose what to work on → ② pick things → ③ place them), with the current step lit.
-  - A "Working on" line showing the reward and what's known.
-  - A plain explanation under every result, honest that the glow is a count ("2 of 3 right, but not which. Swap one thing at a time…").
-- **Pencil marks** (§5) are no longer shown. They added noise on top of the automatic tracking. Saved marks are kept in the save, unused.
+---
+
+## Changelog
+
+One short entry per round, oldest first. The reasons are in [CONCEPT.md's decision log](CONCEPT.md#decision-log).
+
+- **Design:** the hint model (glow counts, auto-deduction, escalating hints from fragments addressed to a recipe, hint-less secrets).
+- **M3:** the Grimoire and the Circle built: 3 hidden recipes, 2 secrets, automatic deduction, discovery grants the effect.
+- **UI feedback round:** the Grimoire and Circle explain themselves: **Gives** first, a **Next step** box, *Belongs / Crossed out / Still possible*, step strips, honest result lines. Pencil marks hidden.
+- **First patch:** experiments open mid-chapter with their own note; the Circle tab starts with the Kindling.
+- **Third patch:** insight became one pool you spend on the hint you choose (categories, a name, a secret's clue); experiments open with the first insight; insight no longer toasts.
+- **Fourth patch:** the list of hidden recipes shows what each gives; item icons in the Circle's picker and slots.
+- **After the fourth patch:** this doc now describes the current Grimoire, with this changelog.

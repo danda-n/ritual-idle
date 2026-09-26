@@ -1,5 +1,7 @@
 # Research Notes (September 2026)
 
+> **A dated snapshot** (September 2026, written for the concept). It records what the research found at the time and isn't rewritten as the game changes; new research gets added. What was actually decided lives in [CONCEPT.md's decision log](CONCEPT.md#decision-log).
+
 Condensed findings behind [CONCEPT.md](CONCEPT.md). The Steam scores are approximate, taken from store pages and Steambase snapshots.
 Caveat: Reddit didn't load during research, so community sentiment comes from Steam discussions, Hacker News, galaxy.click, press and design essays. The r/incremental_games threads are worth reading by hand.
 
