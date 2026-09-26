@@ -3,10 +3,12 @@ import { ITEMS, type ItemId } from "../../content/items";
 import { REQUESTS } from "../../content/requests";
 import { SHOP, type ShopId } from "../../content/shop";
 import { buy, canBuy, declineRequest, deliver, type Result } from "../../engine/commands";
-import { lookupItem, nextTrustAt } from "../../engine/estimates";
+import { lookupItem, nextTrustAt, producingSkill } from "../../engine/estimates";
 import { requestCoin, trustMultiplier } from "../../engine/modifiers";
 import type { GameState } from "../../engine/state";
-import { CoinIcon, HouseIcon } from "../art/icons";
+import { CoinIcon, HouseIcon, LanternIcon } from "../art/icons";
+import { ItemIcon } from "../art/items";
+import { PlaceHero } from "../components/PlaceHero";
 import { Bar } from "../components/Bar";
 import { deliverable, stillNeeded } from "../../engine/village";
 import { ItemChip } from "../components/ItemLookup";
@@ -20,25 +22,44 @@ const pickHelped = (e: FxEvent) => (e.kind === "helped" ? [String(e.slot)] : [])
 
 export function Village({ state, act }: { state: GameState; act: Act }) {
   const helped = useRecentFx(pickHelped, 1800);
+  const nextAt = nextTrustAt(state);
   return (
-    <div className="village">
+    <>
+    <PlaceHero
+      icon={<LanternIcon size={34} />}
+      title="The Village"
+      line="Knocks at the door, and a shop that keeps odd hours."
+      stats={[
+        {
+          label: "Trust",
+          value: (
+            <span className="trust" title="Trust grows with every contract you finish. Higher trust brings better-paying work.">
+              <span>
+                {Math.floor(state.trust)}
+                {nextAt !== null && <span className="unit">· better work at {nextAt}</span>}
+              </span>
+              <Bar value={nextAt ? state.trust / nextAt : 1} label="Trust" />
+            </span>
+          ),
+        },
+        { label: "Coin", value: Math.floor(state.coin), accent: true },
+      ]}
+    />
+    <div className="village-grid">
       <section className="panel" aria-labelledby="board-heading">
         <div className="panel-title">
           <HouseIcon size={18} />
-          <h2 id="board-heading">Contracts</h2>
-          <span className="muted panel-aside num" title="Trust grows with every contract you finish. Higher trust brings better-paying work.">
-            Trust {Math.floor(state.trust)}
-            {nextTrustAt(state) !== null && ` · better work at ${nextTrustAt(state)}`}
-          </span>
+          <h2 id="board-heading">Knocks at the door</h2>
+          <span className="panel-aside">Contracts · {state.board.length} at a time</span>
         </div>
-        <div className="request-grid">
+        <div className="notices">
           {state.board.map((slot, i) =>
             slot.request ? (
               <RequestCard key={i} state={state} index={i} act={act} />
             ) : (
-              <div key={i} className={`request-card empty ${helped.has(String(i)) ? "helped" : ""}`}>
+              <div key={i} className="notice is-empty">
                 {helped.has(String(i)) && <span className="helped-stamp">Helped ✓</span>}
-                <p className="muted num">Someone will knock in {Math.max(0, Math.ceil((slot.refillAt - state.lastTickAt) / 1000))}s.</p>
+                <p className="pays num">Next contract in {Math.max(0, Math.ceil((slot.refillAt - state.lastTickAt) / 1000))}s</p>
               </div>
             ),
           )}
@@ -47,6 +68,7 @@ export function Village({ state, act }: { state: GameState; act: Act }) {
 
       <Shop state={state} act={act} />
     </div>
+    </>
   );
 }
 
@@ -59,21 +81,26 @@ function Shop({ state, act }: { state: GameState; act: Act }) {
         <CoinIcon size={18} />
         <h2 id="shop-heading">The village shop</h2>
       </div>
-      <ul className="shop-list">
+      <span className="label">Provisions</span>
+      <ul className="shop-ledger">
         {PROVISIONS.map((id) => {
           const entry = SHOP[id];
           const use = lookupItem(state, entry.item);
           const purpose = use.inKindling > 0 ? "Needed for the Kindling's offering" : use.usedBy.length > 0 ? `For ${ACTION_DEFS[use.usedBy[0]!].name.toLowerCase()}` : entry.description;
           return (
-            <li key={id} className="shop-row">
-              <div className="shop-info">
+            <li key={id} data-skill={producingSkill(entry.item) ?? undefined}>
+              <span className="ic" aria-hidden="true">
+                <ItemIcon item={entry.item} size={18} />
+              </span>
+              <span>
                 <strong>
                   {ITEMS[entry.item].name} <span className="num muted">×{entry.qty}</span>
                 </strong>
-                <p className="muted">
+                <br />
+                <span className="eff">
                   {purpose} · you hold <span className="num">{state.inventory[entry.item] ?? 0}</span>
-                </p>
-              </div>
+                </span>
+              </span>
               <BuyButton state={state} id={id} act={act} />
             </li>
           );
@@ -89,13 +116,13 @@ function BuyButton({ state, id, act }: { state: GameState; id: ShopId; act: Act 
   const short = cost - Math.floor(state.coin);
   if (reason === "Not enough coin.") {
     return (
-      <span className="shop-short num" title={`Costs ${cost} coin`}>
+      <span className="need-more num" title={`Costs ${cost} coin`}>
         Need {short} more
       </span>
     );
   }
   return (
-    <button className="btn shop-buy" disabled={reason !== null} title={reason ?? undefined} onClick={() => act((s) => buy(s, id))}>
+    <button className="btn btn-ghost btn-sm price" disabled={reason !== null} title={reason ?? undefined} onClick={() => act((s) => buy(s, id))}>
       Buy · <CoinIcon size={14} /> <span className="num">{cost}</span>
     </button>
   );
@@ -111,9 +138,9 @@ function RequestCard({ state, index, act }: { state: GameState; index: number; a
   const canGive = Object.keys(give).length > 0;
   const finishes = needs.every(([item]) => (left[item] ?? 0) <= (give[item] ?? 0));
   return (
-    <article className={`request-card paper ${finishes ? "ready" : ""}`}>
+    <article className={`notice ${finishes ? "is-ready" : ""}`}>
       <h3>{req.from}</h3>
-      <p className="note-quote">{req.text}</p>
+      <p className="lore">{req.text}</p>
       <ul className="contract-needs">
         {needs.map(([item, qty]) => {
           const done = slot.delivered[item] ?? 0;
@@ -128,14 +155,14 @@ function RequestCard({ state, index, act }: { state: GameState; index: number; a
           );
         })}
       </ul>
-      <p className="muted num">
+      <p className="pays num">
         Pays {requestCoin(state, req)} coin · +{+(req.trust * trustMultiplier(state)).toFixed(1)} trust
       </p>
       <div className="row">
-        <button className={`btn ${canGive ? "btn-primary" : "btn-ghost"}`} disabled={!canGive} onClick={() => act((s) => deliver(s, index))} title={canGive ? undefined : "You have none of what they need yet"}>
+        <button className={`btn btn-sm ${canGive ? "btn-primary" : "btn-ghost"}`} disabled={!canGive} onClick={() => act((s) => deliver(s, index))} title={canGive ? undefined : "You have none of what they need yet"}>
           {finishes ? "Deliver and finish" : "Deliver what I have"}
         </button>
-        <button className="btn btn-ghost" onClick={() => act((s) => declineRequest(s, index))}>
+        <button className="btn btn-ghost btn-sm" onClick={() => act((s) => declineRequest(s, index))}>
           Turn away
         </button>
       </div>
