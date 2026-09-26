@@ -95,7 +95,10 @@ describe("performance", () => {
     const took = performance.now() - t;
     expect(report.elapsedMs).toBe(36 * HOUR);
     expect(report.actionsCompleted).toBeGreaterThan(40_000);
-    expect(took).toBeLessThan(1000);
+    // Wall-clock time: about 0.2s on a laptop. Shared CI runners are several times slower and
+    // start cold, so they get more room; the budget for a player's machine stays one second.
+    const onCI = !!(globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env.CI;
+    expect(took).toBeLessThan(onCI ? 4000 : 1000);
   });
 });
 
