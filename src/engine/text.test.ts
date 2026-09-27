@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { BUFFS } from "../content/buffs";
 import { GLOSSARY } from "../content/glossary";
+import { SKILLS } from "../content/skills";
 import { FOLLOWERS } from "../content/followers";
 import { CURIO_STORIES, CURIOS, GRIMOIRE, GRIMOIRE_DEFS, INSIGHT_GAIN } from "../content/grimoire";
 import { ITEMS } from "../content/items";
@@ -145,6 +146,16 @@ describe("new terms are explained", () => {
       expect(t.name.length, id).toBeGreaterThan(0);
       expect(t.text.length, id).toBeGreaterThan(20);
       expect(t.text.length, id).toBeLessThanOrEqual(200);
+    }
+  });
+});
+
+describe("choices talk only about what you already know", () => {
+  it("no skill description names a place or system that isn't open when you choose", () => {
+    const unknown = /villag|contract|trust|hidden recipe|experiment|charm|grimoire|insight|coin/i;
+    for (const [id, sk] of Object.entries(SKILLS)) {
+      expect(sk.about, id).not.toMatch(unknown);
+      expect(sk.blurb, id).not.toMatch(unknown);
     }
   });
 });
