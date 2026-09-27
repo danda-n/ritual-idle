@@ -23,9 +23,11 @@ export function Term({ id, children }: { id: TermId; children?: ReactNode }) {
         title={`What's ${/^[aeiou]/i.test(def.name) ? "an" : "a"} ${def.name.toLowerCase()}?`}
       >
         {children ?? def.name.toLowerCase()}
-        <span className="term-i" aria-hidden="true">
-          i
-        </span>
+        <svg className="term-i" viewBox="0 0 12 12" aria-hidden="true">
+          <circle cx="6" cy="6" r="5.25" fill="none" stroke="currentColor" strokeWidth="1" />
+          <path d="M6 5.2v3.6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+          <circle cx="6" cy="3.4" r="0.75" fill="currentColor" />
+        </svg>
       </button>
       {open &&
         createPortal(
