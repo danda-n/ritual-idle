@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ACTION_DEFS, type ActionId } from "../content/actions";
 import { CURIO_STORIES, GRIMOIRE_DEFS, INSIGHT_GAIN, type GrimoireId } from "../content/grimoire";
 import { REQUESTS } from "../content/requests";
-import type { Result, Success } from "../engine/commands";
+import { start as startCommand, type Result, type Success } from "../engine/commands";
 import { NOTES } from "../content/notes";
 import { ITEMS, type ItemId } from "../content/items";
 import { SKILL_IDS, SKILLS } from "../content/skills";
@@ -19,7 +19,7 @@ import { PART_DEFS, RITE_MS } from "../content/rite";
 import { TALENT_LEVELS, TALENTS, type TalentLevel } from "../content/talents";
 import { catchUp, type CatchUp } from "../engine/offline";
 import { clearLocal, loadLocal, saveLocal } from "../engine/save";
-import { advance, startAction, stopAction, type Report } from "../engine/simulate";
+import { advance, stopAction, type Report } from "../engine/simulate";
 import { newGame, type GameState } from "../engine/state";
 
 const TICK_MS = 100;
@@ -239,10 +239,16 @@ export function useGame() {
     };
   }, [commit, announce]);
 
+  // Starting goes through the start command, so nothing can begin a recipe you haven't reached.
   const start = useCallback((id: ActionId) => {
+    const r = startCommand(ref.current, id);
+    if (!r.ok) {
+      pushToasts([{ title: r.reason, text: "" }]);
+      return;
+    }
     setLastStop(undefined);
-    commit(startAction(ref.current, id));
-  }, [commit]);
+    commit(r.state);
+  }, [commit, pushToasts]);
 
   const stop = useCallback(() => commit(stopAction(ref.current)), [commit]);
 

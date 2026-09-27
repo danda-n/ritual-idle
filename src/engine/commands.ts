@@ -1,5 +1,8 @@
 import { EXPERIMENT_CONSOLATION_XP, GRIMOIRE_DEFS, INSIGHT_GAIN, type GrimoireId } from "../content/grimoire";
 import { REQUESTS } from "../content/requests";
+import { ACTION_DEFS, type ActionId } from "../content/actions";
+import { isRecipeRevealed } from "./estimates";
+import { blockReason, startAction } from "./simulate";
 import { SHOP, type ShopId } from "../content/shop";
 import { UPGRADE_DEFS, type UpgradeId } from "../content/upgrades";
 import type { ItemId } from "../content/items";
@@ -9,7 +12,7 @@ import { requestCoin, trustMultiplier } from "./modifiers";
 import { applyBuff, grantOmen } from "./omens";
 import { beginRite as startRite, canBeginRite } from "./rite";
 import { PART_DEFS, type OfferingId, type PartId } from "../content/rite";
-import { SKILL_IDS, type SkillId } from "../content/skills";
+import { SKILL_IDS, SKILLS, type SkillId } from "../content/skills";
 import type { Side, TalentLevel } from "../content/talents";
 import { canChoose } from "./talents";
 import type { KeepsakeId } from "../content/keepsakes";
@@ -51,6 +54,21 @@ function ok(state: GameState, notes: Note[] = [], extra: Partial<Success> = {}):
 }
 function no(reason: string): Result {
   return { ok: false, reason };
+}
+
+/**
+ * Start working on a recipe. Refused for anything not on its skill's recipe list yet (not revealed,
+ * too high a level, still in a burnt page, skill locked) and while the rite runs. Missing inputs
+ * are allowed: the work stops or falls back on its own, as it would mid-run.
+ */
+export function start(input: GameState, id: ActionId): Result {
+  const block = blockReason(input, id);
+  if (block?.kind === "rite_in_progress") return no("The rite is under way.");
+  if (block?.kind === "skill_locked") return no("That skill hasn't opened yet.");
+  if (block?.kind === "recipe_unknown") return no("That recipe is still in a burnt page.");
+  if (block?.kind === "level_too_low") return no(`Needs ${SKILLS[ACTION_DEFS[id].skill].name} level ${block.level}.`);
+  if (!isRecipeRevealed(input, id)) return no("You haven't found that recipe yet.");
+  return ok(startAction(input, id));
 }
 
 export function hasItems(state: GameState, needs: Partial<Record<ItemId, number>>): boolean {

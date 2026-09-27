@@ -4,7 +4,7 @@ import { PART_DEFS } from "../content/rite";
 import { ITEM_CATEGORIES, ITEMS } from "../content/items";
 import { NOTES } from "../content/notes";
 import { PAGES } from "../content/pages";
-import { setSetting, type Result } from "./commands";
+import { setSetting, start, type Result } from "./commands";
 import { revealedRecipes, bestXpAction, inputsLastMs, lookupItem, nextTrustAt, outputPerHour, producerAction, producingSkill, repsPerHour, timeToCapMs, timeToNextLevelMs, xpPerHour } from "./estimates";
 import { catchUp } from "./offline";
 import { deserialize } from "./save";
@@ -27,6 +27,23 @@ const okay = (r: Result) => {
 describe("content", () => {
   it("every item has a known category", () => {
     for (const [id, item] of Object.entries(ITEMS)) expect(item.category in ITEM_CATEGORIES, id).toBe(true);
+  });
+});
+
+describe("starting work", () => {
+  it("refuses a recipe you haven't reached, even through a shortcut", () => {
+    // Scavenging 1 with the drying rack wanting nails: the midden (level 6) can't start.
+    const s = { ...newGame(T0, 21), notesRevealed: 2 };
+    const r = start(s, "sift_midden");
+    expect(r.ok).toBe(false);
+    expect(!r.ok && r.reason).toContain("level 6");
+    expect(producerAction(s, "iron_nail", () => true)).toBeNull();
+  });
+
+  it("refuses a recipe that's not on the list yet (not revealed), and starts one that is", () => {
+    const s = { ...newGame(T0, 21), notesRevealed: 2, upgrades: ["drying_rack", "mended_shutters"], skills: { ...newGame().skills, scavenging: { xp: xpForLevel(8) } } } as GameState;
+    expect(start(s, "sift_midden").ok).toBe(false);
+    expect(okay(start(s, "search_pantry")).active?.id).toBe("search_pantry");
   });
 });
 
@@ -139,9 +156,14 @@ describe("recipe reveal", () => {
   });
 
   it("hides a gatherer until something you can see uses what it finds", () => {
-    // During the Light, nothing wants iron nails yet, so the midden stays out of sight.
-    const light = { ...newGame(T0, 21), notesRevealed: 2, skills: { ...newGame().skills, scavenging: { xp: xpForLevel(8) } } };
-    expect(revealedRecipes(light, "scavenging")).toEqual(["search_pantry", "rob_hives"]);
+    // During the Light, with the projects that want nails built, nothing wants iron nails: the midden stays out of sight.
+    const light = { ...newGame(T0, 21), notesRevealed: 2, upgrades: ["drying_rack", "mended_shutters"], skills: { ...newGame().skills, scavenging: { xp: xpForLevel(8) } } } as GameState;
+    expect(revealedRecipes(light, "scavenging")).not.toContain("sift_midden");
+  });
+
+  it("a House project's needs give a gatherer a use (the drying rack wants iron nails)", () => {
+    const light = { ...newGame(T0, 21), notesRevealed: 2, skills: { ...newGame().skills, scavenging: { xp: xpForLevel(6) } } };
+    expect(revealedRecipes(light, "scavenging")).toContain("sift_midden");
   });
 
   it("lists recipes in tier order: the hives (tier 2) before the midden (tier 3)", () => {

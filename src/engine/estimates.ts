@@ -3,6 +3,7 @@ import { PART_DEFS, PART_IDS, type PartId } from "../content/rite";
 import { REQUESTS } from "../content/requests";
 import { SHOP } from "../content/shop";
 import { GRIMOIRE_DEFS } from "../content/grimoire";
+import { UPGRADE_DEFS, UPGRADE_IDS, type UpgradeId } from "../content/upgrades";
 import type { ItemId } from "../content/items";
 import type { SkillId } from "../content/skills";
 import { actionDurationMs, actionInputs, bulkExtra, chanceMultiplier, doubleChance, extraYieldChance, xpBonus } from "./modifiers";
@@ -35,7 +36,8 @@ function inputsInReach(state: GameState, id: ActionId): boolean {
 
 /**
  * True if a gatherer's finds have a use you can see: an open Kindling part, a known recipe in an
- * open skill (whose own inputs are in reach), or a request on the board. Crafts always count.
+ * open skill (whose own inputs are in reach), a request on the board, or a House project you can
+ * work toward. Crafts always count.
  * So sweeping (ash) waits until Sigilcraft wants ash; the attic waits for Scholarship's pages.
  */
 function outputWanted(state: GameState, id: ActionId): boolean {
@@ -51,8 +53,15 @@ function outputWanted(state: GameState, id: ActionId): boolean {
     (item) =>
       openParts.some((p) => (PART_DEFS[p].items[item] ?? 0) > 0) ||
       ACTION_IDS.some((a) => a !== id && item in ACTION_DEFS[a].inputs && isSkillUnlocked(state, ACTION_DEFS[a].skill) && isRecipeKnown(state, a) && inputsInReach(state, a)) ||
-      state.board.some((b) => b.request && item in REQUESTS[b.request].needs),
+      state.board.some((b) => b.request && item in REQUESTS[b.request].needs) ||
+      openProjects(state).some((u) => (UPGRADE_DEFS[u].items[item] ?? 0) > 0),
   );
+}
+
+/** House projects on the board: not built, their prerequisite built (shown once Chandlery opens). */
+export function openProjects(state: GameState): UpgradeId[] {
+  if (!isSkillUnlocked(state, "chandlery")) return [];
+  return UPGRADE_IDS.filter((id) => !state.upgrades.includes(id) && (!UPGRADE_DEFS[id].requires || state.upgrades.includes(UPGRADE_DEFS[id].requires as UpgradeId)));
 }
 
 /** A part is open once the note that asks for it has appeared. */
@@ -170,8 +179,11 @@ export function producingSkill(item: ItemId): SkillId | null {
   return id ? ACTION_DEFS[id].skill : null;
 }
 
-/** An action the player knows that makes this item, preferring one that can run right now. */
+/**
+ * An action the player can see (on its skill's recipe list) that makes this item, preferring one
+ * that can run right now. Recipes not yet revealed never count, so no shortcut starts them.
+ */
 export function producerAction(state: GameState, item: ItemId, canRun: (id: ActionId) => boolean): ActionId | null {
-  const known = ACTION_IDS.filter((a) => ACTION_DEFS[a].outputs.some((o) => o.item === item) && isSkillUnlocked(state, ACTION_DEFS[a].skill) && isRecipeKnown(state, a));
+  const known = ACTION_IDS.filter((a) => ACTION_DEFS[a].outputs.some((o) => o.item === item) && isRecipeRevealed(state, a));
   return known.find(canRun) ?? known[0] ?? null;
 }
