@@ -22,7 +22,7 @@ export function Inventory({ state }: { state: GameState }) {
     <section className="panel" aria-labelledby="inventory-heading">
       <div className="panel-title">
         <LanternIcon size={18} />
-        <h2 id="inventory-heading">Stores</h2>
+        <h2 id="inventory-heading">By kind</h2>
       </div>
       {items.length === 0 ? (
         <p className="muted">Nothing yet.</p>

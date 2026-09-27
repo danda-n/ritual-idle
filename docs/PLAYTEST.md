@@ -62,7 +62,7 @@ What to try and what to note in a Chapter 1 playtest, for the game as it is now 
 - **After the rite:** did "Still to find" give you a reason to keep playing? What did you go for first?
 ## Feedback and screens
 - **Was the activity feed enough,** or did you miss toasts for anything? Did any toast feel like noise?
-- **Did the Stores tab and item icons help** you find things?
+- **Did the Inventory tab and item icons help** you find things?
 - **Did anything move or jump** under the mouse?
 - **The look:** is it clear what to press (the red button), what's running (the glowing row and the top-bar band) and which tab you're in (its colour and hero)? Is anything hard to read? Try Settings → Row density.
 
@@ -88,3 +88,4 @@ One short entry per round, oldest first.
 - **Text trimmed to a spreadsheet style:** questions on whether the short labels are clear, whether anyone misses the story (the Journal and "Story" links), the omen shelf's toast, and the villagers' hints.
 - **Before the next playtest:** questions on fixed talents and on the goals after the rite.
 - **Playtest resets:** a note in Setup that saves may reset between builds.
+- **Inventory:** "Stores" renamed to "Inventory".

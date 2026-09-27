@@ -1,12 +1,12 @@
 /* Places: one shell, a room per tab (docs/DESIGN.md "Places"). Each tab owns a place colour, a hero
    band, a room light and a material: House = hearth (ember, wood), Grimoire = the book (lilac ink on
    vellum), Village = the lane (verdigris, daylight paper), Circle = the floor at night (rowan), and
-   Stores = the pantry (brass). The place colour never replaces the action red or skill colours. */
+   Inventory = the storeroom (brass). The place colour never replaces the action red or skill colours. */
 [data-place="house"] { --place: var(--ember-place); --place-deep: var(--oxblood); }
 [data-place="grimoire"] { --place: var(--folk-lilac); --place-deep: #3b2f55; }
 [data-place="village"] { --place: var(--verdigris-400); --place-deep: #1a4a45; }
 [data-place="circle"] { --place: var(--folk-rowan); --place-deep: #5a1f3a; }
-[data-place="stores"] { --place: var(--brass-light); --place-deep: #4a3a22; }
+[data-place="inventory"] { --place: var(--brass-light); --place-deep: #4a3a22; }
 
 /* Room light: a wash in the place colour at the top of the main column */
 .shell-main { position: relative; isolation: isolate; }

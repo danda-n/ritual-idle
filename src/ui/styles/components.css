@@ -525,9 +525,9 @@ details.talents:not([open]) > .talents-summary { margin-bottom: 0; }
 .spark-ring span { position: absolute; width: 8px; height: 8px; margin: -4px; border-radius: 50%; background: var(--color-rare); box-shadow: 0 0 10px var(--color-rare); transform: rotate(var(--a)) translateY(0); animation: spark 900ms var(--ease-out) forwards; }
 @keyframes spark { 0% { opacity: 1; transform: rotate(var(--a)) translateY(0) scale(1); } 100% { opacity: 0; transform: rotate(var(--a)) translateY(-150px) scale(0.3); } }
 
-/* ---------- Stores ---------- */
-.stores .ledger { columns: 2 220px; column-gap: var(--space-6); }
-.stores .ledger li { break-inside: avoid; }
+/* ---------- Inventory tab ---------- */
+.inventory-tab .ledger { columns: 2 220px; column-gap: var(--space-6); }
+.inventory-tab .ledger li { break-inside: avoid; }
 .inv-group + .inv-group { margin-top: var(--space-4); }
 .inv-group h3 { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-1); font: var(--text-2xs) / 1.2 var(--font-display); letter-spacing: var(--tracking-label); color: var(--color-text-3); }
 .inv-group h3 svg { color: var(--color-brass); }

@@ -312,7 +312,7 @@ We deliberately **do not** use:
   - **House projects** are side work built once from items you make, with no coin: the omen shelf, a reading lamp, a drying rack, mended shutters (a longer offline cap) and so on. Nothing on the main path needs them; they give deeper recipes and odds and ends a use.
 - **Calm feedback**
   - Routine events (steps done, plain level-ups, omens, claims) go to a quiet **activity feed** under the top bar. **Toasts are kept for big moments** (a part placed, a project built, a contract done, a new tier, rare finds, the rite beginning).
-  - The inventory has its own **Stores** tab, and every item has its own woodcut icon.
+  - The inventory has its own **Inventory** tab, and every item has its own woodcut icon.
 - **Taint and afflictions** *(decided in Q4; numbers are draft)*
   - **Sources:** forbidden recipe variants, some bound entities, and rites performed with forbidden components.
   - **Scale:** 0–100, with thresholds at 25 *Touched*, 50 *Marked* and 75 *Hollowed*.
@@ -677,3 +677,4 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
 - **After the rite, the tracker lists what's still to find** (hidden recipes, secrets, projects, skills at the cap, better contracts), so the chapter end isn't a dead end.
 - **The talent panel shows only what's reached** and folds while nothing waits; **XP rewards can't go into a capped skill.**
 - **Playtest save resets:** the game can wipe saves on purpose (`SAVE_EPOCH`), so a playtest after big changes starts clean instead of from a save shaped by old rules. Whether to reset is decided at the end of every session. The first reset ships with this build.
+- **The inventory tab is called "Inventory"** (it was "Stores"): the designer preferred a plain, generic name players know at a glance.

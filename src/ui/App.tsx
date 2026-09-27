@@ -11,7 +11,7 @@ import { DevPanel } from "./components/DevPanel";
 import { ChapterEnd } from "./components/ChapterEnd";
 import { DiscoveryModal } from "./components/DiscoveryModal";
 import { ActivityFeed } from "./components/ActivityFeed";
-import { Stores } from "./screens/Stores";
+import { InventoryTab } from "./screens/InventoryTab";
 import { ChapterTracker } from "./components/ChapterTracker";
 import { TaskCard } from "./components/TaskCard";
 import { OmenShelf } from "./components/OmenShelf";
@@ -32,7 +32,7 @@ import { Village } from "./screens/Village";
 import type { Place } from "./tasks";
 import { useGame } from "./useGame";
 
-type TabId = "house" | "stores" | "grimoire" | "village" | "circle";
+type TabId = "house" | "inventory" | "grimoire" | "village" | "circle";
 
 export function App() {
   const game = useGame();
@@ -76,7 +76,7 @@ export function App() {
   // Tabs appear as grandmother's notes open them; each shows a dot until first visited.
   const tabs: TabDef<TabId>[] = [
     { id: "house", label: "House", icon: <HouseIcon size={18} /> },
-    { id: "stores", label: "Stores", icon: <JarIcon size={18} /> },
+    { id: "inventory", label: "Inventory", icon: <JarIcon size={18} /> },
   ];
   const place = (id: TabId, label: string, icon: ReactNode) => tabs.push({ id, label, icon, badge: !seen(id) && tab !== id });
   if (isFeatureOpen(state, "grimoire")) place("grimoire", "Grimoire", <BookIcon size={18} />);
@@ -100,7 +100,7 @@ export function App() {
           <ActivityFeed feed={game.feed} />
         </div>
         <div className="main" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
-          {tab === "stores" && <Stores state={state} />}
+          {tab === "inventory" && <InventoryTab state={state} />}
           {tab === "village" && <Village state={state} act={game.act} />}
           {tab === "grimoire" && <Grimoire state={state} act={game.act} onAttuned={() => setTab("circle")} />}
           {tab === "circle" && <Circle state={state} act={game.act} />}

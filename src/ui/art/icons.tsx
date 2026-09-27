@@ -48,7 +48,7 @@ export const LanternIcon = (p: IconProps) => (
   </Icon>
 );
 
-/** A lidded crock: the Stores. */
+/** A lidded crock: the Inventory tab. */
 export const JarIcon = (p: IconProps) => (
   <Icon {...p}>
     <path d="M8 4h8M9 4v2.5M15 4v2.5" />

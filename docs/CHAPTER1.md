@@ -81,7 +81,7 @@ The table shows the stages in the default order (Ward, Smoke, Words); the middle
   - "New" badges on fresh recipes, the helped stamp, the tracker tick
   - staggered Circle glows, "Closer!", the discovery burst
   - the framed room at the chapter end
-- **Stores:** the inventory has its own tab, and every item has its own woodcut icon, coloured by the skill that makes it.
+- **Inventory:** the inventory has its own tab, and every item has its own woodcut icon, coloured by the skill that makes it.
 
 ---
 
@@ -143,7 +143,7 @@ After the six story pages, each deciphered page brings 2 insight.
 | Bless the threshold | 1 · 1 | 6s | 20 | 1 salt line + 1 tallow candle → Consecrated salt |
 | Smoke the rooms | 2 · 3 | 8s | 25 | 1 smudge bundle + 1 tallow candle → *Blessing* (a 15-minute +10% speed buff to all Chapter 1 skills; the row says so) |
 
-**Curios** (from grandmother's chest and the attic) aren't kept in the Stores. Each is read when found (its toast says "+3 insight") and joins a collection in the Grimoire journal (Curios n/5), listed by name with the story collapsed under it.
+**Curios** (from grandmother's chest and the attic) aren't kept in the Inventory. Each is read when found (its toast says "+3 insight") and joins a collection in the Grimoire journal (Curios n/5), listed by name with the story collapsed under it.
 
 ---
 
@@ -380,3 +380,4 @@ One short entry per round, oldest first. The reasons behind each change are in [
 - **Text trimmed to a spreadsheet style:** screens lead with numbers and verbs, and the story moves to the Grimoire journal (collapsed). Task cards lose the quote (a "Story" link instead); contracts show short labels (full lines as hover titles); the omen-shelf card and its after-build note are gone (a toast instead); the rite log is a phase checklist; keepsakes state their effect (lore as hover title); a Resplendent rite is sold as two keepsakes and the cloth, not "more lore". Shorter step labels and villager asides; no change to numbers.
 - **Before the next playtest:** talents are fixed until the next tier (confirm to take one, no reset), and the panel shows only what's reached; the last stage is just "Wake the Circle" (its two steps never blocked the rite); after the rite the tracker lists what's still to find; XP rewards can't go into a skill at the cap.
 - **Playtest reset 1:** every save from before this build starts fresh (with a notice), because the chapter changed a lot.
+- **Inventory:** the Stores tab is now called Inventory.

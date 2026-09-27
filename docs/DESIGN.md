@@ -47,7 +47,7 @@ Components use the semantic tokens only (`--color-text`, `--color-action`…), n
 
 **Skills** (`[data-skill]` sets `--skill`): Herbalism lichen `#94be58` · Scavenging river `#469bd1` · Chandlery beeswax `#ebd56a` · Sigilcraft poppy `#ee694f` · Scholarship lilac `#cdaef2` · Ritualism rowan `#db6ea5`. They're spread in lightness so they stay apart for colour-blind players.
 
-**Places** (`[data-place]` sets `--place` and `--place-deep`): House ember `#e2703f` · Stores brass `#b39463` · Grimoire lilac · Village verdigris · Circle rowan.
+**Places** (`[data-place]` sets `--place` and `--place-deep`): House ember `#e2703f` · Inventory brass `#b39463` · Grimoire lilac · Village verdigris · Circle rowan.
 
 **Linen theme** (`[data-theme="linen"]`): a light alternative with the same roles, kept opt-in for a future setting.
 
@@ -119,7 +119,7 @@ Every tab adds four things and nothing more: a **place colour**, a **hero band**
   - **Stock:** two lists per skill, **Inputs** (short ones first, a red pill and "need N") and **Made here**; five rows each, then "Show all N".
   - Then the talent vine: only the pairs reached plus the next one; folded to one line (the picks' names) while no choice waits. Clicking a leaf opens a confirm ("Take Quick fingers? · Fixed until level 6"); a fixed pick's other side is disabled with "Change at level N".
   - Then House projects (with the omen-shelf pointers: a New tag and the invite outline).
-- **Stores** (brass): hero with Kinds and Things; the inventory grouped by category, with icons.
+- **Inventory** (brass): hero with Kinds and Things; the inventory grouped by category, with icons.
 - **Grimoire** (lilac): hero with Insight to spend (✦), Hidden recipes, Secrets. An **open book**: a ribbon index (the active entry marked by a lilac gradient and a 3px edge; insight in a box at the top; Hidden recipes, Discovered, Secrets, then the **Journal**) and a **vellum page** (title in SC 30px, a "Gives" line, a "Next step" callout with a lilac edge, the proofs grid Belongs / Crossed out / Still possible, hints with glowing roman numerals, your tries with lit glow dots). Journal pages are lists of collapsed entries (`.journal`), one per note, page, curio, discovery or the Kindling, divided by soft rules.
 - **Village** (verdigris): hero with Trust (and its bar) and Coin. **Knocks at the door** as pinned notices: daylight paper (`#c9bda6 → #b9ab92`, text `#1a1512`), a red pin and a slight tilt; item icons on dark badges; delivered/needed per item with a bar; each notice shows who's asking and a short label in plain type (their full line is the hover title); a notice you can finish gets a verdigris ring and glow; an empty slot shows the Helped stamp and the refill time. The **shop** is a ledger with a 34px icon tile per item: "Buy · (coin) N", or "Need N more".
 - **Circle** (rowan): hero with Parts placed and Ritualism. The **night stage**: the five-petal Kindling rosette as hero art (the outer ring drifts; a placed petal is filled in its skill colour and glows; the next pulses with a dashed stroke), and the parts beside it (placed: a filled disc and what was placed; open: skill tint, ring, chips, Place or "Not ready yet"; later: an outlined disc and "Later · brings X"). The rite card with offerings and its outcome sits under the parts. While the rite runs and after, a five-row **phase checklist** (✓ done, ▸ now in the skill colour, · later) replaces the parts. Below: **Experiments** (slots that glow in the place colour when filled) and "Pick from what you hold".
@@ -183,7 +183,7 @@ Every tab adds four things and nothing more: a **place colour**, a **hero band**
 - **recipe**: a craftable action
 - **hidden recipe**: a Grimoire entry found by hints
 - **secret**: found with no hints
-- **Stores**: the tab with the inventory ("the pantry" is only the Search the pantry action, and "the omen shelf" is the project)
+- **Inventory**: the tab listing everything you hold ("the pantry" is only the Search the pantry action, and "the omen shelf" is the project)
 - **Omens & blessings**: the sidebar panel with stored omens and active blessings (headed just **Blessings** before the omen shelf is built, when no omens can turn up)
 - **insight** and **trust** are always shown together with what they unlock
 
@@ -205,3 +205,4 @@ One short entry per round, oldest first. The reasons are in [CONCEPT.md's decisi
 - **Design system v0.4, "Hearth + Folk":** from the design handoff. The brown-and-gold "candlelit vellum" look is replaced: Soot & Linen roles (red acts, verdigris selects, gold is rare) on warm Hearth grounds, Alegreya Sans for the UI, no italics or dashed outlines, brass corner marks, the embroidery band, a now-working band in the top bar, a real recipe table with a filling running row, per-skill stock lists, a place colour and hero band per tab (the Grimoire as a book, Village notices, the Circle at night), and a Row density setting.
 - **Text trimmed to a spreadsheet style:** a writing section (flavour lives in names, art, hover titles and the journal); the Grimoire journal of collapsed entries and the `Story` disclosure; the task card's quote, the omen-shelf card and its after-build note, the rite log, the keepsakes' lore line and the chapter end's finale and lore lines are gone from view (a phase checklist, hover titles and "Story" instead); contracts show short labels.
 - **Before the next playtest:** the talent vine shows only what's reached and folds while nothing waits, with a confirm and locked sides; the tracker's Still to find after the rite; disabled tiles in the skill picker.
+- **Inventory:** the Stores tab is renamed Inventory (its hero and tab); the panel inside is headed "By kind".
