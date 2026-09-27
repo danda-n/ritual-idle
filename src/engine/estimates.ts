@@ -9,7 +9,8 @@ import type { SkillId } from "../content/skills";
 import { actionDurationMs, actionInputs, bulkExtra, byproducts, chanceFactors, chanceMultiplier, doubleChance, extraYieldChance, xpBonus } from "./modifiers";
 import { TALENT_LEVELS, TALENTS, type TalentEffect } from "../content/talents";
 import { isDiscovered } from "./grimoire";
-import { currentNote, isRecipeKnown, isSkillUnlocked, revealedNotes, type Step } from "./progress";
+import { trustForLevel, trustLevel } from "./village";
+import { currentNote, isFeatureOpen, isRecipeKnown, isSkillUnlocked, revealedNotes, type Step } from "./progress";
 import { skillLevel } from "./simulate";
 import type { GameState } from "./state";
 import { xpForLevel } from "./xp";
@@ -62,7 +63,10 @@ function outputWanted(state: GameState, id: ActionId): boolean {
 /** House projects on the board: not built, their prerequisite built (shown once Chandlery opens). */
 export function openProjects(state: GameState): UpgradeId[] {
   if (!isSkillUnlocked(state, "chandlery")) return [];
-  return UPGRADE_IDS.filter((id) => !state.upgrades.includes(id) && (!UPGRADE_DEFS[id].requires || state.upgrades.includes(UPGRADE_DEFS[id].requires as UpgradeId)));
+  return UPGRADE_IDS.filter((id) => {
+    const d = UPGRADE_DEFS[id];
+    return !state.upgrades.includes(id) && (!d.requires || state.upgrades.includes(d.requires as UpgradeId)) && (!d.requiresFeature || isFeatureOpen(state, d.requiresFeature));
+  });
 }
 
 /** A part is open once the note that asks for it has appeared. */
@@ -220,7 +224,7 @@ export function lookupItem(state: GameState, item: ItemId): ItemLookup {
     usedBy: ACTION_IDS.filter((id) => visible(id) && item in ACTION_DEFS[id].inputs),
     sold: Object.values(SHOP).some((e) => e.item === item),
     inKindling: PART_IDS.filter((p) => !state.kindling.includes(p)).reduce((n, p) => n + (PART_DEFS[p].items[item] ?? 0), 0),
-    wantedBy: Object.values(REQUESTS).filter((r) => item in r.needs && r.minTrust <= state.trust).map((r) => r.from),
+    wantedBy: Object.values(REQUESTS).filter((r) => item in r.needs && r.minLevel <= trustLevel(state)).map((r) => r.from),
     inRecipes: (Object.keys(GRIMOIRE_DEFS) as (keyof typeof GRIMOIRE_DEFS)[])
       .filter((id) => isDiscovered(state, id) && (GRIMOIRE_DEFS[id].ingredients as string[]).includes(item))
       .map((id) => GRIMOIRE_DEFS[id].name),
@@ -230,10 +234,9 @@ export function lookupItem(state: GameState, item: ItemId): ItemLookup {
   };
 }
 
-/** The trust at which the next, better requests start knocking, or null if none are left. */
-export function nextTrustAt(state: GameState): number | null {
-  const gates = Object.values(REQUESTS).map((r) => r.minTrust).filter((t) => t > state.trust);
-  return gates.length > 0 ? Math.min(...gates) : null;
+/** The trust at which the next trust level comes (levels never end: contracts keep growing). */
+export function nextTrustAt(state: GameState): number {
+  return trustForLevel(trustLevel(state) + 1);
 }
 
 /** The skill that makes an item (its first producing action), or null for bought/found things. */

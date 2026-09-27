@@ -35,10 +35,19 @@ export interface ActiveAction {
  * One slot on the village board: a contract, or empty until `refillAt` (sim clock). Contracts can
  * be delivered in parts; `delivered` is what they've had so far.
  */
+/** A contract as it stands on the board: its template scaled to the trust level and the slot. */
+export interface Offer {
+  needs: Partial<Record<ItemId, number>>;
+  coin: number;
+  trust: number;
+}
+
 export interface BoardSlot {
   request: RequestId | null;
   refillAt: number;
   delivered: Partial<Record<ItemId, number>>;
+  /** The scaled contract (v11); older saves get one on load. */
+  offer?: Offer;
 }
 
 export interface GameState {
@@ -62,7 +71,7 @@ export interface GameState {
   stageStart: Partial<Record<ActionId, number>>;
   coin: number;
   trust: number;
-  /** Empty until the village opens; then always BOARD_SLOTS long. */
+  /** Empty until the village opens; then one slot per board place (boardSlots). */
   board: BoardSlot[];
   upgrades: UpgradeId[];
   /** Omens waiting on the shelf. */

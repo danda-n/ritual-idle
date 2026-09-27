@@ -109,8 +109,8 @@ export interface RequestDef<I extends string> {
   needs: Partial<Record<I, number>>;
   coin: number;
   trust: number;
-  /** Trust needed before this request can appear on the board. */
-  minTrust: number;
+  /** Trust level needed before this contract can appear on the board (content/requests.ts scales it to your level). */
+  minLevel: number;
   /** An aside when filled (a free hint toward a hidden recipe), and some insight. */
   mentions?: { recipe: string; aside: string };
 }
@@ -121,13 +121,19 @@ export type UpgradeEffect =
   /** An item turns up more often wherever it's a chance find (the salt crock: salt ×1.5). */
   | { kind: "find"; item: string; multiplier: number }
   | { kind: "omen_capacity"; capacity: number }
-  | { kind: "offline_cap"; hours: number };
+  | { kind: "offline_cap"; hours: number }
+  /** More contracts on the village board at once. */
+  | { kind: "board_slots"; extra: number }
+  /** New provisions in the village shop. */
+  | { kind: "shop"; entries: string[] };
 
 export interface ShopEntry<I extends string> {
   name: string;
   cost: number;
   item: I;
   qty: number;
+  /** A House project that has to be built before the shop sells it. */
+  requires?: string;
 }
 
 /** A house project: built once from items you make, then it helps for good. */
@@ -141,6 +147,8 @@ export interface UpgradeDef<I extends string> {
   effect: UpgradeEffect;
   /** Another project that has to be built first. */
   requires?: string;
+  /** A place that has to be open first (a village project waits for the Village). */
+  requiresFeature?: Feature;
 }
 
 export interface BuffDef<S extends string, I extends string> {

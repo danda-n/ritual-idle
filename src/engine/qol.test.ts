@@ -318,9 +318,9 @@ describe("lookup teases and trust", () => {
     expect(lookupItem(open(), "juniper").inUnfound).toBe(false);
   });
 
-  it("knows when better requests start, and hides gated ones", () => {
-    expect(nextTrustAt(open({ trust: 0 }))).toBe(2);
-    expect(nextTrustAt(open({ trust: 5 }))).toBeNull();
+  it("knows when the next trust level comes (they never end), and hides gated contracts", () => {
+    expect(nextTrustAt(open({ trust: 0 }))).toBe(3);
+    expect(nextTrustAt(open({ trust: 5 }))).toBe(7);
     expect(lookupItem(open({ trust: 0 }), "iron_ward").wantedBy).toEqual([]);
   });
 });

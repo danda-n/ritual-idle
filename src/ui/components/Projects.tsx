@@ -3,8 +3,9 @@ import type { ItemId } from "../../content/items";
 import { UPGRADE_DEFS, UPGRADE_IDS, type UpgradeId } from "../../content/upgrades";
 import { build, canBuild, type Result } from "../../engine/commands";
 import { omenShelfSuggested, projectsReady } from "../../engine/projects";
+import { openProjects } from "../../engine/estimates";
 import type { GameState } from "../../engine/state";
-import { CandleIcon, HouseIcon, LeafIcon, MoonIcon } from "../art/icons";
+import { CandleIcon, HouseIcon, LanternIcon, LeafIcon, MoonIcon } from "../art/icons";
 import { upgradeEffect } from "../effects";
 import { ItemChip } from "./ItemLookup";
 import { ItemIcon } from "../art/items";
@@ -17,7 +18,10 @@ const ICONS: Record<UpgradeId, (p: { size?: number }) => ReactNode> = {
   salt_crock: (p) => <ItemIcon item="salt" {...p} />,
   reading_lamp: CandleIcon,
   drying_rack: LeafIcon,
-  mended_shutters: HouseIcon,
+  notice_board: LanternIcon,
+  second_board: LanternIcon,
+  herb_stall: LeafIcon,
+  wax_trader: CandleIcon,
   carved_shelf: MoonIcon,
 };
 
@@ -28,7 +32,7 @@ const ICONS: Record<UpgradeId, (p: { size?: number }) => ReactNode> = {
 export function Projects({ state, act }: { state: GameState; act: Act }) {
   const ready = projectsReady(state);
   const built = UPGRADE_IDS.filter((id) => state.upgrades.includes(id));
-  const open = UPGRADE_IDS.filter((id) => !built.includes(id) && (!UPGRADE_DEFS[id].requires || built.includes(UPGRADE_DEFS[id].requires as UpgradeId)));
+  const open = openProjects(state);
   return (
     <section className="panel projects" aria-labelledby="projects-heading">
       <div className="panel-title">

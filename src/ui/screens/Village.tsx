@@ -2,7 +2,7 @@ import { ACTION_DEFS } from "../../content/actions";
 import { ITEMS, type ItemId } from "../../content/items";
 import { REQUESTS } from "../../content/requests";
 import { SHOP, type ShopId } from "../../content/shop";
-import { buy, canBuy, declineRequest, deliver, type Result } from "../../engine/commands";
+import { buy, canBuy, declineRequest, deliver, shopStocks, type Result } from "../../engine/commands";
 import { lookupItem, nextTrustAt, producingSkill } from "../../engine/estimates";
 import { requestCoin, trustMultiplier } from "../../engine/modifiers";
 import type { GameState } from "../../engine/state";
@@ -11,7 +11,7 @@ import { ItemIcon } from "../art/items";
 import { PlaceHero } from "../components/PlaceHero";
 import { Term } from "../components/Term";
 import { Bar } from "../components/Bar";
-import { deliverable, stillNeeded } from "../../engine/village";
+import { deliverable, offerOf, stillNeeded, trustForLevel, trustLevel } from "../../engine/village";
 import { ItemChip } from "../components/ItemLookup";
 import type { FxEvent } from "../fx";
 import { useRecentFx } from "../useFx";
@@ -24,6 +24,8 @@ const pickHelped = (e: FxEvent) => (e.kind === "helped" ? [String(e.slot)] : [])
 export function Village({ state, act }: { state: GameState; act: Act }) {
   const helped = useRecentFx(pickHelped, 1800);
   const nextAt = nextTrustAt(state);
+  const level = trustLevel(state);
+  const from = trustForLevel(level);
   return (
     <>
     <PlaceHero
@@ -33,15 +35,17 @@ export function Village({ state, act }: { state: GameState; act: Act }) {
       line="Knocks at the door, and a shop that keeps odd hours."
       stats={[
         {
-          label: "Trust",
+          label: "Trust level",
           term: "trust",
           value: (
-            <span className="trust" title="Trust grows with every contract you finish. Higher trust brings better-paying work.">
+            <span className="trust">
               <span>
-                {Math.floor(state.trust)}
-                {nextAt !== null && <span className="unit">· better work at {nextAt}</span>}
+                {level}
+                <span className="unit">
+                  · {Math.floor(state.trust - from)}/{nextAt - from} to {level + 1}
+                </span>
               </span>
-              <Bar value={nextAt ? state.trust / nextAt : 1} label="Trust" />
+              <Bar value={(state.trust - from) / (nextAt - from)} label="Trust to the next level" />
             </span>
           ),
         },
@@ -77,7 +81,8 @@ export function Village({ state, act }: { state: GameState; act: Act }) {
   );
 }
 
-const PROVISIONS = SHOP_IDS;
+/** What the shop sells now: the basics, plus what built House projects stock. */
+const provisions = (state: GameState) => SHOP_IDS.filter((id) => shopStocks(state, id));
 
 function Shop({ state, act }: { state: GameState; act: Act }) {
   return (
@@ -88,7 +93,7 @@ function Shop({ state, act }: { state: GameState; act: Act }) {
       </div>
       <span className="label">Provisions</span>
       <ul className="shop-ledger">
-        {PROVISIONS.map((id) => {
+        {provisions(state).map((id) => {
           const entry = SHOP[id];
           const use = lookupItem(state, entry.item);
           const purpose = use.inKindling > 0 ? "Needed for the Kindling's offering" : use.usedBy.length > 0 ? `For ${ACTION_DEFS[use.usedBy[0]!].name.toLowerCase()}` : null;
@@ -137,7 +142,9 @@ function BuyButton({ state, id, act }: { state: GameState; id: ShopId; act: Act 
 function RequestCard({ state, index, act }: { state: GameState; index: number; act: Act }) {
   const slot = state.board[index]!;
   const req = REQUESTS[slot.request!];
-  const needs = Object.entries(req.needs) as [ItemId, number][];
+  // As it stands on the board: scaled to your trust level and this slot.
+  const offer = offerOf(slot)!;
+  const needs = Object.entries(offer.needs) as [ItemId, number][];
   const left = stillNeeded(slot);
   const give = deliverable(state, slot);
   const canGive = Object.keys(give).length > 0;
@@ -164,7 +171,7 @@ function RequestCard({ state, index, act }: { state: GameState; index: number; a
         })}
       </ul>
       <p className="pays num">
-        Pays {requestCoin(state, req)} coin · +{+(req.trust * trustMultiplier(state)).toFixed(1)} trust
+        Pays {requestCoin(state, { ...req, coin: offer.coin })} coin · +{+(offer.trust * trustMultiplier(state)).toFixed(1)} trust
       </p>
       <div className="row">
         <button className={`btn btn-sm ${canGive ? "btn-primary" : "btn-ghost"}`} disabled={!canGive} onClick={() => act((s) => deliver(s, index))} title={canGive ? undefined : "You have none of what they need yet"}>

@@ -14,7 +14,8 @@ describe("effects are stated plainly, from the data", () => {
   });
   it("upgrades and followers", () => {
     expect(upgradeEffectFor("reading_lamp")).toBe("+15% Scholarship speed");
-    expect(upgradeEffectFor("mended_shutters")).toBe("Offline cap 36h");
+    expect(upgradeEffectFor("notice_board")).toBe("+1 contract on the village board");
+    expect(upgradeEffectFor("herb_stall")).toBe("The shop sells nettle, chamomile, mugwort");
     expect(followerEffects("janko")).toEqual(["+30% speed on your current action", "+20% Chandlery speed"]);
   });
   it("a built project's toast: the effect, and for the omen shelf what's stored and what a blessing gives", () => {

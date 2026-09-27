@@ -78,12 +78,11 @@ describe("saves", () => {
 });
 
 describe("performance", () => {
-  it("catches up 36 hours offline in well under a second", () => {
+  it("catches up a full 24 hours offline in well under a second", () => {
     const base = newGame(T0, 5);
     let s: GameState = {
       ...base,
       notesRevealed: NOTES.length - 1,
-      upgrades: ["mended_shutters"],
       stats: { ...base.stats, completed: { decipher_page: PAGES.length } },
       followers: ["janko"],
       inventory: { tallow: 500 },
@@ -93,8 +92,8 @@ describe("performance", () => {
     const t = performance.now();
     const { report } = catchUp(s, T0 + 3000 + 40 * HOUR);
     const took = performance.now() - t;
-    expect(report.elapsedMs).toBe(36 * HOUR);
-    expect(report.actionsCompleted).toBeGreaterThan(40_000);
+    expect(report.elapsedMs).toBe(24 * HOUR);
+    expect(report.actionsCompleted).toBeGreaterThan(25_000);
     // Wall-clock time: about 0.2s on a laptop. Shared CI runners are several times slower and
     // start cold, so they get more room; the budget for a player's machine stays one second.
     const onCI = !!(globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env.CI;

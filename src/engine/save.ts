@@ -7,9 +7,10 @@ import { HEARTH_RITE, PART_IDS } from "../content/rite";
 import { SKILL_IDS, type SkillId } from "../content/skills";
 import { TALENT_LEVELS } from "../content/talents";
 import { KEEPSAKES } from "../content/keepsakes";
+import { REQUESTS } from "../content/requests";
+import { boardSlots, scaleOffer, trustLevel } from "./village";
 import { CHARMS } from "../content/charms";
 import { BUFFS } from "../content/buffs";
-import { BOARD_SLOTS } from "../content/requests";
 import { UPGRADE_IDS, UPGRADES, type UpgradeId } from "../content/upgrades";
 import type { Feature } from "../content/types";
 import { SAVE_EPOCH, SAVE_VERSION, newGame, type GameState, type RecipeProgress } from "./state";
@@ -59,7 +60,7 @@ export function deserialize(json: string): GameState {
     charms: Object.fromEntries(Object.entries(data.charms ?? {}).filter(([k, n]) => k in CHARMS && typeof n === "number" && n > 0)),
     buffs: (data.buffs ?? []).filter((b) => b.id in BUFFS),
     // Contracts: two slots now, each remembering what's been delivered.
-    board: (data.board ?? []).slice(0, BOARD_SLOTS).map((b) => ({ ...b, delivered: { ...b.delivered } })),
+    board: (data.board ?? []).map((b) => ({ ...b, delivered: { ...b.delivered } })),
     version: SAVE_VERSION,
   };
   // Fields that no longer exist (the offline cap is now derived from upgrades).
@@ -91,6 +92,9 @@ export function deserialize(json: string): GameState {
     const running = state.active ? ACTION_DEFS[state.active.id].skill : "scholarship";
     state.buffs = state.buffs.map((b) => (b.id === "still_night" && !b.skill ? { ...b, skill: running } : b));
   }
+  // v11: the board has one slot per place (two, plus projects), and each contract its scaled offer.
+  state.upgrades = state.upgrades.filter((u) => u in UPGRADES);
+  state.board = state.board.slice(0, boardSlots(state)).map((b, i) => (b.request && !(b.request in REQUESTS) ? { request: null, refillAt: b.refillAt, delivered: {} } : b.request && !b.offer ? { ...b, offer: scaleOffer(b.request, trustLevel(state), i) } : b));
   // Steps that no longer exist (stages lost their sub-steps: each is its part's checklist now).
   state.stepsDone = (state.stepsDone ?? []).filter((id) => stepById(id));
   state.rewardsWaiting = state.rewardsWaiting.filter((id) => stepById(id));

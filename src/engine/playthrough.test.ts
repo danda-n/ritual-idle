@@ -10,6 +10,7 @@ import type { SkillId } from "../content/skills";
 import { beginRite, buy, chooseStage, claimReward, declineRequest, deliver, placePart, setSetting, chooseTalent, type Result } from "./commands";
 import { actionDurationMs, actionInputs } from "./modifiers";
 import { makerOf, shortfall } from "./estimates";
+import { offerOf } from "./village";
 import { currentNote, isRecipeKnown, isSkillUnlocked, isStepMet, stageChoices, stageOrder, stepById, type Step } from "./progress";
 import { advance, blockReason, skillLevel, startAction } from "./simulate";
 import { newGame, type GameState } from "./state";
@@ -166,8 +167,9 @@ class Bot {
       this.wait(31_000);
       return;
     }
-    const req = REQUESTS[this.state.board[slot]!.request!];
-    for (const [item, qty] of Object.entries(req.needs) as [ItemId, number][]) this.ensure(item, qty);
+    // What the board asks, as scaled for the trust level and the slot.
+    const offer = offerOf(this.state.board[slot]!)!;
+    for (const [item, qty] of Object.entries(offer.needs) as [ItemId, number][]) this.ensure(item, qty);
     this.state = this.must(deliver(this.state, slot));
   }
 

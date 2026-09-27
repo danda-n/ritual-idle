@@ -1,8 +1,9 @@
 import type { ItemId } from "./items";
 import type { RequestDef } from "./types";
 
-// Village contracts (docs/CHAPTER1.md §4). Two show at a time; each asks for a good amount of
-// one or two things, and can be delivered in parts. Better ones appear as trust grows.
+// Village contracts (docs/CHAPTER1.md §4): templates. The board scales each to your trust level
+// and to its slot's quiet difficulty (engine/village.ts), so they never run out. Better ones join
+// as your trust level grows; any can be delivered in parts.
 // Coin only ever comes from here. The card shows `label`; `text` is the hover title.
 // Asides are puzzle hints (docs/GRIMOIRE.md §8): keep what they point at when editing them.
 export const REQUESTS = {
@@ -13,7 +14,7 @@ export const REQUESTS = {
     needs: { nettle: 30, chamomile: 10 },
     coin: 15,
     trust: 1,
-    minTrust: 0,
+    minLevel: 0,
     mentions: { recipe: "dream_pillow", aside: "Grandmother made me a pillow for bad dreams. Bitter-smelling." },
   },
   millers_cough: {
@@ -23,7 +24,7 @@ export const REQUESTS = {
     needs: { chamomile: 15, yarrow: 8 },
     coin: 30,
     trust: 1,
-    minTrust: 2,
+    minLevel: 2,
   },
   lye_ash: {
     from: "The soapmaker",
@@ -32,7 +33,7 @@ export const REQUESTS = {
     needs: { ash: 40 },
     coin: 12,
     trust: 1,
-    minTrust: 0,
+    minLevel: 0,
   },
   grave_candles: {
     from: "Old Tomas",
@@ -41,7 +42,7 @@ export const REQUESTS = {
     needs: { tallow_candle: 12 },
     coin: 20,
     trust: 1,
-    minTrust: 0,
+    minLevel: 0,
   },
   doorstep_salt: {
     from: "The ferryman's wife",
@@ -50,7 +51,7 @@ export const REQUESTS = {
     needs: { salt_line: 12 },
     coin: 18,
     trust: 1,
-    minTrust: 0,
+    minLevel: 0,
   },
   stable_mark: {
     from: "The Kral farm",
@@ -59,7 +60,7 @@ export const REQUESTS = {
     needs: { ash_sigil: 4, salt_line: 6 },
     coin: 40,
     trust: 1,
-    minTrust: 2,
+    minLevel: 2,
     mentions: { recipe: "hearth_mark", aside: "She drew a mark on our hearth in ash. Salt on top." },
   },
   smoke_loft: {
@@ -69,7 +70,7 @@ export const REQUESTS = {
     needs: { smudge: 4 },
     coin: 45,
     trust: 1,
-    minTrust: 3,
+    minLevel: 3,
   },
   sickroom_smoke: {
     from: "The sexton's wife",
@@ -78,7 +79,7 @@ export const REQUESTS = {
     needs: { juniper_incense: 3 },
     coin: 60,
     trust: 2,
-    minTrust: 3,
+    minLevel: 3,
   },
   iron_cradle: {
     from: "A young mother",
@@ -87,7 +88,7 @@ export const REQUESTS = {
     needs: { iron_ward: 3, salt_line: 6 },
     coin: 70,
     trust: 2,
-    minTrust: 5,
+    minLevel: 5,
     mentions: { recipe: "threshold_nail", aside: "The witch kept a nail under her door, and a yellow flower." },
   },
   wake_candles: {
@@ -97,7 +98,7 @@ export const REQUESTS = {
     needs: { hearth_candle: 4, beeswax_candle: 4 },
     coin: 80,
     trust: 2,
-    minTrust: 4,
+    minLevel: 4,
   },
   church_ward: {
     from: "The sexton",
@@ -106,12 +107,20 @@ export const REQUESTS = {
     needs: { hearth_ward: 1, chalk_segment: 4 },
     coin: 110,
     trust: 2,
-    minTrust: 5,
+    minLevel: 5,
   },
 } as const satisfies Record<string, RequestDef<ItemId>>;
 
 export type RequestId = keyof typeof REQUESTS;
 
-/** Slots on the board, and how long (sim time) an emptied slot waits for a new knock. */
-export const BOARD_SLOTS = 2;
+/** Slots on the board to start with (projects add more), and how long an emptied slot waits for a new knock. */
+export const BASE_BOARD_SLOTS = 2;
 export const REFILL_MS = 30_000;
+
+/**
+ * Trust levels never end: level L needs L + 2 more trust than level L - 1 (3, 7, 12, 18, 25…).
+ * Contracts grow with the level: needs and coin ×(1 + LEVEL_SCALE·L), then ×the slot's difficulty.
+ */
+export const LEVEL_SCALE = 0.2;
+/** Each slot's quiet difficulty, in board order: easy, medium, then hard for the rest. Never labelled. */
+export const SLOT_DIFFICULTY = [0.6, 1, 1.6] as const;

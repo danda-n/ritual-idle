@@ -9,6 +9,7 @@ import { ACTION_DEFS, type ActionId } from "../content/actions";
 import type { TalentDef, TalentEffect } from "../content/talents";
 import { CHARM_DEFS, type CharmId } from "../content/charms";
 import { formatDuration } from "./format";
+import { SHOP, type ShopId } from "../content/shop";
 
 // Plain statements of what things do, generated from the game data so they can never
 // drift from the real numbers. Lead with these; flavour lives in names, art, hover titles and the
@@ -54,6 +55,10 @@ export function upgradeEffect(effect: UpgradeEffect): string {
       return `Holds ${effect.capacity} omens`;
     case "offline_cap":
       return `Offline cap ${effect.hours}h`;
+    case "board_slots":
+      return `+${effect.extra} contract on the village board`;
+    case "shop":
+      return `The shop sells ${effect.entries.map((e) => SHOP[e as ShopId].item).map((i) => ITEMS[i as ItemId].name.toLowerCase()).join(", ")}`;
   }
 }
 

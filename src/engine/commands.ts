@@ -23,7 +23,7 @@ import { isSkillUnlocked } from "./progress";
 import { enterNextStage, grantXp, isFeatureOpen, middleParts, MIDDLE_AT, revealNotes, stageChoices, stepById, type Note, type Step } from "./progress";
 import type { GameState, Settings } from "./state";
 import { xpForLevel } from "./xp";
-import { deliverable, emptySlot, stillNeeded } from "./village";
+import { deliverable, emptySlot, offerOf, stillNeeded } from "./village";
 
 // Player commands. Each is pure: it returns a new state, or says why it can't be done.
 // The sim clock for timers is `state.lastTickAt` (the UI ticks it to real time).
@@ -93,8 +93,10 @@ export function deliver(input: GameState, slotIndex: number): Result {
   }
   if (Object.keys(stillNeeded(s)).length > 0) return ok(state);
   const req = REQUESTS[s.request!];
-  state.coin += requestCoin(state, req);
-  state.trust += req.trust * trustMultiplier(state);
+  const offer = offerOf(s)!;
+  // Paid as it stands on the board (scaled to the trust level and the slot).
+  state.coin += requestCoin(state, { ...req, coin: offer.coin });
+  state.trust += offer.trust * trustMultiplier(state);
   spendCharms(state, "contract");
   state.stats.requestsFilled++;
   emptySlot(state, slotIndex, state.lastTickAt);
@@ -119,8 +121,15 @@ export function declineRequest(input: GameState, slotIndex: number): Result {
   return ok(state);
 }
 
+/** Whether the shop sells this now: always, or once the House project that stocks it is built. */
+export function shopStocks(state: GameState, id: ShopId): boolean {
+  const req = (SHOP[id] as { requires?: string }).requires;
+  return !req || state.upgrades.includes(req as UpgradeId);
+}
+
 export function canBuy(state: GameState, id: ShopId): string | null {
   if (!isFeatureOpen(state, "village")) return "The village isn't open to you yet.";
+  if (!shopStocks(state, id)) return "Not sold yet.";
   if (state.coin < SHOP[id].cost) return "Not enough coin.";
   return null;
 }
@@ -140,6 +149,7 @@ export function canBuild(state: GameState, id: UpgradeId): string | null {
   const def = UPGRADE_DEFS[id];
   if (state.upgrades.includes(id)) return "Already built.";
   if (def.requires && !state.upgrades.includes(def.requires as UpgradeId)) return `Build the ${UPGRADE_DEFS[def.requires as UpgradeId].name.toLowerCase()} first.`;
+  if (def.requiresFeature && !isFeatureOpen(state, def.requiresFeature)) return "Opens with the Village.";
   if (!hasItems(state, def.items)) return "Not enough materials yet.";
   return null;
 }
