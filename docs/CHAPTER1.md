@@ -67,8 +67,8 @@ The table shows the stages in the default order (Ward, Smoke, Words); the middle
 - **Task-first cards:** a new stage pops a card with the part's items ("Make these, in any order, then place the part in the Circle"), its reward, and a button naming where the first missing item is made ("Chandlery ›"). Grandmother's note sits behind a collapsed **Story** link on the card, and in the Grimoire journal; there's no quote. A note without a part (the experiments note, the last note) shows one short gameplay line (`hint`) instead. The card closes only with its button or Escape, never by a stray click beside it.
 - **Buttons name where they go:** "Chandlery ›", "Projects ›", "Village ›", "Circle ›", "Experiments ›". No button just says "Go".
 - **The chapter tracker** (in the sidebar) shows the stages as stitches, the current part's checklist, its reward, and one "???" ahead. A **short chip** offers to start what makes that item. When you're idle, the **top bar shows the next task** with its place button.
-- **The stage choice happens at the Circle:** when the Light is placed (and again after the next part), the game takes you to the Circle once, with a toast. There, "Choose the next part" shows a card per part: the skill it brings with a few lines on what that skill is (`about` in `src/content/skills.ts`), what you'll make, what it uses from skills you already have (the Words: tallow and beeswax candles), and what it opens (the Words: the Grimoire, then Experiments, each explained on click), with a "Make the Words next" button. The tracker, the top bar and the skill list only point to the Circle ("Next part: your choice · Circle ›").
-- **Chances past 100%:** bonuses multiply a chance find without a cap. Past 100% it's one for sure plus a chance of another: 110% salt is 1 salt and a 10% chance of a 2nd (the crock plus Deep shelves: 112.5%). The recipe row shows the real percent, and its hover says it in words.
+- **The stage choice happens at the Circle:** when the Light is placed (and again after the next part), the game takes you to the Circle once, with a toast. There, "Choose the next part" shows a card per part: the skill it brings with a few lines on what that skill is (`about` in `src/content/skills.ts`; it talks only about what the player already knows, never a place or system not yet open), what you'll make, what it uses from skills you already have (the Words: tallow and beeswax candles), and what it opens (the Words: the Grimoire, then Experiments, each explained on click), with a "Make the Words next" button. The tracker, the top bar and the skill list only point to the Circle ("Next part: your choice · Circle ›").
+- **Chance finds** follow one rule (§3, Chance finds): every bonus applies to every chance find, and past 100% it's one for sure plus a chance of another.
 - **New words are explained** where they first appear (a click opens one or two lines from `src/content/glossary.ts`): the Circle, the Kindling, the Grimoire, the Village, contracts, trust, coin, hidden recipes, secrets, experiments, talents, Surge, curios, followers, the level cap, keepsakes, omens, blessings, offerings, rite quality, insight, charms and house projects.
 - **Parts that aren't reached yet** show only their name and the skill they bring. No part asks for anything from a skill that isn't open (a test checks this).
 - **Recipes show only when they matter:** each skill lists what you've reached plus whatever opens at the next level. A recipe also stays hidden while one of its ingredients comes from a skill that hasn't opened yet. Shortcuts (a short chip's Start, an item's lookup) only start recipes on a skill's list; the `start` command refuses anything not reached.
@@ -91,7 +91,7 @@ The table shows the stages in the default order (Ward, Smoke, Words); the middle
 
 The columns are: the level required · time per action · XP per action · inputs → outputs. The level cap in Chapter 1 is **20**. Each recipe opens at its own level (§2).
 Outputs in brackets like "(50%)" are chance-based. Some recipes also need a **deciphered page** before they unlock (marked 📜).
-On screen, a recipe row shows what you really get: talents, House projects and buffs are applied to its chances and quantities, and anything raised is marked (§11 and [DESIGN.md](DESIGN.md#6-places-each-tab)).
+On screen, a recipe row shows what you really get: talents, House projects, buffs and charms are applied to its chances and quantities, byproducts from talents (Wick ash) show as their own chips, and anything raised is marked (§11 and [DESIGN.md](DESIGN.md#6-places-each-tab)).
 
 ### Scavenging (the house's stores, the hives, the village midden)
 | Action | Lvl | Time | XP | Output |
@@ -147,23 +147,51 @@ After the six story pages, each deciphered page brings 2 insight.
 | Bless the threshold | 1 | 6s | 20 | 1 salt line + 1 tallow candle → Consecrated salt |
 | Smoke the rooms | 3 | 8s | 25 | 1 smudge bundle + 1 tallow candle → Blessing (a 15-minute +10% speed buff to all Chapter 1 skills; the row says so) |
 
-**Curios** (from grandmother's chest and the attic) aren't kept in the Inventory. Each is read when found (its toast says "+3 insight") and joins a collection in the Grimoire journal (Curios n/5), listed by name with the story collapsed under it.
+**Curios** (from grandmother's chest and the attic) aren't kept in the Inventory. Each is read when found (its toast says "+3 insight") and joins a collection in the Grimoire journal (Curios n/5), listed by name with the story collapsed under it. The Curios page lists where they turn up with the live chances, bonuses applied ("Search the attic 0.5% · Open grandmother's chest 1%").
+
+### Chance finds
+
+One list of chance factors (`chanceFactors` in `src/engine/modifiers.ts`) drives the roll, the number on the recipe row and the names in its tooltip, so they can't disagree.
+
+- **What counts:** every chance find, outputs and byproducts alike (salt from the pantry, charcoal from the hearth, Wick ash from a candle).
+- **What multiplies it:**
+  - the skill's find talents (Deep shelves, Well stocked, Keen search…)
+  - House projects (the Sealed salt crock: salt ×1.5)
+  - buffs that name an item
+  - effects on all finds (the Window charm: ×1.5)
+  - a blessed skill (Still Night: ×2)
+- **What doesn't:** omens (only the omen talents change those: Omen-sense, Omen-seeker, Omen-reader), and doubles, extras, saves and every-nth, which are their own kinds.
+- **Past 100%:** bonuses multiply without a cap. Past 100% it's one for sure plus a chance of another: 110% salt is 1 salt and a 10% chance of a 2nd (the crock plus Deep shelves: 112.5%). Byproducts follow the same rule.
+- **On screen:** the recipe row shows the real percent. The item chip's tooltip explains it (`chanceBreakdown` in `src/engine/estimates.ts`): the base chance, each bonus with its multiplier, and the result (Base chance 50% · Deep shelves ×1.5 · Sealed salt crock ×1.5 · Now 112.5%), plus "1 for sure, 12.5% chance of a 2nd" past 100%.
 
 ---
 
 ## 4. The village and the house: coin, contracts and projects
 
-- **The contract board** shows **2 contracts** at a time. Each asks for a good amount of one or two things. Finishing one pays **coin** plus **trust**, and a new contract knocks after a short delay.
+- **The contract board** shows **2 contracts** at a time to start with; the Notice board and the Covered board projects add one each (`boardSlots` in `src/engine/village.ts`). Each contract asks for a good amount of one or two things. Finishing one pays **coin** plus **trust**, and a new contract knocks after a short delay.
 - **Delivery in parts:** "Deliver what I have" hands over whatever you hold of what's still needed. What's delivered stays delivered (kept per slot, with a bar per item); the last delivery ("Deliver and finish") pays.
-- **Trust** unlocks better-paying contracts (at 2, 3, 4 and 5). The board shows when the next ones start.
+- **Trust levels never end.** Level L needs L + 2 more trust than the level before (`trustForLevel`):
+
+| Trust level | 1 | 2 | 3 | 4 | 5 | 6 |
+|---|---|---|---|---|---|---|
+| Total trust | 3 | 7 | 12 | 18 | 25 | 33 |
+
+  The Village hero shows "Trust level 2 · 1/5 to 3" with a bar. A higher level brings better contracts (each has a `minLevel`) and makes every new contract bigger.
+- **Contracts are templates, scaled.** When a contract knocks, its needs and coin are multiplied by **1 + 0.2 × trust level** (`LEVEL_SCALE`) and by its slot's quiet difficulty (`SLOT_DIFFICULTY`), rounded, at least 1 of each:
+  - slot 1: easy, ×0.6
+  - slot 2: medium, ×1
+  - slot 3 and on: hard, ×1.6, and +1 trust
+  The difficulty is never labelled. The scaled contract (its offer) is stored on the board slot, so it doesn't change once it knocks. Example: Nettle soup at trust level 0 asks 18 nettle + 6 chamomile for 9 coin in slot 1, and 30 + 10 for 15 coin in slot 2; at level 5 in a hard slot it's 96 + 32 for 48 coin and +2 trust.
 - **There's no "sell anything" market.** Coin comes only from contracts, so the resource chains stay meaningful.
 - **Board rules:**
   - An emptied slot refills after **30 seconds** of game time, including offline.
   - Any contract can be **turned away** at no cost (what was delivered to it is gone), so a contract you can't fill never blocks the board.
-  - The village opens with the Offering stage, when every skill but Ritualism is already open. The Offering's bread is bought with coin from contracts. Trust-0 contracts use early items only (nettle and chamomile, ash, tallow candles, salt lines).
-- **Chapter 1 contracts** (`src/content/requests.ts`). A card shows who's asking and a short **label** in plain type; their full line ("Nettle soup, for the widow Hana. My legs won't carry me…") is the label's hover title. Three contracts carry an **aside** when finished, a free hint toward a hidden recipe (+2 insight), kept on that recipe's Grimoire page as "Heard in the village": Hana ("Grandmother made me a pillow for bad dreams. Bitter-smelling." → Dream pillow), the Kral farm ("She drew a mark on our hearth in ash. Salt on top." → Hearth mark) and the young mother ("The witch kept a nail under her door, and a yellow flower." → Threshold nail).
+  - The village opens with the Offering stage, when every skill but Ritualism is already open. The Offering's bread is bought with coin from contracts. Level-0 contracts use early items only (nettle and chamomile, ash, tallow candles, salt lines).
+- **Chapter 1 contracts** (`src/content/requests.ts`). A card shows who's asking and a short **label** in plain type; their full line ("Nettle soup, for the widow Hana. My legs won't carry me…") is in the label's tooltip. Three contracts carry an **aside** when finished, a free hint toward a hidden recipe (+2 insight), kept on that recipe's Grimoire page as "Heard in the village": Hana ("Grandmother made me a pillow for bad dreams. Bitter-smelling." → Dream pillow), the Kral farm ("She drew a mark on our hearth in ash. Salt on top." → Hearth mark) and the young mother ("The witch kept a nail under her door, and a yellow flower." → Threshold nail).
 
-| Label (from) | Needs | Pays | Trust needed |
+The table shows each template as written (medium slot, trust level 0); the board scales it as above.
+
+| Label (from) | Needs | Pays | Trust level |
 |---|---|---|---|
 | Nettle soup (Widow Hana) | 30 nettle + 10 chamomile | 15 coin, +1 trust | 0 |
 | Lye ash (the soapmaker) | 40 ash | 12 coin, +1 trust | 0 |
@@ -179,15 +207,19 @@ After the six story pages, each deciphered page brings 2 insight.
 
   Hana's label stays "Nettle soup" and her name "Widow Hana": the Hana's soup secret leans on them.
 
-- **What coin buys in Chapter 1** (`src/content/shop.ts`): provisions only.
+- **What coin buys in Chapter 1** (`src/content/shop.ts`): provisions only. Some are stocked only once a House project is built (`requires`).
 
-| Purchase | Cost | Why |
-|---|---|---|
-| Bread (for bread and salt) | 5 coin | Needed for the Offering (2) |
-| Tallow ×10 | 8 coin | Backup when the pantry runs short |
+| Purchase | Cost | Sold | Why |
+|---|---|---|---|
+| Bread (for bread and salt) | 5 coin | always | Needed for the Offering (2) |
+| Tallow ×10 | 8 coin | always | Backup when the pantry runs short |
+| Nettle ×10 | 6 coin | with the Herb stall | Contracts, smudge bundles |
+| Chamomile ×5 | 8 coin | with the Herb stall | Contracts, smudge bundles, the Dream pillow |
+| Mugwort ×5 | 12 coin | with the Herb stall | Mugwort incense, the Dream pillow |
+| Beeswax ×5 | 10 coin | with the Wax trader | Beeswax and hearth candles |
 
 - **Coin later:** coin is meant to come in later for some exclusive or rare projects and rare rewards (not in Chapter 1 yet).
-- **House projects:** side work you build once, from things you make, with no coin. Nothing on the main path needs them; they give the deeper recipes (the midden, the chest, iron wards) and the attic's odds and ends a use. A **Projects** panel on the House tab shows them once Chandlery is open (`src/content/upgrades.ts`). Each row states its effect (generated from the data), one extra fact where needed, and a plain "what it's for" line (`blurb`):
+- **House projects:** side work you build once, from things you make, with no coin. Nothing on the main path needs them; they give the deeper recipes (the midden, the chest, iron wards) and the attic's odds and ends a use. A **Projects** panel on the House tab shows them once Chandlery is open (`src/content/upgrades.ts`); the village projects show only once the Village is open (`requiresFeature`). Each row states its effect (generated from the data), one extra fact where needed, and a plain "what it's for" line (`blurb`):
 
 | Project | Built from | Effect |
 |---|---|---|
@@ -195,15 +227,19 @@ After the six story pages, each deciphered page brings 2 insight.
 | **Sealed salt crock** | 8 beeswax + 6 tallow candles | Salt finds ×1.5: pantry salt 50% → 75% (for the Ward and the Offering) |
 | **Reading lamp** | 6 beeswax candles + 8 glass | +15% Scholarship speed |
 | **Herb drying rack** | 12 iron nails + 10 rags | +10% Herbalism yield (a visible rack in the scene) |
-| **Mended shutters** | 20 iron nails + 15 rags + 10 salt lines | Offline cap 24h → 36h *(the first taste of the cap upgrades; 72h comes in Chapter 2)* |
+| **Notice board** (Village open) | 10 iron nails + 6 salt lines + 6 tallow candles | +1 contract on the board |
+| **Covered board** (Village open, after the notice board) | 6 chalk + 2 iron wards + 4 beeswax candles | +1 more contract (a hard slot) |
+| **Herb stall** (Village open) | 8 rags + 6 iron nails | The shop sells nettle ×10, chamomile ×5, mugwort ×5 |
+| **Wax trader** (Village open) | 8 tallow candles + 4 salt lines | The shop sells beeswax ×5 |
 | **Carved omen shelf** (after the omen shelf) | 6 chalk + 2 iron wards | Omen storage 2 → 3 |
 
+- **The offline cap** is 24 hours in Chapter 1; no project raises it (72 hours comes in Chapter 2).
 - **The omen shelf is highlighted** until it's built, since it's the way into omens:
   - Once the Light is placed, the chapter tracker shows a quiet optional line, **"Side project · Omen shelf"**, with have/need chips and "Projects ›" (or "Build it").
   - In the Projects panel, the omen shelf row carries a **"New"** tag and a soft glow, and the panel title says how many projects are ready to build.
   - A one-time toast says when you could first build it ("Omen shelf: ready to build").
   - Building it is a toast, not a dialog: "Omen shelf built · Holds 2 omens · 1 Still Night stored · bless a skill: ×2 speed, 2m". Project rows state their effect generated from the data (`upgradeEffect`), plus one extra fact where needed (`extra`).
-- **Old saves:** anyone who had met an omen keeps an omen shelf; the old bought shelf (3 omens) becomes the carved shelf; the board trims to 2 contracts.
+- **Old saves:** anyone who had met an omen keeps an omen shelf; the old bought shelf (3 omens) becomes the carved shelf. Projects that no longer exist (the mended shutters) are dropped, so the offline cap is back to 24 hours. The board keeps one slot per place, and a contract already on it gets its scaled offer on load (save version 11).
 
 ---
 
@@ -215,7 +251,8 @@ After the six story pages, each deciphered page brings 2 insight.
 - **Bless a skill (2 minutes):** a dialog asks which open skill to bless, with the one you're running first. That skill gets **×2 speed and ×2 chance finds**. Blessings on different skills run side by side; the same skill again adds 2 minutes. The dialog lists what's already active.
 - **Its lesson:** save omens for the skill you want to rush.
 - **During the rite:** Still Night active at any point during the rite is one of the rite's offerings (§8).
-- **An omen that drops on a full shelf** is lost, and the feed says so ("Omen lost (shelf full)"); the shelf's count has the rule as its hover title.
+- **On the shelf** (the sidebar's Omens & blessings panel): one card per kind of omen, with a jar and a count ("Still Night ×2"), what it does on its own line, and a full-width "Bless a skill" button. The panel's count reads "stored/capacity".
+- **An omen that drops on a full shelf** is lost, and the feed says so ("Omen lost (shelf full)"). A full shelf says it in words: "Shelf full: new omens are lost until you use one."
 
 ---
 
@@ -229,7 +266,7 @@ There are four hidden recipes in Chapter 1. None unlock by level. You find them 
   - one more ingredient named (6); the last ingredient is never named
   - a nudge toward that last ingredient, never its name (6)
   - a secret's next written clue (4)
-- **Experimenting:** attune the Circle to a hidden recipe on the Experiments tab. The glow count shows how many items are right, wrong items are crossed out automatically, and known ingredients sort first as gold chips. The attuned recipe's hints sit on the same tab.
+- **Experimenting:** attune the Circle to a hidden recipe on the Experiments tab. The glow count shows how many items are right, wrong items are crossed out automatically, and known ingredients sort first as gold chips. The tab has two views, The Circle and Charms: The Circle view puts what you're working on (the recipe, what it gives, what belongs and what's crossed out, its hints to buy) beside the Circle itself (the ring, the result, your items, your tries) (see [GRIMOIRE.md](GRIMOIRE.md) §9.2).
 - **The free Circle** takes exactly 3 things; every Chapter 1 hidden recipe and secret is 3 things.
 - **There are also 2 secrets** (Honey-light and Hana's soup), each with 3 written clues you can buy.
 - **The list shows what each hidden recipe gives,** so you know what you're hunting for.
@@ -242,14 +279,17 @@ There are four hidden recipes in Chapter 1. None unlock by level. You find them 
 | **Hearth mark** | "…where the fire lived, draw its name in what it left behind, and salt to keep it." | Ash + charcoal + salt | +1 rite quality (an offering, §8) · +10% Sigilcraft speed |
 | **Threshold nail** | "…cold iron under the door, and the Kupala herb to make it sing." | Iron nail + St John's wort + salt | Trust gains ×2, and grandmother's hidden note opens (the first thread toward the hidden 5th follower) |
 
-**Charms** (`src/content/charms.ts`, `src/content/buffs.ts`): once a hidden recipe is discovered, its charm can be bound again on the Experiments tab, at once, as often as you like, from 1 of each ingredient. Using a charm starts a **10-minute** boost (using another of the same kind refreshes it; it never stacks). Active charms show in the sidebar's blessings panel (Omens & blessings) with the time left.
+**Charms** (`src/content/charms.ts`): once a hidden recipe is discovered, its charm can be bound again on the Experiments tab (the Charms view), at once, as often as you like, from its own **bind cost**. Using a charm turns it on for a **number of actions, crafts or contracts**, never a clock: there's nothing to time, and time away counts the same. Using another while one is on adds its uses. Charms in use show in the sidebar's Omens & blessings panel with the uses left and a bar.
 
-| Charm | Boost for 10 minutes |
-|---|---|
-| Window charm | Chance finds ×1.5, all skills |
-| Dream pillow | +25% XP, all skills |
-| Hearth mark | 15% of crafts use no inputs |
-| Threshold nail | Contracts pay +50% coin |
+| Charm | Bind cost | Lasts | Effect |
+|---|---|---|---|
+| Window charm | 3 tallow candles + 2 glass + 4 salt | next 100 actions | Chance finds ×1.5, all skills (every chance find, §3) |
+| Dream pillow | 4 mugwort + 3 chamomile + 2 rags | next 100 actions | +25% XP, all skills |
+| Hearth mark | 6 ash + 2 charcoal + 3 salt | next 40 crafts | 25% of crafts use no inputs |
+| Threshold nail | 3 iron nails + 2 St John's wort + 3 salt | next 3 contracts | Contracts pay +50% coin and trust |
+
+- **What counts:** every finished action counts for an action charm (a craft is an action too); a craft is an action with inputs; a contract counts when it's finished.
+- **Old saves** (save version 11): charms held are kept; the old timed charm boosts are dropped.
 
 ---
 
@@ -268,7 +308,7 @@ There are four hidden recipes in Chapter 1. None unlock by level. You find them 
 - **When it's ready:** once all five parts are placed, a banner, "The Circle is ready. Wake it.", takes the place of the House tab's hero (and shows on the Circle). It lists what the rite needs (Ritualism 3, all five parts), the optional offerings with the quality ladder, and one red button, **Begin the rite**. Its line: "Kindling of the Hearth-Circle · 3 min, less if you tend it · runs offline · can't fail".
 - **Performing it:** **five phases of 36 seconds each** (about 3 minutes in all), one per part. It takes the action slot, **runs by itself** and carries on offline if you step away. You begin it by hand (priming, which begins a rite by itself, comes with the longer rites of later chapters).
 - **The rite scene:** while it runs, the House tab's main area becomes the rite: "Phase N of 5", the part's name in large letters, the phase's line, a phase bar and the time left, a field where things to tend appear, and the five-row phase checklist (✓ done, ▸ now, · later). The Circle shows a compact copy. Each phase's line (`HEARTH_RITE.phases` in `src/content/rite.ts`) also goes to the Grimoire journal's Kindling entry.
-- **Tending (optional):** things to tend pop up in the field, one kind per phase: wicks to light (the Light), gaps in the salt to close (the Ward), smoke to fan (the Smoke), words to read (the Words), bread to set down (the Offering). Each click takes **3 seconds** off (`TEND_MS`), up to **half the rite** (`TEND_MAX_MS` = 90 seconds), so an active player finishes in about 1.5 minutes and an idle one in 3. Nothing is lost by not tending. The foot of the scene shows "Time taken off: 0:45 of 1:30 · optional · leave any time, it keeps going".
+- **Tending (optional):** things to tend pop up in the field, one kind per phase: wicks to light (the Light), gaps in the salt to close (the Ward), smoke to fan (the Smoke), words to read (the Words), bread to set down (the Offering). Each click takes **3 seconds** off (`TEND_MS`), up to **half the rite** (`TEND_MAX_MS` = 90 seconds), so an active player finishes in about 1.5 minutes and an idle one in 3. Nothing is lost by not tending. No text appears in the middle of the field: a clicked target leaves a small ring pulse, and the "Time taken off" counter below ticks up. The hint is a steady caption under the field ("Light a wick: click what appears to hurry the rite", then "Tended as far as it goes. The rite finishes on its own."). The foot of the scene shows "Time taken off: 0:45 of 1:30 · optional · leave any time, it keeps going".
 - **Offerings (optional):** chosen before you begin. Each is one quality step (`OFFERINGS` in `src/content/rite.ts`):
   - **a hearth candle** at the heart of the circle (an item, used when the rite begins; "Uses 1 · poured at Chandlery 6")
   - **the Hearth mark** discovered (a hidden recipe on the Experiments tab, §6; counts by itself)
@@ -283,14 +323,14 @@ There are four hidden recipes in Chapter 1. None unlock by level. You find them 
 | A jar of embers | +1 omen slot (once the shelf is built) |
 | Her reading glasses | +1 insight per page deciphered |
 
-  Each card states its effect; its line of lore is the card's hover title. **Choosing:** click a keepsake to choose it, click again to change your mind; the choice is kept when you leave the chapter-end screen (the `chooseKeepsakes` command). Close it without choosing and the tracker keeps a **Choose a keepsake** button, whose chooser has a **Keep** button.
-- **The chapter-end screen** ("Chapter I · Hearth") comes in sections: the rite (its quality and the ladder, with the offerings that counted), what it gave (a ledger: caps rise to 40, Janko, the cellar, the cloth if Resplendent), the keepsakes to choose, and the story, folded. Its button reads "Keep it · back to the house" (or "Back to the house").
+  Each card states its effect; its line of lore is in the card's tooltip. **Choosing:** click a keepsake to choose it, click again to change your mind; the choice is kept when you leave the chapter-end screen (the `chooseKeepsakes` command). Close it without choosing and the tracker keeps a **Choose a keepsake** button, whose chooser has a **Keep** button.
+- **The chapter-end screen** ("Chapter I · Hearth") comes in sections: the rite (its quality and the ladder, with the offerings that counted), what it gave (a ledger: caps rise to 40, Janko, the cellar, the Embroidered circle cloth if Resplendent, "in your inventory · kept for Chapter II"), the keepsakes to choose, and the story, folded. Its button reads "Keep it · back to the house" (or "Back to the house").
 - **Story rewards (the same at every quality):**
   - All caps rise to **40** (the content for it comes with Chapter II).
-  - **Follower 1** arrives: Janko, a village orphan who "heard the circle wake" (his row's hover title), with +20% Chandlery speed.
+  - **Follower 1** arrives: Janko, a village orphan who "heard the circle wake" (his row's tooltip), with +20% Chandlery speed.
   - The **cellar** opens in the sanctum.
   - The finale and lore lines, in the Grimoire journal's Kindling entry (and under a collapsed **Story** on the chapter-end screen).
-- **Resplendent bonus:** choose two keepsakes, and a cosmetic (the embroidered circle cloth). Its second-circle lore line also goes to the journal, but it isn't sold as a reward.
+- **Resplendent bonus:** choose two keepsakes, and the **Embroidered circle cloth**, a kept item (the Heirlooms category in the Inventory: "Grandmother's embroidered cloth, from a Resplendent rite. It will matter in Chapter II."). It's named on the chapter end and drawn in the House scene (linen with a red cross-stitch border). Saves that already had a Resplendent rite get it on load. Its second-circle lore line also goes to the journal, but it isn't sold as a reward.
 - **Afterwards** the house goes back to work (through the fallback rule), and a bridge note closes the chapter. The tracker shows a small **Chapter I complete** card (Janko joined, skill caps rise to 40, Chapter II comes in a later build) and nothing more to chase; the next goal is Chapter II.
 - **Janko** ("assist me") gives +30% speed on your current action, and +20% Chandlery speed. Hana's double pay ends when the rite completes.
 
@@ -321,7 +361,7 @@ There are four hidden recipes in Chapter 1. None unlock by level. You find them 
 - **XP curve:** XP to the next level = **110 × 1.1^(level − 1)**, with no easing: 110 XP for level 2, 121 for 3, 133 for 4. The flatter curve keeps new recipes coming every few levels.
 - **Length:** the chapter's length follows from the "no grinding" rule; the designer chose about 30–35 minutes.
 - **Level speed:** each level makes its own skill 1% faster, compounding.
-- **Result** (6 orders × 2 seeds): the rite begins at **29–32 minutes**, and it takes about 3 (about 1.5 if tended), so the chapter is about **32–35 minutes** for an efficient idle player (about 45–60 with side projects and experiments). Stage lengths (seed 1, Ward → Smoke → Words): Light 7.0, Ward 5.3, Smoke 4.1, Words 7.1, Offering 5.2 minutes, then the rite.
+- **Result** (6 orders × 2 seeds): the rite begins at **28–33 minutes**, and it takes about 3 (about 1.5 if tended), so the chapter is about **31–36 minutes** for an efficient idle player (about 45–60 with side projects and experiments). Stage lengths (seed 1, Ward → Smoke → Words): Light 7.0, Ward 5.3, Smoke 4.1, Words 7.1, Offering 4.7 minutes, then the rite. The bot fills contracts as the board scales them (§4).
 
 **Things to tune in playtests:**
 - **Whether ~30 minutes feels right.** Longer means bigger parts (every item still has a use) and slower levels, together.
@@ -332,9 +372,9 @@ There are four hidden recipes in Chapter 1. None unlock by level. You find them 
 
 ## 11. Talents as builds, and level speed
 
-- **A pair at levels 3, 6, 9 and 12:** at each, a skill offers two talents and **you take one side, A or B**. The sides pull different ways, and some help another skill. By the Chapter 1 cap of 20, every skill has all four pairs open.
-- **A pick is fixed until the next pair's level** (`TALENT_RELOCK` = 3 levels): the level-3 pick can be changed from level 6, the level-6 pick from 9, the level-12 pick from 15. Taking a talent asks first ("Fixed until level 9"). There is no reset.
-- **The panel** shows only the pairs reached so far plus the next one, and folds to one line (the picks' names) while no choice is waiting.
+- **A pair every 3 levels, up to 30** (`TALENT_LEVELS`: 3, 6, 9, 12, 15, 18, 21, 24, 27, 30): at each, a skill offers two talents and **you take one side, A or B**. The sides pull different ways, and some help another skill; higher pairs are bigger versions of the same kinds. By the Chapter 1 cap of 20, every skill has six pairs open (3–18); 21–30 open after the rite raises the cap to 40. Past 30, later chapters space pairs 5 levels apart (`TALENT_SPACING_AFTER`).
+- **A pick is fixed until the next talent level** (`nextTalentLevel`): the level-3 pick can be changed from level 6, the level-18 pick from 21, the level-30 pick from 35. Taking a talent asks first ("Fixed until level 9, then you can change it."). There is no reset.
+- **The panel** stays small at any level: a pair waiting for a choice shows as two leaves side by side; picks made fold to one line each (level, name, what it does, and "Change" once the next talent level allows it, which opens the pair again; before that "fixed until N"); the next pair within the level cap is one quiet line ("Level 15: Long strides or Keen nose"). Pairs further up stay out of sight. The whole panel folds to one line (the picks' names) while no choice is waiting.
 - **Old saves:** older talent ranks are dropped on load; you choose again.
 - **Effects** (`TalentEffect` in `src/content/talents.ts`):
   - **speed:** this skill, or another skill, is faster
@@ -350,7 +390,7 @@ There are four hidden recipes in Chapter 1. None unlock by level. You find them 
   - **insight:** insight from each repetition of a recipe
   - **buffLength:** buffs from this skill's rites last longer
   - **omenChance:** omens turn up more often, from any work
-- **Talent text is generated from the effects** (`talentText` in `src/ui/effects.ts`), so the words always match the numbers. A talent in `src/content/talents.ts` has a name, its effects and an optional `flavour` line (hover only); there's no hand-written description. The wording, one vocabulary for all:
+- **Talent text is generated from the effects** (`talentText` in `src/ui/effects.ts`), so the words always match the numbers. A talent in `src/content/talents.ts` has a name, its effects and an optional `flavour` line (tooltip only); there's no hand-written description. The wording, one vocabulary for all:
   - speed and XP: "+15% Scavenging speed", "+25% Scavenging XP"
   - finds: just the multiplier ("Salt ×2 as likely", "Scavenging chance finds ×1.5"); the recipe rows show what it does to each chance
   - bulk: "makes 2 per action instead of 1, XP ×2 · each takes 80% longer, so +11% per hour" (or "no extra time")
@@ -366,29 +406,65 @@ There are four hidden recipes in Chapter 1. None unlock by level. You find them 
 | | 6 | **Full arms:** Search the pantry and Rob the old hives: makes 2 per action instead of 1, XP ×2 (chance finds still roll once) · each takes 80% longer, so +11% per hour | **For the chandler:** +12% Chandlery speed |
 | | 9 | **Scavenger's luck:** 10% of Scavenging actions give double output and XP | **Busy hands:** +25% Scavenging XP |
 | | 12 | **Grandmother's eye:** Curio ×3 as likely | **Well stocked:** Salt ×2 as likely |
+| | 15 | **Long strides:** +25% Scavenging speed | **Keen nose:** Scavenging chance finds ×1.5 |
+| | 18 | **Heavy sacks:** Sift the village midden and Open grandmother's chest: makes 2 per action instead of 1, XP ×2 (chance finds still roll once) · each takes 80% longer, so +11% per hour | **Barrel scraper:** Scrape the salt barrel: makes 2 per action instead of 1, XP ×2 (chance finds still roll once), no extra time |
+| | 21 | **Lucky hands:** 15% of Scavenging actions give double output and XP | **Busier hands:** +30% Scavenging XP |
+| | 24 | **Pack mule:** 20% chance of +1 of each sure Scavenging output | **Stock for the chandler:** +20% Chandlery speed |
+| | 27 | **Old pockets:** Curio ×2 as likely | **Omen-seeker:** Omens ×1.5 as likely, from any work |
+| | 30 | **Master scavenger:** +35% Scavenging speed | **Every fifth shelf:** Every 5th Scavenging action gives +1 of each sure output |
 | Chandlery | 3 | **Quick pour:** +15% Chandlery speed | **Thin wicks:** Tallow candle: 1 tallow (was 2) |
 | | 6 | **Double moulds:** Tallow and beeswax candles: makes 2 per action instead of 1, XP ×2 · each takes 80% longer, so +11% per hour | **Wick ash:** Tallow and beeswax candles: 33% chance of +1 ash |
 | | 9 | **Steady flame:** 10% of Chandlery actions give double output and XP | **A light to read by:** +12% Scholarship speed |
 | | 12 | **Hearth-light:** Hearth candle: makes 2 per action instead of 1, XP ×2, no extra time | **Chandler's pride:** +30% Chandlery XP |
+| | 15 | **Steady pour:** +25% Chandlery speed | **Frugal wax:** Beeswax candle: 1 beeswax (was 2) |
+| | 18 | **Wax to spare:** Beeswax candle and Hearth candle: 25% chance of +1 beeswax | **Incense moulds:** Juniper incense: makes 2 per action instead of 1, XP ×2 · each takes 50% longer, so +33% per hour |
+| | 21 | **Candle luck:** 15% of Chandlery actions give double output and XP | **Chandler's craft:** +35% Chandlery XP |
+| | 24 | **Thrifty flame:** 15% of Chandlery crafts use no inputs | **Light for the sigils:** +20% Sigilcraft speed |
+| | 27 | **Extra wicks:** 20% chance of +1 of each sure Chandlery output | **Every sixth candle:** Every 6th Chandlery action gives +1 of each sure output |
+| | 30 | **Master chandler:** +35% Chandlery speed | **Hearth-keeper:** +40% Chandlery XP |
 | Sigilcraft | 3 | **Sure strokes:** +15% Sigilcraft speed | **Fine ash:** Ash sigil: 1 ash (was 2) |
 | | 6 | **Long lines:** Salt line: makes 2 per action instead of 1, XP ×2 · each takes 80% longer, so +11% per hour | **Warded rooms:** +12% Ritualism speed |
 | | 9 | **Steady hand:** 15% of Sigilcraft crafts use no inputs | **Practised:** +25% Sigilcraft XP |
 | | 12 | **Charcoal eye:** Charcoal ×3 as likely | **Iron will:** Iron ward: makes 2 per action instead of 1, XP ×2, no extra time |
+| | 15 | **Quick lines:** +25% Sigilcraft speed | **One nail short:** Iron ward: 1 iron nail (was 2) |
+| | 18 | **Heavy sigils:** Ash sigil: makes 2 per action instead of 1, XP ×2 · each takes 80% longer, so +11% per hour | **Chalk dust:** Chalk segment: 25% chance of +1 chalk |
+| | 21 | **Sure mark:** 15% of Sigilcraft actions give double output and XP | **Sigil lore:** +35% Sigilcraft XP |
+| | 24 | **Salt keeper:** Salt line and Ash sigil: 20% chance to use no inputs | **Warding the rites:** +20% Ritualism speed |
+| | 27 | **Deep sweeps:** 20% chance of +1 of each sure Sigilcraft output | **Soot-reader:** Charcoal ×2 as likely |
+| | 30 | **Master of wards:** +35% Sigilcraft speed | **Grand wards:** Hearth ward: makes 2 per action instead of 1, XP ×2, no extra time |
 | Herbalism | 3 | **Light step:** +15% Herbalism speed | **Green thumb:** 20% chance of +1 of each sure Herbalism output |
 | | 6 | **Tight bundles:** Bind a smudge bundle: makes 2 per action instead of 1, XP ×2 · each takes 80% longer, so +11% per hour | **Pure smoke:** Mugwort incense: no tallow (was 1) |
 | | 9 | **Dew-picked:** Every 5th Herbalism action gives +1 of each sure output | **Herb-wise:** +12% Chandlery speed |
 | | 12 | **Wild harvest:** 10% of Herbalism actions give double output and XP | **Herbwife:** +30% Herbalism XP |
+| | 15 | **Swift picking:** +25% Herbalism speed | **Rich soil:** 15% chance of +1 of each sure Herbalism output |
+| | 18 | **Bundles of plenty:** Mugwort incense: makes 2 per action instead of 1, XP ×2 · each takes 80% longer, so +11% per hour | **Loose flowers:** Bind a smudge bundle: 30% chance of +1 chamomile |
+| | 21 | **Good harvest:** 15% of Herbalism actions give double output and XP | **Herb lore:** +35% Herbalism XP |
+| | 24 | **Gentle binding:** 20% of Herbalism crafts use no inputs | **Herbs for the attic:** +20% Scholarship speed |
+| | 27 | **Every third pick:** Every 3rd Herbalism action gives +1 of each sure output | **Bitter gift:** Bind a smudge bundle: 1 nettle (was 2) |
+| | 30 | **Master herbwife:** +35% Herbalism speed | **Wild bounty:** 20% of Herbalism actions give double output and XP |
 | Scholarship | 3 | **Quick eyes:** +15% Scholarship speed | **Keen search:** Scholarship chance finds ×1.5 |
 | | 6 | **By one candle:** Decipher a burnt page: 50% chance to use no inputs | **Marginalia:** Decipher a burnt page: +1 insight each |
 | | 9 | **Well read:** +25% Scholarship XP | **The rite's words:** +20% Ritualism XP |
 | | 12 | **Footnotes:** Decipher a burnt page: +2 insight each | **Copyist:** 10% of Scholarship actions give double output and XP |
+| | 15 | **Fast reader:** +25% Scholarship speed | **Sharp search:** Scholarship chance finds ×1.5 |
+| | 18 | **By moonlight:** Decipher a burnt page: no tallow candle (was 1) | **Scribe's hand:** Copy the Litany: makes 2 per action instead of 1, XP ×2, no extra time |
+| | 21 | **Lucky pages:** 15% of Scholarship actions give double output and XP | **Deep study:** +35% Scholarship XP |
+| | 24 | **Glosses:** Decipher a burnt page: +2 insight each | **Words for the rites:** +20% Ritualism speed |
+| | 27 | **Rag picker:** Rags ×2 as likely | **Ink economy:** 25% of Scholarship crafts use no inputs |
+| | 30 | **Master scholar:** +35% Scholarship speed | **The whole book:** Decipher a burnt page: +3 insight each |
 | Ritualism | 3 | **Practised rites:** +15% Ritualism speed | **Devout:** +25% Ritualism XP |
 | | 6 | **Long blessing:** Blessing lasts ×2 (15m → 30m) | **Consecrated hands:** 30% of Ritualism crafts use no inputs |
 | | 9 | **Omen-sense:** Omens ×2 as likely, from any work | **Circle-keeper:** +12% Sigilcraft speed |
 | | 12 | **Blessed work:** 10% of Ritualism actions give double output and XP | **High rites:** +30% Ritualism XP |
+| | 15 | **Steady rites:** +25% Ritualism speed | **Spare salt:** Bless the threshold: 25% chance to use no inputs |
+| | 18 | **Lingering blessing:** Blessing lasts ×1.5 (15m → 22m) | **Blessed hands:** +35% Ritualism XP |
+| | 21 | **Rite luck:** 15% of Ritualism actions give double output and XP | **Omen-reader:** Omens ×1.5 as likely, from any work |
+| | 24 | **Consecrated work:** +20% Chandlery speed | **Salt of the earth:** 20% chance of +1 of each sure Ritualism output |
+| | 27 | **Circle-bound:** +20% Herbalism speed | **Every seventh rite:** Every 7th Ritualism action gives +1 of each sure output |
+| | 30 | **Master of rites:** +35% Ritualism speed | **High devotion:** +50% Ritualism XP |
 
-- **Recipe rows show the talents at work:** outputs appear as you really get them (find talents, projects and buffs on chances, bulk on quantities; `effectiveOutputs` in `src/engine/estimates.ts`, shared with the per-hour rates). A raised number is in the "improved" colour with a ▲, and its hover title names what raised it ("raised by Deep shelves, Sealed salt crock").
-- **Where:** a vine under each skill's recipes on the House tab: the skill at the root, level 3 nearest the root, and a pair of leaves at each talent level. The taken leaf fills in the skill's colour and the other dims; pairs not reached yet stay stitched outlines. A skill tile shows a "+N" badge when N choices are waiting.
+- **Recipe rows show the talents at work:** outputs appear as you really get them (find talents, projects, buffs and charms on chances, byproducts as their own chips, bulk on quantities; `effectiveOutputs` in `src/engine/estimates.ts`, shared with the per-hour rates). A raised number is in the "improved" colour with a ▲, and its tooltip shows what raised it: each bonus and its multiplier (§3, Chance finds).
+- **Where:** the talent panel under each skill's recipes on the House tab. A taken leaf fills in the skill's colour and the other dims. A skill tile shows a "+N" badge when N choices are waiting.
 - **Level speed:** each level also makes its own skill 1% faster, compounding.
 - **All rolls use the seeded RNG,** and only for bonuses the player has, so offline progress applies them the same way.
 
@@ -414,3 +490,4 @@ One short entry per round, oldest first. The reasons behind each change are in [
 - **Inventory:** the Stores tab is now called Inventory.
 - **Playtest round 2:** salt relief (Scrape the salt barrel at Scavenging 7; the Sealed salt crock project, pantry salt 50% → 75%); recipes open at their own level (a "Lvl" column instead of tiers; Decipher at Scholarship 2, mugwort at Herbalism 5). Each stage's steps became one part checklist (have/need, a button to the maker, a "Short of" line, level chips), in any order; the Offering's "finish a contract" step is gone. Talent words generated from their effects, and recipe rows show boosted outputs. The rite as an event: a "Wake it" banner, the rite scene on the House with optional tending (up to half the rite), a quality ladder, a chapter end in sections, keepsakes kept on leaving (save version 10). Experiments get their own tab, the Window charm as the first hidden recipe, new rewards (Dream pillow +10% XP, Hearth mark also +10% Sigilcraft speed, Threshold nail trust ×2), charms for 10-minute boosts, and a nudge for the never-named ingredient. New words explained on click; House project blurbs; the stage choice explains each part. After the rite, a "Chapter I complete" card replaces Still to find. Buttons name where they go. Shortcuts can no longer start recipes not yet reached. Chances can pass 100% (one for sure plus a chance of another), and find talents say just their multiplier. The next part is chosen at the Circle (the game takes you there), with a card per part. Every new term is explained on click. The rite still begins at 29–32 minutes.
 - **Playtest reset 2:** every save from before this build starts fresh (with a notice): steps, experiments, the rite and chances all changed.
+- **Playtest round 3:** one rule for chance finds: every bonus (find talents, projects, item buffs, the Window charm, Still Night) applies to every chance find, byproducts included, and a tooltip breaks each chance down. Custom tooltips replace the browser's everywhere. The omen shelf shows one card per kind of omen. Charms last a number of actions, crafts or contracts instead of 10 minutes, with their own bind costs (Hearth mark 25% of crafts, Threshold nail +50% coin and trust). Trust levels never end (3, 7, 12, 18, 25… trust), and contracts are scaled to the level and to each slot's quiet difficulty. New projects: Notice board and Covered board (+1 contract each), Herb stall and Wax trader (shop stock); Mended shutters removed (the offline cap stays 24h). Talents every 3 levels to 30 (36 new pairs), in a compact panel. Skill descriptions at the stage choice talk only about what the player knows. The rite's tend field has no text in its middle, and a Resplendent rite gives the Embroidered circle cloth as a kept item. The Experiments tab has two views; the Grimoire shows pages as a grid. Save version 11. The rite begins at 28–33 minutes.
