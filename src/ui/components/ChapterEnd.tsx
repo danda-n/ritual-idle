@@ -10,6 +10,7 @@ import { KeepsakePick, useKeepsakeChoice } from "./KeepsakePick";
 import { chooseKeepsakes, type Result } from "../../engine/commands";
 import { riteJournal } from "../../engine/rite";
 import { QualityLadder } from "./QualityLadder";
+import { Term } from "./Term";
 
 /**
  * The chapter's end, in sections: how the rite went (the quality ladder, with the offerings that
@@ -39,11 +40,15 @@ export function ChapterEnd({ state, onClose, act }: { state: GameState; onClose:
         <h3 id="end-rewards">What it gave</h3>
         <ul className="ledger rewards-in">
           <li>
-            <span>Skill caps</span>
+            <span>
+              Skill <Term id="cap">caps</Term>
+            </span>
             <span className="num">rise to {HEARTH_RITE.rewards.levelCap} (for Chapter II)</span>
           </li>
           <li title={janko.description}>
-            <span>A follower: {janko.name}</span>
+            <span>
+              A <Term id="follower">follower</Term>: {janko.name}
+            </span>
             <span>{followerEffects("janko").join(" · ")}</span>
           </li>
           <li>

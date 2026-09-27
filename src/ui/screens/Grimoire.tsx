@@ -15,6 +15,7 @@ import { BookIcon, CircleRiteIcon, ScrollIcon } from "../art/icons";
 import { ItemChip } from "../components/ItemLookup";
 import { PlaceHero } from "../components/PlaceHero";
 import { Story } from "../components/Story";
+import { Term } from "../components/Term";
 import { noteTitle } from "../tasks";
 import { itemName } from "../format";
 import { INSIGHT_SOURCES, recipeGuide, recipeKnowledge } from "../guidance";
@@ -68,11 +69,12 @@ export function Grimoire({ state, act, onAttuned }: { state: GameState; act: Act
       <PlaceHero
         icon={<BookIcon size={34} />}
         title="The Grimoire"
+        term="grimoire"
         line="What's left of her book, and what you add to it."
         stats={[
-          { label: "Insight to spend", value: `✦ ${state.insight}`, accent: true },
-          { label: "Hidden recipes", value: <>{found}<span className="unit">/{hidden}</span></> },
-          { label: "Secrets", value: <>{secretsTotal - secretsLeft}<span className="unit">/{secretsTotal}</span></> },
+          { label: "Insight to spend", term: "insight", value: `✦ ${state.insight}`, accent: true },
+          { label: "Hidden recipes", term: "hidden", value: <>{found}<span className="unit">/{hidden}</span></> },
+          { label: "Secrets", term: "secret", value: <>{secretsTotal - secretsLeft}<span className="unit">/{secretsTotal}</span></> },
         ]}
       />
       {discovered.length === 0 && isFeatureOpen(state, "experiments") && (
@@ -134,7 +136,9 @@ export function Grimoire({ state, act, onAttuned }: { state: GameState; act: Act
           <>
             <div className="panel-title">
               <ScrollIcon size={18} />
-              <h2>Curios</h2>
+              <h2>
+                <Term id="curio">Curios</Term>
+              </h2>
               <span className="muted panel-aside num">
                 {curiosFound}/{CURIOS.length}
               </span>

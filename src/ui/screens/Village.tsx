@@ -9,6 +9,7 @@ import type { GameState } from "../../engine/state";
 import { CoinIcon, HouseIcon, LanternIcon } from "../art/icons";
 import { ItemIcon } from "../art/items";
 import { PlaceHero } from "../components/PlaceHero";
+import { Term } from "../components/Term";
 import { Bar } from "../components/Bar";
 import { deliverable, stillNeeded } from "../../engine/village";
 import { ItemChip } from "../components/ItemLookup";
@@ -28,10 +29,12 @@ export function Village({ state, act }: { state: GameState; act: Act }) {
     <PlaceHero
       icon={<LanternIcon size={34} />}
       title="The Village"
+      term="village"
       line="Knocks at the door, and a shop that keeps odd hours."
       stats={[
         {
           label: "Trust",
+          term: "trust",
           value: (
             <span className="trust" title="Trust grows with every contract you finish. Higher trust brings better-paying work.">
               <span>
@@ -42,7 +45,7 @@ export function Village({ state, act }: { state: GameState; act: Act }) {
             </span>
           ),
         },
-        { label: "Coin", value: Math.floor(state.coin), accent: true },
+        { label: "Coin", term: "coin", value: Math.floor(state.coin), accent: true },
       ]}
     />
     <div className="village-grid">
@@ -50,7 +53,9 @@ export function Village({ state, act }: { state: GameState; act: Act }) {
         <div className="panel-title">
           <HouseIcon size={18} />
           <h2 id="board-heading">Knocks at the door</h2>
-          <span className="panel-aside">Contracts · {state.board.length} at a time</span>
+          <span className="panel-aside">
+            <Term id="contract">Contracts</Term> · {state.board.length} at a time
+          </span>
         </div>
         <div className="notices">
           {state.board.map((slot, i) =>

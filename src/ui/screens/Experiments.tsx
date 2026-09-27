@@ -78,11 +78,12 @@ export function Experiments({ state, act }: { state: GameState; act: Act }) {
       <PlaceHero
         icon={<MoonIcon size={34} />}
         title="Experiments"
+        term="experiment"
         line="Her small workings. The Circle answers those too, if you give it the right three things."
         stats={[
-          { label: "Hidden recipes", value: <>{hiddenIds.filter((id) => isDiscovered(state, id)).length}<span className="unit">/{hiddenIds.length}</span></>, accent: true },
-          { label: "Secrets", value: <>{secretIds.filter((id) => isDiscovered(state, id)).length}<span className="unit">/{secretIds.length}</span></> },
-          { label: "Insight", value: `✦ ${state.insight}` },
+          { label: "Hidden recipes", term: "hidden", value: <>{hiddenIds.filter((id) => isDiscovered(state, id)).length}<span className="unit">/{hiddenIds.length}</span></>, accent: true },
+          { label: "Secrets", term: "secret", value: <>{secretIds.filter((id) => isDiscovered(state, id)).length}<span className="unit">/{secretIds.length}</span></> },
+          { label: "Insight", term: "insight", value: `✦ ${state.insight}` },
         ]}
       />
       <Charms state={state} act={act} />

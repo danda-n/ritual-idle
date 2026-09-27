@@ -18,9 +18,10 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
       <PlaceHero
         icon={<CircleRiteIcon size={34} />}
         title="The Circle"
+        term="circle"
         line="Grandmother drew it in the floor. It has been waiting for you."
         stats={[
-          { label: "Parts placed", value: <>{state.kindling.length}<span className="unit">/{PART_IDS.length}</span></>, accent: true },
+          { label: "Parts placed", term: "kindling", value: <>{state.kindling.length}<span className="unit">/{PART_IDS.length}</span></>, accent: true },
           {
             label: "Ritualism",
             value: (

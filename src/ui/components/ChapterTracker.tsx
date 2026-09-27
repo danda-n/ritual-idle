@@ -19,6 +19,7 @@ import { PART_DEFS as PARTS } from "../../content/rite";
 import { Bar } from "./Bar";
 import { ItemChip } from "./ItemLookup";
 import { KeepsakePick, useKeepsakeChoice } from "./KeepsakePick";
+import { Term } from "./Term";
 import { Modal } from "./Modal";
 import { UPGRADES } from "../../content/upgrades";
 import { omenShelfSuggested, projectsReady } from "../../engine/projects";
@@ -51,7 +52,9 @@ export function ChapterTracker({ state, onGo, act }: { state: GameState; onGo: (
     <section className={`panel tracker ${advanced ? "advanced" : ""}`} aria-labelledby="tracker-heading">
       <div className="panel-title">
         <CircleRiteIcon size={18} />
-        <h2 id="tracker-heading">Chapter I · Hearth</h2>
+        <h2 id="tracker-heading">
+          Chapter I · Hearth <Term id="kindling" iconOnly />
+        </h2>
         <span className="panel-aside num">
           {done}/{STEPS.length}
         </span>
@@ -128,7 +131,22 @@ export function ChapterTracker({ state, onGo, act }: { state: GameState; onGo: (
                       )}
                     </>
                   )}
-                  {reward && <p className="step-reward">Reward: <span className="task-reward num">{reward}</span></p>}
+                  {reward && (
+                    <p className="step-reward">
+                      Reward:{" "}
+                      <span className="task-reward num">
+                        {/* A Surge is a new word the first time: explain it. */}
+                        {reward.startsWith("Surge") ? (
+                          <>
+                            <Term id="surge">Surge</Term>
+                            {reward.slice("Surge".length)}
+                          </>
+                        ) : (
+                          reward
+                        )}
+                      </span>
+                    </p>
+                  )}
                   {steps.length === 0 && "hint" in s.note && <p className="step-hint">{s.note.hint as string}</p>}
                   {goal.kind === "place" && canPlace(state, goal.part as PartId) === null ? (
                     <button className="btn btn-primary step-go" onClick={() => act((st) => placePart(st, goal.part as PartId))}>

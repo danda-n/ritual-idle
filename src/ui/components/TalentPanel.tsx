@@ -7,6 +7,7 @@ import type { GameState } from "../../engine/state";
 import { choicesWaiting, takenTalents } from "../../engine/talents";
 import { Modal } from "./Modal";
 import { TalentTree } from "./TalentTree";
+import { Term } from "./Term";
 import { talentText } from "../effects";
 
 type Act = (c: (s: GameState) => Result) => unknown;
@@ -32,7 +33,9 @@ export function TalentPanel({ state, skill, act }: { state: GameState; skill: Sk
   return (
     <details className={`panel talents ${waiting > 0 ? "has-points" : ""}`} data-skill={skill} open={open} onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)}>
       <summary className="panel-title talents-summary">
-        <h2 id="talents-heading">{SKILLS[skill].name} talents</h2>
+        <h2 id="talents-heading">
+          {SKILLS[skill].name} <Term id="talent">talents</Term>
+        </h2>
         {!open && summary && <span className="talents-picks">{summary}</span>}
         <span className="panel-aside num">
           {waiting > 0 ? (

@@ -45,16 +45,16 @@ export function noteTitle(note: Note): string {
   return "goal" in note ? taskName(note.goal) : "Chapter complete";
 }
 
-/** What a note opens, stated plainly (for the task card). */
-export function noteUnlocks(note: Note): string[] {
-  const out: string[] = [];
-  for (const s of note.unlocks as readonly (keyof typeof SKILLS)[]) out.push(`New skill: ${SKILLS[s].name}`);
-  const places: Record<string, string> = { grimoire: "the Grimoire", village: "the Village", circle: "the Circle", experiments: "the Experiments tab" };
-  if ("opens" in note) for (const f of note.opens as readonly string[]) out.push(`Opens ${places[f] ?? f}`);
+/** What a note opens, stated plainly (for the task card), each with the glossary term that explains it. */
+export function noteUnlocks(note: Note): { text: string; term?: TermId }[] {
+  const out: { text: string; term?: TermId }[] = [];
+  for (const s of note.unlocks as readonly (keyof typeof SKILLS)[]) out.push({ text: `New skill: ${SKILLS[s].name} · ${SKILLS[s].blurb}` });
+  const places: Record<string, [string, TermId]> = { grimoire: ["the Grimoire", "grimoire"], village: ["the Village", "village"], circle: ["the Circle", "circle"], experiments: ["the Experiments tab", "experiment"] };
+  if ("opens" in note) for (const f of note.opens as readonly string[]) out.push(places[f] ? { text: `Opens ${places[f][0]}`, term: places[f][1] } : { text: `Opens ${f}` });
   return out;
 }
 
-/** Where a Go button leads. On the House tab: a skill's recipes, or the House projects panel. */
+/** Where a button leads. On the House tab: a skill's recipes, or the House projects panel. */
 export type Place = { tab: "house"; skill: keyof typeof SKILLS } | { tab: "house"; anchor: "projects" } | { tab: "village" } | { tab: "circle" } | { tab: "grimoire" } | { tab: "experiments" };
 
 /** A button label that says where it takes you: "Sigilcraft ›", "Circle ›", "Projects ›". */

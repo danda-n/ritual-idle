@@ -581,4 +581,6 @@ details.talents:not([open]) > .talents-summary { margin-bottom: 0; }
 /* A new word, explained on click: a thin solid underline and a small circled "i" (no dashes). */
 .term { display: inline; padding: 0; border: 0; background: none; font: inherit; color: inherit; cursor: help; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; text-decoration-color: var(--color-info); }
 .term:hover { color: var(--color-text); text-decoration-color: currentColor; }
+.term.term-only { text-decoration: none; }
+.term.term-only .term-i { width: 0.5em; height: 0.5em; min-width: 14px; min-height: 14px; margin-left: 6px; vertical-align: 0.6em; }
 .term-i { display: inline-block; width: 0.7em; height: 0.7em; min-width: 10px; min-height: 10px; margin-left: 3px; color: var(--color-info); vertical-align: 0.45em; }

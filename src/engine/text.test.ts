@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { BUFFS } from "../content/buffs";
+import { GLOSSARY } from "../content/glossary";
 import { FOLLOWERS } from "../content/followers";
 import { CURIO_STORIES, CURIOS, GRIMOIRE, GRIMOIRE_DEFS, INSIGHT_GAIN } from "../content/grimoire";
 import { ITEMS } from "../content/items";
@@ -135,5 +136,15 @@ describe("refusals are labels", () => {
     markDiscovered(s, "dream_pillow");
     const r = attune(s, "dream_pillow");
     expect(!r.ok && r.reason).toBe("Recipe not available yet");
+  });
+});
+
+describe("new terms are explained", () => {
+  it("every glossary entry has a name and a short plain explanation", () => {
+    for (const [id, t] of Object.entries(GLOSSARY)) {
+      expect(t.name.length, id).toBeGreaterThan(0);
+      expect(t.text.length, id).toBeGreaterThan(20);
+      expect(t.text.length, id).toBeLessThanOrEqual(200);
+    }
   });
 });

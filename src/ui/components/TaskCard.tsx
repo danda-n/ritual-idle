@@ -5,6 +5,7 @@ import type { GameState } from "../../engine/state";
 import { itemPlace, noteUnlocks, placeLabel, rewardText, stepPlace, stepProgress, stepsOf, taskName, taskPlace, type Place } from "../tasks";
 import { ItemChip } from "./ItemLookup";
 import { Modal } from "./Modal";
+import { Term } from "./Term";
 import { Story } from "./Story";
 
 /**
@@ -32,7 +33,10 @@ export function TaskCard({ note, state, onClose, onGo }: { note: Note; state: Ga
       {unlocks.length > 0 && (
         <ul className="effects">
           {unlocks.map((u) => (
-            <li key={u}>{u}</li>
+            <li key={u.text}>
+              {u.text}
+              {u.term && <Term id={u.term} iconOnly />}
+            </li>
           ))}
         </ul>
       )}
