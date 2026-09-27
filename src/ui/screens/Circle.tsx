@@ -5,12 +5,14 @@ import { KindlingPanel } from "../components/KindlingPanel";
 import { PlaceHero } from "../components/PlaceHero";
 import { HEARTH_RITE, PART_IDS } from "../../content/rite";
 import { skillLevel } from "../../engine/simulate";
-import { isFeatureOpen } from "../../engine/progress";
+import { isFeatureOpen, stageChoices } from "../../engine/progress";
+import { StageChoicePanel } from "../components/StageChoicePanel";
 
 type Act = (command: (s: GameState) => Result) => Success | null;
 
 export function Circle({ state, act }: { state: GameState; act: Act }) {
   const experiments = isFeatureOpen(state, "experiments");
+  const choices = stageChoices(state);
   return (
     <>
       <PlaceHero
@@ -30,6 +32,7 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
           },
         ]}
       />
+      {choices.length > 0 && <StageChoicePanel state={state} choices={choices} act={act} />}
       <KindlingPanel state={state} act={act} />
       {experiments && <p className="circle-later">Experiments have their own tab: find grandmother's small workings, and bind charms.</p>}
     </>

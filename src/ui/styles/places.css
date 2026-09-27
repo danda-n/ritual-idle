@@ -319,3 +319,20 @@
 .charm-io { display: flex; flex-wrap: wrap; gap: 4px; }
 .charm-ctl { display: flex; gap: var(--space-2); }
 @container (max-width: 520px) { .charm { grid-template-columns: 36px minmax(0, 1fr); } .charm-ctl { grid-column: 2; } }
+
+/* The next part, chosen at the Circle: a card per part, in its skill's colour. */
+.stage-choice-panel { display: flex; flex-direction: column; gap: var(--space-3); padding: 20px 24px; border-radius: var(--radius-md); background: var(--color-surface); box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--color-stitch) 50%, transparent), 0 8px 24px rgb(0 0 0 / 0.3); }
+.stage-choice-panel h2 { font: var(--weight-medium) 26px / 1.1 var(--font-display); letter-spacing: 0.02em; }
+.stage-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: var(--space-3); }
+.stage-card { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); background: color-mix(in oklch, var(--skill) 8%, var(--color-raised)); box-shadow: inset 0 3px 0 var(--skill); }
+.stage-card-head { display: flex; gap: var(--space-3); align-items: center; }
+.stage-card-head svg { color: var(--skill); flex: none; }
+.stage-card h3 { font: var(--weight-medium) var(--text-lg) / 1.1 var(--font-display); }
+.stage-card-about { font-size: var(--text-sm); color: var(--color-text-2); line-height: 1.45; }
+.stage-card-facts { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px var(--space-3); margin: 0; font-size: var(--text-sm); }
+.stage-card-facts dt { font: var(--text-2xs) / 1.6 var(--font-display); letter-spacing: var(--tracking-label); color: var(--color-text-3); }
+.stage-card-facts dd { margin: 0; display: flex; flex-wrap: wrap; gap: 2px 10px; color: var(--color-text-2); }
+.stage-card-item { display: inline-flex; gap: 4px; align-items: center; }
+.stage-card-item svg { color: var(--skill); }
+.stage-card-go { margin-top: auto; align-self: flex-start; box-shadow: inset 0 0 0 1px var(--skill); }
+.stage-card-go:hover { background: color-mix(in oklch, var(--skill) 20%, var(--color-raised)); }

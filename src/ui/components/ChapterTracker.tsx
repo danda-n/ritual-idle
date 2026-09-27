@@ -13,11 +13,9 @@ import { SkillPicker } from "./SkillPicker";
 import { skillLevel } from "../../engine/simulate";
 import type { GameState } from "../../engine/state";
 import { CircleRiteIcon } from "../art/icons";
-import { chapterSteps, itemPlace, placeLabel, rewardText, stageInfo, stepPlace, stepsOf, taskName, taskPlace, type Place } from "../tasks";
+import { chapterSteps, itemPlace, placeLabel, rewardText, stepPlace, stepsOf, taskName, taskPlace, type Place } from "../tasks";
 import { isSkillUnlocked, stageChoices } from "../../engine/progress";
-import { PART_DEFS as PARTS, type PartId as Part } from "../../content/rite";
-import { SkillIcon } from "../art/icons";
-import { chooseStage } from "../../engine/commands";
+import { PART_DEFS as PARTS } from "../../content/rite";
 import { Bar } from "./Bar";
 import { ItemChip } from "./ItemLookup";
 import { KeepsakePick, useKeepsakeChoice } from "./KeepsakePick";
@@ -66,7 +64,18 @@ export function ChapterTracker({ state, onGo, act }: { state: GameState; onGo: (
       </div>
       <RewardsWaiting state={state} act={act} />
       <KeepsakesWaiting state={state} act={act} />
-      {choices.length > 0 && <StageChoice state={state} choices={choices} act={act} />}
+      {choices.length > 0 && (
+        // The sidebar only informs: the choice itself is made at the Circle, with room to explain it.
+        <div className="stage-choice-note">
+          <span>
+            <strong>Next part: your choice</strong>
+            <span className="muted"> · {choices.map((p) => PARTS[p].name).join(", ")}</span>
+          </span>
+          <button className="btn btn-primary btn-sm" onClick={() => onGo({ tab: "circle" })}>
+            Circle ›
+          </button>
+        </div>
+      )}
       <ol className="steps">
         {STEPS.map((s, i) => {
           if (!("goal" in s.note)) return null;
@@ -302,27 +311,3 @@ function RewardsWaiting({ state, act }: { state: GameState; act: (c: (s: GameSta
 }
 
 /** The free choice after the Light: which part to make next. Each brings its own skill. */
-function StageChoice({ state, choices, act }: { state: GameState; choices: Part[]; act: (c: (s: GameState) => Result) => unknown }) {
-  return (
-    <div className="stage-choice" role="group" aria-label="Choose what to make next">
-      <p className="stage-choice-title">{state.middleOrder.length === 0 ? "Choose the next part (any order; you'll make all three)" : "Choose the next part"}</p>
-      {choices.map((p) => {
-        const info = stageInfo(p);
-        return (
-          <button key={p} data-skill={info.skill} className="skill-pick stage-pick" onClick={() => act((s) => chooseStage(s, p))}>
-            <SkillIcon skill={info.skill} size={20} />
-            <span className="skill-pick-name">
-              {PARTS[p].name} <span className="muted">· brings {SKILLS[info.skill].name}</span>
-            </span>
-            <span className="stage-pick-blurb">{info.blurb}</span>
-            <span className="stage-pick-meta num">
-              {info.items.map(([item, qty]) => `${qty} ${itemName(item).toLowerCase()}`).join(" · ")}
-              {info.uses.length > 0 && ` · uses ${info.uses.join(", ")}`}
-              {info.opens.length > 0 && ` · opens ${info.opens.join(", ")}`}
-            </span>
-          </button>
-        );
-      })}
-    </div>
-  );
-}

@@ -116,7 +116,7 @@ function NextSkill({ state }: { state: GameState }) {
         <span />
         <span className="name">Next skill</span>
         <span />
-        <span className="when">You choose: see the chapter tracker</span>
+        <span className="when">You choose, at the Circle</span>
       </div>
     );
   }

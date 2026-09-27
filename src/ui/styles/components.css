@@ -414,13 +414,8 @@ button.chip:hover { background: var(--color-raised); }
 .task-reward { font-size: var(--text-xs); color: var(--color-rare); white-space: nowrap; font-weight: var(--weight-regular); }
 .rewards-waiting { display: flex; flex-direction: column; gap: var(--space-1); margin-bottom: var(--space-3); }
 .claim-btn { justify-content: flex-start; min-height: 30px; font-size: var(--text-xs); text-align: left; }
-.stage-choice { display: flex; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-3); }
-.stage-choice-title { font-size: var(--text-sm); color: var(--color-text); }
-.stage-pick { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 2px var(--space-2); align-items: center; width: 100%; text-align: left; padding: var(--space-2) var(--space-3); border: 0; border-radius: var(--radius-sm); background: color-mix(in oklch, var(--skill) 10%, var(--color-surface)); box-shadow: inset 3px 0 0 var(--skill); color: var(--color-text); cursor: pointer; }
-.stage-pick:hover { background: color-mix(in oklch, var(--skill) 18%, var(--color-surface)); }
-.stage-pick svg { color: var(--skill); grid-row: span 3; align-self: start; margin-top: 2px; }
-.stage-pick-blurb { font-size: var(--text-sm); color: var(--color-text-2); }
-.stage-pick-meta { font-size: var(--text-xs); color: var(--color-text-3); }
+/* The sidebar's pointer to the choice at the Circle (the sidebar informs; choices happen on tabs). */
+.stage-choice-note { display: flex; gap: var(--space-2); align-items: center; justify-content: space-between; margin-bottom: var(--space-3); padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); background: color-mix(in oklch, var(--color-stitch) 10%, var(--color-surface)); font-size: var(--text-sm); }
 .side-project { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--color-border-soft); }
 .side-project .step-head { justify-content: flex-start; font-size: var(--text-sm); }
 .tracker.advanced .stitch-row .is-done:last-of-type { animation: pop 600ms var(--ease-out); }

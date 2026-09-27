@@ -1,9 +1,9 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ACTION_DEFS } from "../content/actions";
 import type { SkillId } from "../content/skills";
 import { dismissEnding, setSetting } from "../engine/commands";
 import type { ItemId } from "../content/items";
-import { isFeatureOpen, isSkillUnlocked } from "../engine/progress";
+import { isFeatureOpen, isSkillUnlocked, stageChoices } from "../engine/progress";
 import { BookIcon, CircleRiteIcon, HouseIcon, LanternIcon, JarIcon, MoonIcon } from "./art/icons";
 import { EmbroideryBand } from "./art/ornaments";
 import { AwaySummary } from "./components/AwaySummary";
@@ -67,6 +67,18 @@ export function App() {
     // After the tab renders, bring the projects panel into view.
     if ("anchor" in p) setTimeout(() => document.getElementById("projects-heading")?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
   };
+
+  // A stage just finished and the next part is the player's choice: take them to the Circle, where
+  // the choice is explained. Only on the change, so it never keeps pulling them back.
+  const choosing = stageChoices(state).length > 0;
+  const wasChoosing = useRef(choosing);
+  useEffect(() => {
+    if (choosing && !wasChoosing.current) {
+      setTab("circle");
+      game.notify([{ title: "Choose the next part", text: "At the Circle · each brings a new skill" }]);
+    }
+    wasChoosing.current = choosing;
+  }, [choosing]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // The omen shelf, pointed out once it matters: a one-time toast when it could first be built.
   const shelfReady = omenShelfSuggested(state) && projectsReady(state).includes("omen_shelf");

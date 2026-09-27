@@ -1,5 +1,6 @@
 import { ACTION_DEFS, type ActionId } from "../content/actions";
 import { NOTES } from "../content/notes";
+import { GLOSSARY, type TermId } from "../content/glossary";
 import { PART_DEFS, type PartId } from "../content/rite";
 import { SKILLS } from "../content/skills";
 import type { GoalDef } from "../content/types";
@@ -159,23 +160,25 @@ export function stepProgress(state: GameState, step: Step): string | null {
 }
 
 /**
- * What choosing a middle part means, for the stage choice: the skill it brings and what that skill
- * is, the part's items, what it opens, and what it needs from skills you already have.
+ * What choosing a middle part means, for the choice at the Circle: the skill it brings and what
+ * that skill is, the part's items, what it opens (as glossary terms), and what it needs from skills
+ * you already have.
  */
-export function stageInfo(part: PartId): { skill: keyof typeof SKILLS; blurb: string; items: [ItemId, number][]; opens: string[]; uses: string[] } {
+export function stageInfo(part: PartId): { skill: keyof typeof SKILLS; blurb: string; about: string; items: [ItemId, number][]; opens: TermId[]; uses: ItemId[] } {
   const skill = PART_DEFS[part].skill;
   const items = Object.entries(PART_DEFS[part].items) as [ItemId, number][];
   const note = NOTES.find((n) => "goal" in n && n.goal.kind === "place" && n.goal.part === part);
-  const opens = note && "opens" in note ? (note.opens as readonly string[]).map((f) => (f === "grimoire" ? "the Grimoire, then Experiments" : f)) : [];
+  // The Grimoire brings Experiments soon after (with the first hint toward a hidden recipe).
+  const opens = (note && "opens" in note ? (note.opens as readonly string[]) : []).flatMap((f): TermId[] => (f === "grimoire" ? ["grimoire", "experiment"] : f in GLOSSARY ? [f as TermId] : []));
   // Inputs of the part's recipes that another skill makes (Words: tallow and beeswax candles).
-  const uses = new Set<string>();
+  const uses = new Set<ItemId>();
   for (const [item] of items) {
     const maker = (Object.keys(ACTION_DEFS) as ActionId[]).find((a) => ACTION_DEFS[a].outputs.some((o) => o.item === item));
     if (!maker) continue;
     for (const input of Object.keys(ACTION_DEFS[maker].inputs) as ItemId[]) {
       const from = (Object.keys(ACTION_DEFS) as ActionId[]).find((a) => ACTION_DEFS[a].outputs.some((o) => o.item === input));
-      if (from && ACTION_DEFS[from].skill !== skill) uses.add(ITEMS[input].name.toLowerCase());
+      if (from && ACTION_DEFS[from].skill !== skill) uses.add(input);
     }
   }
-  return { skill, blurb: SKILLS[skill].blurb, items, opens, uses: [...uses] };
+  return { skill, blurb: SKILLS[skill].blurb, about: SKILLS[skill].about, items, opens, uses: [...uses] };
 }

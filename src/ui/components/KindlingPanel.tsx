@@ -2,7 +2,7 @@ import type { CSSProperties } from "react";
 import type { ItemId } from "../../content/items";
 import { HEARTH_RITE, PART_DEFS, PART_IDS, QUALITIES, type PartId } from "../../content/rite";
 import { SKILLS } from "../../content/skills";
-import { canPlace, chooseStage, placePart, type Result } from "../../engine/commands";
+import { canPlace, placePart, type Result } from "../../engine/commands";
 import { stageChoices } from "../../engine/progress";
 import { ritePhases } from "../../engine/rite";
 import type { GameState } from "../../engine/state";
@@ -84,13 +84,8 @@ function PartRow({ part, state, act, fresh }: { part: PartId; state: GameState; 
         <div className="part-body">
           <strong>{def.name}</strong>
           <span className="muted part-later">
-            {choosable ? "Yours to choose" : "Later"} · brings <SkillIcon skill={skill} size={12} /> {SKILLS[skill].name}
+            {choosable ? "Yours to choose (above)" : "Later"} · brings <SkillIcon skill={skill} size={12} /> {SKILLS[skill].name}
           </span>
-          {choosable && (
-            <button className="btn btn-ghost btn-sm part-place" onClick={() => act((s) => chooseStage(s, part))}>
-              Make this next
-            </button>
-          )}
         </div>
       </li>
     );

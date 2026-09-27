@@ -2,7 +2,7 @@ import { ACTION_DEFS } from "../../content/actions";
 import { BUFFS } from "../../content/buffs";
 import { HEARTH_RITE, RITE_MS } from "../../content/rite";
 import { actionDurationMs, activeBuffs } from "../../engine/modifiers";
-import { currentNote, isFeatureOpen } from "../../engine/progress";
+import { currentNote, isFeatureOpen, stageChoices } from "../../engine/progress";
 import { taskName, placeLabel, taskPlace, type Place } from "../tasks";
 import type { GameState } from "../../engine/state";
 import { CircleRiteIcon, CoinIcon, CogIcon, MoonIcon, SkillIcon } from "../art/icons";
@@ -66,7 +66,15 @@ function Working({ state, onStop, stopNote, onGo }: { state: GameState; onStop: 
     return (
       <div className="working idle" role="status">
         {stopNote && <span className="warn">Stopped: {stopNote}.</span>}
-        {goal ? (
+        {stageChoices(state).length > 0 ? (
+          <>
+            <span className="muted">Next:</span>
+            <span className="working-name">Choose the next part</span>
+            <button className="btn btn-ghost btn-sm" onClick={() => onGo({ tab: "circle" })}>
+              Circle ›
+            </button>
+          </>
+        ) : goal ? (
           <>
             <span className="muted">Next:</span>
             <span className="working-name">{taskName(goal)}</span>

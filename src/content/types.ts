@@ -8,8 +8,10 @@ export interface SkillDef {
   category: SkillCategory;
   /** Chapter in which the skill first becomes available. */
   chapter: number;
-  /** What the skill is, in one plain line (shown when you choose which part comes next). */
+  /** What the skill is, in one plain line. */
   blurb: string;
+  /** A little more, for the choice at the Circle: what you do in it, what it makes, what it's for later. */
+  about: string;
 }
 
 export interface ItemDef {
