@@ -80,12 +80,19 @@ export function AwaySummary({ away, onClose }: { away: CatchUp; onClose: () => v
             <span className="num">+{report.fragments.reduce((n, f) => n + f.amount, 0)}</span>
           </li>
         )}
-        {report.omensFound.map((o, i) => (
-          <li key={`omen${i}`}>
-            <span>Omen</span>
-            <span title={`Bless a skill: ${buffEffects(OMENS[o].buff).join(", ")}`}>{OMENS[o].name} (on shelf)</span>
-          </li>
-        ))}
+        {/* One line per kind of omen, with a count (two Still Nights read "Still Night ×2"). */}
+        {[...new Set(report.omensFound)].map((o) => {
+          const n = report.omensFound.filter((x) => x === o).length;
+          return (
+            <li key={`omen-${o}`}>
+              <span>Omen</span>
+              <span title={`Bless a skill: ${buffEffects(OMENS[o].buff).join(", ")}`}>
+                {OMENS[o].name}
+                {n > 1 ? ` ×${n}` : ""} (on shelf)
+              </span>
+            </li>
+          );
+        })}
         {report.omensLost > 0 && (
           <li>
             <span>Omens lost (shelf full)</span>

@@ -183,7 +183,7 @@ Every tab adds four things and nothing more: a **place colour**, a **hero band**
 - **hidden recipe**: a Grimoire entry found by hints
 - **secret**: found with no hints
 - **Stores**: the tab with the inventory ("the pantry" is only the Search the pantry action, and "the omen shelf" is the project)
-- **Omens & blessings**: the sidebar panel with stored omens and active blessings
+- **Omens & blessings**: the sidebar panel with stored omens and active blessings (headed just **Blessings** before the omen shelf is built, when no omens can turn up)
 - **insight** and **trust** are always shown together with what they unlock
 
 ---

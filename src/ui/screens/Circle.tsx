@@ -73,7 +73,15 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
         line="Grandmother drew it in the floor. It has been waiting for you."
         stats={[
           { label: "Parts placed", value: <>{state.kindling.length}<span className="unit">/{PART_IDS.length}</span></>, accent: true },
-          { label: "Ritualism", value: <>{skillLevel(state, "ritualism")}<span className="unit">/{HEARTH_RITE.skills.ritualism} needed</span></> },
+          {
+            label: "Ritualism",
+            value: (
+              <>
+                {skillLevel(state, "ritualism")}
+                <span className="unit">{skillLevel(state, "ritualism") >= HEARTH_RITE.skills.ritualism! ? "✓ ready" : `needs ${HEARTH_RITE.skills.ritualism}`}</span>
+              </>
+            ),
+          },
         ]}
       />
       <KindlingPanel state={state} act={act} />

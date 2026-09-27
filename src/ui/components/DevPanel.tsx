@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { ITEMS, type ItemId } from "../../content/items";
 import { NOTES } from "../../content/notes";
-import { PART_DEFS, PART_IDS } from "../../content/rite";
+import { PART_DEFS, PART_IDS, type PartId } from "../../content/rite";
+import { currentNote } from "../../engine/progress";
 import { addInsight } from "../../engine/grimoire";
 import type { GameState } from "../../engine/state";
 import { SKILL_IDS } from "../../content/skills";
@@ -50,7 +51,10 @@ export function DevPanel({ dev }: { dev: { skip: (ms: number) => void; mutate: (
           className="btn btn-ghost"
           onClick={() =>
             dev.mutate((s) => {
-              const part = PART_IDS.find((p) => !s.kindling.includes(p));
+              // The part the current stage asks for (the middle parts come in the order you chose).
+              const note = currentNote(s);
+              const staged = "goal" in note && note.goal.kind === "place" ? (note.goal.part as PartId) : null;
+              const part = staged && !s.kindling.includes(staged) ? staged : PART_IDS.find((p) => !s.kindling.includes(p));
               if (part) for (const [item, qty] of Object.entries(PART_DEFS[part].items)) s.inventory[item as ItemId] = (s.inventory[item as ItemId] ?? 0) + (qty ?? 0);
               return s;
             })

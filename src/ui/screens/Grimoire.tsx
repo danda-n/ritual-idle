@@ -434,7 +434,7 @@ function PagesPage({ state }: { state: GameState }) {
         <ScrollIcon size={18} />
         <h2>Deciphered pages</h2>
       </div>
-      {pages.length === 0 && <p className="muted">None yet · burnt pages: Search the attic</p>}
+      {pages.length === 0 && <p className="muted">None yet · burnt pages come from Search the attic (Scholarship)</p>}
       <ol className="journal">
         {pages.map((p) => (
           <li key={p.title}>

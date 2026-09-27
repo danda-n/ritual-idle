@@ -30,12 +30,15 @@ export function OmenShelf({ state, act }: { state: GameState; act: (c: (s: GameS
     <section className="panel omen-shelf" aria-labelledby="omens-heading">
       <div className="panel-title">
         <MoonIcon size={18} />
-        <h2 id="omens-heading">Omens &amp; blessings</h2>
-        <span className="muted panel-aside num" title="Full shelf: new omens are lost">
-          {stored}/{capacity}
-        </span>
+        {/* Before the omen shelf is built, this only shows what's active. */}
+        <h2 id="omens-heading">{capacity > 0 ? "Omens & blessings" : "Blessings"}</h2>
+        {capacity > 0 && (
+          <span className="muted panel-aside num" title="Full shelf: new omens are lost">
+            {stored}/{capacity}
+          </span>
+        )}
       </div>
-      {stored === 0 && <p className="muted">Empty · ~1 omen per {Math.round(1 / OMENS.still_night.dropChance)} actions</p>}
+      {capacity > 0 && stored === 0 && <p className="muted">Empty · ~1 omen per {Math.round(1 / OMENS.still_night.dropChance)} actions</p>}
       {OMEN_IDS.filter((id) => (state.omens[id] ?? 0) > 0).map((id) => (
         <div key={id} className="omen">
           <div className="omen-jars" aria-label={`${state.omens[id]} stored`}>
