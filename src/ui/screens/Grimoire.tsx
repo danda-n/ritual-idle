@@ -251,7 +251,7 @@ function BuyHint({ state, id, kind, label, act }: { state: GameState; id: Grimoi
   if (cost === null) return null;
   const short = state.insight < cost;
   return (
-    <button className="btn btn-ghost btn-sm buy-hint" disabled={short} title={short ? `Needs ${cost} insight; you have ${state.insight}.` : undefined} onClick={() => act((s) => buyHint(s, id, kind))}>
+    <button className="btn btn-ghost btn-sm buy-hint" disabled={short} onClick={() => act((s) => buyHint(s, id, kind))}>
       {label} · <span className="num">{cost}</span> ✦
     </button>
   );

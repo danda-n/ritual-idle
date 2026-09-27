@@ -20,6 +20,7 @@ import { ItemIcon } from "../art/items";
 import { describeSanctum, Sanctum, sanctumView } from "../art/Sanctum";
 import { Bar } from "../components/Bar";
 import { ItemChip } from "../components/ItemLookup";
+import { Tip, type TipContent } from "../components/Tip";
 import type { FxEvent } from "../fx";
 import { useRecentFx } from "../useFx";
 import { formatDuration, formatRate, formatStop } from "../format";
@@ -75,7 +76,7 @@ export function SkillNav({ state, skill, onSelect }: { state: GameState; skill: 
             <span className="name">
               {SKILLS[id].name}
               {waiting > 0 && (
-                <span className="talent-badge num" title="A talent to choose">
+                <span className="talent-badge num" aria-label={`${waiting} talent${waiting === 1 ? "" : "s"} to choose`}>
                   +{waiting}
                 </span>
               )}
@@ -250,7 +251,7 @@ function RecipeRow({ id, state, onStart, onStop, fresh }: { id: ActionId; state:
         {def.name}
         {fresh && <span className="new">New</span>}
       </span>
-      <span className="r num" title={`Opens at ${SKILLS[def.skill].name} level ${def.level}`}>
+      <span className="r num">
         {def.level}
       </span>
       <span className="r num">
@@ -269,18 +270,22 @@ function RecipeRow({ id, state, onStart, onStop, fresh }: { id: ActionId; state:
         )}
         {/* What you really get: talents, projects and buffs applied (marked when they changed it). */}
         {effectiveOutputs(state, id).map((o) => (
-          <ItemChip key={o.item} item={o.item} qty={o.qty} chance={o.chance} boostedBy={o.changedBy} />
+          <ItemChip key={o.item} item={o.item} qty={o.qty} chance={o.chance} boostedBy={o.changedBy} source={id} />
         ))}
         {def.buff && (
           // A minor rite that gives an effect instead of an item: say exactly what it does.
-          <span className="chip buff-out" title={`Each completion: ${buffEffects(def.buff as BuffId).join(", ")} for ${buffDuration(def.buff as BuffId)} (refreshes, never stacks)`}>
-            {BUFFS[def.buff as BuffId].name}: {buffEffects(def.buff as BuffId).join(", ")} · {buffDuration(def.buff as BuffId)}
-          </span>
+          <Tip content={{ title: BUFFS[def.buff as BuffId].name, note: "Each completion starts it, or refreshes it to its full time; it never stacks." }}>
+            <span className="chip buff-out" tabIndex={0}>
+              {BUFFS[def.buff as BuffId].name}: {buffEffects(def.buff as BuffId).join(", ")} · {buffDuration(def.buff as BuffId)}
+            </span>
+          </Tip>
         )}
       </span>
-      <span className="r num col-rate" title={rateTitle(state, id)}>
-        {locked ? "" : formatRate(xpPerHour(state, id))}
-      </span>
+      <Tip content={locked ? null : rateTip(state, id)}>
+        <span className="r num col-rate" tabIndex={locked ? undefined : 0}>
+          {locked ? "" : formatRate(xpPerHour(state, id))}
+        </span>
+      </Tip>
       <span className="ctl">
         {running ? (
           <>
@@ -296,7 +301,7 @@ function RecipeRow({ id, state, onStart, onStop, fresh }: { id: ActionId; state:
             </button>
           </>
         ) : blocked ? (
-          <button className="btn btn-sm" disabled title={formatStop(blocked)}>
+          <button className="btn btn-sm" disabled>
             {startLabel(state, id, blocked)}
           </button>
         ) : (
@@ -316,18 +321,15 @@ function RecipeRow({ id, state, onStart, onStop, fresh }: { id: ActionId; state:
 }
 
 /** The rates behind a row, for its tooltip: output per hour and, while running, what's left. */
-function rateTitle(state: GameState, id: ActionId): string {
-  const main = outputPerHour(state, id)[0];
+/** The rate card for a recipe's XP/h cell: what it makes an hour, its XP, the next level, the inputs. */
+function rateTip(state: GameState, id: ActionId): TipContent {
   const last = inputsLastMs(state, id);
   const next = timeToNextLevelMs(state, id);
-  return [
-    main && `${formatRate(main.perHour)} ${ITEMS[main.item].name.toLowerCase()}/h`,
-    `${formatRate(xpPerHour(state, id))} xp/h`,
-    next !== null && `next level in ${formatDuration(next)}`,
-    last !== null && `inputs last ${formatDuration(last)}`,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  const rows: [ReactNode, ReactNode][] = outputPerHour(state, id).map((o) => [`${ITEMS[o.item].name} per hour`, formatRate(o.perHour)]);
+  rows.push(["XP per hour", formatRate(xpPerHour(state, id))]);
+  if (next !== null) rows.push(["Next level in", formatDuration(next)]);
+  if (last !== null) rows.push(["Inputs last", formatDuration(last)]);
+  return { title: ACTION_DEFS[id].name, rows };
 }
 
 const STOCK_ROWS = 5;

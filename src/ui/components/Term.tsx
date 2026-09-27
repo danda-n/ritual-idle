@@ -23,7 +23,6 @@ export function Term({ id, children, iconOnly = false }: { id: TermId; children?
           e.stopPropagation();
           setOpen(true);
         }}
-        title={`What's ${/^[aeiou]/i.test(def.name) ? "an" : "a"} ${def.name.toLowerCase()}?`}
       >
         {!iconOnly && (children ?? def.name.toLowerCase())}
         <svg className="term-i" viewBox="0 0 12 12" aria-hidden="true">

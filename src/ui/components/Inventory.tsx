@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ITEM_CATEGORIES, ITEM_DEFS, type ItemCategory, type ItemId } from "../../content/items";
 import type { GameState } from "../../engine/state";
 import { CATEGORY_ICONS, LanternIcon } from "../art/icons";
+import { Tip } from "./Tip";
 import { ItemChip } from "./ItemLookup";
 
 const CATEGORY_IDS = Object.keys(ITEM_CATEGORIES) as ItemCategory[];
@@ -36,10 +37,12 @@ export function Inventory({ state }: { state: GameState }) {
               {present.map((c) => {
                 const Icon = CATEGORY_ICONS[c];
                 return (
-                  <button key={c} className={`chip filter ${filter === c ? "accent" : ""}`} aria-pressed={filter === c} onClick={() => setFilter(c)} title={ITEM_CATEGORIES[c].name}>
-                    <Icon size={14} />
-                    <span className="sr-only">{ITEM_CATEGORIES[c].name}</span>
-                  </button>
+                  <Tip key={c} content={ITEM_CATEGORIES[c].name}>
+                    <button className={`chip filter ${filter === c ? "accent" : ""}`} aria-pressed={filter === c} onClick={() => setFilter(c)}>
+                      <Icon size={14} />
+                      <span className="sr-only">{ITEM_CATEGORIES[c].name}</span>
+                    </button>
+                  </Tip>
                 );
               })}
             </div>

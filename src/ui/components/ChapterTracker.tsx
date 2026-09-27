@@ -23,6 +23,7 @@ import { Term } from "./Term";
 import { Modal } from "./Modal";
 import { UPGRADES } from "../../content/upgrades";
 import { omenShelfSuggested, projectsReady } from "../../engine/projects";
+import { Tip } from "./Tip";
 import { followerEffects } from "../effects";
 
 /**
@@ -228,9 +229,11 @@ function PartChecklist({ state, part, onGo }: { state: GameState; part: PartId; 
                 {Math.min(it.have, it.need)}/{it.need}
               </span>
               {!done && (
-                <button className="btn btn-text btn-sm" onClick={() => onGo(where)} title={it.maker ? `Made with ${ACTION_DEFS[it.maker].name.toLowerCase()}` : "Bought at the Village, with coin from contracts"}>
-                  {placeLabel(where)}
-                </button>
+                <Tip content={it.maker ? `Made with ${ACTION_DEFS[it.maker].name.toLowerCase()}` : "Bought at the Village, with coin from contracts"}>
+                  <button className="btn btn-text btn-sm" onClick={() => onGo(where)}>
+                    {placeLabel(where)}
+                  </button>
+                </Tip>
               )}
             </li>
           );
@@ -249,7 +252,7 @@ function PartChecklist({ state, part, onGo }: { state: GameState; part: PartId; 
       {sf.levels.length > 0 && (
         <div className="step-needs">
           {sf.levels.map((l) => (
-            <span key={l.for} className="chip short" title={`${ACTION_DEFS[l.for].name} opens at ${SKILLS[l.skill].name} level ${l.level}`}>
+            <span key={l.for} className="chip short">
               {SKILLS[l.skill].name} {l.level} for {ACTION_DEFS[l.for].name.toLowerCase()}
             </span>
           ))}

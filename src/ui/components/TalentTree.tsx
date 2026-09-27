@@ -4,6 +4,7 @@ import { skillLevel } from "../../engine/simulate";
 import type { GameState } from "../../engine/state";
 import { canChoose, choiceAt, unlocksAt } from "../../engine/talents";
 import { SkillIcon } from "../art/icons";
+import { Tip } from "./Tip";
 import { talentText } from "../effects";
 
 /**
@@ -42,18 +43,18 @@ export function TalentTree({ state, skill, onChoose }: { state: GameState; skill
                       ? "Take this one instead"
                       : `Take this one · fixed until level ${at + TALENT_RELOCK}`;
               return (
+                <Tip key={side} content={{ title: t.name, note: t.flavour ? `${title} · ${t.flavour}` : title }}>
                 <button
-                  key={side}
                   type="button"
                   className={`vine-leaf vine-leaf-${side} ${taken ? "is-taken" : ""} ${other ? "is-other" : ""}`}
                   disabled={!taken && !changeable}
                   aria-pressed={taken}
                   onClick={() => !taken && changeable && onChoose(at, side)}
-                  title={t.flavour ? `${title} · ${t.flavour}` : title}
                 >
                   <span className="vine-leaf-name">{t.name}</span>
                   <span className="vine-leaf-text">{talentText(t, skill)}</span>
                 </button>
+                </Tip>
               );
             })}
             <span className="vine-node num" aria-hidden="true">

@@ -226,7 +226,6 @@ export function Experiments({ state, act }: { state: GameState; act: Act }) {
                 className={`chip pick ${placed.includes(id) ? "accent" : ""} ${known.has(id) ? "right" : ""}`}
                 onClick={() => place(id)}
                 disabled={placed.includes(id) || placed.length >= slots}
-                title={known.has(id) ? "Known: this belongs" : undefined}
               >
                 {known.has(id) && <span aria-label="known">✓ </span>}
                 <ItemIcon item={id} size={15} />

@@ -11,6 +11,7 @@ import { chooseKeepsakes, type Result } from "../../engine/commands";
 import { riteJournal } from "../../engine/rite";
 import { QualityLadder } from "./QualityLadder";
 import { ItemIcon } from "../art/items";
+import { Tip } from "./Tip";
 import { Term } from "./Term";
 
 /**
@@ -46,10 +47,12 @@ export function ChapterEnd({ state, onClose, act }: { state: GameState; onClose:
             </span>
             <span className="num">rise to {HEARTH_RITE.rewards.levelCap} (for Chapter II)</span>
           </li>
-          <li title={janko.description}>
-            <span>
-              A <Term id="follower">follower</Term>: {janko.name}
-            </span>
+          <li>
+            <Tip content={{ title: janko.name, note: janko.description }}>
+              <span tabIndex={0}>
+                A <Term id="follower">follower</Term>: {janko.name}
+              </span>
+            </Tip>
             <span>{followerEffects("janko").join(" · ")}</span>
           </li>
           <li>

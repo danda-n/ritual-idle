@@ -48,7 +48,6 @@ export function SkillPicker({
             data-skill={skill}
             className={`skill-pick ${skill === suggest && !blocked ? "is-suggested" : ""}`}
             disabled={blocked !== null}
-            title={blocked ?? undefined}
             onClick={() => {
               onPick(skill);
               onClose();

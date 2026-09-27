@@ -13,6 +13,7 @@ import { TimedBar } from "./Bar";
 import { useCountUp } from "../useFx";
 import { SKILLS } from "../../content/skills";
 
+import { Tip } from "./Tip";
 export function TopBar({ state, onStop, stopNote, onSettings, onGo }: { state: GameState; onStop: () => void; stopNote?: string; onSettings: () => void; onGo: (p: Place) => void }) {
   return (
     <header className="topbar">
@@ -22,11 +23,13 @@ export function TopBar({ state, onStop, stopNote, onSettings, onGo }: { state: G
       </div>
       <Working state={state} onStop={onStop} stopNote={stopNote} onGo={onGo} />
       {activeBuffs(state).map((b) => (
-        <span key={`${b.id}:${b.skill ?? ""}`} className="buff-chip" data-skill={b.skill} title={buffEffects(b.id, b.skill).join(" · ")}>
+        <Tip key={`${b.id}:${b.skill ?? ""}`} content={{ title: BUFFS[b.id].name, note: buffEffects(b.id, b.skill).join(" · ") }}>
+        <span className="buff-chip" data-skill={b.skill} tabIndex={0}>
           <MoonIcon size={16} />
           {BUFFS[b.id].name}
           {b.skill && <span className="buff-skill"> · {SKILLS[b.skill].name}</span>} <span className="num muted">{formatClock(b.endsAt - state.lastTickAt)}</span>
         </span>
+        </Tip>
       ))}
       {isFeatureOpen(state, "village") && (
         <div className="purse" aria-label={`${state.coin} coin`}>

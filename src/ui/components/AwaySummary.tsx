@@ -7,6 +7,7 @@ import { SKILLS } from "../../content/skills";
 import type { CatchUp } from "../../engine/offline";
 import { formatDuration, formatStop, itemName } from "../format";
 import { Modal } from "./Modal";
+import { Tip } from "./Tip";
 import { buffEffects } from "../effects";
 
 export function AwaySummary({ away, onClose }: { away: CatchUp; onClose: () => void }) {
@@ -86,10 +87,12 @@ export function AwaySummary({ away, onClose }: { away: CatchUp; onClose: () => v
           return (
             <li key={`omen-${o}`}>
               <span>Omen</span>
-              <span title={`Bless a skill: ${buffEffects(OMENS[o].buff).join(", ")}`}>
+              <Tip content={{ title: OMENS[o].name, note: `Bless a skill: ${buffEffects(OMENS[o].buff).join(", ")}` }}>
+              <span tabIndex={0}>
                 {OMENS[o].name}
                 {n > 1 ? ` ×${n}` : ""} (on shelf)
               </span>
+              </Tip>
             </li>
           );
         })}

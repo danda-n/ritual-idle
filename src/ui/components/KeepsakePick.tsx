@@ -2,6 +2,7 @@ import { useState } from "react";
 import { KEEPSAKE_DEFS, KEEPSAKE_IDS, type KeepsakeId } from "../../content/keepsakes";
 import { keepsakePicksLeft } from "../../engine/keepsakes";
 import type { GameState } from "../../engine/state";
+import { Tip } from "./Tip";
 import { Term } from "./Term";
 
 /** The keepsakes being chosen on a screen, kept until you leave it (then committed with chooseKeepsakes). */
@@ -35,13 +36,12 @@ export function KeepsakePick({ state, chosen, onToggle, later = true }: { state:
           const picked = chosen.includes(id);
           const on = kept || picked;
           return (
+            <Tip key={id} content={k.flavour ? { title: k.name, note: k.flavour } : null}>
             <button
-              key={id}
               type="button"
               className={`keepsake ${on ? "is-kept" : ""} ${!on && (left === 0 || (full && left > 1)) ? "is-other" : ""}`}
               disabled={kept || left === 0}
               aria-pressed={on}
-              title={k.flavour}
               onClick={() => onToggle(id)}
             >
               <span className="keepsake-name">
@@ -50,6 +50,7 @@ export function KeepsakePick({ state, chosen, onToggle, later = true }: { state:
               </span>
               <span className="keepsake-text">{k.text}</span>
             </button>
+            </Tip>
           );
         })}
       </div>

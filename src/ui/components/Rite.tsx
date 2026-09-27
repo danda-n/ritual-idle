@@ -53,7 +53,7 @@ export function RiteReady({ state, act }: { state: GameState; act: Act }) {
         <Term id="offering">Offerings</Term> <span className="muted">(optional)</span>
       </h3>
       <QualityLadder state={state} chosen={chosen} candle={{ checked: candle, onChange: setCandle }} />
-      <button className="btn btn-primary btn-lg" disabled={reason !== null} title={reason ?? undefined} onClick={() => act((s) => beginRite(s, chosen))}>
+      <button className="btn btn-primary btn-lg" disabled={reason !== null} onClick={() => act((s) => beginRite(s, chosen))}>
         Begin the rite
       </button>
       {reason && <p className="muted">{reason}</p>}

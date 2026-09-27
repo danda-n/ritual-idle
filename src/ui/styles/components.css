@@ -586,3 +586,17 @@ details.talents:not([open]) > .talents-summary { margin-bottom: 0; }
 .term.term-only { text-decoration: none; }
 .term.term-only .term-i { width: 0.5em; height: 0.5em; min-width: 14px; min-height: 14px; margin-left: 6px; vertical-align: 0.6em; }
 .term-i { display: inline-block; width: 0.7em; height: 0.7em; min-width: 10px; min-height: 10px; margin-left: 3px; color: var(--color-info); vertical-align: 0.45em; }
+
+/* ---------- Tooltips (Tip): extra detail on demand, never over what you point at ---------- */
+.tip { position: fixed; z-index: 60; max-width: 300px; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--color-raised); box-shadow: 0 0 0 1px var(--color-border), 0 8px 20px rgb(0 0 0 / 0.45); color: var(--color-text-2); font-size: var(--text-xs); line-height: 1.45; pointer-events: none; animation: tip-in 120ms var(--ease-out); }
+@keyframes tip-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+.tip.is-below { animation-name: tip-in-below; }
+@keyframes tip-in-below { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
+.tip-title { display: block; color: var(--color-text); font-size: var(--text-sm); font-weight: var(--weight-medium); margin-bottom: 2px; }
+.tip-rows { margin: 4px 0 0; display: flex; flex-direction: column; gap: 2px; }
+.tip-rows > div { display: flex; justify-content: space-between; gap: var(--space-3); }
+.tip-rows dt { color: var(--color-text-3); }
+.tip-rows dd { margin: 0; color: var(--color-text); font-variant-numeric: tabular-nums; text-align: right; }
+.tip-note { margin: 4px 0 0; color: var(--color-text-3); }
+[data-motion="reduced"] .tip { animation: none; }
+@media (prefers-reduced-motion: reduce) { .tip { animation: none; } }

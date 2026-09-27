@@ -81,7 +81,6 @@ export function Projects({ state, act }: { state: GameState; act: Act }) {
               <button
                 className={`btn ${reason === null ? "btn-primary" : ""}`}
                 disabled={reason !== null}
-                title={reason ?? undefined}
                 onClick={() => act((s) => build(s, id))}
               >
                 Build

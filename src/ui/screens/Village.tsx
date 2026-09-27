@@ -10,6 +10,7 @@ import { CoinIcon, HouseIcon, LanternIcon } from "../art/icons";
 import { ItemIcon } from "../art/items";
 import { PlaceHero } from "../components/PlaceHero";
 import { Term } from "../components/Term";
+import { Tip } from "../components/Tip";
 import { Bar } from "../components/Bar";
 import { deliverable, offerOf, stillNeeded, trustForLevel, trustLevel } from "../../engine/village";
 import { ItemChip } from "../components/ItemLookup";
@@ -126,13 +127,13 @@ function BuyButton({ state, id, act }: { state: GameState; id: ShopId; act: Act 
   const short = cost - Math.floor(state.coin);
   if (reason === "Not enough coin.") {
     return (
-      <span className="need-more num" title={`Costs ${cost} coin`}>
+      <span className="need-more num">
         Need {short} more
       </span>
     );
   }
   return (
-    <button className="btn btn-ghost btn-sm price" disabled={reason !== null} title={reason ?? undefined} onClick={() => act((s) => buy(s, id))}>
+    <button className="btn btn-ghost btn-sm price" disabled={reason !== null} onClick={() => act((s) => buy(s, id))}>
       Buy · <CoinIcon size={14} /> <span className="num">{cost}</span>
     </button>
   );
@@ -153,9 +154,11 @@ function RequestCard({ state, index, act }: { state: GameState; index: number; a
     <article className={`notice ${finishes ? "is-ready" : ""}`}>
       <h3>{req.from}</h3>
       {/* A short label in plain type; their full line is the hover title. */}
-      <p className="contract-label" title={req.text}>
-        {req.label}
-      </p>
+      <Tip content={{ title: req.from, note: req.text }}>
+        <p className="contract-label" tabIndex={0}>
+          {req.label}
+        </p>
+      </Tip>
       <ul className="contract-needs">
         {needs.map(([item, qty]) => {
           const done = slot.delivered[item] ?? 0;
@@ -174,7 +177,7 @@ function RequestCard({ state, index, act }: { state: GameState; index: number; a
         Pays {requestCoin(state, { ...req, coin: offer.coin })} coin · +{+(offer.trust * trustMultiplier(state)).toFixed(1)} trust
       </p>
       <div className="row">
-        <button className={`btn btn-sm ${canGive ? "btn-primary" : "btn-ghost"}`} disabled={!canGive} onClick={() => act((s) => deliver(s, index))} title={canGive ? undefined : "You have none of what they need yet"}>
+        <button className={`btn btn-sm ${canGive ? "btn-primary" : "btn-ghost"}`} disabled={!canGive} onClick={() => act((s) => deliver(s, index))}>
           {finishes ? "Deliver and finish" : "Deliver what I have"}
         </button>
         <button className="btn btn-ghost btn-sm" onClick={() => act((s) => declineRequest(s, index))}>

@@ -1,19 +1,37 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { ACTION_DEFS } from "../../content/actions";
+import { ACTION_DEFS, type ActionId } from "../../content/actions";
 import { ITEM_CATEGORIES, ITEM_DEFS, type ItemCategory, type ItemId } from "../../content/items";
 import { SKILLS } from "../../content/skills";
-import { lookupItem, producerAction, producingSkill } from "../../engine/estimates";
+import { chanceBreakdown, lookupItem, producerAction, producingSkill } from "../../engine/estimates";
 import { blockReason } from "../../engine/simulate";
 import type { GameState } from "../../engine/state";
 import { useChipActions } from "../chipContext";
 import { CATEGORY_ICONS, SkillIcon } from "../art/icons";
 import { ItemIcon } from "../art/items";
+import { Tip, type TipContent } from "./Tip";
 import { formatStop, itemName } from "../format";
 import { Modal } from "./Modal";
 
 /** A chip's tooltip: "Look up Mugwort · The dream-herb." (item descriptions are puzzle bridges). */
-const lookUpTitle = (item: ItemId) => `Look up ${itemName(item)}${ITEM_DEFS[item].description ? ` · ${ITEM_DEFS[item].description}` : ""}`;
+const pctText = (c: number) => `${Math.round(c * 1000) / 10}%`;
+
+/**
+ * A chip's tooltip: the item, what you hold against what's needed, and for a recipe's chance find
+ * where the chance comes from (base × each bonus = now). Clicking still opens the full lookup.
+ */
+function chipTip(state: GameState, item: ItemId, o: { need?: number; have: number; chance?: number; source?: ActionId }): TipContent {
+  const rows: [ReactNode, ReactNode][] = [];
+  if (o.need !== undefined) rows.push(["You have", o.have], ["Needed", o.need]);
+  const b = o.source && o.chance !== undefined ? chanceBreakdown(state, o.source, item) : null;
+  if (b) {
+    rows.push(["Base chance", pctText(b.base)]);
+    for (const f of b.factors) rows.push([f.source, `×${+f.mult.toFixed(2)}`]);
+    if (b.factors.length > 0) rows.push(["Now", pctText(b.chance)]);
+  }
+  const notes = [o.chance !== undefined && o.chance > 1 ? overflowText(o.chance) : null, ITEM_DEFS[item].description ?? null, "Click to look it up"].filter(Boolean);
+  return { title: itemName(item), rows, note: notes.join(" · ") };
+}
 
 /**
  * An item as a chip, coloured and marked with the skill that makes it.
@@ -30,7 +48,7 @@ export function overflowText(chance: number): string {
   return more > 0 ? `${sure} for sure, ${more}% chance of a ${sure + 1 === 2 ? "2nd" : `${sure + 1}th`}` : `${sure} for sure`;
 }
 
-export function ItemChip({ item, qty, need, chance, plain, bare, boostedBy }: { item: ItemId; qty?: number; need?: number; chance?: number; plain?: boolean; bare?: boolean; boostedBy?: string[] }) {
+export function ItemChip({ item, qty, need, chance, plain, bare, boostedBy, source }: { item: ItemId; qty?: number; need?: number; chance?: number; plain?: boolean; bare?: boolean; boostedBy?: string[]; source?: ActionId }) {
   const { state, lookup, start } = useChipActions();
   const [menu, setMenu] = useState(false);
   const wrap = useRef<HTMLSpanElement>(null);
@@ -67,19 +85,20 @@ export function ItemChip({ item, qty, need, chance, plain, bare, boostedBy }: { 
 
   if (plain) {
     return (
-      <button
-        type="button"
-        className="chip item-chip plain"
-        data-skill={skill ?? undefined}
-        onClick={(e) => {
-          e.stopPropagation();
-          lookup(item);
-        }}
-        title={lookUpTitle(item)}
-      >
-        {!bare && <ItemIcon item={item} size={15} />}
-        {itemName(item)}
-      </button>
+      <Tip content={chipTip(state, item, { have })}>
+        <button
+          type="button"
+          className="chip item-chip plain"
+          data-skill={skill ?? undefined}
+          onClick={(e) => {
+            e.stopPropagation();
+            lookup(item);
+          }}
+        >
+          {!bare && <ItemIcon item={item} size={15} />}
+          {itemName(item)}
+        </button>
+      </Tip>
     );
   }
 
@@ -88,6 +107,7 @@ export function ItemChip({ item, qty, need, chance, plain, bare, boostedBy }: { 
 
   return (
     <span className="item-chip-wrap" ref={wrap}>
+      <Tip content={menu ? null : chipTip(state, item, { need, have, chance, source })}>
       <button
         type="button"
         className={`chip item-chip ${short ? "short" : ""} ${need !== undefined && !short ? "enough" : ""} ${boostedBy?.length ? "boosted" : ""}`}
@@ -100,7 +120,6 @@ export function ItemChip({ item, qty, need, chance, plain, bare, boostedBy }: { 
           if (short) setMenu((m) => !m);
           else lookup(item);
         }}
-        title={short ? `Short of ${itemName(item)}: you have ${have}, need ${need}` : [lookUpTitle(item), chance !== undefined && chance > 1 ? overflowText(chance) : null, boostedBy?.length ? `raised by ${boostedBy.join(", ")}` : null].filter(Boolean).join(" · ")}
       >
         <ItemIcon item={item} size={15} />
         {(need ?? qty) !== undefined && <span className="num">{need ?? qty}</span>}
@@ -112,6 +131,7 @@ export function ItemChip({ item, qty, need, chance, plain, bare, boostedBy }: { 
           </span>
         )}
       </button>
+      </Tip>
       {menu &&
         pos &&
         createPortal(
