@@ -347,3 +347,19 @@
 .stage-card-item svg { color: var(--skill); }
 .stage-card-go { margin-top: auto; align-self: flex-start; box-shadow: inset 0 0 0 1px var(--skill); }
 .stage-card-go:hover { background: color-mix(in oklch, var(--skill) 20%, var(--color-raised)); }
+
+/* Grimoire: the book as a grid of pages, chapter by chapter */
+.page-grid { display: flex; flex-direction: column; gap: var(--space-3); }
+.page-band { display: flex; flex-direction: column; gap: 6px; }
+.page-tiles { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 4px; max-width: 280px; }
+.page-tile { aspect-ratio: 3 / 4; max-width: 100%; display: grid; place-items: center; border: 0; border-radius: 3px; font: inherit; font-size: var(--text-xs); color: var(--color-text-3); background: var(--color-sunken); box-shadow: inset 0 0 0 1px var(--color-border-soft); }
+.page-tile.is-read { position: relative; cursor: pointer; background: color-mix(in oklch, var(--color-vellum) 70%, var(--place) 10%); box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--place) 45%, transparent); color: var(--color-text-2); }
+.page-tile.is-read:hover, .page-tile.is-open { box-shadow: inset 0 0 0 1px var(--place), 0 0 10px color-mix(in oklch, var(--place) 40%, transparent); }
+.page-seal { width: 40%; aspect-ratio: 1; border-radius: 50%; background: var(--color-stitch); opacity: 0.85; }
+.page-num { position: absolute; bottom: 1px; right: 3px; font-size: 0.7rem; color: var(--color-text-3); }
+.page-tile.is-unread { background: repeating-linear-gradient(135deg, var(--color-sunken) 0 4px, color-mix(in oklch, var(--color-sunken) 80%, #000) 4px 8px); }
+.page-band.is-later .page-tile { opacity: 0.4; }
+.page-band.is-later .label { color: var(--color-text-3); }
+.page-read { margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--color-border-soft); display: flex; flex-direction: column; gap: 4px; }
+.page-read h3 { font: var(--weight-medium) var(--text-lg) / 1.2 var(--font-display); }
+.curio-tiles { grid-template-columns: repeat(5, 40px); margin-bottom: var(--space-2); }

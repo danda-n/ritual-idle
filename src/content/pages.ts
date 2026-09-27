@@ -36,3 +36,16 @@ export const PAGES = [
     unlocks: [],
   },
 ] as const satisfies readonly PageDef<ActionId>[];
+
+/**
+ * The whole book's pages, chapter by chapter, for the Grimoire's page grid: Chapter I's are the
+ * pages above; later chapters show as locked slots, so the book reads as mostly still to find.
+ */
+export const BOOK_PAGES = [
+  { chapter: "I", count: PAGES.length },
+  { chapter: "II", count: 14 },
+  { chapter: "III", count: 20 },
+  { chapter: "IV", count: 25 },
+  { chapter: "V", count: 35 },
+] as const;
+export const BOOK_PAGE_TOTAL = BOOK_PAGES.reduce((n, c) => n + c.count, 0);

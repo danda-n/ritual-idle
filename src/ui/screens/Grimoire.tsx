@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { ACTION_DEFS, type ActionId } from "../../content/actions";
 import { CURIOS, GRIMOIRE_DEFS, INSIGHT_COST, INSIGHT_GAIN, type GrimoireId } from "../../content/grimoire";
-import { PAGES } from "../../content/pages";
+import { BOOK_PAGE_TOTAL, BOOK_PAGES, PAGES } from "../../content/pages";
 import { REQUESTS } from "../../content/requests";
 import { attune, buyHint, type Result } from "../../engine/commands";
 import { effectiveOutputs } from "../../engine/estimates";
@@ -126,7 +126,7 @@ export function Grimoire({ state, act, onAttuned }: { state: GameState; act: Act
         <span className="label">Journal</span>
         <ul>
           {item({ kind: "notes" }, "Grandmother's notes", state.notesRevealed + (state.experimentsOpen ? 1 : 0))}
-          {item({ kind: "pages" }, "Deciphered pages", pagesRead(state).length)}
+          {item({ kind: "pages" }, "Deciphered pages", `${pagesRead(state).length}/${BOOK_PAGE_TOTAL}`)}
           {item({ kind: "curios" }, "Curios", `${curiosFound}/${CURIOS.length}`)}
           {discovered.length > 0 && item({ kind: "discoveries" }, "Discoveries", discovered.length)}
           {riteStarted && item({ kind: "kindling" }, "The Kindling")}
@@ -151,18 +151,20 @@ export function Grimoire({ state, act, onAttuned }: { state: GameState; act: Act
             <p className="muted num">
               {curioSources(state).join(" · ")} · +{INSIGHT_GAIN.curio} insight each
             </p>
+            {/* The collection as tiles; a found one opens its story. */}
+            <div className="page-tiles curio-tiles">
+              {CURIOS.map((c, i) => (
+                <span key={c.name} className={`page-tile ${i < curiosFound ? "is-read" : "is-unread"}`} aria-label={i < curiosFound ? c.name : "Not found yet"}>
+                  {i < curiosFound ? <span className="page-seal" aria-hidden="true" /> : "?"}
+                </span>
+              ))}
+            </div>
             <ol className="journal">
-              {CURIOS.map((c, i) =>
-                i < curiosFound ? (
-                  <li key={c.name}>
-                    <Story summary={c.name} lines={[c.story]} />
-                  </li>
-                ) : (
-                  <li key={c.name} className="missing">
-                    Not found yet
-                  </li>
-                ),
-              )}
+              {CURIOS.slice(0, curiosFound).map((c) => (
+                <li key={c.name}>
+                  <Story summary={c.name} lines={[c.story]} />
+                </li>
+              ))}
             </ol>
           </>
         )}
@@ -450,20 +452,62 @@ function DiscoveredPage({ id }: { id: GrimoireId }) {
 
 function PagesPage({ state }: { state: GameState }) {
   const pages = pagesRead(state);
+  const [open, setOpen] = useState<number | null>(pages.length > 0 ? pages.length - 1 : null);
+  // Deciphers past the story pages: loose leaves, each worth insight.
+  const leaves = Math.max(0, (state.stats.completed.decipher_page ?? 0) - PAGES.length);
+  const shown = open !== null ? pages[open] : undefined;
   return (
     <>
       <div className="panel-title">
         <ScrollIcon size={18} />
         <h2>Deciphered pages</h2>
+        <span className="muted panel-aside num">
+          {pages.length}/{BOOK_PAGE_TOTAL}
+        </span>
       </div>
       {pages.length === 0 && <p className="muted">None yet · burnt pages come from Search the attic (Scholarship)</p>}
-      <ol className="journal">
-        {pages.map((p) => (
-          <li key={p.title}>
-            <Story summary={p.title} meta={p.unlocks.length > 0 ? `Teaches: ${p.unlocks.map((a) => ACTION_DEFS[a].name).join(", ")}` : "Readable in Chapter 3"} lines={[p.text]} />
-          </li>
-        ))}
-      </ol>
+      {leaves > 0 && (
+        <p className="muted num">
+          Loose leaves read: {leaves} · +{leaves * INSIGHT_GAIN.page} <Term id="insight">insight</Term>
+        </p>
+      )}
+      {/* The whole book as a grid of pages, chapter by chapter: most of it is still to find. */}
+      <div className="page-grid">
+        {BOOK_PAGES.map((band, b) => {
+          const start = BOOK_PAGES.slice(0, b).reduce((n, c) => n + c.count, 0);
+          return (
+            <section key={band.chapter} className={`page-band ${b > 0 ? "is-later" : ""}`} aria-label={`Chapter ${band.chapter}`}>
+              <span className="label">Chapter {band.chapter}{b > 0 && " · later"}</span>
+              <div className="page-tiles">
+                {Array.from({ length: band.count }, (_, i) => {
+                  const n = start + i;
+                  const page = b === 0 ? pages[i] : undefined;
+                  if (page) {
+                    return (
+                      <button key={n} type="button" className={`page-tile is-read ${open === i ? "is-open" : ""}`} onClick={() => setOpen(open === i ? null : i)} aria-pressed={open === i} aria-label={page.title}>
+                        <span className="page-seal" aria-hidden="true" />
+                        <span className="page-num num">{n + 1}</span>
+                      </button>
+                    );
+                  }
+                  return (
+                    <span key={n} className={`page-tile ${b === 0 ? "is-unread" : "is-locked"}`} aria-hidden="true">
+                      {b === 0 ? "?" : ""}
+                    </span>
+                  );
+                })}
+              </div>
+            </section>
+          );
+        })}
+      </div>
+      {shown && (
+        <article className="page-read">
+          <h3>{shown.title}</h3>
+          <p className="muted">{shown.unlocks.length > 0 ? `Teaches: ${shown.unlocks.map((a) => ACTION_DEFS[a].name).join(", ")}` : "Readable in Chapter 3"}</p>
+          <p className="note-quote">{shown.text}</p>
+        </article>
+      )}
     </>
   );
 }
