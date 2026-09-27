@@ -73,14 +73,22 @@ export const HEARTH_RITE = {
 export const RITE_MS = HEARTH_RITE.phaseMs * HEARTH_RITE.phases.length;
 
 /**
+ * Tending the rite (never required): each thing you tend while it runs (a wick to light, a gap in
+ * the salt to close…) takes this much off, up to TEND_MAX_MS in all, so an active player can finish
+ * it in about half the time. Idle, it simply runs its full length.
+ */
+export const TEND_MS = 3_000;
+export const TEND_MAX_MS = RITE_MS / 2;
+
+/**
  * Optional offerings, each one quality step. `item` offerings are chosen (and used) when the rite
  * begins; the others count by themselves if they're true when it runs.
  */
 export const OFFERINGS = [
-  { id: "hearth_candle", label: "Hearth candle (uses 1)", item: "hearth_candle" },
-  { id: "hearth_mark", label: "Hearth mark discovered (hidden recipe)" },
-  { id: "still_night", label: "Still Night active during the rite" },
-] as const satisfies readonly { id: string; label: string; item?: ItemId }[];
+  { id: "hearth_candle", label: "Hearth candle", how: "Uses 1 · poured at Chandlery 6", item: "hearth_candle" },
+  { id: "hearth_mark", label: "Hearth mark", how: "Counts once discovered · a hidden recipe (Experiments)" },
+  { id: "still_night", label: "Still Night", how: "Counts if its blessing is active during the rite · an omen" },
+] as const satisfies readonly { id: string; label: string; how: string; item?: ItemId }[];
 export type OfferingId = (typeof OFFERINGS)[number]["id"];
 
 /**

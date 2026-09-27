@@ -23,6 +23,7 @@
 .btn-text { padding: 0 4px; min-height: 24px; color: var(--color-text-2); border: 0; }
 .btn-text:hover { color: var(--color-text); text-decoration: underline; text-underline-offset: 3px; }
 .btn-sm { min-height: 26px; padding: 0 10px; font-size: var(--text-xs); }
+.btn-lg { min-height: 42px; padding: 0 22px; font-size: var(--text-md); }
 .btn-block { width: 100%; justify-content: flex-start; }
 /* Disabled: a solid dark ground and the reason in words. Never a dashed box. */
 .btn:disabled, .btn[aria-disabled="true"] { background: var(--color-sunken); color: var(--color-text-3); border-color: transparent; box-shadow: none; cursor: not-allowed; opacity: 1; transform: none; font-weight: var(--weight-regular); }
@@ -579,3 +580,8 @@ details.talents:not([open]) > .talents-summary { margin-bottom: 0; }
 .chip.item-chip.boosted > .num,
 .chip.item-chip.boosted .chip-chance { color: var(--color-success); font-weight: 600; }
 .chip.item-chip.boosted .chip-chance::before { content: "▲ "; font-size: 0.7em; vertical-align: 0.1em; }
+
+/* A new word, explained on click: a thin solid underline and a small circled "i" (no dashes). */
+.term { display: inline; padding: 0; border: 0; background: none; font: inherit; color: inherit; cursor: help; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; text-decoration-color: var(--color-info); }
+.term:hover { color: var(--color-text); text-decoration-color: currentColor; }
+.term-i { display: inline-grid; place-items: center; width: 1.05em; height: 1.05em; margin-left: 3px; border: 1px solid var(--color-info); border-radius: 50%; color: var(--color-info); font-size: 0.62em; font-weight: 700; line-height: 1; vertical-align: 0.35em; text-transform: none; font-family: var(--font-ui, inherit); }

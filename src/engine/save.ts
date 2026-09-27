@@ -41,7 +41,12 @@ export function deserialize(json: string): GameState {
       curiosRead: data.stats?.curiosRead ?? 0,
     },
     settings: { ...base.settings, ...data.settings },
-    rite: { ...base.rite, ...data.rite },
+    rite: {
+      ...base.rite,
+      ...data.rite,
+      // v10 added tending: a rite under way in an older save starts with none.
+      performing: data.rite?.performing ? { ...data.rite.performing, tendedMs: data.rite.performing.tendedMs ?? 0, bankMs: data.rite.performing.bankMs ?? 0 } : null,
+    },
     kept: { ...base.kept, ...data.kept },
     rewardsWaiting: data.rewardsWaiting ?? [],
     middleOrder: data.middleOrder ?? [],
@@ -153,7 +158,7 @@ function upgradeToV7(state: GameState, data: Partial<GameState>): void {
   if (oldRite && oldRite.elapsedMs !== undefined) {
     const at = Math.min(0.999, oldRite.elapsedMs / (30 * 60_000)) * HEARTH_RITE.phases.length;
     const phase = Math.floor(at);
-    state.rite.performing = { phase, phaseMs: (at - phase) * HEARTH_RITE.phaseMs, offered: [], omen: !!oldRite.stillNight };
+    state.rite.performing = { phase, phaseMs: (at - phase) * HEARTH_RITE.phaseMs, offered: [], omen: !!oldRite.stillNight, tendedMs: 0, bankMs: 0 };
   }
   if (pool > 0 && state.kept.features.includes("grimoire")) state.experimentsOpen = true;
 }

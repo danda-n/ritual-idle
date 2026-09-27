@@ -31,6 +31,8 @@ import { Grimoire } from "./screens/Grimoire";
 import { Village } from "./screens/Village";
 import type { Place } from "./tasks";
 import { useGame } from "./useGame";
+import { RiteReady, RiteScene } from "./components/Rite";
+import { PART_IDS } from "../content/rite";
 
 type TabId = "house" | "inventory" | "grimoire" | "village" | "circle";
 
@@ -73,6 +75,8 @@ export function App() {
     game.act((s) => setSetting(s, "introsSeen", [...s.settings.introsSeen, "omen_shelf_ready"]));
   }, [shelfReady]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const riteReady = state.kindling.length === PART_IDS.length && !state.rite.completed && !state.rite.performing;
+
   // Tabs appear as grandmother's notes open them; each shows a dot until first visited.
   const tabs: TabDef<TabId>[] = [
     { id: "house", label: "House", icon: <HouseIcon size={18} /> },
@@ -104,9 +108,11 @@ export function App() {
           {tab === "village" && <Village state={state} act={game.act} />}
           {tab === "grimoire" && <Grimoire state={state} act={game.act} onAttuned={() => setTab("circle")} />}
           {tab === "circle" && <Circle state={state} act={game.act} />}
-          {tab === "house" && (
+          {tab === "house" && state.rite.performing && <RiteScene state={state} act={game.act} />}
+          {tab === "house" && !state.rite.performing && (
             <>
-              <HouseHero state={state} />
+              {/* All five parts placed: the rite takes the hero's place until it's begun. */}
+              {riteReady ? <RiteReady state={state} act={game.act} /> : <HouseHero state={state} />}
               <div className="house">
                 <SkillNav state={state} skill={skill} onSelect={setSkill} />
                 <SkillActions state={state} skill={skill} onStart={game.start} onStop={game.stop} act={game.act} />

@@ -53,8 +53,9 @@ function Working({ state, onStop, stopNote, onGo }: { state: GameState; onStop: 
             Phase {rite.phase + 1}/{HEARTH_RITE.phases.length}
           </span>
         </span>
-        <TimedBar key={`phase${rite.phase}`} progress={rite.phaseMs / HEARTH_RITE.phaseMs} durationMs={HEARTH_RITE.phaseMs} label="Phase progress" />
-        <span className="muted num">{formatClock(RITE_MS - (rite.phase * HEARTH_RITE.phaseMs + rite.phaseMs))}</span>
+        {/* Keyed on tending too: a tend jumps the bar forward, the same clock as the rite scene's. */}
+        <TimedBar key={`phase${rite.phase}:${Math.round(rite.tendedMs)}`} progress={Math.min(1, (rite.phaseMs + rite.bankMs) / HEARTH_RITE.phaseMs)} durationMs={HEARTH_RITE.phaseMs} label="Phase progress" />
+        <span className="muted num">{formatClock(RITE_MS - (rite.phase * HEARTH_RITE.phaseMs + rite.phaseMs + rite.bankMs))}</span>
       </div>
     );
   }

@@ -4,7 +4,7 @@ import { HEARTH_RITE, type PartId } from "../../content/rite";
 import type { ItemId } from "../../content/items";
 import { SKILL_IDS, SKILLS } from "../../content/skills";
 import { goalProgress } from "../../engine/progress";
-import { atCap, canPlace, claimReward, placePart, type Result } from "../../engine/commands";
+import { atCap, canPlace, chooseKeepsakes, claimReward, placePart, type Result } from "../../engine/commands";
 import { stepById } from "../../engine/progress";
 import type { SkillId } from "../../content/skills";
 import { GRIMOIRE_DEFS } from "../../content/grimoire";
@@ -25,9 +25,8 @@ import { SkillIcon } from "../art/icons";
 import { chooseStage } from "../../engine/commands";
 import { Bar } from "./Bar";
 import { ItemChip } from "./ItemLookup";
-import { KeepsakePick } from "./KeepsakePick";
+import { KeepsakePick, useKeepsakeChoice } from "./KeepsakePick";
 import { Modal } from "./Modal";
-import { keepsakePicksLeft } from "../../engine/keepsakes";
 import { UPGRADES } from "../../content/upgrades";
 import { omenShelfSuggested, projectsReady } from "../../engine/projects";
 import { followerEffects } from "../effects";
@@ -302,7 +301,7 @@ function StillToFind({ state, onGo }: { state: GameState; onGo: (p: Place) => vo
 /** Keepsakes still to choose after the rite (if the chapter-end card was closed first). */
 function KeepsakesWaiting({ state, act }: { state: GameState; act: (c: (s: GameState) => Result) => unknown }) {
   const [open, setOpen] = useState(false);
-  const left = keepsakePicksLeft(state);
+  const { left, chosen, toggle } = useKeepsakeChoice(state);
   if (left === 0 || !state.rite.completed?.endingSeen) return null;
   return (
     <div className="rewards-waiting">
@@ -311,10 +310,22 @@ function KeepsakesWaiting({ state, act }: { state: GameState; act: (c: (s: GameS
       </button>
       {open && (
         <Modal title="Keepsakes" onClose={() => setOpen(false)}>
-          <KeepsakePick state={state} act={act} later={false} />
-          <button className="btn btn-primary" onClick={() => setOpen(false)}>
-            Done
-          </button>
+          <KeepsakePick state={state} chosen={chosen} onToggle={toggle} later={false} />
+          <div className="row">
+            <button
+              className="btn btn-primary"
+              disabled={chosen.length === 0}
+              onClick={() => {
+                act((s) => chooseKeepsakes(s, chosen));
+                setOpen(false);
+              }}
+            >
+              Keep {chosen.length > 1 ? "them" : "it"}
+            </button>
+            <button className="btn btn-ghost" onClick={() => setOpen(false)}>
+              Later
+            </button>
+          </div>
         </Modal>
       )}
     </div>

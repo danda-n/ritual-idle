@@ -185,16 +185,67 @@
 .part.is-choosable .ic { color: var(--skill); box-shadow: inset 0 0 0 1px var(--skill); }
 .part-later { display: inline-flex; align-items: center; gap: 4px; font-size: var(--text-xs); }
 .part-later svg { color: var(--skill); }
-.perform { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); background: rgb(255 240 215 / 0.04); }
-.perform h3 { font: var(--text-2xs) / 1.2 var(--font-display); letter-spacing: var(--tracking-label); color: var(--color-text-3); }
-.perform.is-ready { box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--place) 60%, transparent); }
-.offerings { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: var(--text-sm); color: var(--color-text-3); }
-.offerings li.met { color: var(--color-text); }
-.ceremony { display: flex; flex-direction: column; gap: var(--space-2); }
-.ceremony .bar-fill { background: var(--color-stitch); }
-.ceremony-head { display: flex; justify-content: space-between; gap: var(--space-2); align-items: baseline; }
-.ceremony-head strong { font-weight: var(--weight-medium); }
-/* The rite's phase checklist: ✓ done, ▸ now, · later (the story lines are in the Grimoire journal) */
+/* The rite ready: a banner in the hero's place (House) and on the Circle. Cinnabar edge = the one thing to do. */
+.rite-ready { display: flex; flex-direction: column; gap: var(--space-3); padding: 20px 24px 22px; border-radius: var(--radius-md); background: radial-gradient(ellipse 80% 90% at 0% 0%, color-mix(in oklch, var(--color-stitch) 16%, transparent), transparent 70%), var(--color-surface); box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--color-stitch) 55%, transparent), 0 8px 24px rgb(0 0 0 / 0.35); }
+.rite-ready-head { display: flex; gap: var(--space-3); align-items: center; }
+.rite-ready-head svg { color: var(--color-stitch); flex: none; filter: drop-shadow(0 0 8px color-mix(in oklch, var(--color-stitch) 60%, transparent)); }
+.rite-ready h2 { font: var(--weight-medium) 26px / 1.1 var(--font-display); letter-spacing: 0.02em; text-wrap: balance; }
+.rite-ready-sub { font-size: var(--text-sm); color: var(--color-text-2); margin-top: 2px; }
+.rite-ready h3 { font: var(--text-2xs) / 1.2 var(--font-display); letter-spacing: var(--tracking-label); color: var(--color-text-3); text-transform: none; }
+.rite-ready > .btn-primary { align-self: flex-start; }
+.rite-needs { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 20px; font-size: var(--text-sm); color: var(--color-text-2); }
+.rite-needs .is-met { color: var(--color-text); }
+.rite-needs .is-met > span[aria-hidden] { color: var(--color-success); }
+
+/* Offerings and the quality ladder */
+.quality-ladder { display: flex; flex-direction: column; gap: var(--space-3); }
+.offerings { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: var(--text-sm); color: var(--color-text-2); }
+.offerings li { display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: var(--space-2); align-items: baseline; }
+.offerings .offering-mark { color: var(--color-text-3); }
+.offerings li.is-met .offering-mark { color: var(--color-success); }
+.offerings li.is-met strong { color: var(--color-text); }
+.offering-body { display: flex; flex-wrap: wrap; gap: 2px 10px; align-items: baseline; }
+.offering-body strong { font-weight: var(--weight-medium); }
+.offering-body .muted { font-size: var(--text-xs); }
+.ladder { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.ladder li { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--color-sunken); color: var(--color-text-3); font-size: var(--text-xs); }
+.ladder .ladder-name { font: var(--weight-medium) var(--text-md) / 1.1 var(--font-display); color: var(--color-text-2); }
+.ladder li.is-past .ladder-name { color: var(--color-text-2); }
+.ladder li.is-now { background: var(--color-raised); box-shadow: inset 0 0 0 1px var(--color-selected); color: var(--color-text-2); }
+.ladder li.is-now .ladder-name { color: var(--color-text); }
+.ladder li.is-now.is-top { box-shadow: inset 0 0 0 1px var(--color-rare); }
+.ladder li.is-now.is-top .ladder-name { color: var(--color-rare); }
+.ladder-note { font-size: var(--text-xs); }
+@container (max-width: 520px) { .ladder { grid-template-columns: 1fr; } }
+
+/* The rite under way: the focus of the House while it runs, and of the Circle. */
+.rite-scene { display: flex; flex-direction: column; gap: var(--space-3); padding: 22px 24px; border-radius: var(--radius-md); background: radial-gradient(ellipse 70% 80% at 50% 40%, color-mix(in oklch, var(--skill) 14%, transparent), transparent 70%), var(--color-surface); box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--skill) 40%, transparent); }
+.rite-scene.is-compact { padding: var(--space-3); background: transparent; box-shadow: none; }
+.rite-scene-head { text-align: center; display: flex; flex-direction: column; gap: 4px; }
+.rite-scene-head h2 { font: var(--weight-medium) 34px / 1.05 var(--font-display); letter-spacing: 0.03em; color: var(--color-text); }
+.rite-scene.is-compact .rite-scene-head h2 { font-size: 24px; }
+.rite-line { font: var(--text-md) / 1.4 var(--font-lore); color: var(--color-text-2); max-width: 52ch; margin: 0 auto; text-wrap: balance; }
+.rite-time { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-3); align-items: center; }
+.rite-time .bar-fill { background: var(--skill); }
+.rite-field { position: relative; height: 240px; border-radius: var(--radius-md); background: radial-gradient(circle at 50% 50%, color-mix(in oklch, var(--skill) 10%, var(--color-sunken)), var(--color-sunken) 70%); box-shadow: inset 0 0 0 1px var(--color-border-soft); overflow: hidden; }
+.rite-scene.is-compact .rite-field { height: 180px; }
+.rite-field-hint { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: var(--space-4); font-size: var(--text-sm); }
+.rite-target { position: absolute; width: 48px; height: 48px; margin: -24px 0 0 -24px; display: grid; place-items: center; border: 0; border-radius: 50%; cursor: pointer; color: var(--color-text); background: radial-gradient(circle, color-mix(in oklch, var(--skill) 45%, transparent), transparent 70%); box-shadow: 0 0 0 1px color-mix(in oklch, var(--skill) 70%, transparent), 0 0 18px color-mix(in oklch, var(--skill) 55%, transparent); animation: tend-life linear forwards; }
+.rite-target:hover, .rite-target:focus-visible { transform: scale(1.12); box-shadow: 0 0 0 2px var(--color-focus), 0 0 22px color-mix(in oklch, var(--skill) 75%, transparent); }
+@keyframes tend-life { 0% { opacity: 0; scale: 0.5; } 12% { opacity: 1; scale: 1; } 75% { opacity: 1; } 100% { opacity: 0; scale: 0.85; } }
+.rite-burst { position: absolute; transform: translate(-50%, -50%); font-weight: 700; color: var(--color-text); pointer-events: none; animation: float-up 700ms var(--ease-out) forwards; }
+.rite-foot { font-size: var(--text-xs); text-align: center; }
+.rite-scene .phase-list { align-self: center; flex-direction: row; flex-wrap: wrap; gap: var(--space-1) var(--space-3); box-shadow: none; padding: 0; }
+[data-motion="reduced"] .rite-target { animation: none; }
+[data-motion="reduced"] .rite-burst { animation: none; opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .rite-target { animation: none; } .rite-burst { display: none; } }
+
+/* The chapter's end, in sections */
+.end-section { display: flex; flex-direction: column; gap: var(--space-2); padding-top: var(--space-3); border-top: 1px solid var(--color-border-soft); }
+.end-section h3 { font: var(--weight-medium) var(--text-md) / 1.2 var(--font-display); letter-spacing: 0.02em; }
+.quality-word.q2 { color: var(--color-rare); }
+.quality-word.q1 { color: var(--color-selected); }
+
 .phase-list { list-style: none; margin: 0; padding: 0 0 0 var(--space-3); box-shadow: inset 2px 0 0 color-mix(in oklch, var(--place) 50%, transparent); display: flex; flex-direction: column; gap: var(--space-1); font-size: var(--text-sm); color: var(--color-text-3); }
 .phase-list li { display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: var(--space-2); align-items: baseline; }
 .phase-list li.is-done { color: var(--color-text-2); }

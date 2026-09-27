@@ -10,7 +10,7 @@ import { OMENS, type OmenId } from "../content/omens";
 import { addInsight, buyHintInto, deduce, GRIMOIRE_IDS, glowCount, hintCost, isDiscovered, isSilhouetteVisible, markDiscovered, matches, progressOf, type Fragment, type HintKind } from "./grimoire";
 import { requestCoin, trustMultiplier } from "./modifiers";
 import { applyBuff, grantOmen } from "./omens";
-import { beginRite as startRite, canBeginRite } from "./rite";
+import { beginRite as startRite, canBeginRite, tendRite as tendRiteInto } from "./rite";
 import { PART_DEFS, type OfferingId, type PartId } from "../content/rite";
 import { SKILL_IDS, SKILLS, type SkillId } from "../content/skills";
 import type { Side, TalentLevel } from "../content/talents";
@@ -328,10 +328,17 @@ export function chooseTalent(input: GameState, skill: SkillId, level: TalentLeve
 }
 
 /** Choose a keepsake after a Fine or Resplendent rite. It's kept for good. */
-export function chooseKeepsake(input: GameState, id: KeepsakeId): Result {
-  if (keepsakePicksLeft(input) < 1) return no("There's no keepsake to choose.");
-  if (input.keepsakes.includes(id)) return no("You already keep that one.");
-  return ok({ ...input, keepsakes: [...input.keepsakes, id] });
+/**
+ * Keep the keepsakes chosen on the chapter-end screen (or the tracker's), all at once: the screen
+ * lets you change your mind freely, and this commits the choice when you leave it.
+ */
+export function chooseKeepsakes(input: GameState, ids: readonly KeepsakeId[]): Result {
+  const left = keepsakePicksLeft(input);
+  if (left < 1) return no("There's no keepsake to choose.");
+  if (ids.length === 0) return no("Choose a keepsake first.");
+  if (new Set(ids).size !== ids.length || ids.some((id) => input.keepsakes.includes(id))) return no("You already keep that one.");
+  if (ids.length > left) return no(left === 1 ? "Choose just one." : `Choose up to ${left}.`);
+  return ok({ ...input, keepsakes: [...input.keepsakes, ...ids] });
 }
 
 // The Major Rite
@@ -345,6 +352,17 @@ export function beginRite(input: GameState, offer: readonly OfferingId[] = []): 
   return ok(state);
 }
 
+
+/**
+ * Tend the running rite once (the Circle's small clicks): it takes a few seconds off, up to half
+ * the rite. Nothing happens once tending has done all it can, and nothing is lost by not tending.
+ */
+export function tendRite(input: GameState): Result {
+  if (!input.rite.performing) return no("No rite is under way.");
+  const state = structuredClone(input);
+  tendRiteInto(state);
+  return ok(state);
+}
 
 export function dismissEnding(input: GameState): Result {
   if (!input.rite.completed) return no("Not yet.");

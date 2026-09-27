@@ -13,7 +13,7 @@ import type { KeepsakeId } from "../content/keepsakes";
 import { SKILL_IDS, type SkillId } from "../content/skills";
 import { randomSeed } from "./rng";
 
-export const SAVE_VERSION = 9;
+export const SAVE_VERSION = 10;
 /**
  * The playtest reset number. Raise it by one to wipe every player's save on their next load
  * (after big changes, when old saves would give a misleading playtest). Saves from an older
@@ -123,9 +123,14 @@ export interface RecipeProgress {
 }
 
 export interface RiteState {
-  /** The rite under way: which phase, how far into it, the offerings made, and whether an omen was active. */
-  performing: { phase: number; phaseMs: number; offered: OfferingId[]; omen: boolean } | null;
-  completed: { quality: number; endingSeen: boolean } | null;
+  /**
+   * The rite under way: which phase, how far into it, the offerings made, and whether an omen was
+   * active. `tendedMs` is the time tending has taken off so far (capped); `bankMs` is tended time
+   * not yet applied (the next simulation step adds it).
+   */
+  performing: { phase: number; phaseMs: number; offered: OfferingId[]; omen: boolean; tendedMs: number; bankMs: number } | null;
+  /** The rite done: its quality, the offerings that counted (saves before v10 lack them), and whether its ending was seen. */
+  completed: { quality: number; endingSeen: boolean; offered?: OfferingId[] } | null;
 }
 
 /** What to do when the current action can't continue (e.g. out of tallow). */

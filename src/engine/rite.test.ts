@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { ACTION_DEFS } from "../content/actions";
 import { NOTES } from "../content/notes";
 import { PAGES } from "../content/pages";
-import { HEARTH_RITE, PART_DEFS, PART_IDS, QUALITIES, RITE_MS } from "../content/rite";
-import { beginRite, chooseKeepsake, chooseStage, dismissEnding, placePart, releaseOmen, type Result } from "./commands";
+import { HEARTH_RITE, PART_DEFS, PART_IDS, QUALITIES, RITE_MS, TEND_MAX_MS, TEND_MS } from "../content/rite";
+import { beginRite, tendRite, chooseKeepsakes, chooseStage, dismissEnding, placePart, releaseOmen, type Result } from "./commands";
 import { progressOf } from "./grimoire";
 import { actionDurationMs, insightPerRep, offlineBonus, omenCapacity, requestCoin } from "./modifiers";
 import { keepsakePicksLeft } from "./keepsakes";
@@ -152,6 +152,49 @@ describe("performing", () => {
   });
 });
 
+describe("tending the rite (never required)", () => {
+  const running = () => okay(beginRite(ready()));
+
+  it("each tend takes a few seconds off, applied on the next step", () => {
+    const s = okay(tendRite(running()));
+    expect(s.rite.performing).toMatchObject({ tendedMs: TEND_MS, bankMs: TEND_MS });
+    const { state, report } = advance(s, 1000);
+    expect(report.riteMs).toBe(1000); // real time spent: just the step
+    expect(state.rite.performing).toMatchObject({ phase: 0, phaseMs: 1000 + TEND_MS, bankMs: 0 });
+  });
+
+  it("stops helping at half the rite, so an active player finishes in about half the time", () => {
+    let s = running();
+    for (let i = 0; i < 100; i++) s = okay(tendRite(s));
+    expect(s.rite.performing!.tendedMs).toBe(TEND_MAX_MS);
+    const { state, report } = advance(s, RITE_MS);
+    expect(state.rite.completed).not.toBeNull();
+    expect(report.riteMs).toBe(RITE_MS - TEND_MAX_MS);
+  });
+
+  it("moves through phases, and finishes early, with the same rewards", () => {
+    let s = running();
+    // 12 tends (36 s) finish the first phase without any time passing.
+    for (let i = 0; i < 12; i++) s = okay(tendRite(s));
+    s = advance(s, 1).state;
+    expect(s.rite.performing!.phase).toBe(1);
+    const done = advance(s, RITE_MS).state;
+    expect(done.levelCap).toBe(HEARTH_RITE.rewards.levelCap);
+    expect(done.followers).toContain(HEARTH_RITE.rewards.follower);
+  });
+
+  it("idle, the rite runs its full length; no rite, nothing to tend", () => {
+    expect(advance(running(), RITE_MS - 1).state.rite.completed).toBeNull();
+    expect(tendRite(ready()).ok).toBe(false);
+  });
+
+  it("a rite under way in an older save gets no tending yet", () => {
+    const old = running();
+    const json = JSON.stringify({ ...old, version: 9, rite: { ...old.rite, performing: { phase: 2, phaseMs: 5, offered: [], omen: false } } });
+    expect(deserialize(json).rite.performing).toMatchObject({ phase: 2, tendedMs: 0, bankMs: 0 });
+  });
+});
+
 describe("offerings", () => {
   const withCandle = (extra: Partial<GameState> = {}) => ready({ inventory: { hearth_candle: 1 }, ...extra });
 
@@ -203,41 +246,48 @@ describe("keepsakes", () => {
   it("none to choose before the rite, or after a Sound one", () => {
     expect(keepsakePicksLeft(ready())).toBe(0);
     expect(keepsakePicksLeft(sound())).toBe(0);
-    expect(chooseKeepsake(sound(), "quilt").ok).toBe(false);
+    expect(chooseKeepsakes(sound(), ["quilt"]).ok).toBe(false);
+  });
+
+  it("choices are made all at once, when you leave the screen: never too many, never twice", () => {
+    expect(chooseKeepsakes(fine(), ["quilt", "glasses"]).ok).toBe(false);
+    expect(chooseKeepsakes(resplendent(), ["embers", "embers"]).ok).toBe(false);
+    expect(chooseKeepsakes(resplendent(), []).ok).toBe(false);
+    expect(okay(chooseKeepsakes(resplendent(), ["embers", "glasses"])).keepsakes).toEqual(["embers", "glasses"]);
   });
 
   it("a Fine rite lets you choose one, a Resplendent one two, each only once", () => {
-    const f = okay(chooseKeepsake(fine(), "quilt"));
+    const f = okay(chooseKeepsakes(fine(), ["quilt"]));
     expect(f.keepsakes).toEqual(["quilt"]);
     expect(keepsakePicksLeft(f)).toBe(0);
-    expect(chooseKeepsake(f, "glasses").ok).toBe(false);
+    expect(chooseKeepsakes(f, ["glasses"]).ok).toBe(false);
     let r = resplendent();
     expect(keepsakePicksLeft(r)).toBe(2);
-    r = okay(chooseKeepsake(r, "embers"));
-    expect(chooseKeepsake(r, "embers").ok).toBe(false);
-    r = okay(chooseKeepsake(r, "glasses"));
+    r = okay(chooseKeepsakes(r, ["embers"]));
+    expect(chooseKeepsakes(r, ["embers"]).ok).toBe(false);
+    r = okay(chooseKeepsakes(r, ["glasses"]));
     expect(keepsakePicksLeft(r)).toBe(0);
   });
 
   it("the quilt speeds up time away by 10%", () => {
-    const s = okay(chooseKeepsake(fine(), "quilt"));
+    const s = okay(chooseKeepsakes(fine(), ["quilt"]));
     expect(offlineBonus(s) - offlineBonus(fine())).toBeCloseTo(0.1);
   });
 
   it("the jar of embers adds an omen place, once there's a shelf", () => {
-    const s = okay(chooseKeepsake(fine(), "embers"));
+    const s = okay(chooseKeepsakes(fine(), ["embers"]));
     expect(omenCapacity(s)).toBe(0);
     expect(omenCapacity({ ...s, upgrades: ["omen_shelf"] })).toBe(3);
   });
 
   it("her reading glasses add insight to every page deciphered", () => {
-    const s = okay(chooseKeepsake(fine(), "glasses"));
+    const s = okay(chooseKeepsakes(fine(), ["glasses"]));
     expect(insightPerRep(s, "decipher_page")).toBe(1);
     expect(insightPerRep(s, "search_attic")).toBe(0);
   });
 
   it("keepsakes round-trip, and older saves have none", () => {
-    const s = okay(chooseKeepsake(fine(), "quilt"));
+    const s = okay(chooseKeepsakes(fine(), ["quilt"]));
     expect(deserialize(JSON.stringify(s)).keepsakes).toEqual(["quilt"]);
     const old = { ...ready(), version: 8 } as Partial<GameState>;
     delete old.keepsakes;
@@ -299,7 +349,7 @@ describe("save v5", () => {
     expect(loaded.kindling).toEqual(PART_IDS);
     expect(currentNote(loaded)).toBe(NOTES[RITE_NOTE]);
     // 1 of the old 30 minutes is the first phase of five, about a sixth of the way in.
-    expect(loaded.rite.performing).toEqual({ phase: 0, phaseMs: expect.closeTo(HEARTH_RITE.phaseMs / 6, 0), offered: [], omen: false });
+    expect(loaded.rite.performing).toEqual({ phase: 0, phaseMs: expect.closeTo(HEARTH_RITE.phaseMs / 6, 0), offered: [], omen: false, tendedMs: 0, bankMs: 0 });
     expect(advance(loaded, 30 * MIN).state.rite.completed).not.toBeNull();
   });
 

@@ -1,4 +1,4 @@
-import { HEARTH_RITE, OFFERINGS, PART_IDS, QUALITIES, QUALITY_AT, RITE_MS, type OfferingId, type PartId } from "../content/rite";
+import { HEARTH_RITE, OFFERINGS, PART_IDS, QUALITIES, QUALITY_AT, RITE_MS, TEND_MAX_MS, TEND_MS, type OfferingId, type PartId } from "../content/rite";
 import { SKILLS, type SkillId } from "../content/skills";
 import { activeBuffs, riteQualitySteps } from "./modifiers";
 import { isRiteRevealed } from "./progress";
@@ -63,7 +63,18 @@ export function beginRite(state: GameState, now: number, offer: readonly Offerin
     if ("item" in o) state.inventory[o.item] = (state.inventory[o.item] ?? 0) - 1;
   }
   state.active = null;
-  state.rite.performing = { phase: 0, phaseMs: 0, offered, omen: omenActive(state, now) };
+  state.rite.performing = { phase: 0, phaseMs: 0, offered, omen: omenActive(state, now), tendedMs: 0, bankMs: 0 };
+}
+
+/** Tend the rite once: take TEND_MS off, up to TEND_MAX_MS in all. Returns the time taken off. */
+export function tendRite(state: GameState): number {
+  const p = state.rite.performing;
+  if (!p) return 0;
+  const done = p.phase * HEARTH_RITE.phaseMs + p.phaseMs + p.bankMs;
+  const add = Math.max(0, Math.min(TEND_MS, TEND_MAX_MS - p.tendedMs, RITE_MS - done));
+  p.tendedMs += add;
+  p.bankMs += add;
+  return add;
 }
 
 /** Quality index into QUALITIES: no offerings → Sound, 1–2 → Fine, all 3 → Resplendent. */
@@ -83,15 +94,19 @@ export function stepRite(state: GameState, ms: number, now: number): { used: num
   const p = state.rite.performing!;
   if (omenActive(state, now)) p.omen = true;
   const done = p.phase * HEARTH_RITE.phaseMs + p.phaseMs;
-  const used = Math.min(ms, RITE_MS - done);
-  const total = done + used;
+  // Tended time goes first (it costs no real time), then the real time of this step.
+  const fromBank = Math.min(p.bankMs ?? 0, RITE_MS - done);
+  p.bankMs = 0;
+  const used = Math.min(ms, RITE_MS - done - fromBank);
+  const total = done + fromBank + used;
   p.phase = Math.min(HEARTH_RITE.phases.length, Math.floor(total / HEARTH_RITE.phaseMs));
   p.phaseMs = total - p.phase * HEARTH_RITE.phaseMs;
   if (total < RITE_MS) return { used, completedQuality: null };
 
-  const quality = riteQuality(state);
+  const offered = offeringsMet(state);
+  const quality = qualityFor(offered.length);
   state.rite.performing = null;
-  state.rite.completed = { quality, endingSeen: false };
+  state.rite.completed = { quality, endingSeen: false, offered };
   state.levelCap = Math.max(state.levelCap, HEARTH_RITE.rewards.levelCap);
   if (!state.followers.includes(HEARTH_RITE.rewards.follower)) state.followers.push(HEARTH_RITE.rewards.follower);
   return { used, completedQuality: quality };

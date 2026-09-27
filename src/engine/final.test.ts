@@ -53,7 +53,7 @@ describe("saves", () => {
 
   it("load from every older version and keep playing", () => {
     const current = everything();
-    for (const version of [1, 2, 3, 4, 5, 6, 7, 8]) {
+    for (const version of [1, 2, 3, 4, 5, 6, 7, 8, 9]) {
       const old = { ...current, version } as Partial<GameState>;
       if (version < 3) {
         delete old.board;
@@ -67,7 +67,7 @@ describe("saves", () => {
       }
       const loaded = deserialize(JSON.stringify(old));
       expect(loaded.version).toBe(SAVE_VERSION);
-      expect(SAVE_VERSION).toBe(9);
+      expect(SAVE_VERSION).toBe(10);
       expect(() => catchUp(loaded, T0 + HOUR)).not.toThrow();
     }
   });
