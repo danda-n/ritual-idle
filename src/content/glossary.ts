@@ -72,7 +72,7 @@ export const GLOSSARY = {
   },
   blessing: {
     name: "Blessing",
-    text: "A timed boost from an omen, a charm or a minor rite. It shows in the side panel with the time left.",
+    text: "A timed boost from an omen or a minor rite. It shows in the side panel with the time left.",
   },
   offering: {
     name: "Offering",
@@ -88,7 +88,7 @@ export const GLOSSARY = {
   },
   charm: {
     name: "Charm",
-    text: "Bound on the Experiments tab from a recipe you've discovered, as often as you like. Use it for a timed boost.",
+    text: "Bound on the Experiments tab from a recipe you\'ve discovered. Use it for a boost that lasts a number of actions or contracts, not a time; using another adds more.",
   },
   project: {
     name: "House project",

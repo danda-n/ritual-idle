@@ -76,7 +76,7 @@ describe("what a recipe really gives", () => {
 });
 
 describe("chance bonuses apply to every chance find", () => {
-  const charmed = (s: GameState) => ({ ...s, buffs: [{ id: "charm_window", endsAt: T0 + 60_000 }] }) as GameState;
+  const charmed = (s: GameState) => ({ ...s, charms: { charm_window: 10 } }) as GameState;
 
   it("a charm on all finds raises charcoal (10% -> 15%), and names itself", () => {
     const s = charmed(open());

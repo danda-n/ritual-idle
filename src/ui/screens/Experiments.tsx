@@ -1,21 +1,19 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { GRIMOIRE_DEFS, type GrimoireId } from "../../content/grimoire";
 import type { ItemId } from "../../content/items";
-import { BUFF_DEFS } from "../../content/buffs";
-import { CHARM_IDS, CHARMS, type CharmId } from "../../content/charms";
+import { CHARM_DEFS, CHARM_IDS, CHARMS, type CharmId } from "../../content/charms";
 import { attune, bindCharm, canBindCharm, circleSlots, experiment, useCharm, type ExperimentOutcome, type Result, type Success } from "../../engine/commands";
 import { GRIMOIRE_IDS, isDiscovered, isSilhouetteVisible, progressOf } from "../../engine/grimoire";
-import { activeBuffs } from "../../engine/modifiers";
 import type { GameState } from "../../engine/state";
 import { CircleRiteIcon, MoonIcon } from "../art/icons";
 import { PlaceHero } from "../components/PlaceHero";
 import { ItemChip } from "../components/ItemLookup";
 import { Term } from "../components/Term";
-import { formatClock, itemName } from "../format";
+import { itemName } from "../format";
 import { ItemIcon } from "../art/items";
 import { producingSkill } from "../../engine/estimates";
 import { circleStep, outcomeHelp, recipeKnowledge } from "../guidance";
-import { buffDuration, buffEffects } from "../effects";
+import { charmEffects, charmLasts } from "../effects";
 import { Glows, SilhouettePage } from "./Grimoire";
 
 type Act = (command: (s: GameState) => Result) => Success | null;
@@ -266,7 +264,6 @@ export function Experiments({ state, act }: { state: GameState; act: Act }) {
  * for a timed boost. Recipes not found yet show what they'll bind, so there's a reason to look.
  */
 function Charms({ state, act }: { state: GameState; act: Act }) {
-  const running = activeBuffs(state);
   return (
     <section className="panel charms" aria-labelledby="charms-heading">
       <div className="panel-title">
@@ -280,37 +277,37 @@ function Charms({ state, act }: { state: GameState; act: Act }) {
         {CHARM_IDS.map((c: CharmId) => {
           const recipe = CHARMS[c].from;
           const found = isDiscovered(state, recipe);
-          const buff = CHARMS[c].buff;
           const held = state.inventory[c] ?? 0;
-          const on = running.find((b) => b.id === buff);
+          const left = state.charms[c] ?? 0;
           const block = canBindCharm(state, c);
           return (
-            <li key={c} className={`charm ${found ? "" : "is-locked"} ${on ? "is-on" : ""}`}>
+            <li key={c} className={`charm ${found ? "" : "is-locked"} ${left > 0 ? "is-on" : ""}`}>
               <span className="charm-icon" aria-hidden="true">
                 <ItemIcon item={c} size={22} />
               </span>
               <span className="charm-body">
                 <strong>{itemName(c)}</strong>
                 <span className="charm-effect">
-                  {buffEffects(buff).join(" · ")} · {buffDuration(buff)}
-                  {on && <span className="charm-on num"> · on, {formatClock(on.endsAt - state.lastTickAt)} left</span>}
+                  {charmEffects(c).join(" · ")} · next {charmLasts(c)}
+                  {left > 0 && <span className="charm-on num"> · on, {charmLasts(c, left)} left</span>}
                 </span>
                 {found ? (
                   <span className="charm-io">
-                    {GRIMOIRE_DEFS[recipe].ingredients.map((i) => (
-                      <ItemChip key={i} item={i} need={1} />
+                    {(Object.entries(CHARM_DEFS[c].cost) as [ItemId, number][]).map(([i, n]) => (
+                      <ItemChip key={i} item={i} need={n} />
                     ))}
                   </span>
                 ) : (
                   <span className="muted">Discover {GRIMOIRE_DEFS[recipe].name} to bind it</span>
                 )}
+                {found && block && held === 0 && <span className="muted charm-why">{block}</span>}
               </span>
               {found && (
                 <span className="charm-ctl">
-                  <button className="btn btn-sm" disabled={block !== null} title={block ?? "Uses 1 of each"} onClick={() => act((s) => bindCharm(s, c))}>
+                  <button className="btn btn-sm" disabled={block !== null} onClick={() => act((s) => bindCharm(s, c))}>
                     Bind
                   </button>
-                  <button className="btn btn-ghost btn-sm" disabled={held < 1} title={`${BUFF_DEFS[buff].name}: refreshes, never stacks`} onClick={() => act((s) => useCharm(s, c))}>
+                  <button className="btn btn-ghost btn-sm" disabled={held < 1} onClick={() => act((s) => useCharm(s, c))}>
                     Use <span className="num">({held})</span>
                   </button>
                 </span>

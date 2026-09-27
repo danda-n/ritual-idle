@@ -7,6 +7,7 @@ import { SKILLS, SKILL_IDS, type SkillId } from "../content/skills";
 import type { UpgradeEffect } from "../content/types";
 import { ACTION_DEFS, type ActionId } from "../content/actions";
 import type { TalentDef, TalentEffect } from "../content/talents";
+import { CHARM_DEFS, type CharmId } from "../content/charms";
 import { formatDuration } from "./format";
 
 // Plain statements of what things do, generated from the game data so they can never
@@ -145,4 +146,28 @@ export function talentEffect(effect: TalentEffect, skill: SkillId): string {
 /** A talent's full text: each effect, generated, joined. */
 export function talentText(t: TalentDef, skill: SkillId): string {
   return t.effects.map((e) => talentEffect(e, skill)).join(" · ");
+}
+
+// ---------- Charms ----------
+
+/** What a charm does and how long it lasts, in plain words ("Chance finds ×1.5, all skills · next 100 actions"). */
+export function charmEffects(id: CharmId): string[] {
+  const d = CHARM_DEFS[id];
+  const e = d.effect;
+  const out: string[] = [];
+  if (e.findMultiplier) out.push(`Chance finds ×${e.findMultiplier}, all skills`);
+  if (e.xpBonus) out.push(`${pct(e.xpBonus)} XP, all skills`);
+  if (e.saveChance) out.push(`${Math.round(e.saveChance * 100)}% of crafts use no inputs`);
+  if (e.coinBonus && e.trustBonus && e.coinBonus === e.trustBonus) out.push(`Contracts pay ${pct(e.coinBonus)} coin and trust`);
+  else {
+    if (e.coinBonus) out.push(`Contracts pay ${pct(e.coinBonus)} coin`);
+    if (e.trustBonus) out.push(`Contracts give ${pct(e.trustBonus)} trust`);
+  }
+  return out;
+}
+
+/** How long a charm lasts: "next 100 actions", "next 3 contracts". */
+export function charmLasts(id: CharmId, left: number = CHARM_DEFS[id].uses): string {
+  const unit = { action: "action", craft: "craft", contract: "contract" }[CHARM_DEFS[id].per];
+  return `${left} ${unit}${left === 1 ? "" : "s"}`;
 }

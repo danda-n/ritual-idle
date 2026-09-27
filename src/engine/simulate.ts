@@ -7,7 +7,7 @@ import { INSIGHT_GAIN } from "../content/grimoire";
 import { PAGES } from "../content/pages";
 import { addInsight, readCurio, type Fragment } from "./grimoire";
 import { omenCapacity } from "./modifiers";
-import { actionDurationMs, actionInputs, buffLength, bulkExtra, byproducts, chanceMultiplier, doubleChance, everyNth, extraYieldChance, insightPerRep, omenChanceMultiplier, saveChance, xpBonus } from "./modifiers";
+import { spendCharms, actionDurationMs, actionInputs, buffLength, bulkExtra, byproducts, chanceMultiplier, doubleChance, everyNth, extraYieldChance, insightPerRep, omenChanceMultiplier, saveChance, xpBonus } from "./modifiers";
 import { applyBuff, grantOmen, pruneBuffs } from "./omens";
 import { isRecipeKnown, isSkillUnlocked, pagesRead, revealNotes, type Note, type Page, type Step } from "./progress";
 import { nextRandom } from "./rng";
@@ -266,6 +266,8 @@ export function advance(input: GameState, ms: number, opts: AdvanceOptions = {})
       else report.levelUps.push({ skill: def.skill, from: before, to: after });
     }
     report.actionsCompleted++;
+    // Charms count actions (and crafts), not time.
+    spendCharms(state, Object.keys(def.inputs).length > 0 ? "craft" : "action");
     if (def.buff) applyBuff(state, def.buff as BuffId, now, false, undefined, buffLength(state, def.skill));
     // Omens turn up only once the omen shelf is built.
     if (omenCapacity(state) > 0) for (const omen of Object.keys(OMENS) as OmenId[]) {

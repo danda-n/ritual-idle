@@ -21,11 +21,6 @@ export const BUFFS = {
     durationMs: 15 * MIN,
     speed: { herbalism: 0.1, scavenging: 0.1, chandlery: 0.1, sigilcraft: 0.1, scholarship: 0.1, ritualism: 0.1 },
   },
-  // Charms (content/charms.ts): bound and used on the Experiments tab.
-  charm_window: { name: "Window charm", durationMs: 10 * MIN, findMultiplier: 1.5 },
-  charm_pillow: { name: "Dream pillow", durationMs: 10 * MIN, xpBonus: 0.25 },
-  charm_mark: { name: "Hearth mark", durationMs: 10 * MIN, saveChance: 0.15 },
-  charm_nail: { name: "Threshold nail", durationMs: 10 * MIN, coinBonus: 0.5 },
 } as const satisfies Record<string, BuffDef<SkillId, ItemId>>;
 
 export type BuffId = keyof typeof BUFFS;

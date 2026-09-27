@@ -263,28 +263,46 @@ describe("charms (bound again and again from a discovered recipe)", () => {
     return r.state;
   };
 
-  it("bind at once from the recipe's ingredients, only once it's discovered", () => {
-    expect(bindCharm({ ...open(), inventory: { tallow_candle: 1, glass: 1, salt: 1 } }, "charm_window").ok).toBe(false);
-    const s = ok(bindCharm(found("window_charm", { tallow_candle: 2, glass: 1, salt: 1 }), "charm_window"));
+  it("bind at once from its bind cost, only once its recipe is discovered", () => {
+    const cost = { tallow_candle: 3, glass: 2, salt: 4 };
+    expect(bindCharm({ ...open(), inventory: cost }, "charm_window").ok).toBe(false);
+    const s = ok(bindCharm(found("window_charm", { ...cost, tallow_candle: 4 }), "charm_window"));
     expect(s.inventory).toMatchObject({ tallow_candle: 1, glass: 0, salt: 0, charm_window: 1 });
-    expect(bindCharm(s, "charm_window").ok).toBe(false); // out of glass and salt
+    expect(bindCharm(s, "charm_window").ok).toBe(false);
   });
 
-  it("using one starts its boost for ten minutes, and spends it", () => {
-    const s = ok(useCharm(found("dream_pillow", { charm_pillow: 1 }), "charm_pillow"));
-    expect(s.inventory.charm_pillow).toBe(0);
+  it("a charm lasts a number of actions, not a time; using another adds its uses", () => {
+    let s = ok(useCharm(found("dream_pillow", { charm_pillow: 2 }), "charm_pillow"));
+    expect(s.charms.charm_pillow).toBe(100);
     expect(xpBonus(s, "pick_nettle")).toBeCloseTo(0.1 + 0.25);
-    expect(xpBonus(s, "pick_nettle", T0 + 10 * 60_000)).toBeCloseTo(0.1);
+    // Ten nettles: ten uses spent. Time alone spends nothing.
+    s = advance(startAction(s, "pick_nettle"), actionDurationMs(s, "pick_nettle") * 10 + 1).state;
+    expect(s.charms.charm_pillow).toBe(90);
+    s = ok(useCharm(s, "charm_pillow"));
+    expect(s.charms.charm_pillow).toBe(190);
     expect(useCharm(s, "charm_pillow").ok).toBe(false);
   });
 
-  it("each charm's boost: finds, inputs saved, contract coin", () => {
+  it("each charm's boost: finds, inputs saved on crafts only, contracts (counted per contract)", () => {
     const w = ok(useCharm(found("window_charm", { charm_window: 1 }), "charm_window"));
     expect(chanceMultiplier(w, "salt", T0)).toBeCloseTo(1.5);
     const m = ok(useCharm(found("hearth_mark", { charm_mark: 1 }), "charm_mark"));
-    expect(saveChance(m, "tallow_candle", T0)).toBeCloseTo(0.15);
+    expect(saveChance(m, "tallow_candle", T0)).toBeCloseTo(0.25);
+    // A gathering action doesn't spend a craft charm.
+    const swept = advance(startAction(m, "sweep_hearth"), actionDurationMs(m, "sweep_hearth") * 3 + 1).state;
+    expect(swept.charms.charm_mark).toBe(40);
     const n = ok(useCharm(found("threshold_nail", { charm_nail: 1 }), "charm_nail"));
     expect(requestCoin(n, REQUESTS.grave_candles)).toBe(Math.round(REQUESTS.grave_candles.coin * 1.5));
+    expect(trustMultiplier(n)).toBeCloseTo(2 * 1.5);
+    expect(n.charms.charm_nail).toBe(3);
+  });
+
+  it("the nail's uses go one per finished contract", () => {
+    const n = ok(useCharm(found("threshold_nail", { charm_nail: 1, tallow_candle: 12 }), "charm_nail"));
+    const s = { ...n, notesRevealed: NOTES.length, board: [{ request: "grave_candles", refillAt: 0, delivered: {} }] } as GameState;
+    const r = deliver(s, 0);
+    if (!r.ok) throw new Error(r.reason);
+    expect(r.state.charms.charm_nail).toBe(2);
   });
 
   it("every hidden recipe teaches a charm", () => {

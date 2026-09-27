@@ -10,10 +10,11 @@ import type { Feature } from "../content/types";
 import type { RequestId } from "../content/requests";
 import type { UpgradeId } from "../content/upgrades";
 import type { KeepsakeId } from "../content/keepsakes";
+import type { CharmId } from "../content/charms";
 import { SKILL_IDS, type SkillId } from "../content/skills";
 import { randomSeed } from "./rng";
 
-export const SAVE_VERSION = 10;
+export const SAVE_VERSION = 11;
 /**
  * The playtest reset number. Raise it by one to wipe every player's save on their next load
  * (after big changes, when old saves would give a misleading playtest). Saves from an older
@@ -68,6 +69,8 @@ export interface GameState {
   omens: Partial<Record<OmenId, number>>;
   /** Active timed effects, ending at a time on the sim clock. */
   buffs: ActiveBuff[];
+  /** Charms in use: how many actions, crafts or contracts each has left (content/charms.ts). */
+  charms: Partial<Record<CharmId, number>>;
   /** Insight: one pool, spent on the hints you choose. */
   insight: number;
   /** Progress on each hidden recipe or secret. Missing = never seen. */
@@ -181,6 +184,7 @@ export function newGame(now: number = Date.now(), seed: number = randomSeed()): 
     upgrades: [],
     omens: {},
     buffs: [],
+    charms: {},
     insight: 0,
     grimoire: {},
     attunedTo: null,

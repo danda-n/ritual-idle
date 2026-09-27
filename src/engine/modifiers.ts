@@ -3,6 +3,8 @@ import { BUFF_DEFS } from "../content/buffs";
 import { FOLLOWERS } from "../content/followers";
 import type { ItemId } from "../content/items";
 import { UPGRADE_DEFS } from "../content/upgrades";
+import { CHARM_DEFS, CHARM_IDS, type CharmId } from "../content/charms";
+import { ITEM_DEFS } from "../content/items";
 import type { RequestDef, UpgradeEffect } from "../content/types";
 import type { SkillId } from "../content/skills";
 import { discoveredRewards } from "./grimoire";
@@ -92,7 +94,7 @@ export function actionInputs(state: GameState, id: ActionId): Partial<Record<Ite
 export function saveChance(state: GameState, id: ActionId, now: number = state.lastTickAt): number {
   let chance = talentsOn(state, "save", id).reduce((n, t) => n + t.chance, 0);
   for (const b of activeBuffs(state, now)) chance += BUFF_DEFS[b.id].saveChance ?? 0;
-  return Math.min(1, chance);
+  return Math.min(1, chance + charmBonus(state, "saveChance"));
 }
 
 /** Items an action sometimes gives besides its own (Wick ash). */
@@ -159,9 +161,30 @@ export function chanceFactors(state: GameState, item: ItemId, now: number = stat
   return out;
 }
 
-/** Charms that raise every chance find (filled in by the charms: see charmFindFactors). */
-function charmFindFactors(_state: GameState): { source: string; mult: number }[] {
-  return [];
+/** Charms in use that raise every chance find (the Window charm). */
+function charmFindFactors(state: GameState): { source: string; mult: number }[] {
+  return activeCharms(state).flatMap((c) => (CHARM_DEFS[c].effect.findMultiplier ? [{ source: ITEM_DEFS[c].name, mult: CHARM_DEFS[c].effect.findMultiplier! }] : []));
+}
+
+/** Charms with uses left. */
+export function activeCharms(state: GameState): CharmId[] {
+  return CHARM_IDS.filter((c) => (state.charms?.[c] ?? 0) > 0);
+}
+
+/** One of a charm's effects, summed over the charms in use (0 if none). */
+function charmBonus(state: GameState, key: "xpBonus" | "saveChance" | "coinBonus" | "trustBonus"): number {
+  return activeCharms(state).reduce((n, c) => n + (CHARM_DEFS[c].effect[key] ?? 0), 0);
+}
+
+/**
+ * Spend a use of each charm that counts this: every completed action, a craft (an action with
+ * inputs), or a finished contract. Mutates `state`.
+ */
+export function spendCharms(state: GameState, what: "action" | "craft" | "contract"): void {
+  for (const c of activeCharms(state)) {
+    const per = CHARM_DEFS[c].per;
+    if (per === what || (per === "action" && what === "craft")) state.charms[c] = state.charms[c]! - 1;
+  }
 }
 
 /** The product of chanceFactors: past 1 it's one for sure plus a chance of another (rollOutputs). */
@@ -183,7 +206,7 @@ export function xpBonus(state: GameState, id: ActionId, now: number = state.last
   let bonus = talents(state, "xp", ACTION_DEFS[id].skill).reduce((n, t) => n + t.bonus, 0);
   for (const r of discoveredRewards(state)) if (r.kind === "xp_all") bonus += r.bonus;
   for (const b of activeBuffs(state, now)) bonus += BUFF_DEFS[b.id].xpBonus ?? 0;
-  return bonus;
+  return bonus + charmBonus(state, "xpBonus");
 }
 
 export function offlineCapMs(state: GameState): number {
@@ -218,8 +241,9 @@ export function riteQualitySteps(state: GameState): number {
   return steps;
 }
 
+/** Trust a contract gives, as a multiplier: the Threshold nail found (×2), and its charm while it lasts. */
 export function trustMultiplier(state: GameState): number {
-  let mult = 1;
+  let mult = 1 + charmBonus(state, "trustBonus");
   for (const r of discoveredRewards(state)) if (r.kind === "trust_multiplier") mult *= r.multiplier;
   return mult;
 }
@@ -229,7 +253,7 @@ export function requestCoin(state: GameState, req: RequestDef<string>): number {
   let mult = 1;
   const chapterOver = state.rite.completed !== null;
   for (const r of discoveredRewards(state)) if (r.kind === "patron_coin" && r.from === req.from && !chapterOver) mult *= r.multiplier;
-  // A Threshold nail charm: contracts pay more while it lasts.
+  // A Threshold nail charm: its next contracts pay more.
   for (const b of activeBuffs(state)) mult *= 1 + (BUFF_DEFS[b.id].coinBonus ?? 0);
-  return Math.round(req.coin * mult);
+  return Math.round(req.coin * mult * (1 + charmBonus(state, "coinBonus")));
 }

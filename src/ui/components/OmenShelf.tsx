@@ -5,14 +5,17 @@ import { BUFF_DEFS, BUFFS } from "../../content/buffs";
 import { OMENS, type OmenId } from "../../content/omens";
 import { SKILLS } from "../../content/skills";
 import { releaseOmen, type Result } from "../../engine/commands";
-import { activeBuffs, omenCapacity } from "../../engine/modifiers";
+import { activeBuffs, activeCharms, omenCapacity } from "../../engine/modifiers";
+import { CHARM_DEFS } from "../../content/charms";
+import { ITEMS } from "../../content/items";
+import { ItemIcon } from "../art/items";
 import { storedOmens } from "../../engine/omens";
 import type { ActiveBuff, GameState } from "../../engine/state";
 import { MoonIcon, SkillIcon } from "../art/icons";
 import { formatClock } from "../format";
 import { buffDuration, buffEffects } from "../effects";
 import { SkillPicker } from "./SkillPicker";
-import { DrainBar } from "./Bar";
+import { Bar, DrainBar } from "./Bar";
 
 const OMEN_IDS = Object.keys(OMENS) as OmenId[];
 
@@ -25,7 +28,8 @@ export function OmenShelf({ state, act }: { state: GameState; act: (c: (s: GameS
   const [choosing, setChoosing] = useState<OmenId | null>(null);
   const buffs = activeBuffs(state);
   const capacity = omenCapacity(state);
-  if (capacity === 0 && buffs.length === 0) return null;
+  const charms = activeCharms(state);
+  if (capacity === 0 && buffs.length === 0 && charms.length === 0) return null;
   const stored = storedOmens(state);
   const running = state.active ? ACTION_DEFS[state.active.id].skill : undefined;
   return (
@@ -68,6 +72,19 @@ export function OmenShelf({ state, act }: { state: GameState; act: (c: (s: GameS
         </div>
       ))}
       {buffs.length > 0 && <ActiveList state={state} buffs={buffs} />}
+      {charms.length > 0 && (
+        // Charms count down by uses, not time: "Window charm · 63 actions".
+        <ul className="active-buffs" aria-label="Charms in use">
+          {charms.map((c) => (
+            <li key={c}>
+              <ItemIcon item={c} size={14} />
+              <span className="active-buff-name">{ITEMS[c].name}</span>
+              <Bar thin value={(state.charms[c] ?? 0) / CHARM_DEFS[c].uses} label="Uses left" />
+              <span className="num muted">{state.charms[c]}</span>
+            </li>
+          ))}
+        </ul>
+      )}
       {choosing && (
         <SkillPicker
           state={state}
