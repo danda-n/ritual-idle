@@ -63,7 +63,7 @@ export const NOTES = [
   {
     text: "The circle is warm. It has been waiting for you. Wake it.",
     // No steps: waking the Circle needs only Ritualism 3 (the rite's card on the Circle tab says so).
-    hint: "Ritualism 3 · begin it on the Circle tab · offerings optional",
+    hint: "Ritualism 3 · begin it from the banner on the House · offerings optional",
     unlocks: [],
     goal: { kind: "rite" },
   },

@@ -28,7 +28,7 @@ export const GLOSSARY = {
   },
   charm: {
     name: "Charm",
-    text: "Made at the Circle from a recipe you've discovered, as often as you like. Use it for a timed boost.",
+    text: "Bound on the Experiments tab from a recipe you've discovered, as often as you like. Use it for a timed boost.",
   },
   project: {
     name: "House project",
