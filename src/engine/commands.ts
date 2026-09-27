@@ -291,9 +291,10 @@ export function claimReward(input: GameState, stepId: string, skill?: SkillId): 
 
 // Talents
 
-/** Take one side of a talent pair. Switching to the other side later is free. */
+/** Take one side of a talent pair. It's fixed until the next tier, then it can be changed. */
 export function chooseTalent(input: GameState, skill: SkillId, level: TalentLevel, side: Side): Result {
   if (!isSkillUnlocked(input, skill)) return no("That skill isn't open yet.");
+  if (input.talents[skill]?.[level] === side) return ok(input);
   const reason = canChoose(input, skill, level);
   if (reason) return no(reason);
   const state = structuredClone(input);
@@ -306,13 +307,6 @@ export function chooseKeepsake(input: GameState, id: KeepsakeId): Result {
   if (keepsakePicksLeft(input) < 1) return no("There's no keepsake to choose.");
   if (input.keepsakes.includes(id)) return no("You already keep that one.");
   return ok({ ...input, keepsakes: [...input.keepsakes, id] });
-}
-
-/** Clear every talent choice in a skill. Free, any time. */
-export function resetTalents(input: GameState, skill: SkillId): Result {
-  const state = structuredClone(input);
-  delete state.talents[skill];
-  return ok(state);
 }
 
 // The Major Rite

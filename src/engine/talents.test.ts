@@ -5,12 +5,12 @@ import { OMENS } from "../content/omens";
 import { PAGES } from "../content/pages";
 import { SKILL_IDS, type SkillId } from "../content/skills";
 import { TALENT_LEVELS, TALENTS, type TalentLevel } from "../content/talents";
-import { chooseTalent, resetTalents, type Result } from "./commands";
+import { chooseTalent, type Result } from "./commands";
 import { actionDurationMs, actionInputs, levelSpeed, omenChanceMultiplier, speedMultiplier, xpBonus } from "./modifiers";
 import { deserialize } from "./save";
 import { advance, blockReason, startAction } from "./simulate";
 import { newGame, type GameState, type Talents } from "./state";
-import { choicesWaiting, takenTalents } from "./talents";
+import { choicesWaiting, takenTalents, unlocksAt } from "./talents";
 import { xpForLevel } from "./xp";
 
 const T0 = 1_000_000;
@@ -69,23 +69,38 @@ describe("talent pairs", () => {
     expect(chooseTalent(at(5), "herbalism", 6, "a").ok).toBe(false);
   });
 
-  it("take one side only: choosing the other side switches, for free", () => {
+  it("take one side only; the pick is fixed until the next tier", () => {
     let s = okay(chooseTalent(at(3), "herbalism", 3, "a"));
     expect(takenTalents(s, "herbalism")).toEqual([TALENTS.herbalism[3].a]);
     expect(choicesWaiting(s, "herbalism")).toEqual([]);
-    s = okay(chooseTalent(s, "herbalism", 3, "b"));
-    expect(takenTalents(s, "herbalism")).toEqual([TALENTS.herbalism[3].b]);
+    const refused = chooseTalent(s, "herbalism", 3, "b");
+    expect(!refused.ok && refused.reason).toMatch(/Locked until level 6/);
+    expect(unlocksAt(s, "herbalism", 3)).toBe(6);
+  });
+
+  it("can be changed again from the next tier on", () => {
+    const s = okay(chooseTalent(at(3), "herbalism", 3, "a"));
+    const later = { ...s, skills: { ...s.skills, herbalism: { xp: xpForLevel(6) } } };
+    expect(unlocksAt(later, "herbalism", 3)).toBeNull();
+    expect(takenTalents(okay(chooseTalent(later, "herbalism", 3, "b")), "herbalism")[0]).toBe(TALENTS.herbalism[3].b);
+    // The newest pick (level 6) is still fixed once taken.
+    const six = okay(chooseTalent(later, "herbalism", 6, "a"));
+    expect(chooseTalent(six, "herbalism", 6, "b").ok).toBe(false);
+  });
+
+  it("the level-12 pick opens again at 15", () => {
+    const s = okay(chooseTalent(at(12), "herbalism", 12, "a"));
+    expect(unlocksAt(s, "herbalism", 12)).toBe(15);
+    expect(chooseTalent({ ...s, skills: { ...s.skills, herbalism: { xp: xpForLevel(15) } } }, "herbalism", 12, "b").ok).toBe(true);
+  });
+
+  it("choosing the side you already hold changes nothing", () => {
+    const s = okay(chooseTalent(at(3), "herbalism", 3, "a"));
+    expect(okay(chooseTalent(s, "herbalism", 3, "a"))).toBe(s);
   });
 
   it("refuse in a skill that isn't open", () => {
     expect(chooseTalent({ ...at(9), notesRevealed: 1 }, "herbalism", 3, "a").ok).toBe(false);
-  });
-
-  it("reset for free: every choice is open again", () => {
-    let s = okay(chooseTalent(okay(chooseTalent(at(6), "herbalism", 3, "a")), "herbalism", 6, "b"));
-    s = okay(resetTalents(s, "herbalism"));
-    expect(s.talents.herbalism).toBeUndefined();
-    expect(choicesWaiting(s, "herbalism")).toEqual([3, 6]);
   });
 });
 

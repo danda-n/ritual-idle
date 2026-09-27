@@ -4,10 +4,13 @@ import type { SkillId } from "./skills";
 
 // Skill talents (docs/CHAPTER1.md §11): builds, not small percentages. At levels 3, 6, 9 and 12
 // each skill offers a pair, and you take one side of each pair. The sides pull different ways,
-// and some help another skill. Switching sides is free, any time.
+// and some help another skill. A pick is fixed until the next tier (TALENT_RELOCK levels later);
+// then it can be changed again.
 
 /** The levels at which a skill offers a pair (one per tier). */
 export const TALENT_LEVELS = [3, 6, 9, 12] as const;
+/** A pick can be changed again this many levels after its own level (the next tier). */
+export const TALENT_RELOCK = 3;
 export type TalentLevel = (typeof TALENT_LEVELS)[number];
 export type Side = "a" | "b";
 

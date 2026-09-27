@@ -1,6 +1,6 @@
 import type { SkillId } from "../content/skills";
 import { SKILL_IDS } from "../content/skills";
-import { TALENT_LEVELS, TALENTS, type Side, type TalentDef, type TalentEffect, type TalentLevel } from "../content/talents";
+import { TALENT_LEVELS, TALENT_RELOCK, TALENTS, type Side, type TalentDef, type TalentEffect, type TalentLevel } from "../content/talents";
 import type { GameState, Talents } from "./state";
 import { levelForXp } from "./xp";
 
@@ -61,8 +61,20 @@ export function talentEffects(state: GameState): Taken {
   return taken;
 }
 
-/** Why this side can't be taken, or null if it can. */
+/**
+ * The level at which a pick made at `at` can be changed again, or null if it's open now (or
+ * nothing is picked yet). A pick is fixed until the next tier.
+ */
+export function unlocksAt(state: GameState, skill: SkillId, at: TalentLevel): number | null {
+  if (!choiceAt(state, skill, at)) return null;
+  const opens = at + TALENT_RELOCK;
+  return level(state, skill) < opens ? opens : null;
+}
+
+/** Why this pair can't be chosen (or changed) now, or null if it can. */
 export function canChoose(state: GameState, skill: SkillId, at: TalentLevel): string | null {
   if (level(state, skill) < at) return `Opens at level ${at}.`;
+  const locked = unlocksAt(state, skill, at);
+  if (locked !== null) return `Locked until level ${locked}.`;
   return null;
 }

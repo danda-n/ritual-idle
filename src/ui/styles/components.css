@@ -428,6 +428,11 @@ button.chip:hover { background: var(--color-raised); }
    Talents: a vine of pairs
    ===================================================================== */
 .talents .panel-aside { gap: var(--space-2); }
+/* Folded while nothing waits: one line with the picks' names */
+.talents-summary { cursor: pointer; }
+.talents-summary::before { color: var(--color-text-3); }
+details.talents:not([open]) > .talents-summary { margin-bottom: 0; }
+.talents-picks { font: var(--weight-regular) var(--text-sm) / 1.3 var(--font-ui); letter-spacing: 0; color: var(--skill); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .talent-free { color: var(--skill); font-weight: var(--weight-medium); }
 .talent-intro { font-size: var(--text-sm); color: var(--color-text-3); margin-bottom: var(--space-2); }
 .talent-vine { position: relative; display: flex; flex-direction: column-reverse; gap: var(--space-3); padding: var(--space-2) 0 calc(var(--space-6) + 4px); }
