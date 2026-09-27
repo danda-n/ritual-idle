@@ -28,7 +28,9 @@ What to try and what to note in a Chapter 1 playtest, for the game as it is now 
 - **Did you know what the Circle wanted** at each stage, and how to get it?
 - **The part checklist:** was a list of the part's items with have/need, a button to each maker and a "Short of" line clearer than a list of steps? Did you ever feel lost about which item to make first? Did the "Short of" line match what you then had to gather?
 - **Did the buttons that name a place** ("Chandlery ›", "Projects ›") tell you where you'd end up?
-- **Did the explained words help?** Which did you click? Was any word still unclear?
+- **Did the explained words help?** Which did you click? Was any word still unclear, or explained too often?
+- **The choice at the Circle:** when the game took you to the Circle to choose the next part, was that welcome or jarring? Did the skill cards tell you enough to choose on purpose, not by the name?
+- **Chances past 100%:** did "112.5%" make sense (one for sure, a chance of a second)?
 - **Was the trimmed text clear enough?** Did any short label ("Offline cap 36h", "2 of 3 right (not which) · swap one at a time", a contract's label) leave you unsure what it meant? Did you hover for the full line?
 - **Did anyone miss the story?** Did you open a "Story" link or the Grimoire's Journal? Did the game feel less eerie without grandmother's lines on screen, or did the art and names carry it?
 
@@ -43,7 +45,7 @@ What to try and what to note in a Chapter 1 playtest, for the game as it is now 
 
 ## Choices and builds
 - **Did choosing the order of the Ward, the Smoke and the Words feel like a real choice,** or did you just take the first one? Why did you pick the order you did? Did the choice card (what the skill does, what the part needs, what it opens) help you decide?
-- **Did the talent pairs feel like builds?** Which sides did you take, did you ever switch, and did any pair feel like an obvious pick? Did the talent text ("+11% per hour", "50% → 75%") make the choice easier?
+- **Did the talent pairs feel like builds?** Which sides did you take, did you ever switch, and did any pair feel like an obvious pick? Did the talent text ("+11% per hour", "Salt ×2 as likely") make the choice easier, and did the recipe rows show you what a find talent did?
 - **Which stage rewards did you enjoy claiming?** Where did you put the XP choices?
 - **Fixed talents:** did locking a pick until the next tier make choices feel weighty, or like a trap? Did the confirm help?
 
@@ -98,4 +100,4 @@ One short entry per round, oldest first.
 - **Before the next playtest:** questions on fixed talents and on the goals after the rite.
 - **Playtest resets:** a note in Setup that saves may reset between builds.
 - **Inventory:** "Stores" renamed to "Inventory".
-- **Playtest round 2:** questions on salt, the part checklist, place-named buttons, the explained words, the stage choice card, talent text, project blurbs, the Experiments tab and charms, the nudge hint, the rite as an event (banner, tending, the quality ladder), keepsakes kept on leaving, and the chapter end. "Still to find" and step questions dropped.
+- **Playtest round 2:** questions on salt, the part checklist, place-named buttons, the explained words, the stage choice card, talent text, project blurbs, the Experiments tab and charms, the nudge hint, the rite as an event (banner, tending, the quality ladder), keepsakes kept on leaving, and the chapter end; the choice at the Circle, chances past 100%. "Still to find" and step questions dropped.
