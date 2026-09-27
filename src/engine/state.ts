@@ -19,7 +19,7 @@ export const SAVE_VERSION = 10;
  * (after big changes, when old saves would give a misleading playtest). Saves from an older
  * reset start a new game with a notice. Decided at the end of each session (CLAUDE.md).
  */
-export const SAVE_EPOCH = 1;
+export const SAVE_EPOCH = 2; // 2: playtest round 2 (2026-09-27)
 
 export interface ActiveAction {
   id: ActionId;
