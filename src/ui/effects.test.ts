@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buffDuration, buffEffects, builtText, followerEffects, talentText, upgradeEffectFor } from "./effects";
-import { TALENT_LEVELS, TALENTS } from "../content/talents";
+import { TALENT_LEVELS, TALENTS, type TalentLevel } from "../content/talents";
 import { SKILL_IDS } from "../content/skills";
 
 describe("effects are stated plainly, from the data", () => {
@@ -26,7 +26,7 @@ describe("effects are stated plainly, from the data", () => {
 });
 
 describe("talent text is generated from the effects", () => {
-  const t = (skill: keyof typeof TALENTS, level: 3 | 6 | 9 | 12, side: "a" | "b") => talentText(TALENTS[skill][level][side], skill);
+  const t = (skill: keyof typeof TALENTS, level: TalentLevel, side: "a" | "b") => talentText(TALENTS[skill][level][side], skill);
 
   it("bulk (always 2, but slower) and double (a chance of twice) never read alike", () => {
     expect(t("chandlery", 6, "a")).toBe("Tallow candle and Beeswax candle: makes 2 per action instead of 1, XP ×2 · each takes 80% longer, so +11% per hour");

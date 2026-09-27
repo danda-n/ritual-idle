@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { SKILLS, type SkillId } from "../../content/skills";
-import { TALENT_LEVELS, TALENT_RELOCK, TALENTS, type Side, type TalentLevel } from "../../content/talents";
+import { nextTalentLevel, TALENT_LEVELS, TALENTS, type Side, type TalentLevel } from "../../content/talents";
 import { chooseTalent, type Result } from "../../engine/commands";
 import { skillLevel } from "../../engine/simulate";
 import type { GameState } from "../../engine/state";
@@ -13,7 +13,7 @@ import { talentText } from "../effects";
 type Act = (c: (s: GameState) => Result) => unknown;
 
 /**
- * A skill's talents: at levels 3, 6, 9 and 12 a pair to choose between, shown as a vine.
+ * A skill's talents: every 3 levels a pair to choose between (TalentTree keeps it compact).
  * Folded to one line while nothing waits; open when a choice does. Taking a talent asks first,
  * because a pick is fixed until the next tier.
  */
@@ -47,13 +47,13 @@ export function TalentPanel({ state, skill, act }: { state: GameState; skill: Sk
           )}
         </span>
       </summary>
-      <p className="muted talent-intro">One per pair · fixed until the next tier ({TALENT_RELOCK} levels), then you can change it</p>
+      <p className="muted talent-intro">One per pair, every 3 levels · a pick is fixed until the next talent level, then you can change it</p>
       <TalentTree state={state} skill={skill} onChoose={(at, side) => setConfirm({ at, side })} />
       {confirm && pick && (
         <Modal title={`Take ${pick.name}?`} onClose={() => setConfirm(null)}>
           <p>{talentText(pick, skill)}</p>
           <p className="muted">
-            {level < confirm.at + TALENT_RELOCK ? `Fixed until level ${confirm.at + TALENT_RELOCK}, then you can change it.` : "You're past the next tier, so you can change it again any time."}
+            {level < nextTalentLevel(confirm.at) ? `Fixed until level ${nextTalentLevel(confirm.at)}, then you can change it.` : "You're past the next talent level, so you can change it again any time."}
           </p>
           <div className="row">
             <button

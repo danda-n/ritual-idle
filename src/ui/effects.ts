@@ -90,6 +90,8 @@ export function builtText(id: UpgradeId, stored: Partial<Record<OmenId, number>>
 
 // ---------- Talents ----------
 
+const ordinal = (n: number) => `${n}${n % 100 >= 11 && n % 100 <= 13 ? "th" : ({ 1: "st", 2: "nd", 3: "rd" } as Record<number, string>)[n % 10] ?? "th"}`;
+
 const actionName = (id: ActionId) => ACTION_DEFS[id].name;
 const list = (xs: string[]) => (xs.length <= 1 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
 /** A chance as a percent: whole numbers, with one decimal under 10% (5% → 7.5%). */
@@ -123,7 +125,7 @@ export function talentEffect(effect: TalentEffect, skill: SkillId): string {
     case "extra":
       return `${round(effect.chance)} chance of +1 of each sure ${own} output`;
     case "everyNth":
-      return `Every ${effect.n}th ${own} action gives +1 of each sure output`;
+      return `Every ${ordinal(effect.n)} ${own} action gives +1 of each sure output`;
     case "thrift": {
       const was = ACTION_DEFS[effect.action].inputs[effect.item] ?? 0;
       const now = Math.max(0, was - effect.less);

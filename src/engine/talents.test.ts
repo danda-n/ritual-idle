@@ -4,7 +4,7 @@ import { NOTES } from "../content/notes";
 import { OMENS } from "../content/omens";
 import { PAGES } from "../content/pages";
 import { SKILL_IDS, type SkillId } from "../content/skills";
-import { TALENT_LEVELS, TALENTS, type TalentLevel } from "../content/talents";
+import { nextTalentLevel, TALENT_LEVELS, TALENTS, type TalentLevel } from "../content/talents";
 import { chooseTalent, type Result } from "./commands";
 import { actionDurationMs, actionInputs, levelSpeed, omenChanceMultiplier, speedMultiplier, xpBonus } from "./modifiers";
 import { deserialize } from "./save";
@@ -23,7 +23,7 @@ const okay = (r: Result) => {
 function at(level: number, skill: SkillId = "herbalism", talents?: Talents): GameState {
   const b = newGame(T0, 31);
   const skills = Object.fromEntries(Object.keys(b.skills).map((k) => [k, { xp: xpForLevel(level) }])) as GameState["skills"];
-  return { ...b, levelCap: 20, notesRevealed: NOTES.length, stats: { ...b.stats, completed: { decipher_page: PAGES.length } }, skills, talents: talents ? { [skill]: talents } : {} };
+  return { ...b, levelCap: Math.max(20, level), notesRevealed: NOTES.length, stats: { ...b.stats, completed: { decipher_page: PAGES.length } }, skills, talents: talents ? { [skill]: talents } : {} };
 }
 
 /** A state with one talent taken, at level 12 so every pair is open. */
@@ -48,6 +48,27 @@ describe("level speed", () => {
     const s = { ...at(1), skills: { ...at(1).skills, herbalism: { xp: xpForLevel(20) } } };
     expect(actionDurationMs(s, "pick_nettle")).toBeLessThan(BASE("pick_nettle"));
     expect(actionDurationMs(s, "sweep_hearth")).toBe(BASE("sweep_hearth"));
+  });
+});
+
+describe("talents every 3 levels to 30", () => {
+  it("a pair at every third level up to 30, then later chapters space them out", () => {
+    expect(TALENT_LEVELS).toEqual([3, 6, 9, 12, 15, 18, 21, 24, 27, 30]);
+    expect(nextTalentLevel(12)).toBe(15);
+    expect(nextTalentLevel(30)).toBe(35);
+  });
+
+  it("a pick can change at the next talent level, not before", () => {
+    const s = at(20, "herbalism", { 18: "a" });
+    expect(chooseTalent(s, "herbalism", 18, "b").ok).toBe(false);
+    expect(chooseTalent(at(21, "herbalism", { 18: "a" }), "herbalism", 18, "b").ok).toBe(true);
+    // The last pick (30) waits for the spaced-out level after it.
+    expect(chooseTalent(at(34, "herbalism", { 30: "a" }), "herbalism", 30, "b").ok).toBe(false);
+    expect(chooseTalent(at(35, "herbalism", { 30: "a" }), "herbalism", 30, "b").ok).toBe(true);
+  });
+
+  it("choices open only up to the level cap", () => {
+    expect(choicesWaiting(at(20), "herbalism")).toEqual([3, 6, 9, 12, 15, 18]);
   });
 });
 

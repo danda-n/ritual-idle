@@ -1,6 +1,6 @@
 import type { SkillId } from "../content/skills";
 import { SKILL_IDS } from "../content/skills";
-import { TALENT_LEVELS, TALENT_RELOCK, TALENTS, type Side, type TalentDef, type TalentEffect, type TalentLevel } from "../content/talents";
+import { nextTalentLevel, TALENT_LEVELS, TALENTS, type Side, type TalentDef, type TalentEffect, type TalentLevel } from "../content/talents";
 import type { GameState, Talents } from "./state";
 import { levelForXp } from "./xp";
 
@@ -67,7 +67,7 @@ export function talentEffects(state: GameState): Taken {
  */
 export function unlocksAt(state: GameState, skill: SkillId, at: TalentLevel): number | null {
   if (!choiceAt(state, skill, at)) return null;
-  const opens = at + TALENT_RELOCK;
+  const opens = nextTalentLevel(at);
   return level(state, skill) < opens ? opens : null;
 }
 
