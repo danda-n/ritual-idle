@@ -1,3 +1,5 @@
+import { deserialize } from "./save";
+import { markTermSeen } from "./commands";
 import { describe, expect, it } from "vitest";
 import { BUFFS } from "../content/buffs";
 import { GLOSSARY } from "../content/glossary";
@@ -157,5 +159,20 @@ describe("choices talk only about what you already know", () => {
       expect(sk.about, id).not.toMatch(unknown);
       expect(sk.blurb, id).not.toMatch(unknown);
     }
+  });
+});
+
+describe("words you've read", () => {
+  it("marking a word read is remembered once, and old or unknown entries are handled on load", () => {
+    const s = newGame(1, 1);
+    const a = markTermSeen(s, "omen");
+    if (!a.ok) throw new Error(a.reason);
+    const b = markTermSeen(a.state, "omen");
+    if (!b.ok) throw new Error(b.reason);
+    expect(b.state.settings.termsSeen).toEqual(["omen"]);
+    const old = { ...s, settings: { ...s.settings, termsSeen: undefined } };
+    expect(deserialize(JSON.stringify(old)).settings.termsSeen).toEqual([]);
+    const odd = { ...s, settings: { ...s.settings, termsSeen: ["omen", "not_a_word"] } };
+    expect(deserialize(JSON.stringify(odd)).settings.termsSeen).toEqual(["omen"]);
   });
 });

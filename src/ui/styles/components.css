@@ -28,6 +28,7 @@
 /* Disabled: a solid dark ground and the reason in words. Never a dashed box. */
 .btn:disabled, .btn[aria-disabled="true"] { background: var(--color-sunken); color: var(--color-text-3); border-color: transparent; box-shadow: none; cursor: not-allowed; opacity: 1; transform: none; font-weight: var(--weight-regular); }
 .icon-btn { padding: 0; width: 32px; min-width: 32px; }
+.guide-btn { font: var(--weight-medium) var(--text-md) / 1 var(--font-display); }
 /* Invite: a stitch-red outline pulses three times, then stays */
 .btn-invite { box-shadow: 0 0 0 1px var(--color-stitch); animation: invite 1.6s ease-in-out 3; }
 @keyframes invite { 50% { box-shadow: 0 0 0 2px var(--color-stitch); } }
@@ -617,3 +618,9 @@ details.talents:not([open]) > .talents-summary { margin-bottom: 0; }
 .talent-row-pair { grid-column: 1 / -1; padding: var(--space-2) 0 var(--space-1); }
 .talent-next { font-size: var(--text-xs); margin: 0; }
 @container (max-width: 520px) { .talent-pair { grid-template-columns: 1fr; } .talent-row { grid-template-columns: 26px minmax(0, 1fr) auto; } .talent-row-text { grid-column: 2 / -1; } }
+
+/* The Guide: words you've read, A to Z */
+.guide-list { margin: 0; display: flex; flex-direction: column; gap: var(--space-3); max-height: min(60vh, 520px); overflow-y: auto; padding-right: 4px; }
+.guide-list dt { font: var(--weight-medium) var(--text-md) / 1.2 var(--font-display); color: var(--color-text); letter-spacing: 0.02em; }
+.guide-list dd { margin: 2px 0 0; font-size: var(--text-sm); color: var(--color-text-2); line-height: 1.45; }
+.guide-left { font-size: var(--text-xs); }

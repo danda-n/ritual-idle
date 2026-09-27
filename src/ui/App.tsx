@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ACTION_DEFS } from "../content/actions";
 import type { SkillId } from "../content/skills";
-import { dismissEnding, setSetting } from "../engine/commands";
+import { dismissEnding, markTermSeen, setSetting } from "../engine/commands";
 import type { ItemId } from "../content/items";
 import { isFeatureOpen, isSkillUnlocked, stageChoices } from "../engine/progress";
 import { BookIcon, CircleRiteIcon, HouseIcon, LanternIcon, JarIcon, MoonIcon } from "./art/icons";
@@ -29,6 +29,7 @@ import { HouseHero, SkillActions, SkillNav } from "./screens/House";
 import { Circle } from "./screens/Circle";
 import { Grimoire } from "./screens/Grimoire";
 import { Experiments } from "./screens/Experiments";
+import { GuideModal } from "./components/GuideModal";
 import { Village } from "./screens/Village";
 import type { Place } from "./tasks";
 import { useGame } from "./useGame";
@@ -43,6 +44,7 @@ export function App() {
   const [tab, setTabState] = useState<TabId>("house");
   const [lookup, setLookup] = useState<ItemId | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
   // Tabs show a dot until first visited; visits are saved.
   const seen = (t: TabId) => state.settings.seenTabs.includes(t);
   const setTab = (t: TabId) => {
@@ -102,12 +104,12 @@ export function App() {
   if (isFeatureOpen(state, "experiments")) place("experiments", "Experiments", <MoonIcon size={18} />);
 
   return (
-    <ChipContext.Provider value={{ state, lookup: setLookup, start: game.start }}>
+    <ChipContext.Provider value={{ state, lookup: setLookup, start: game.start, markTerm: (id) => game.act((s) => markTermSeen(s, id)) }}>
     <div className="app">
       <a className="skip-link" href="#main">
         Skip to main content
       </a>
-      <TopBar state={state} onStop={game.stop} stopNote={game.lastStop && formatStop(game.lastStop.reason)} onSettings={() => setSettingsOpen(true)} onGo={goTo} />
+      <TopBar state={state} onStop={game.stop} stopNote={game.lastStop && formatStop(game.lastStop.reason)} onSettings={() => setSettingsOpen(true)} onGuide={() => setGuideOpen(true)} onGo={goTo} />
       <EmbroideryBand />
 
       {/* One shell, a room per tab: data-place sets the tab's colour, light and hero. */}
@@ -160,6 +162,7 @@ export function App() {
         <TaskCard note={game.story} state={state} onClose={game.dismissStory} onGo={goTo} />
       )}
       {lookup && <ItemLookupModal state={state} item={lookup} onClose={() => setLookup(null)} />}
+      {guideOpen && <GuideModal state={state} onClose={() => setGuideOpen(false)} />}
       {settingsOpen && (
         <SettingsModal state={state} act={game.act} onLoad={game.load} onReset={game.reset} onClose={() => setSettingsOpen(false)} />
       )}

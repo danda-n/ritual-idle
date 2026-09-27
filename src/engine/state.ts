@@ -160,6 +160,8 @@ export interface Settings {
   introsSeen: string[];
   /** Row density: roomy 46px rows (the default), comfortable 36px, compact 32px. */
   density: Density;
+  /** Glossary words whose explanation has been read: they show as plain text, and the Guide lists them. */
+  termsSeen: string[];
 }
 
 export type Density = "roomy" | "comfortable" | "compact";
@@ -197,7 +199,7 @@ export function newGame(now: number = Date.now(), seed: number = randomSeed()): 
     insight: 0,
     grimoire: {},
     attunedTo: null,
-    settings: { grimoireAssist: false, fallback: "last_gathering", reducedMotion: false, toastSeconds: 8, seenTabs: ["house"], introsSeen: [], density: "roomy" },
+    settings: { grimoireAssist: false, fallback: "last_gathering", reducedMotion: false, toastSeconds: 8, seenTabs: ["house"], introsSeen: [], density: "roomy", termsSeen: [] },
     lastGathering: null,
     kindling: [],
     experimentsOpen: false,

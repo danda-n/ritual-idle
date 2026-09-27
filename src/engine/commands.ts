@@ -292,6 +292,12 @@ export function setSetting<K extends keyof Settings>(input: GameState, key: K, v
 // The chapter
 
 /** Choose which free-order part to make next (the Ward, the Smoke or the Words): its stage opens. */
+/** Remember that a word's explanation was read (once; it then shows as plain text). */
+export function markTermSeen(input: GameState, id: string): Result {
+  if (input.settings.termsSeen.includes(id)) return ok(input);
+  return ok({ ...input, settings: { ...input.settings, termsSeen: [...input.settings.termsSeen, id] } });
+}
+
 export function chooseStage(input: GameState, part: PartId): Result {
   if (!stageChoices(input).includes(part)) return no("That isn't a choice right now.");
   const state = structuredClone(input);

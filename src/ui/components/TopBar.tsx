@@ -14,7 +14,7 @@ import { useCountUp } from "../useFx";
 import { SKILLS } from "../../content/skills";
 
 import { Tip } from "./Tip";
-export function TopBar({ state, onStop, stopNote, onSettings, onGo }: { state: GameState; onStop: () => void; stopNote?: string; onSettings: () => void; onGo: (p: Place) => void }) {
+export function TopBar({ state, onStop, stopNote, onSettings, onGuide, onGo }: { state: GameState; onStop: () => void; stopNote?: string; onSettings: () => void; onGuide: () => void; onGo: (p: Place) => void }) {
   return (
     <header className="topbar">
       <div className="brand">
@@ -37,6 +37,9 @@ export function TopBar({ state, onStop, stopNote, onSettings, onGo }: { state: G
           <Purse coin={Math.floor(state.coin)} />
         </div>
       )}
+      <button className="btn btn-ghost icon-btn guide-btn" onClick={onGuide} aria-label="Guide">
+        <span aria-hidden="true">?</span>
+      </button>
       <button className="btn btn-ghost icon-btn" onClick={onSettings} aria-label="Settings">
         <CogIcon size={18} />
       </button>

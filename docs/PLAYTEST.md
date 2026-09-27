@@ -31,6 +31,7 @@ What to try and what to note in a Chapter 1 playtest, for the game as it is now 
 - **The part checklist:** was a list of the part's items with have/need, a button to each maker and a "Short of" line clearer than a list of steps? Did you ever feel lost about which item to make first? Did the "Short of" line match what you then had to gather?
 - **Did the buttons that name a place** ("Chandlery ›", "Projects ›") tell you where you'd end up?
 - **Did the explained words help?** Which did you click? Was any word still unclear, or explained too often?
+- **Read words turning plain, and the Guide:** did it feel calmer once you'd read a word? Did you use the "?" Guide to look one up again?
 - **The choice at the Circle:** when the game took you to the Circle to choose the next part, was that welcome or jarring? Did the skill cards tell you enough to choose on purpose, not by the name?
 - **Chances past 100%:** did "112.5%" make sense (one for sure, a chance of a second)?
 - **Tooltips:** did the hover cards appear when you wanted them, and never get in the way? Did the chance breakdown (base × each bonus = now) explain a number you wondered about? Did anyone on touch or keyboard find them? Did you miss the old browser tooltips anywhere, or find a disabled button whose reason you couldn't see?
@@ -111,3 +112,4 @@ One short entry per round, oldest first.
 - **Inventory:** "Stores" renamed to "Inventory".
 - **Playtest round 2:** questions on salt, the part checklist, place-named buttons, the explained words, the stage choice card, talent text, project blurbs, the Experiments tab and charms, the nudge hint, the rite as an event (banner, tending, the quality ladder), keepsakes kept on leaving, and the chapter end; the choice at the Circle, chances past 100%. "Still to find" and step questions dropped.
 - **Playtest round 3:** questions on tooltips and the chance breakdown, the omen card, charms by count and their two views, trust levels and scaled contracts, village projects, talents past 12 and the compact panel, the stage choice's descriptions, the quieter tend field, the cloth, and the page grid. The offline-cap example is gone.
+- **The Guide:** questions on read words turning plain and on using the Guide.

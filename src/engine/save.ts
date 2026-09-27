@@ -7,6 +7,7 @@ import { HEARTH_RITE, PART_IDS } from "../content/rite";
 import { SKILL_IDS, type SkillId } from "../content/skills";
 import { TALENT_LEVELS } from "../content/talents";
 import { KEEPSAKES } from "../content/keepsakes";
+import { GLOSSARY } from "../content/glossary";
 import { REQUESTS } from "../content/requests";
 import { boardSlots, scaleOffer, trustLevel } from "./village";
 import { CHARMS } from "../content/charms";
@@ -43,7 +44,7 @@ export function deserialize(json: string): GameState {
       omensSeen: data.stats?.omensSeen ?? 0,
       curiosRead: data.stats?.curiosRead ?? 0,
     },
-    settings: { ...base.settings, ...data.settings },
+    settings: { ...base.settings, ...data.settings, termsSeen: (data.settings?.termsSeen ?? []).filter((t) => t in GLOSSARY) },
     rite: {
       ...base.rite,
       ...data.rite,

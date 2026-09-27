@@ -10,6 +10,8 @@ export interface ChipActions {
   state: GameState;
   lookup: (item: ItemId) => void;
   start: (id: ActionId) => void;
+  /** Mark a glossary word as read (it then shows as plain text; the Guide keeps it). */
+  markTerm: (id: string) => void;
 }
 
 export const ChipContext = createContext<ChipActions | null>(null);
@@ -19,4 +21,9 @@ export function useChipActions(): ChipActions {
   // No silent fallback: a chip outside the game would show a fake empty game's answers.
   if (!ctx) throw new Error("ItemChip used outside <ChipContext.Provider>");
   return ctx;
+}
+
+/** For Terms: the game's context, or null outside it (then every word counts as unread). */
+export function useOptionalChipActions(): ChipActions | null {
+  return useContext(ChipContext);
 }
