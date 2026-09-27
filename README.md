@@ -24,7 +24,7 @@ From the cold house to the Kindling of the Hearth-Circle:
 - **Free order:** after the Light, you choose the order of the Ward, the Smoke and the Words; the Offering comes last.
 - **Small steps** inside every stage, counted from the stage's start, shown task-first (grandmother gets one line). One reward per stage, claimed: a Surge, XP where you choose, or items.
 - **Steps sized to the level:** following the steps never needs grinding, in any order, and nothing made is wasted (the playthrough test checks both).
-- **Skill talents as builds:** at levels 3, 6, 9 and 12 each skill offers a pair, and you take one side; switching and reset are free. Drawn as a vine. Each level also makes its skill 1% faster.
+- **Skill talents as builds:** at levels 3, 6, 9 and 12 each skill offers a pair, and you take one side; a pick is fixed until the next tier, then it can be changed. Drawn as a vine. Each level also makes its skill 1% faster.
 - **Timed actions** with XP, level caps and rates, in tiers (a new tier every 3 levels). Each skill shows only what you've reached plus the next tier. Click anywhere on a row to start it. An item lookup on every item name, a woodcut icon for every item, and a Stores tab grouped by where things come from.
 - **The village:**
   - two contracts at a time, delivered in parts, with trust

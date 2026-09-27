@@ -19,6 +19,7 @@ export function SkillPicker({
   suggestLabel = "helps your next step",
   onPick,
   onClose,
+  isDisabled,
   children,
 }: {
   state: GameState;
@@ -28,6 +29,8 @@ export function SkillPicker({
   suggestLabel?: string;
   onPick: (skill: SkillId) => void;
   onClose: () => void;
+  /** Why a skill can't be picked (e.g. "At the cap"), or null if it can. */
+  isDisabled?: (skill: SkillId) => string | null;
   children?: React.ReactNode;
 }) {
   const running = state.active ? ACTION_DEFS[state.active.id].skill : null;
@@ -37,11 +40,15 @@ export function SkillPicker({
       <p className="picker-effect">{effect}</p>
       {children}
       <div className="skill-picker" role="group" aria-label={title}>
-        {open.map((skill) => (
+        {open.map((skill) => {
+          const blocked = isDisabled?.(skill) ?? null;
+          return (
           <button
             key={skill}
             data-skill={skill}
-            className={`skill-pick ${skill === suggest ? "is-suggested" : ""}`}
+            className={`skill-pick ${skill === suggest && !blocked ? "is-suggested" : ""}`}
+            disabled={blocked !== null}
+            title={blocked ?? undefined}
             onClick={() => {
               onPick(skill);
               onClose();
@@ -50,9 +57,14 @@ export function SkillPicker({
             <SkillIcon skill={skill} size={22} />
             <span className="skill-pick-name">{SKILLS[skill].name}</span>
             <span className="skill-pick-level num">Level {skillLevel(state, skill)}</span>
-            {(skill === running || skill === suggest) && <span className="skill-pick-tag">{skill === suggest ? suggestLabel : "working on it now"}</span>}
+            {blocked ? (
+              <span className="skill-pick-tag">{blocked}</span>
+            ) : (
+              (skill === running || skill === suggest) && <span className="skill-pick-tag">{skill === suggest ? suggestLabel : "working on it now"}</span>
+            )}
           </button>
-        ))}
+          );
+        })}
       </div>
     </Modal>
   );

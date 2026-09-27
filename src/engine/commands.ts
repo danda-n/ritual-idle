@@ -9,7 +9,7 @@ import { requestCoin, trustMultiplier } from "./modifiers";
 import { applyBuff, grantOmen } from "./omens";
 import { beginRite as startRite, canBeginRite } from "./rite";
 import { PART_DEFS, type OfferingId, type PartId } from "../content/rite";
-import type { SkillId } from "../content/skills";
+import { SKILL_IDS, type SkillId } from "../content/skills";
 import type { Side, TalentLevel } from "../content/talents";
 import { canChoose } from "./talents";
 import type { KeepsakeId } from "../content/keepsakes";
@@ -274,11 +274,18 @@ export function placePart(input: GameState, part: PartId): Result {
  * Claim a done step's reward. An XP choice needs `skill`, an open one. Rewards never block
  * progress; they just wait here until claimed.
  */
+/** A skill at the chapter's level cap (XP past it isn't banked). */
+export function atCap(state: GameState, skill: SkillId): boolean {
+  return state.skills[skill].xp >= xpForLevel(state.levelCap);
+}
+
 export function claimReward(input: GameState, stepId: string, skill?: SkillId): Result {
   const step = stepById(stepId);
   if (!step?.reward || !input.rewardsWaiting.includes(stepId)) return no("Nothing to claim there.");
   const r = step.reward;
   if ("xpChoice" in r && (!skill || !isSkillUnlocked(input, skill))) return no("Choose an open skill.");
+  // XP into a skill at the cap would be lost (unless every open skill is capped).
+  if ("xpChoice" in r && skill && atCap(input, skill) && SKILL_IDS.some((k) => isSkillUnlocked(input, k) && !atCap(input, k))) return no("Already at the level cap.");
   const state = structuredClone(input);
   state.rewardsWaiting = state.rewardsWaiting.filter((id) => id !== stepId);
   if ("items" in r) for (const [item, qty] of Object.entries(r.items)) state.inventory[item as ItemId] = (state.inventory[item as ItemId] ?? 0) + qty;

@@ -40,6 +40,7 @@ What to try and what to note in a Chapter 1 playtest, for the game as it is now 
 - **Did the talent pairs feel like builds?** Which sides did you take, did you ever switch, and did any pair feel like an obvious pick?
 - **Which step rewards did you enjoy claiming?** Where did you put the XP choices?
 
+- **Fixed talents:** did locking a pick until the next tier make choices feel weighty, or like a trap? Did the confirm help?
 ## Side projects, omens and the village
 - **Did you find the House projects,** and which did you build? Was each worth its materials?
 - **Did the omen shelf make you want omens?** Did you notice it being pointed out (the tracker line, the "New" tag and glow, the ready toast)? After building it, did the toast tell you enough about omens?
@@ -57,6 +58,7 @@ What to try and what to note in a Chapter 1 playtest, for the game as it is now 
 - **Did you bring any offerings,** and did you try for Resplendent? Did the keepsakes make it feel worth the effort?
 - **Which keepsake(s) did you choose,** and why? Did any feel like the only right answer, or like no reward at all?
 
+- **After the rite:** did "Still to find" give you a reason to keep playing? What did you go for first?
 ## Feedback and screens
 - **Was the activity feed enough,** or did you miss toasts for anything? Did any toast feel like noise?
 - **Did the Stores tab and item icons help** you find things?
@@ -83,3 +85,4 @@ One short entry per round, oldest first.
 - **Rite quality pays:** questions on whether keepsakes make offerings worth it, and which ones players choose.
 - **Design system v0.4:** a question on the new look (what to press, what's running, which tab you're in) and row density.
 - **Text trimmed to a spreadsheet style:** questions on whether the short labels are clear, whether anyone misses the story (the Journal and "Story" links), the omen shelf's toast, and the villagers' hints.
+- **Before the next playtest:** questions on fixed talents and on the goals after the rite.

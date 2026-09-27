@@ -2,18 +2,23 @@ import { useEffect, useRef, useState } from "react";
 import { ACTION_DEFS } from "../../content/actions";
 import { HEARTH_RITE, PART_DEFS, type PartId } from "../../content/rite";
 import type { ItemId } from "../../content/items";
-import { SKILLS } from "../../content/skills";
+import { SKILL_IDS, SKILLS } from "../../content/skills";
 import { goalProgress } from "../../engine/progress";
-import { canPlace, claimReward, placePart, type Result } from "../../engine/commands";
+import { atCap, canPlace, claimReward, placePart, type Result } from "../../engine/commands";
 import { stepById } from "../../engine/progress";
 import type { SkillId } from "../../content/skills";
+import { GRIMOIRE_DEFS } from "../../content/grimoire";
+import { UPGRADE_IDS } from "../../content/upgrades";
+import { GRIMOIRE_IDS, isDiscovered } from "../../engine/grimoire";
+import { nextTrustAt } from "../../engine/estimates";
+import { isFeatureOpen } from "../../engine/progress";
 import { SkillPicker } from "./SkillPicker";
 import { skillLevel } from "../../engine/simulate";
 import { actionInputs } from "../../engine/modifiers";
 import type { GameState } from "../../engine/state";
 import { CircleRiteIcon } from "../art/icons";
 import { chapterSteps, rewardText, stepPlace, stepProgress, stepsOf, taskName, taskPlace, type Place } from "../tasks";
-import { stageChoices } from "../../engine/progress";
+import { isSkillUnlocked, stageChoices } from "../../engine/progress";
 import { NOTES } from "../../content/notes";
 import { PART_DEFS as PARTS, type PartId as Part } from "../../content/rite";
 import { SkillIcon } from "../art/icons";
@@ -133,6 +138,7 @@ export function ChapterTracker({ state, onGo, act }: { state: GameState; onGo: (
                       ))}
                     </div>
                   )}
+                  {steps.length === 0 && "hint" in s.note && <p className="step-hint">{s.note.hint as string}</p>}
                   {goal.kind === "place" && canPlace(state, goal.part as PartId) === null ? (
                     <button className="btn btn-primary step-go" onClick={() => act((st) => placePart(st, goal.part as PartId))}>
                       Place in the Circle
@@ -174,8 +180,79 @@ export function ChapterTracker({ state, onGo, act }: { state: GameState; onGo: (
           </button>
         </div>
       )}
-      {state.rite.completed && <p className="step-hint">Chapter complete · Janko joined ({followerEffects("janko")[0]})</p>}
+      {state.rite.completed && (
+        <>
+          <p className="step-hint">Chapter complete · Janko joined ({followerEffects("janko")[0]})</p>
+          <StillToFind state={state} onGo={onGo} />
+        </>
+      )}
     </section>
+  );
+}
+
+/**
+ * After the rite: what's left in Chapter 1, each with a count and a Go to where it's done, so the
+ * chapter end isn't a dead end.
+ */
+function StillToFind({ state, onGo }: { state: GameState; onGo: (p: Place) => void }) {
+  const hidden = GRIMOIRE_IDS.filter((id) => GRIMOIRE_DEFS[id].kind === "hidden");
+  const secrets = GRIMOIRE_IDS.filter((id) => GRIMOIRE_DEFS[id].kind === "secret");
+  const open = SKILL_IDS.filter((k) => isSkillUnlocked(state, k));
+  const trustAt = nextTrustAt(state);
+  const rows: { label: string; have: number; of: number; go?: Place }[] = [
+    { label: "Hidden recipes", have: hidden.filter((id) => isDiscovered(state, id)).length, of: hidden.length, go: { tab: "grimoire" } },
+    { label: "Secrets", have: secrets.filter((id) => isDiscovered(state, id)).length, of: secrets.length, go: { tab: "grimoire" } },
+    { label: "House projects", have: UPGRADE_IDS.filter((id) => state.upgrades.includes(id)).length, of: UPGRADE_IDS.length, go: { tab: "house", anchor: "projects" } },
+    { label: `Skills at level ${state.levelCap}`, have: open.filter((k) => atCap(state, k)).length, of: open.length },
+  ];
+  return (
+    <div className="still-to-find">
+      <span className="label">Still to find</span>
+      <ul className="steps">
+        {rows.map((r) => {
+          const complete = r.have >= r.of;
+          return (
+            <li key={r.label} className={`step ${complete ? "done" : ""}`}>
+              <span className="step-mark" aria-hidden="true">
+                {complete ? "✓" : "·"}
+              </span>
+              <span className="step-head">
+                <span>{r.label}</span>
+                <span className="row">
+                  <span className="num muted">
+                    {r.have}/{r.of}
+                  </span>
+                  {!complete && r.go && (
+                    <button className="btn btn-text btn-sm" onClick={() => onGo(r.go!)}>
+                      Go
+                    </button>
+                  )}
+                </span>
+              </span>
+            </li>
+          );
+        })}
+        {trustAt !== null && (
+          <li className="step">
+            <span className="step-mark" aria-hidden="true">
+              ·
+            </span>
+            <span className="step-head">
+              <span>Better contracts at trust {trustAt}</span>
+              <span className="row">
+                <span className="num muted">{Math.floor(state.trust)}</span>
+                {isFeatureOpen(state, "village") && (
+                  <button className="btn btn-text btn-sm" onClick={() => onGo({ tab: "village" })}>
+                    Go
+                  </button>
+                )}
+              </span>
+            </span>
+          </li>
+        )}
+      </ul>
+      <p className="step-hint">Chapter II · Grave comes in a later build.</p>
+    </div>
   );
 }
 
@@ -207,6 +284,7 @@ function RewardsWaiting({ state, act }: { state: GameState; act: (c: (s: GameSta
   if (state.rewardsWaiting.length === 0) return null;
   const pending = choosing ? stepById(choosing) : undefined;
   const choice = pending?.reward && "xpChoice" in pending.reward ? pending.reward.xpChoice : null;
+  const allCapped = SKILL_IDS.filter((k) => isSkillUnlocked(state, k)).every((k) => atCap(state, k));
   return (
     <div className="rewards-waiting" aria-label="Rewards to claim">
       {state.rewardsWaiting.map((id) => {
@@ -227,6 +305,8 @@ function RewardsWaiting({ state, act }: { state: GameState; act: (c: (s: GameSta
           suggest={choice.suggest as SkillId}
           onPick={(skill) => act((s) => claimReward(s, choosing, skill))}
           onClose={() => setChoosing(null)}
+          // XP past the cap is lost: capped skills can't take it (unless every skill is capped).
+          isDisabled={(skill) => (atCap(state, skill) && !allCapped ? "At the cap" : null)}
         />
       )}
     </div>

@@ -670,3 +670,9 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
 - **A Resplendent rite** is sold as "choose two keepsakes, and the embroidered cloth", no longer "and more lore" (its lore line still exists, in the journal).
 - **Logged decisions this adjusts:** the pillar "Lore is a reward" (still true, now opt-in); the UI feedback round's "each note appears once, as a modal story beat" (a task beat now) and "flavour text is one short line at most" (flavour lives in names, art, hover titles and the journal); the second patch's "story stays in the rite log"; the one-time omen-shelf card from after the fourth patch; DESIGN.md's task-card quote, shelf card, omen-shelf note, rite log, keepsake lore line and the chapter end's finale and lore lines; GRIMOIRE.md §9.2's reveal dialog with the lore line (the reward only now).
 - **No save change:** `settings.introsSeen` stays (the ready toast uses it); an old "omen_shelf" entry is simply unused.
+
+### Before the next playtest (after the text trim)
+- **Talents are fixed until the next tier** (changes "switching is free"): a pick at level L can be changed from level L+3; taking one asks first; no reset. The designer wants talent choices to be real decisions, with a way back once you've grown past them.
+- **The last stage is just "Wake the Circle":** its two steps (bind 2 smudge bundles, smoke the rooms twice) never blocked the rite, so they read as busywork.
+- **After the rite, the tracker lists what's still to find** (hidden recipes, secrets, projects, skills at the cap, better contracts), so the chapter end isn't a dead end.
+- **The talent panel shows only what's reached** and folds while nothing waits; **XP rewards can't go into a capped skill.**

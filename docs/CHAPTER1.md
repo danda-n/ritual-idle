@@ -55,7 +55,7 @@ The table shows the stages in the default order (Ward, Smoke, Words); the middle
 | 2–4 Smoke | **Herbalism** | Pick 32 nettle → Herbalism 3 · Pick 16 chamomile · Bind 16 smudge bundles · Pick 12 mugwort (Herbalism 6) · Make 6 mugwort incense | 16 smudge bundles, 6 mugwort incense | 10 tallow candles |
 | 2–4 Words | **Scholarship** (+ the Grimoire) | Pour 24 tallow candles · Search the attic ×60 · Decipher 24 pages (21 Words + 3 Litany) · Scholarship 3 · Copy the Litany (Scholarship 6) | 21 deciphered pages, the Litany | +80 XP (Scholarship suggested) |
 | 5 Offering | **Ritualism** (+ the Village) | Finish 1 contract · Lay 15 salt lines · Pour 17 tallow candles · Bless the threshold ×15 | 2 bread, 3 salt, 15 consecrated salt | +60 XP (Ritualism suggested) |
-| 6 Perform | | Bind 2 smudge bundles · Smoke the rooms ×2 (Ritualism 3) · begin the rite (Ritualism 3) | | |
+| 6 Wake the Circle | | No steps: begin the rite at Ritualism 3 (the tracker says "Ritualism 3 · begin it on the Circle tab · offerings optional") | | |
 
 - **Small steps:** they're in `steps` on each note in `src/content/notes.ts`.
   - **Steps count from the stage's start.** What you did before the stage doesn't count, so a step always means the work in front of you. The tracker shows live progress.
@@ -311,7 +311,8 @@ There are three hidden recipes in Chapter 1. None unlock by level. You find them
 ## 11. Talents as builds, and level speed
 
 - **A pair at levels 3, 6, 9 and 12** (one per tier): at each, a skill offers two talents and **you take one side, A or B**. The sides pull different ways, and some help another skill. By the Chapter 1 cap of 20, every skill has all four pairs open.
-- **Switching is free,** any time: click the other side. **Reset is free** too.
+- **A pick is fixed until the next tier** (`TALENT_RELOCK` = 3 levels): the level-3 pick can be changed from level 6, the level-6 pick from 9, the level-12 pick from 15. Taking a talent asks first ("Fixed until level 9"). There is no reset.
+- **The panel** shows only the pairs reached so far plus the next one, and folds to one line (the picks' names) while no choice is waiting.
 - **Old saves:** older talent ranks are dropped on load; you choose again.
 - **Effects** (`TalentEffect` in `src/content/talents.ts`):
   - **speed:** this skill, or another skill, is faster
@@ -377,3 +378,4 @@ One short entry per round, oldest first. The reasons behind each change are in [
 - **Rite quality pays:** a Fine rite lets you choose a keepsake, a Resplendent one two (quilt, jar of embers, reading glasses). The kiss/curse bargains ("The Circle Asks") are planned from Chapter 2.
 - **Design system v0.4 ("Hearth + Folk"):** a new look for every screen (see DESIGN.md); no change to the chapter's content or numbers.
 - **Text trimmed to a spreadsheet style:** screens lead with numbers and verbs, and the story moves to the Grimoire journal (collapsed). Task cards lose the quote (a "Story" link instead); contracts show short labels (full lines as hover titles); the omen-shelf card and its after-build note are gone (a toast instead); the rite log is a phase checklist; keepsakes state their effect (lore as hover title); a Resplendent rite is sold as two keepsakes and the cloth, not "more lore". Shorter step labels and villager asides; no change to numbers.
+- **Before the next playtest:** talents are fixed until the next tier (confirm to take one, no reset), and the panel shows only what's reached; the last stage is just "Wake the Circle" (its two steps never blocked the rite); after the rite the tracker lists what's still to find; XP rewards can't go into a skill at the cap.

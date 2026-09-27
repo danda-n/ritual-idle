@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { ACTION_DEFS } from "../content/actions";
 import { NOTES } from "../content/notes";
 import { claimReward, type Result } from "./commands";
+import { xpForLevel } from "./xp";
 import { BUFFS } from "../content/buffs";
 import { actionDurationMs } from "./modifiers";
 import { currentSteps, revealNotes, stepById, type Step } from "./progress";
@@ -37,6 +38,16 @@ describe("stage steps", () => {
     expect(claimed.skills.scavenging.xp).toBe(place.reward.xpChoice.amount);
     expect(claimed.rewardsWaiting).toEqual([]);
     expect(claimReward(claimed, "light.place", "scavenging").ok).toBe(false);
+  });
+
+  it("an XP choice can't go into a skill at the cap, unless every open skill is capped", () => {
+    const base = { ...newGame(T0, 1), notesRevealed: 2, stepsDone: ["light.place"], rewardsWaiting: ["light.place"] };
+    const capped = { ...base, skills: { ...base.skills, scavenging: { xp: xpForLevel(base.levelCap) } } };
+    const refused = claimReward(capped, "light.place", "scavenging");
+    expect(!refused.ok && refused.reason).toMatch(/level cap/);
+    expect(claimReward(capped, "light.place", "chandlery").ok).toBe(true);
+    const allCapped = { ...capped, skills: { ...capped.skills, chandlery: { xp: xpForLevel(base.levelCap) } } };
+    expect(claimReward(allCapped, "light.place", "scavenging").ok).toBe(true);
   });
 
   it("a Surge doubles speed on everything for its few seconds", () => {
