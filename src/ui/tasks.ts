@@ -1,5 +1,5 @@
 import { ACTION_DEFS, type ActionId } from "../content/actions";
-import { HEARTH_RITE, PART_DEFS, type PartId } from "../content/rite";
+import { PART_DEFS, type PartId } from "../content/rite";
 import { SKILLS } from "../content/skills";
 import type { GoalDef } from "../content/types";
 import { revealedNotes, sinceStageStart, stageOrder, type Note, type Step } from "../engine/progress";
@@ -33,7 +33,7 @@ export function taskName(goal: GoalDef<ActionId>): string {
     case "place":
       return `Make ${PART_DEFS[goal.part as PartId].name.replace(/^The /, "the ")}`;
     case "rite":
-      return `Perform the ${HEARTH_RITE.name}`;
+      return "Wake the Circle";
   }
 }
 

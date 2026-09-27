@@ -80,11 +80,9 @@ export const NOTES = [
   },
   {
     text: "The circle is warm. It has been waiting for you. Wake it.",
+    // No steps: waking the Circle needs only Ritualism 3 (the rite's card on the Circle tab says so).
+    hint: "Ritualism 3 · begin it on the Circle tab · offerings optional",
     unlocks: [],
-    steps: [
-      { id: "perform.smudge", label: "Bind 2 smudge bundles", goal: { kind: "complete", action: "smudge_bundle", count: 2 } },
-      { id: "perform.smoke", label: "Smoke the rooms twice (Ritualism 3)", goal: { kind: "complete", action: "smoke_rooms", count: 2 } },
-    ],
     goal: { kind: "rite" },
   },
   {
