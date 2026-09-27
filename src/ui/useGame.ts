@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ACTION_DEFS, type ActionId } from "../content/actions";
-import { CURIO_STORIES, type GrimoireId } from "../content/grimoire";
+import { CURIO_STORIES, GRIMOIRE_DEFS, INSIGHT_GAIN, type GrimoireId } from "../content/grimoire";
+import { REQUESTS } from "../content/requests";
 import type { Result, Success } from "../engine/commands";
 import { NOTES } from "../content/notes";
 import { ITEMS, type ItemId } from "../content/items";
@@ -12,9 +13,9 @@ import { isRareDrop, rewardText, unlockedByLevel } from "./tasks";
 import type { Note } from "../engine/progress";
 import { rewind } from "../engine/devtools";
 import { OMENS } from "../content/omens";
-import { buffDuration, buffEffects, upgradeEffectFor } from "./effects";
+import { buffDuration, buffEffects, builtText } from "./effects";
 import { UPGRADE_DEFS } from "../content/upgrades";
-import { PART_DEFS } from "../content/rite";
+import { PART_DEFS, RITE_MS } from "../content/rite";
 import { TALENT_LEVELS, TALENTS, type TalentLevel } from "../content/talents";
 import { catchUp, type CatchUp } from "../engine/offline";
 import { clearLocal, loadLocal, saveLocal } from "../engine/save";
@@ -62,12 +63,12 @@ function celebrateCommand(before: GameState, after: GameState, toast: (t: Omit<T
   if (after.stats.requestsFilled > before.stats.requestsFilled) {
     const slot = after.board.findIndex((b, i) => b.request === null && before.board[i]?.request !== null);
     if (slot >= 0) emitFx({ kind: "helped", slot });
-    toast([{ title: "Contract done", text: `+${coin} coin, and the village trusts you a little more.` }]);
+    toast([{ title: "Contract done", text: `+${coin} coin · +${+(after.trust - before.trust).toFixed(1)} trust` }]);
   } else if (after.board.some((b, i) => JSON.stringify(b.delivered) !== JSON.stringify(before.board[i]?.delivered ?? {}))) {
     log(["Delivered part of a contract"]);
   }
   const bought = after.upgrades.filter((u) => !before.upgrades.includes(u));
-  if (bought.length > 0) toast(bought.map((u) => ({ title: `${UPGRADE_DEFS[u].name} is built`, text: upgradeEffectFor(u) })));
+  if (bought.length > 0) toast(bought.map((u) => ({ title: `${UPGRADE_DEFS[u].name} built`, text: builtText(u, after.omens) })));
   // A claimed step reward: say what it gave (and where an XP choice went).
   for (const id of before.rewardsWaiting.filter((r) => !after.rewardsWaiting.includes(r))) {
     const step = stepById(id);
@@ -82,12 +83,20 @@ function celebrateCommand(before: GameState, after: GameState, toast: (t: Omit<T
   if (placed.length > 0) {
     toast(placed.map((p) => ({ title: `${PART_DEFS[p].name} is placed · ${after.kindling.length} of 5`, text: "" })));
   }
-  if (after.rite.performing && !before.rite.performing) toast([{ title: "The rite begins", text: "It runs by itself, about three minutes. Stay or step away." }]);
+  if (after.rite.performing && !before.rite.performing) toast([{ title: "The rite begins", text: `${Math.round(RITE_MS / 60_000)} min · runs offline` }]);
   for (const k of SKILL_IDS) {
     for (const [lvl, side] of Object.entries(after.talents[k] ?? {})) {
       if (before.talents[k]?.[Number(lvl) as TalentLevel] !== side) log([`${SKILLS[k].name} talent: ${TALENTS[k][Number(lvl) as TalentLevel][side].name}`]);
     }
   }
+}
+
+/** "Heard: Dream pillow" for a villager's aside (it's also kept on that recipe's Grimoire page). */
+function heardTitle(aside: string): string {
+  for (const r of Object.values(REQUESTS)) {
+    if ("mentions" in r && r.mentions.aside === aside && r.mentions.recipe in GRIMOIRE_DEFS) return `Heard: ${GRIMOIRE_DEFS[r.mentions.recipe as GrimoireId].name}`;
+  }
+  return "Heard in the village";
 }
 
 function boot(): { state: GameState; away: CatchUp | null; fresh: boolean } {
@@ -168,13 +177,13 @@ export function useGame() {
         .map((item) => ({ title: `Rare find: ${ITEMS[item].name}`, text: "" }));
       for (const id of (report.fellBackTo ?? []).slice(0, 1)) lines.push(`Out of an ingredient: back to ${ACTION_DEFS[id].name.toLowerCase()}`);
       for (const p of report.pagesRead ?? []) if (p.unlocks.length === 0) lines.push(`Page deciphered: ${p.title}`);
-      for (const o of report.omensFound ?? []) lines.push(`An omen: ${OMENS[o].name}, on the shelf (bless a skill: ${buffEffects(OMENS[o].buff).join(", ")}, ${buffDuration(OMENS[o].buff)})`);
-      if (report.omensLost) lines.push("An omen passed unseen: the shelf was full");
+      for (const o of report.omensFound ?? []) lines.push(`Omen: ${OMENS[o].name} (on shelf) · bless a skill: ${buffEffects(OMENS[o].buff).join(", ")}, ${buffDuration(OMENS[o].buff)}`);
+      if (report.omensLost) lines.push("Omen lost (shelf full)");
       log(lines);
       pushToasts([
         ...levelToasts,
         ...rareToasts,
-        ...(report.curioStories ?? []).map(() => ({ title: `Curio found (${ref.current.stats.curiosRead}/${CURIO_STORIES.length})`, text: "Read it in the Grimoire." })),
+        ...(report.curioStories ?? []).map(() => ({ title: `Curio found (${ref.current.stats.curiosRead}/${CURIO_STORIES.length})`, text: `+${INSIGHT_GAIN.curio} insight` })),
         ...(report.pagesRead ?? [])
           .filter((p) => p.unlocks.length > 0)
           .map((p) => ({ title: `Page deciphered: ${p.title}`, text: `New recipe: ${p.unlocks.map((a) => ACTION_DEFS[a].name).join(", ")}.` })),
@@ -257,7 +266,7 @@ export function useGame() {
       commit(r.state);
       saveLocal(r.state); // choices are saved at once, not on the next autosave
       celebrateCommand(before, r.state, pushToasts, log);
-      if (r.aside) pushToasts([{ title: "They tell you something", text: r.aside }]);
+      if (r.aside) pushToasts([{ title: heardTitle(r.aside), text: r.aside }]);
       announce({ notesRevealed: r.notes, fragments: r.fragments, omensFound: r.gifts, stepsDone: r.steps });
       if (r.outcome?.kind === "discovered") setDiscovery(r.outcome.recipe);
       return r;

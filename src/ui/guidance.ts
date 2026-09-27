@@ -29,6 +29,7 @@ export function recipeKnowledge(state: GameState, id: GrimoireId): RecipeKnowled
 
 export interface Guide {
   headline: string;
+  /** One short line under the headline, or empty. */
   detail: string;
   /** Label for the Circle button, or null if the Circle isn't open yet. */
   action: string | null;
@@ -38,21 +39,21 @@ export function recipeGuide(state: GameState, id: GrimoireId): Guide {
   const k = recipeKnowledge(state, id);
   const left = k.size - k.belongs.length;
   if (!isFeatureOpen(state, "experiments")) {
-    return { headline: "Experiments open with grandmother's next note", detail: "That's where you test guesses at the Circle. Until then, collect hints: they sharpen on their own.", action: null };
+    return { headline: "Opens with experiments", detail: "", action: null };
   }
   if (left === 0) {
-    return { headline: `You know all ${k.size}: make it at the Circle`, detail: "Place exactly these in the Circle to discover it.", action: "Make it at the Circle" };
+    return { headline: `You know all ${k.size}: make it at the Circle`, detail: "", action: "Make it at the Circle" };
   }
   if (k.attempts === 0 && k.belongs.length === 0) {
     return {
       headline: `Try any ${k.size} things at the Circle, or buy a hint`,
-      detail: `Use the riddle as a guide. The Circle glows once for each right thing, and each wrong try gives +${INSIGHT_GAIN.failedAttempt} insight to spend on hints below.`,
+      detail: `1 glow per right item · wrong try +${INSIGHT_GAIN.failedAttempt} ✦`,
       action: "Try at the Circle",
     };
   }
   return {
     headline: k.belongs.length > 0 ? `${k.belongs.length} of ${k.size} known: find the last ${left === 1 ? "one" : left}` : `Narrow it down: ${k.size} things to find`,
-    detail: "Keep what belongs, and swap the rest for things not crossed out yet.",
+    detail: "Swap one at a time",
     action: "Keep trying at the Circle",
   };
 }
@@ -77,14 +78,14 @@ export function circleStep(attuned: boolean, hasSilhouettes: boolean, placed: nu
 export function outcomeHelp(o: ExperimentOutcome): string {
   switch (o.kind) {
     case "discovered":
-      return `Discovered. ${GRIMOIRE_DEFS[o.recipe].rewardText}`;
+      return `Discovered · ${GRIMOIRE_DEFS[o.recipe].rewardText}`;
     case "glow":
-      if (o.glows === 0) return `None of these belong. They're crossed out and hidden from your list.`;
-      if (o.glows === o.of - 1) return `${o.glows} of ${o.of} right, but not which. Swap one thing at a time to find the odd one out.`;
-      return `${o.glows} of ${o.of} right, but not which. Swap one thing at a time and watch the count.`;
+      if (o.glows === 0) return "0 right · all crossed out";
+      if (o.glows === o.of - 1) return `${o.glows} of ${o.of} right (not which) · swap one at a time`;
+      return `${o.glows} of ${o.of} right (not which) · swap one at a time, watch the count`;
     case "almost":
       return "Two of those match a secret. Swap the third.";
     case "nothing":
-      return "No secret matches that set. A secret answers only its exact 3.";
+      return "No match · a secret answers only its exact 3";
   }
 }

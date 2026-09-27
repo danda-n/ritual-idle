@@ -53,8 +53,8 @@ The table shows the stages in the default order (Ward, Smoke, Words); the middle
 | 1 Light | **Chandlery** | Pour 40 tallow candles → Chandlery 3 · Rob the old hives ×16 (Scavenging 3) · Pour 8 beeswax candles | 40 tallow candles, 8 beeswax candles | +60 XP (Scavenging suggested) |
 | 2–4 Ward | **Sigilcraft** | Lay 40 salt lines → Sigilcraft 3 · Sweep the hearth ×24 · Draw 12 ash sigils | 40 salt lines, 12 ash sigils | a Surge |
 | 2–4 Smoke | **Herbalism** | Pick 32 nettle → Herbalism 3 · Pick 16 chamomile · Bind 16 smudge bundles · Pick 12 mugwort (Herbalism 6) · Make 6 mugwort incense | 16 smudge bundles, 6 mugwort incense | 10 tallow candles |
-| 2–4 Words | **Scholarship** (+ the Grimoire) | Pour 24 tallow candles to read by · Search the attic ×60 · Decipher 24 burnt pages (Scholarship 3; 21 for the Words, 3 for the Litany) · Copy the Litany (Scholarship 6) | 21 deciphered pages, the Litany | +80 XP (Scholarship suggested) |
-| 5 Offering | **Ritualism** (+ the Village) | Finish a contract for a villager · Lay 15 salt lines · Pour 17 tallow candles · Bless the threshold ×15 | 2 bread, 3 salt, 15 consecrated salt | +60 XP (Ritualism suggested) |
+| 2–4 Words | **Scholarship** (+ the Grimoire) | Pour 24 tallow candles · Search the attic ×60 · Decipher 24 pages (21 Words + 3 Litany) · Scholarship 3 · Copy the Litany (Scholarship 6) | 21 deciphered pages, the Litany | +80 XP (Scholarship suggested) |
+| 5 Offering | **Ritualism** (+ the Village) | Finish 1 contract · Lay 15 salt lines · Pour 17 tallow candles · Bless the threshold ×15 | 2 bread, 3 salt, 15 consecrated salt | +60 XP (Ritualism suggested) |
 | 6 Perform | | Bind 2 smudge bundles · Smoke the rooms ×2 (Ritualism 3) · begin the rite (Ritualism 3) | | |
 
 - **Small steps:** they're in `steps` on each note in `src/content/notes.ts`.
@@ -66,7 +66,7 @@ The table shows the stages in the default order (Ward, Smoke, Words); the middle
   - items for the next step
   - XP into a skill you pick (the one the next step needs is suggested)
   - a **Surge** (×2 speed on everything for 20 seconds)
-- **Task-first cards:** a new stage pops a card with its steps and reward, what the part needs, and a **Go** button to the current step. Grandmother gets one short line (`quote`); her full note is in the Grimoire journal. The card closes only with its button or Escape, never by a stray click beside it.
+- **Task-first cards:** a new stage pops a card with its steps and reward, what the part needs, and a **Go** button to the current step. Grandmother's note sits behind a collapsed **Story** link on the card, and in the Grimoire journal; there's no quote. A note without steps (the experiments note, the last note) shows one short gameplay line (`hint`) instead. The card closes only with its button or Escape, never by a stray click beside it.
 - **Go** leads to the skill that makes the current step's **first missing ingredient**, not just the stage's skill.
 - **The chapter tracker** (in the sidebar) shows done steps, the current step with live progress and its needs as item chips, and one "???" ahead. A **short chip** offers to start what makes that item. When you're idle, the **top bar shows the next task**.
 - **Parts that aren't reached yet** show only their name and the skill they bring. No part asks for anything from a skill that isn't open (a test checks this).
@@ -143,7 +143,7 @@ After the six story pages, each deciphered page brings 2 insight.
 | Bless the threshold | 1 · 1 | 6s | 20 | 1 salt line + 1 tallow candle → Consecrated salt |
 | Smoke the rooms | 2 · 3 | 8s | 25 | 1 smudge bundle + 1 tallow candle → *Blessing* (a 15-minute +10% speed buff to all Chapter 1 skills; the row says so) |
 
-**Curios** (from grandmother's chest and the attic) aren't kept in the Stores. Each is read when found and joins a collection (Grimoire → Curios n/5) with its story, and each brings 3 insight.
+**Curios** (from grandmother's chest and the attic) aren't kept in the Stores. Each is read when found (its toast says "+3 insight") and joins a collection in the Grimoire journal (Curios n/5), listed by name with the story collapsed under it.
 
 ---
 
@@ -157,21 +157,23 @@ After the six story pages, each deciphered page brings 2 insight.
   - An emptied slot refills after **30 seconds** of game time, including offline.
   - Any contract can be **turned away** at no cost (what was delivered to it is gone), so a contract you can't fill never blocks the board.
   - The village opens with the Offering stage, when every skill but Ritualism is already open. Its first step is to finish one contract. Trust-0 contracts use early items only (nettle and chamomile, ash, tallow candles, salt lines).
-- **Chapter 1 contracts** (`src/content/requests.ts`):
+- **Chapter 1 contracts** (`src/content/requests.ts`). A card shows who's asking and a short **label** in plain type; their full line ("Nettle soup, for the widow Hana. My legs won't carry me…") is the label's hover title. Three contracts carry an **aside** when finished, a free hint toward a hidden recipe (+2 insight), kept on that recipe's Grimoire page as "Heard in the village": Hana ("Grandmother made me a pillow for bad dreams. Bitter-smelling." → Dream pillow), the Kral farm ("She drew a mark on our hearth in ash. Salt on top." → Hearth mark) and the young mother ("The witch kept a nail under her door, and a yellow flower." → Threshold nail).
 
-| Contract | Needs | Pays | Trust needed |
+| Label (from) | Needs | Pays | Trust needed |
 |---|---|---|---|
-| "Nettle soup, for the widow Hana" | 30 nettle + 10 chamomile | 15 coin, +1 trust | 0 |
-| "Ash for the lye" (the soapmaker) | 40 ash | 12 coin, +1 trust | 0 |
-| "Candles for my father's grave" | 12 tallow candles | 20 coin, +1 trust | 0 |
-| "Salt across our doorstep" | 12 salt lines | 18 coin, +1 trust | 0 |
-| "Something for the miller's cough" | 15 chamomile + 8 yarrow | 30 coin, +1 trust | 2 |
-| "A mark over the stable door" | 4 ash sigils + 6 salt lines | 40 coin, +1 trust | 2 |
-| "Smoke out whatever is in my loft" | 4 smudge bundles | 45 coin, +1 trust | 3 |
-| "Juniper smoke for the sickroom" | 3 juniper incense | 60 coin, +2 trust | 3 |
-| "Candles for the wake" | 4 hearth candles + 4 beeswax candles | 80 coin, +2 trust | 4 |
-| "Iron by the cradle" | 3 iron wards + 6 salt lines | 70 coin, +2 trust | 5 |
-| "A ward for the church door" | 1 hearth ward + 4 chalk segments | 110 coin, +2 trust | 5 |
+| Nettle soup (Widow Hana) | 30 nettle + 10 chamomile | 15 coin, +1 trust | 0 |
+| Lye ash (the soapmaker) | 40 ash | 12 coin, +1 trust | 0 |
+| Grave candles (Old Tomas) | 12 tallow candles | 20 coin, +1 trust | 0 |
+| Doorstep salt (the ferryman's wife) | 12 salt lines | 18 coin, +1 trust | 0 |
+| Cough remedy (the miller) | 15 chamomile + 8 yarrow | 30 coin, +1 trust | 2 |
+| Stable mark (the Kral farm) | 4 ash sigils + 6 salt lines | 40 coin, +1 trust | 2 |
+| Smoke the loft (the weaver) | 4 smudge bundles | 45 coin, +1 trust | 3 |
+| Sickroom smoke (the sexton's wife) | 3 juniper incense | 60 coin, +2 trust | 3 |
+| Wake candles (the Dvorak family) | 4 hearth candles + 4 beeswax candles | 80 coin, +2 trust | 4 |
+| Cradle iron (a young mother) | 3 iron wards + 6 salt lines | 70 coin, +2 trust | 5 |
+| Church ward (the sexton) | 1 hearth ward + 4 chalk segments | 110 coin, +2 trust | 5 |
+
+  Hana's label stays "Nettle soup" and her name "Widow Hana": the Hana's soup secret leans on them.
 
 - **What coin buys in Chapter 1** (`src/content/shop.ts`): provisions only.
 
@@ -185,30 +187,30 @@ After the six story pages, each deciphered page brings 2 insight.
 
 | Project | Built from | Effect |
 |---|---|---|
-| **Omen shelf** | 10 tallow candles + 4 beeswax candles | Omens start to turn up (two fit), and the first Still Night comes with the shelf (§5) |
+| **Omen shelf** | 10 tallow candles + 4 beeswax candles | Holds 2 omens · 1st omen included · omens drop from any work (§5) |
 | **Reading lamp** | 6 beeswax candles + 8 glass | +15% Scholarship speed |
 | **Herb drying rack** | 12 iron nails + 10 rags | +10% Herbalism yield (a visible rack in the scene) |
 | **Mended shutters** | 20 iron nails + 15 rags + 10 salt lines | Offline cap 24h → 36h *(the first taste of the cap upgrades; 72h comes in Chapter 2)* |
 | **Carved omen shelf** (after the omen shelf) | 6 chalk + 2 iron wards | Omen storage 2 → 3 |
 
 - **The omen shelf is highlighted** until it's built, since it's the way into omens:
-  - Once the Light is placed, a one-time card in grandmother's voice says her omen shelf is bare and explains house projects in a line (optional, built from what you make, kept for good), with a **Go** button to the House projects panel.
-  - The chapter tracker shows a quiet optional line, **"Side project: the omen shelf"**, with have/need chips and Go.
+  - Once the Light is placed, the chapter tracker shows a quiet optional line, **"Side project · Omen shelf"**, with have/need chips and Go (or "Build it").
   - In the Projects panel, the omen shelf row carries a **"New"** tag and a soft glow, and the panel title says how many projects are ready to build.
-  - A one-time toast says when you could first build it.
+  - A one-time toast says when you could first build it ("Omen shelf: ready to build").
+  - Building it is a toast, not a dialog: "Omen shelf built · Holds 2 omens · 1 Still Night stored · bless a skill: ×2 speed, 2m". Project rows state their effect generated from the data (`upgradeEffect`), plus one extra fact where needed (`extra`).
 - **Old saves:** anyone who had met an omen keeps an omen shelf; the old bought shelf (3 omens) becomes the carved shelf; the board trims to 2 contracts.
 
 ---
 
 ## 5. Omen: Still Night (the only omen in Chapter 1)
 
-- **Omens need the omen shelf.** None turn up until you build it (a house project, §4, highlighted to the player from the Light onwards). Building it brings the **first Still Night** and a short note on what omens do.
+- **Omens need the omen shelf.** None turn up until you build it (a house project, §4, highlighted to the player from the Light onwards). Building it brings the **first Still Night**, and its toast says what blessing a skill gives.
 - **Drop:** after that, about 1 in 100 actions (roughly every 4–5 minutes of work), online or offline. The Ritualism talent *Omen-sense* doubles it (§11).
 - **Storage:** the omen shelf holds 2; the carved omen shelf holds 3.
 - **Bless a skill (2 minutes):** a dialog asks which open skill to bless, with the one you're running first. That skill gets **×2 speed and ×2 chance finds**. Blessings on different skills run side by side; the same skill again adds 2 minutes. The dialog lists what's already active.
 - **Its lesson:** save omens for the skill you want to rush.
 - **During the rite:** Still Night active at any point during the rite is one of the rite's offerings (§8).
-- **An omen that drops on a full shelf** passes unseen, and the player is told why.
+- **An omen that drops on a full shelf** is lost, and the feed says so ("Omen lost (shelf full)"); the shelf's count has the rule as its hover title.
 
 ---
 
@@ -246,7 +248,7 @@ There are three hidden recipes in Chapter 1. None unlock by level. You find them
 
 **The rite needs its five parts placed in the Circle** (§2) and **Ritualism 3**.
 
-- **Performing it:** **five phases of 36 seconds each** (about 3 minutes in all), one per part, each adding a line to the rite's log (content: `HEARTH_RITE.phases` in `src/content/rite.ts`). It takes the action slot and **runs by itself**: there's nothing to answer, and it carries on offline if you step away. You begin it by hand from the rite's card (priming, which begins a rite by itself, comes with the longer rites of later chapters).
+- **Performing it:** **five phases of 36 seconds each** (about 3 minutes in all), one per part. The Circle shows a five-row phase checklist (✓ done, ▸ now, · later, by part name) beside the rosette; each phase's story line (`HEARTH_RITE.phases` in `src/content/rite.ts`) goes to the Grimoire journal's Kindling entry. It takes the action slot and **runs by itself**: there's nothing to answer, and it carries on offline if you step away. You begin it by hand from the rite's card (priming, which begins a rite by itself, comes with the longer rites of later chapters).
 - **Offerings (optional):** chosen on the rite's card before you begin. Each is one quality step (`OFFERINGS` in `src/content/rite.ts`):
   - **a hearth candle** at the heart of the circle (an item, used when the rite begins; §3)
   - **the Hearth mark** discovered (a hidden recipe, §6; counts by itself)
@@ -256,19 +258,19 @@ There are three hidden recipes in Chapter 1. None unlock by level. You find them
 
 | Keepsake | Effect |
 |---|---|
-| Grandmother's quilt | The house works 10% faster while you're away |
-| A jar of embers | The omen shelf holds one more omen (once it's built) |
-| Her reading glasses | +1 insight from every page deciphered |
+| Grandmother's quilt | +10% offline speed |
+| A jar of embers | +1 omen slot (once the shelf is built) |
+| Her reading glasses | +1 insight per page deciphered |
 
-  The choice is on the chapter-end card; close it without choosing and the tracker keeps a **Choose a keepsake** button. The rite's card says what each quality gives.
+  Each card states its effect; its line of lore is the card's hover title. The choice is on the chapter-end card; close it without choosing and the tracker keeps a **Choose a keepsake** button. The rite's card says what each quality gives: "none = Sound · 1–2 = Fine: choose a keepsake · all 3 = Resplendent: choose two keepsakes, and the embroidered cloth" (the rule that story rewards never change is its hover title).
 - **Story rewards (the same at every quality):**
   - All caps rise to **40** (the content for it comes with Chapter II).
-  - **Follower 1** arrives. *(draft)* A village orphan who "heard the circle wake", with the trait *Hearth-born: +20% Chandlery*.
+  - **Follower 1** arrives: Janko, a village orphan who "heard the circle wake" (his row's hover title), with +20% Chandlery speed.
   - The **cellar** opens in the sanctum.
-  - A lore chapter.
-- **Resplendent bonus:** a cosmetic (embroidered circle cloth) and an extra lore line.
+  - The finale and lore lines, in the Grimoire journal's Kindling entry (and under a collapsed **Story** on the chapter-end card, which otherwise shows the painting and the ledger).
+- **Resplendent bonus:** choose two keepsakes, and a cosmetic (the embroidered circle cloth). Its second-circle lore line also goes to the journal, but it isn't sold as a reward.
 - **Afterwards** the house goes back to work (through the fallback rule), and a bridge note closes the chapter.
-- **Janko** ("assist me") gives +30% speed to whatever you do, and +20% more on Chandlery. Hana's double pay ends when the rite completes.
+- **Janko** ("assist me") gives +30% speed on your current action, and +20% Chandlery speed. Hana's double pay ends when the rite completes.
 
 ---
 
@@ -374,3 +376,4 @@ One short entry per round, oldest first. The reasons behind each change are in [
 - **After the fourth patch:** the omen shelf is highlighted to the player (a one-time card, a tracker line, a "New" tag, a one-time toast). Coin is planned for exclusive or rare projects and rare rewards later. The docs now describe the current game, with this changelog.
 - **Rite quality pays:** a Fine rite lets you choose a keepsake, a Resplendent one two (quilt, jar of embers, reading glasses). The kiss/curse bargains ("The Circle Asks") are planned from Chapter 2.
 - **Design system v0.4 ("Hearth + Folk"):** a new look for every screen (see DESIGN.md); no change to the chapter's content or numbers.
+- **Text trimmed to a spreadsheet style:** screens lead with numbers and verbs, and the story moves to the Grimoire journal (collapsed). Task cards lose the quote (a "Story" link instead); contracts show short labels (full lines as hover titles); the omen-shelf card and its after-build note are gone (a toast instead); the rite log is a phase checklist; keepsakes state their effect (lore as hover title); a Resplendent rite is sold as two keepsakes and the cloth, not "more lore". Shorter step labels and villager asides; no change to numbers.

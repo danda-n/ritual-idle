@@ -37,7 +37,13 @@ export function taskName(goal: GoalDef<ActionId>): string {
   }
 }
 
-/** What a note opens, stated plainly (for the story modal). */
+/** A note's one-line title: its task, "Experiments at the Circle", or "Chapter complete" for the last. */
+export function noteTitle(note: Note): string {
+  if ("opens" in note && (note.opens as readonly string[]).includes("experiments")) return "Experiments at the Circle";
+  return "goal" in note ? taskName(note.goal) : "Chapter complete";
+}
+
+/** What a note opens, stated plainly (for the task card). */
 export function noteUnlocks(note: Note): string[] {
   const out: string[] = [];
   for (const s of note.unlocks as readonly (keyof typeof SKILLS)[]) out.push(`New skill: ${SKILLS[s].name}`);

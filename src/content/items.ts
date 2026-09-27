@@ -25,10 +25,10 @@ export const ITEMS = {
   charcoal: { name: "Charcoal", category: "house" },
   tallow: { name: "Tallow", category: "house" },
   salt: { name: "Salt", category: "house" },
-  burnt_page: { name: "Burnt page", category: "pages", description: "What's left of grandmother's grimoire." },
+  burnt_page: { name: "Burnt page", category: "pages" },
   rags: { name: "Rags", category: "house" },
   glass: { name: "Glass shard", category: "house" },
-  curio: { name: "Curio", category: "house", description: "Odd keepsakes. Each one is read when found, and remembered in the Grimoire's margins." },
+  curio: { name: "Curio", category: "house", description: "Collectible · +3 insight · story in Grimoire › Curios" },
   beeswax: { name: "Beeswax", category: "house" },
   iron_nail: { name: "Iron nail", category: "house" },
   chalk: { name: "Chalk", category: "house" },
@@ -47,9 +47,9 @@ export const ITEMS = {
   hearth_ward: { name: "Hearth ward", category: "sigils" },
   // Scholarship
   deciphered_page: { name: "Deciphered page", category: "pages" },
-  litany: { name: "Grandmother's Litany", category: "pages", description: "The focus for the Hearth-Circle." },
+  litany: { name: "Grandmother's Litany", category: "pages" },
   // Village
-  bread: { name: "Bread", category: "house", description: "For the offering of bread and salt." },
+  bread: { name: "Bread", category: "house" },
   // Ritualism
   consecrated_salt: { name: "Consecrated salt", category: "rites" },
 } as const satisfies Record<string, ItemDef>;

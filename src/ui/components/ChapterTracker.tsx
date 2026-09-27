@@ -25,6 +25,7 @@ import { Modal } from "./Modal";
 import { keepsakePicksLeft } from "../../engine/keepsakes";
 import { UPGRADES } from "../../content/upgrades";
 import { omenShelfSuggested, projectsReady } from "../../engine/projects";
+import { followerEffects } from "../effects";
 
 /**
  * The chapter as a checklist: done steps, the current task with what it needs (as chips,
@@ -132,7 +133,6 @@ export function ChapterTracker({ state, onGo, act }: { state: GameState; onGo: (
                       ))}
                     </div>
                   )}
-                  {steps.length === 0 && "hint" in s.note && <p className="step-hint">{s.note.hint}</p>}
                   {goal.kind === "place" && canPlace(state, goal.part as PartId) === null ? (
                     <button className="btn btn-primary step-go" onClick={() => act((st) => placePart(st, goal.part as PartId))}>
                       Place in the Circle
@@ -162,7 +162,7 @@ export function ChapterTracker({ state, onGo, act }: { state: GameState; onGo: (
         <div className="side-project">
           <div className="step-head">
             <span className="muted">Side project</span>
-            <strong>The omen shelf</strong>
+            <strong>Omen shelf</strong>
           </div>
           <div className="step-needs">
             {(Object.entries(UPGRADES.omen_shelf.items) as [ItemId, number][]).map(([item, qty]) => (
@@ -174,7 +174,7 @@ export function ChapterTracker({ state, onGo, act }: { state: GameState; onGo: (
           </button>
         </div>
       )}
-      {state.rite.completed && <p className="step-hint">Chapter complete. Janko has joined you.</p>}
+      {state.rite.completed && <p className="step-hint">Chapter complete · Janko joined ({followerEffects("janko")[0]})</p>}
     </section>
   );
 }
@@ -237,7 +237,7 @@ function RewardsWaiting({ state, act }: { state: GameState; act: (c: (s: GameSta
 function StageChoice({ state, choices, act }: { state: GameState; choices: Part[]; act: (c: (s: GameState) => Result) => unknown }) {
   return (
     <div className="stage-choice" role="group" aria-label="Choose what to make next">
-      <p className="stage-choice-title">{state.middleOrder.length === 0 ? "Choose what to make next. Any order works." : "Choose the next part."}</p>
+      <p className="stage-choice-title">{state.middleOrder.length === 0 ? "Choose the next part (any order)" : "Choose the next part"}</p>
       {choices.map((p) => {
         const note = NOTES.find((n) => "goal" in n && n.goal.kind === "place" && n.goal.part === p)!;
         const skill = note.unlocks[0]!;

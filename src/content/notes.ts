@@ -6,11 +6,10 @@ import type { NoteDef } from "./types";
 // The Kindling is built in five parts; each stage's note brings the one new skill that part needs.
 // Each stage splits into small steps with small rewards, so there's always a next click.
 // The first note is shown at the start of a new game; each goal reveals the next note.
+// `text` is story only (the Grimoire journal); what to do is in the steps.
 export const NOTES = [
   {
     text: "The house is cold, child. Under the floor is my circle. It sleeps, and it will want waking: light first, then a ward, smoke and words in whatever order you like, and an offering last. Start in the pantry.",
-    quote: "The house is cold, child. Start in the pantry.",
-    hint: "Search the pantry (Scavenging) for tallow.",
     unlocks: ["scavenging"],
     opens: ["circle"],
     steps: [
@@ -20,8 +19,6 @@ export const NOTES = [
   },
   {
     text: "Light is the first ward. Nothing that listens at the window likes a candle.",
-    quote: "Light is the first ward.",
-    hint: "Pour tallow candles (Chandlery). Beeswax comes from Rob the old hives (Scavenging 3).",
     unlocks: ["chandlery"],
     steps: [
       { id: "light.candles", label: "Pour 40 tallow candles", goal: { kind: "complete", action: "tallow_candle", count: 40 } },
@@ -33,8 +30,6 @@ export const NOTES = [
   },
   {
     text: "Salt keeps what is inside, inside. And what is outside, out.",
-    quote: "Salt keeps what is inside, inside.",
-    hint: "Lay salt lines (Sigilcraft) with salt from the pantry. Sweep the hearth (Sigilcraft) for ash for the sigils.",
     unlocks: ["sigilcraft"],
     steps: [
       { id: "ward.lines", label: "Lay 40 salt lines", goal: { kind: "complete", action: "salt_line", count: 40 } },
@@ -46,8 +41,6 @@ export const NOTES = [
   },
   {
     text: "The garden still remembers me. Mind the nettles; they remember everyone. Smoke carries what hands can't.",
-    quote: "The garden still remembers me. Mind the nettles.",
-    hint: "Pick nettle and chamomile (Herbalism) and bind them into smudge bundles; mugwort and a little tallow make incense.",
     unlocks: ["herbalism"],
     steps: [
       { id: "smoke.nettle", label: "Pick 32 nettle", goal: { kind: "complete", action: "pick_nettle", count: 32 } },
@@ -61,14 +54,12 @@ export const NOTES = [
   },
   {
     text: "My pages burned. Read what's left by candlelight, and don't hurry them. The circle wants my Litany spoken, and it's in there somewhere.",
-    quote: "My pages burned. Read what's left by candlelight.",
-    hint: "Search the attic for burnt pages (Scholarship). Deciphering one uses a tallow candle.",
     unlocks: ["scholarship"],
     opens: ["grimoire"],
     steps: [
-      { id: "words.candles", label: "Pour 24 tallow candles to read by", goal: { kind: "complete", action: "tallow_candle", count: 24 } },
+      { id: "words.candles", label: "Pour 24 tallow candles", goal: { kind: "complete", action: "tallow_candle", count: 24 } },
       { id: "words.attic", label: "Search the attic 60 times", goal: { kind: "complete", action: "search_attic", count: 60 } },
-      { id: "words.decipher", label: "Decipher 24 burnt pages: 21 for the Words, 3 for the Litany (Scholarship 3)", goal: { kind: "complete", action: "decipher_page", count: 24 } },
+      { id: "words.decipher", label: "Decipher 24 pages (21 Words + 3 Litany) · Scholarship 3", goal: { kind: "complete", action: "decipher_page", count: 24 } },
       { id: "words.litany", label: "Copy the Litany (Scholarship 6)", goal: { kind: "complete", action: "copy_litany", count: 1 } },
       { id: "words.place", label: "Place the Words in the Circle", goal: { kind: "place", part: "words" }, reward: { xpChoice: { amount: 80, suggest: "scholarship" } } },
     ],
@@ -76,12 +67,10 @@ export const NOTES = [
   },
   {
     text: "They'll knock. They always knock. Help them, and they'll forget to be afraid of you. Their bread goes in the circle, with our salt.",
-    quote: "They'll knock. Help them.",
-    hint: "Fill village requests for coin and buy bread. Bless the threshold (Ritualism) to make consecrated salt.",
     unlocks: ["ritualism"],
     opens: ["village"],
     steps: [
-      { id: "offering.help", label: "Finish a contract for a villager (Village tab)", goal: { kind: "requests", count: 1 } },
+      { id: "offering.help", label: "Finish 1 contract", goal: { kind: "requests", count: 1 } },
       { id: "offering.lines", label: "Lay 15 salt lines", goal: { kind: "complete", action: "salt_line", count: 15 } },
       { id: "offering.candles", label: "Pour 17 tallow candles", goal: { kind: "complete", action: "tallow_candle", count: 17 } },
       { id: "offering.bless", label: "Bless the threshold 15 times", goal: { kind: "complete", action: "bless_threshold", count: 15 } },
@@ -91,8 +80,6 @@ export const NOTES = [
   },
   {
     text: "The circle is warm. It has been waiting for you. Wake it.",
-    quote: "The circle is warm. Wake it.",
-    hint: "Smoke the rooms (Ritualism 3), then begin the Kindling on the Circle tab.",
     unlocks: [],
     steps: [
       { id: "perform.smudge", label: "Bind 2 smudge bundles", goal: { kind: "complete", action: "smudge_bundle", count: 2 } },
@@ -102,8 +89,7 @@ export const NOTES = [
   },
   {
     text: "Rest now, child. The house will keep working, and so will the boy.",
-    quote: "Rest now, child.",
-    hint: "Janko speeds up whatever you do. Chapter II comes in a later build.",
+    hint: "Janko: +30% speed on your current action · Chapter II: later build",
     unlocks: [],
   },
 ] as const satisfies readonly NoteDef<SkillId, ActionId>[];
@@ -114,8 +100,7 @@ export const NOTES = [
  */
 export const EXPERIMENTS_NOTE = {
   text: "You've found the edge of one of my small workings. The circle answers those too, if you give it the right three things.",
-  quote: "The circle answers small workings too.",
-  hint: "Pick a hidden recipe (the Dream pillow is a good first one) and try three things at the Circle. It glows once for each right one. Optional.",
+  hint: "Optional · place 3 items at the Circle · 1 glow per right item · start with Dream pillow",
   unlocks: [],
   opens: ["experiments"],
 } as const satisfies NoteDef<SkillId, ActionId>;

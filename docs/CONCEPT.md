@@ -89,7 +89,7 @@ Every skill feeds the ritual circle. Followers take over the work you have maste
 
 **Tone:** eerie-cozy. Candlelight, dried herbs, snow on the roof, whispers in the cellar. Folk horror, not gore. Unsettling lore delivered calmly.
 
-**Lore is a reward.** Grandmother's notes, translated fragments, the voices of the dead on Forefathers' Eve, and the Patrons' bargains are things you *earn*, the same way you earn XP.
+**Lore is a reward.** Grandmother's notes, translated fragments, the voices of the dead on Forefathers' Eve, and the Patrons' bargains are things you *earn*, the same way you earn XP. It's an opt-in reward: it collects in the Grimoire journal, one click away, and is never pushed at the player. The screens read like a ledger; the mood comes from names and art.
 
 **Draft renames to fit the setting**
 
@@ -152,7 +152,7 @@ Every skill feeds the ritual circle. Followers take over the work you have maste
 - **Rites run by themselves.** Once the requirements are met, you begin it (or let it begin by itself) and it runs in the action slot, offline too. There's nothing to answer while it runs, and it never fails.
 - **Quality comes from optional offerings, never from failure.** In Chapter 1 there are three: a hearth candle, a discovered hidden recipe (the Hearth mark) and an active Still Night blessing. None = *Sound*, 1–2 = *Fine*, all 3 = *Resplendent*.
   - Later chapters can add more kinds of offering: consecrated materials, followers assisting, a matching omen or invoked moon, low Taint.
-  - **Quality adds lasting extras, never the story rewards.** A plain (Sound) rite always gives the whole story reward. In Chapter 1 a Fine rite lets you choose **one keepsake** of three, a Resplendent one **two** (small lasting perks: faster time away, one more omen place, insight from pages), plus lore and a cosmetic. Keepsakes are kept for good and can be swapped at Ascension. Later, quality also adds a capped share of Offerings (§5.5).
+  - **Quality adds lasting extras, never the story rewards.** A plain (Sound) rite always gives the whole story reward. In Chapter 1 a Fine rite lets you choose **one keepsake** of three, a Resplendent one **two** (small lasting perks: faster time away, one more omen place, insight from pages), and a Resplendent one adds a cosmetic (the embroidered cloth). Keepsakes are kept for good and can be swapped at Ascension. Later, quality also adds a capped share of Offerings (§5.5).
 - **The Circle Asks** *(from Chapter 2; the kiss/curse)*: before a rite, the circle offers a choice of 2–3 bargains, each written for that rite and shown in full. Take any, or none. Each is one quality step.
   - **The bite:** a curse on one skill you choose, e.g. *"The house goes cold: Chandlery 25% slower."* It counts down with **any work you do** (online or offline), about 150 repetitions (~10 minutes of play), so you simply work on something else meanwhile. It never takes a skill below half speed, never stops work, and never touches the rite. Nothing is random.
   - **The kiss:** when it runs out, the curse turns into a small permanent blessing on the same skill (e.g. *Hearth-hardened*: +3% Chandlery), up to +15% per skill across the game.
@@ -161,13 +161,13 @@ Every skill feeds the ritual circle. Followers take over the work you have maste
 - **Promises** *(later chapters)*: optional bonus goals you can take on before a rite, e.g. *"Before the next rite, finish two contracts."* Keeping one pays at the next rite; breaking one costs nothing. Promises never restrict or block play.
 - **No time as a price.** Nothing asks you to wait or leave a rite "steeping"; the only time-like price is a curse, and it passes by working, not waiting.
 - **Length:** the Chapter 1 rite is about 3 minutes. Longer rites (30 minutes to 8 hours) are the target for later chapters, which is where **priming** (queueing a prepared rite so it begins by itself, even offline) matters most.
-- **Rites are presented as events:** a short log plays while it runs ("the third candle gutters… the ward holds").
+- **Rites are presented as events:** the rosette's petals light phase by phase beside a short phase checklist; the rite's story lines ("the third candle gutters… the ward holds") collect in the Grimoire journal.
 - **Rewards of a Major Rite:**
   - all skill caps raised
   - the next material tier
   - a follower
   - a sanctum expansion
-  - a lore chapter
+  - a lore chapter (in the Grimoire journal)
   - Patron favour (from Chapter 3)
 - **Side rites** (optional, some hidden in the Grimoire) give sanctum upgrades, the extra follower, cosmetics and lore. This is where most of the **discovery** lives.
 
@@ -559,9 +559,9 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
 ### UI feedback round (after M7)
 - **Grandmother's notes are no longer a sidebar panel.**
   - The sidebar shows a **chapter tracker**: done steps, the current task with its progress and hint, and one "???" ahead.
-  - Each note appears **once, as a modal story beat** when its step begins. It states plainly what opened and what's next.
+  - Each note appears **once, as a modal story beat** when its step begins. It states plainly what opened and what's next. *(→ changed: it's a task beat; see Text trimmed to a spreadsheet style)*
   - All notes stay readable in the **Grimoire journal**.
-- **Effects are always explicit.** Buffs, omens, upgrades and rewards lead with what they do (generated from the data). Flavour text is one short line at most.
+- **Effects are always explicit.** Buffs, omens, upgrades and rewards lead with what they do (generated from the data). Flavour text is one short line at most. *(→ tightened: flavour lives in names, art, hover titles and the journal; see Text trimmed to a spreadsheet style)*
 
 ### Playtest-readiness round
 - **Rite quality:** Sound / Fine / Resplendent by factors met (0 / 1–2 / 3). Every factor now matters.
@@ -593,7 +593,7 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
 - **Small steps inside every stage,** each a minute or two with a small reward, so there's always a concrete next click.
 - **A faster start:** tier-1 recipes take 2 seconds, and the first levels are eased (levels 2–4 in about 30–60 seconds each). The XP base rose to keep the chapter's length.
 - **Still Night blesses a skill you choose** on release: +50% speed and chance finds ×2 for 15 minutes. It used to bless Scholarship and Ritualism, which rarely mattered.
-- **Notes are task-first.** A new stage shows its steps, rewards, needs and a Go button; grandmother gets one line, and the full note lives in the Grimoire journal. Toasts say what you got; story stays in the rite log, curios and pages.
+- **Notes are task-first.** A new stage shows its steps, rewards, needs and a Go button; grandmother gets one line, and the full note lives in the Grimoire journal. Toasts say what you got; story stays in the rite log, curios and pages. *(→ changed: no quote and no rite log on screen; see Text trimmed to a spreadsheet style)*
 - **Rows never change height on hover:** the rates line always takes its space and is only revealed.
 
 ### Third patch: no grinding, a played rite, insight you spend
@@ -632,7 +632,7 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
 
 ### After the fourth patch
 - **Coin later buys exclusive or rare things:** house projects stay built from items, but later on coin is meant to come in for some exclusive or rare projects and rare rewards. A note for the future; nothing in Chapter 1 yet.
-- **The omen shelf is highlighted to the player,** because omens start only with it and playtesters could miss it: once the Light is placed, a one-time card from grandmother (her shelf is bare; house projects are optional, built from what you make, kept for good) with a Go button; an optional tracker line with have/need chips; a "New" tag and a soft glow on its row; and a one-time toast when it can first be built.
+- **The omen shelf is highlighted to the player,** because omens start only with it and playtesters could miss it: once the Light is placed, a one-time card from grandmother (her shelf is bare; house projects are optional, built from what you make, kept for good) with a Go button *(→ removed; see Text trimmed to a spreadsheet style)*; an optional tracker line with have/need chips; a "New" tag and a soft glow on its row; and a one-time toast when it can first be built.
 - **The docs stay current:** after every patch, CONCEPT and CHAPTER1 are rewritten to describe the current game. History lives in this decision log and in CHAPTER1's changelog, not in the main sections.
 
 ### Rite quality: the kiss and the curse (after the fourth patch)
@@ -654,3 +654,19 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
 - **What:** the design handoff ([design_handoff/](design_handoff/README.md)) applied to the whole game: "Soot & Linen" roles (red acts, verdigris selects or marks done, gold only for rare things, skill colours only on icons, stripes and bars) on warm "Hearth" grounds; Alegreya Sans for the UI and numbers, the SC face only for titles and column headers, Alegreya roman for lore, **no italics** and no dashed outlines; "Folk" ornament that does a job (the embroidery band, brass corners, item tokens, the running row that fills as it works); and a colour, hero band and material per tab. Recipes are a real table with XP/h, and each skill shows its own Inputs and Made-here stock.
 - **Kept on purpose:** the Stores tab (a logged decision from the fourth patch) instead of the handoff's collapsed "All shelves" in the sidebar; Tend stays removed; the shop sells only provisions (house upgrades are projects).
 - **New setting:** row density (roomy 46px, comfortable 36px, compact 32px).
+
+### Text trimmed to a spreadsheet style (after v0.4)
+- **Why:** the designer: too much fluff text. Screens should read like a spreadsheet, where text says something about the gameplay; the flavour belongs in the visuals, not in lore nobody reads. The audit behind it: [research/TEXT_AUDIT.md](research/TEXT_AUDIT.md).
+- **Rules:** numbers and verbs first; one line per thing; labels over sentences; tooltips for the rare "why"; no dead text (content fields no screen shows are deleted). **Puzzle text is gameplay** and stays: riddles, clues, category hints, villager asides (shortened), and the item bridges ("The dream-herb.", "The Kupala herb.", now also in the item chip's tooltip).
+- **Where the story went:** everything written stays in the game, one click away. "The rest of the book" is now the Grimoire **Journal**, one collapsed entry per note, page, curio (listed by name), discovery reveal and the Kindling (its phase lines, finale, lore, and the Resplendent line). The task card, the discovery dialog and the chapter end each carry a collapsed **Story** instead of prose.
+- **What changed on screen:**
+  - Task cards keep steps, needs and Go, and lose grandmother's quote.
+  - The omen-shelf card and its after-build note are gone. The tracker's side-project line, the New tag and the ready toast stay; building it is a toast ("Omen shelf built · Holds 2 omens · 1 Still Night stored · bless a skill: ×2 speed, 2m").
+  - The rite log is a five-row phase checklist (✓ done, ▸ now, · later) beside the rosette.
+  - Contracts show a short label ("Nettle soup") with the full line as its hover title.
+  - Keepsakes state their effect ("+10% offline speed"), with their lore as the hover title.
+  - Rewards, project effects, talents, the away summary, toasts, the how-strip, guidance and settings are short labels. Curio toasts say "+3 insight".
+  - The Threshold nail's page says "Opens: grandmother's hidden note (journal)", so the plot thread shows with the story folded.
+- **A Resplendent rite** is sold as "choose two keepsakes, and the embroidered cloth", no longer "and more lore" (its lore line still exists, in the journal).
+- **Logged decisions this adjusts:** the pillar "Lore is a reward" (still true, now opt-in); the UI feedback round's "each note appears once, as a modal story beat" (a task beat now) and "flavour text is one short line at most" (flavour lives in names, art, hover titles and the journal); the second patch's "story stays in the rite log"; the one-time omen-shelf card from after the fourth patch; DESIGN.md's task-card quote, shelf card, omen-shelf note, rite log, keepsake lore line and the chapter end's finale and lore lines; GRIMOIRE.md §9.2's reveal dialog with the lore line (the reward only now).
+- **No save change:** `settings.introsSeen` stays (the ready toast uses it); an old "omen_shelf" entry is simply unused.

@@ -31,11 +31,11 @@ export function OmenShelf({ state, act }: { state: GameState; act: (c: (s: GameS
       <div className="panel-title">
         <MoonIcon size={18} />
         <h2 id="omens-heading">Omens &amp; blessings</h2>
-        <span className="muted panel-aside num">
+        <span className="muted panel-aside num" title="Full shelf: new omens are lost">
           {stored}/{capacity}
         </span>
       </div>
-      {stored === 0 && <p className="muted">Empty. Omens turn up now and then from any work (about 1 in 100 actions).</p>}
+      {stored === 0 && <p className="muted">Empty · ~1 omen per {Math.round(1 / OMENS.still_night.dropChance)} actions</p>}
       {OMEN_IDS.filter((id) => (state.omens[id] ?? 0) > 0).map((id) => (
         <div key={id} className="omen">
           <div className="omen-jars" aria-label={`${state.omens[id]} stored`}>
@@ -61,13 +61,13 @@ export function OmenShelf({ state, act }: { state: GameState; act: (c: (s: GameS
           title={`Bless a skill with ${OMENS[choosing].name}`}
           effect={`${buffEffects(OMENS[choosing].buff).join(", ")} · ${buffDuration(OMENS[choosing].buff)}`}
           suggest={running}
-          suggestLabel="working on it now"
+          suggestLabel="current"
           onPick={(skill) => act((s) => releaseOmen(s, choosing, skill))}
           onClose={() => setChoosing(null)}
         >
           {buffs.length > 0 && (
             <>
-              <p className="muted">Already active (blessing the same skill again adds {buffDuration(OMENS[choosing].buff)}):</p>
+              <p className="muted">Active · same skill again: +{buffDuration(OMENS[choosing].buff)}</p>
               <ActiveList state={state} buffs={buffs} />
             </>
           )}

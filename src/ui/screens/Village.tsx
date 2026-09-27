@@ -79,14 +79,14 @@ function Shop({ state, act }: { state: GameState; act: Act }) {
     <section className="panel shop" aria-labelledby="shop-heading">
       <div className="panel-title">
         <CoinIcon size={18} />
-        <h2 id="shop-heading">The village shop</h2>
+        <h2 id="shop-heading">Shop</h2>
       </div>
       <span className="label">Provisions</span>
       <ul className="shop-ledger">
         {PROVISIONS.map((id) => {
           const entry = SHOP[id];
           const use = lookupItem(state, entry.item);
-          const purpose = use.inKindling > 0 ? "Needed for the Kindling's offering" : use.usedBy.length > 0 ? `For ${ACTION_DEFS[use.usedBy[0]!].name.toLowerCase()}` : entry.description;
+          const purpose = use.inKindling > 0 ? "Needed for the Kindling's offering" : use.usedBy.length > 0 ? `For ${ACTION_DEFS[use.usedBy[0]!].name.toLowerCase()}` : null;
           return (
             <li key={id} data-skill={producingSkill(entry.item) ?? undefined}>
               <span className="ic" aria-hidden="true">
@@ -98,7 +98,7 @@ function Shop({ state, act }: { state: GameState; act: Act }) {
                 </strong>
                 <br />
                 <span className="eff">
-                  {purpose} · you hold <span className="num">{state.inventory[entry.item] ?? 0}</span>
+                  {purpose && `${purpose} · `}you hold <span className="num">{state.inventory[entry.item] ?? 0}</span>
                 </span>
               </span>
               <BuyButton state={state} id={id} act={act} />
@@ -140,7 +140,10 @@ function RequestCard({ state, index, act }: { state: GameState; index: number; a
   return (
     <article className={`notice ${finishes ? "is-ready" : ""}`}>
       <h3>{req.from}</h3>
-      <p className="lore">{req.text}</p>
+      {/* A short label in plain type; their full line is the hover title. */}
+      <p className="contract-label" title={req.text}>
+        {req.label}
+      </p>
       <ul className="contract-needs">
         {needs.map(([item, qty]) => {
           const done = slot.delivered[item] ?? 0;

@@ -14,6 +14,7 @@ export interface ItemDef {
   name: string;
   /** Where it comes from (a key of ITEM_CATEGORIES). */
   category: string;
+  /** Shown in the item lookup and the chip tooltip. Some are puzzle bridges ("The dream-herb."): keep those. */
   description?: string;
 }
 
@@ -73,13 +74,11 @@ export interface StepDef<S extends string, A extends string> {
 }
 
 export interface NoteDef<S extends string, A extends string> {
-  /** Grandmother's margin note, in her voice (shown in full in the Grimoire journal). */
+  /** Grandmother's margin note, in her voice. Story only: shown in the Grimoire journal (collapsed) and behind the task card's "Story" link. */
   text: string;
-  /** One short line of hers for the task card. */
-  quote?: string;
   /** Small steps toward the goal, each with a reward. Any order; the first unclaimed one is "current". */
   steps?: StepDef<S, A>[];
-  /** Plain-language pointer so nobody needs a wiki. */
+  /** A short gameplay line, shown only for a note without steps (the task card and the tracker). */
   hint?: string;
   /** Skills that become available when this note appears. */
   unlocks: S[];
@@ -99,6 +98,9 @@ export interface PageDef<A extends string> {
 export interface RequestDef<I extends string> {
   /** Who is asking. Used for flavour and for people-specific effects (e.g. Hana's soup). */
   from: string;
+  /** Short label on the contract card ("Nettle soup"). */
+  label: string;
+  /** Their full line, in their voice: the card's hover title. */
   text: string;
   needs: Partial<Record<I, number>>;
   coin: number;
@@ -117,7 +119,6 @@ export type UpgradeEffect =
 
 export interface ShopEntry<I extends string> {
   name: string;
-  description: string;
   cost: number;
   item: I;
   qty: number;
@@ -126,7 +127,8 @@ export interface ShopEntry<I extends string> {
 /** A house project: built once from items you make, then it helps for good. */
 export interface UpgradeDef<I extends string> {
   name: string;
-  description: string;
+  /** One extra fact shown after the generated effect, where the effect alone doesn't say it all. */
+  extra?: string;
   items: Partial<Record<I, number>>;
   effect: UpgradeEffect;
   /** Another project that has to be built first. */
@@ -135,7 +137,6 @@ export interface UpgradeDef<I extends string> {
 
 export interface BuffDef<S extends string, I extends string> {
   name: string;
-  description: string;
   durationMs: number;
   /** Speed bonus per skill (0.5 = 50% faster). */
   speed?: Partial<Record<S, number>>;
@@ -147,7 +148,6 @@ export interface BuffDef<S extends string, I extends string> {
 
 export interface OmenDef<B extends string> {
   name: string;
-  description: string;
   /** Chance per completed action that this omen appears. */
   dropChance: number;
   /** The buff it gives when released. */
@@ -172,8 +172,10 @@ export interface GrimoireEntryDef<I extends string> {
   /** Secrets: written clues you buy with insight, one at a time. */
   clues?: string[];
   reward: GrimoireReward;
-  /** What the reward does, in plain words. */
+  /** What the reward does, numbers first ("+10% offline speed"). */
   rewardText: string;
-  /** Lore line shown when discovered. */
+  /** Story line: shown collapsed on the discovered page and in the Grimoire journal. */
   reveal: string;
+  /** A visible line on the discovered page when the reveal starts a plot thread. */
+  opens?: string;
 }

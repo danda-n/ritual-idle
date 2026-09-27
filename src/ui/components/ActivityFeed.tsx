@@ -31,7 +31,7 @@ export function ActivityFeed({ feed }: { feed: FeedEntry[] }) {
         </span>
         {/* Keyed so each new line fades in; the line itself never changes height. */}
         <span key={latest?.id} className="feed-text" aria-live="polite">
-          {latest ? latest.text : "Quiet in the house."}
+          {latest ? latest.text : "No activity yet"}
         </span>
         {feed.length > 1 && <span className="feed-more muted">{open ? "Hide" : "Recent"}</span>}
       </button>

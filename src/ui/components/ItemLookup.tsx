@@ -12,6 +12,9 @@ import { ItemIcon } from "../art/items";
 import { formatStop, itemName } from "../format";
 import { Modal } from "./Modal";
 
+/** A chip's tooltip: "Look up Mugwort · The dream-herb." (item descriptions are puzzle bridges). */
+const lookUpTitle = (item: ItemId) => `Look up ${itemName(item)}${ITEM_DEFS[item].description ? ` · ${ITEM_DEFS[item].description}` : ""}`;
+
 /**
  * An item as a chip, coloured and marked with the skill that makes it.
  * - `qty` alone: an output ("1 Ash"), with an optional drop `chance`.
@@ -64,7 +67,7 @@ export function ItemChip({ item, qty, need, chance, plain, bare }: { item: ItemI
           e.stopPropagation();
           lookup(item);
         }}
-        title={`Look up ${itemName(item)}`}
+        title={lookUpTitle(item)}
       >
         {!bare && <ItemIcon item={item} size={15} />}
         {itemName(item)}
@@ -89,7 +92,7 @@ export function ItemChip({ item, qty, need, chance, plain, bare }: { item: ItemI
           if (short) setMenu((m) => !m);
           else lookup(item);
         }}
-        title={short ? `Short of ${itemName(item)}: you have ${have}, need ${need}` : `Look up ${itemName(item)}`}
+        title={short ? `Short of ${itemName(item)}: you have ${have}, need ${need}` : lookUpTitle(item)}
       >
         <ItemIcon item={item} size={15} />
         {(need ?? qty) !== undefined && <span className="num">{need ?? qty}</span>}
@@ -125,7 +128,7 @@ export function ItemChip({ item, qty, need, chance, plain, bare }: { item: ItemI
               {producerBlock ? `${ACTION_DEFS[producer].name}: ${formatStop(producerBlock).toLowerCase()}` : `Start ${ACTION_DEFS[producer].name.toLowerCase()}`}
             </button>
           ) : (
-            <span className="muted chip-menu-note">You don't know how to make this yet.</span>
+            <span className="muted chip-menu-note">Recipe unknown</span>
           )}
           <button
             type="button"
@@ -155,11 +158,11 @@ export function ItemLookupModal({ state, item, onClose }: { state: GameState; it
       <p className="muted lookup-category">
         <Icon size={16} /> {ITEM_CATEGORIES[def.category as ItemCategory].name} · you hold <span className="num">{state.inventory[item] ?? 0}</span>
       </p>
-      {def.description && <p className="note-quote">{def.description}</p>}
+      {def.description && <p>{def.description}</p>}
       <dl className="lookup">
         <dt>Comes from</dt>
         <dd>
-          {l.madeBy.length === 0 && !l.sold ? <span className="muted">Not something you know how to get yet.</span> : null}
+          {l.madeBy.length === 0 && !l.sold ? <span className="muted">Unknown</span> : null}
           {l.madeBy.map((id) => (
             <span key={id}>{actionLabel(id)}</span>
           ))}
@@ -167,7 +170,7 @@ export function ItemLookupModal({ state, item, onClose }: { state: GameState; it
         </dd>
         <dt>Used for</dt>
         <dd>
-          {l.usedBy.length === 0 && l.inKindling === 0 && l.wantedBy.length === 0 && l.inRecipes.length === 0 && !l.inUnfound && <span className="muted">Nothing you know of yet.</span>}
+          {l.usedBy.length === 0 && l.inKindling === 0 && l.wantedBy.length === 0 && l.inRecipes.length === 0 && !l.inUnfound && <span className="muted">Nothing known</span>}
           {l.usedBy.map((id) => (
             <span key={id}>{actionLabel(id)}</span>
           ))}

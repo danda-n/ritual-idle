@@ -44,14 +44,14 @@ export function SettingsModal({
             </option>
           ))}
         </select>
-        <p className="muted">This also applies while you're away.</p>
+        <p className="muted">Applies offline too</p>
       </div>
 
       <label className="setting toggle">
         <input type="checkbox" checked={s.grimoireAssist} onChange={(e) => act((st) => setSetting(st, "grimoireAssist", e.target.checked))} />
         <span>
           <strong>Grimoire assist</strong>
-          <span className="muted"> Double insight from every hint source, for the story without the puzzle.</span>
+          <span className="muted"> ×2 insight from all sources</span>
         </span>
       </label>
 

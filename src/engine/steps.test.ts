@@ -50,7 +50,7 @@ describe("stage steps", () => {
     for (const n of NOTES) {
       const steps = ("steps" in n ? n.steps : []) as readonly Step[];
       const rewarded = steps.filter((st) => st.reward);
-      expect(rewarded.length, n.quote).toBeLessThanOrEqual(1);
+      expect(rewarded.length, n.text.slice(0, 40)).toBeLessThanOrEqual(1);
     }
   });
 

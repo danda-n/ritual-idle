@@ -14,7 +14,7 @@ export const GRIMOIRE = {
       plain: ["mugwort", "chamomile"],
     },
     reward: { kind: "offline_bonus", bonus: 0.1 },
-    rewardText: "+10% speed on everything while you're away.",
+    rewardText: "+10% offline speed",
     reveal: "The pillow smells of her. You sleep, and the house keeps working in your dreams.",
   },
   hearth_mark: {
@@ -27,7 +27,7 @@ export const GRIMOIRE = {
       plain: ["charcoal", "salt"],
     },
     reward: { kind: "rite_quality", steps: 1 },
-    rewardText: "Your rites turn out one step better.",
+    rewardText: "+1 rite quality step",
     reveal: "The mark on the hearthstone was always there, under the soot. Now it is yours.",
   },
   threshold_nail: {
@@ -40,8 +40,10 @@ export const GRIMOIRE = {
       plain: ["iron_nail", "stjohns"],
     },
     reward: { kind: "trust_multiplier", multiplier: 1.5 },
-    rewardText: "Village trust grows half again as fast.",
+    rewardText: "Trust gains ×1.5",
     reveal: "Under the threshold, where the nail goes in, a folded note: \"There was a child I could not keep. Find her, if the circle lets you.\"",
+    // A plot thread (the hidden fifth follower): say so on the page, even with the story collapsed.
+    opens: "Opens: grandmother's hidden note (journal)",
   },
   honey_light: {
     name: "Honey-light",
@@ -49,7 +51,7 @@ export const GRIMOIRE = {
     ingredients: ["beeswax_candle", "chamomile", "glass"],
     clues: ["She kept bees for the light, not the honey.", "Something from the garden, gentle and yellow.", "Something that holds light, found broken in the attic."],
     reward: { kind: "cosmetic", id: "honey_light" },
-    rewardText: "A jar of soft light now glows in the window.",
+    rewardText: "Cosmetic: honey jar in the window",
     reveal: "She kept bees for the light, not the honey. The jar hums when you hold it.",
   },
   hanas_soup: {
@@ -58,7 +60,7 @@ export const GRIMOIRE = {
     ingredients: ["nettle", "salt", "bread"],
     clues: ["A soup for a widow, the way grandmother made it.", "Something from the ditch by the lane. It stings.", "A loaf from the village, and what keeps things in."],
     reward: { kind: "patron_coin", from: "Widow Hana", multiplier: 2 },
-    rewardText: "Widow Hana's requests pay double for the rest of the chapter.",
+    rewardText: "Widow Hana's contracts pay ×2 (this chapter)",
     reveal: "Hana tastes it and cries. \"She made it for me the winter my husband died.\"",
   },
 } as const satisfies Record<string, GrimoireEntryDef<ItemId>>;
@@ -78,11 +80,13 @@ export const INSIGHT_GAIN = { failedAttempt: 1, page: 2, curio: 3, request: 2 } 
 /** Ritualism XP for any experiment that doesn't discover something. */
 export const EXPERIMENT_CONSOLATION_XP = 4;
 
-// Curios are read automatically when they drop: a story line and some insight.
-export const CURIO_STORIES = [
-  "A child's wooden horse, one leg whittled shorter than the others. Someone was learning.",
-  "A button of black horn, with a thread of red wool still knotted through it.",
-  "A pressed flower in a folded letter. The letter is blank; the flower is not from any garden here.",
-  "A tin whistle. When you blow it, the dogs in the lane go quiet.",
-  "A key that fits no door in the house. It is warm.",
+// Curios are read automatically when they drop: some insight, and a story for the journal
+// (Grimoire › Curios lists the name; the story opens under it).
+export const CURIOS = [
+  { name: "Wooden horse", story: "A child's wooden horse, one leg whittled shorter than the others. Someone was learning." },
+  { name: "Horn button", story: "A button of black horn, with a thread of red wool still knotted through it." },
+  { name: "Pressed flower", story: "A pressed flower in a folded letter. The letter is blank; the flower is not from any garden here." },
+  { name: "Tin whistle", story: "A tin whistle. When you blow it, the dogs in the lane go quiet." },
+  { name: "Warm key", story: "A key that fits no door in the house. It is warm." },
 ] as const;
+export const CURIO_STORIES = CURIOS.map((c) => c.story);

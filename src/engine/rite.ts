@@ -1,14 +1,16 @@
-import { HEARTH_RITE, OFFERINGS, PART_IDS, QUALITY_AT, RITE_MS, type OfferingId, type PartId } from "../content/rite";
-import type { SkillId } from "../content/skills";
+import { HEARTH_RITE, OFFERINGS, PART_IDS, QUALITIES, QUALITY_AT, RITE_MS, type OfferingId, type PartId } from "../content/rite";
+import { SKILLS, type SkillId } from "../content/skills";
 import { activeBuffs, riteQualitySteps } from "./modifiers";
 import { isRiteRevealed } from "./progress";
 import type { GameState } from "./state";
 import { levelForXp } from "./xp";
 
+const QUALITY_RESPLENDENT = QUALITIES.indexOf("Resplendent");
+
 // The Chapter 1 Major Rite. Its parts are placed in the Circle one by one (see `placePart`); once
 // all are placed and Ritualism is high enough, it takes the action slot for five short phases and
-// runs by itself, offline too. Optional offerings set its quality, which changes only cosmetics
-// and lore. It never fails. Helpers mutate `state`.
+// runs by itself, offline too. Optional offerings set its quality, which changes only keepsakes
+// and a cosmetic. It never fails. Helpers mutate `state`.
 
 export interface Shortfall {
   /** Kindling parts not yet placed in the Circle. */
@@ -25,12 +27,12 @@ export function riteShortfall(state: GameState): Shortfall {
 }
 
 export function canBeginRite(state: GameState): string | null {
-  if (!isRiteRevealed(state)) return "Grandmother's notes haven't reached the circle yet.";
+  if (!isRiteRevealed(state)) return "Not unlocked yet";
   if (state.rite.completed) return "The circle is already awake.";
   if (state.rite.performing) return "The rite is already under way.";
   const s = riteShortfall(state);
   if (s.parts.length > 0) return "Every part of the Kindling must be placed first.";
-  if (s.skills.length > 0) return "Your Ritualism isn't high enough yet.";
+  if (s.skills.length > 0) return s.skills.map((x) => `Needs ${SKILLS[x.skill].name} ${x.need}`).join(" · ");
   return null;
 }
 
@@ -101,4 +103,25 @@ export function riteLog(state: GameState): string[] {
   const p = state.rite.performing;
   if (!p) return [];
   return HEARTH_RITE.phases.slice(0, p.phase + 1).map((ph) => ph.log);
+}
+
+/**
+ * The Grimoire journal's Kindling entry: the log so far, then (once it's done) the lore, and the
+ * second-circle line for a Resplendent rite. Story only; the Circle shows the phase checklist.
+ */
+export function riteJournal(state: GameState): string[] {
+  const done = state.rite.completed;
+  if (!done) return riteLog(state);
+  return [...riteLog(state), HEARTH_RITE.rewards.lore, ...(done.quality === QUALITY_RESPLENDENT ? [HEARTH_RITE.resplendentLore] : [])];
+}
+
+export type PhaseStatus = "done" | "current" | "later";
+
+/** The rite's phase checklist, one row per part: done, the one running now, or later. */
+export function ritePhases(state: GameState): { part: PartId; status: PhaseStatus }[] {
+  const p = state.rite.performing;
+  return HEARTH_RITE.phases.map((ph, i) => ({
+    part: ph.part,
+    status: state.rite.completed || (p && i < p.phase) ? "done" : p && i === p.phase ? "current" : "later",
+  }));
 }

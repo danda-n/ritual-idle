@@ -58,7 +58,7 @@
 .notice:nth-child(3) { --tilt: -0.5deg; }
 .notice::before { content: ""; position: absolute; top: -5px; left: 50%; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #e86a57, #8f2218); box-shadow: 0 2px 3px rgb(0 0 0 / 0.5); }
 .notice h3 { font: var(--weight-medium) 17px / 1.1 var(--font-display); color: #1a1512; }
-.notice .lore { color: #2e2823; font-size: 15px; }
+.notice .contract-label { color: #2e2823; font-size: 15px; font-weight: var(--weight-medium); cursor: help; }
 .notice .pays { font-size: var(--text-sm); color: #2e2823; }
 .notice .pays b { color: #1a1512; font-weight: var(--weight-bold); }
 .notice .muted { color: #3f3832; }
@@ -140,9 +140,6 @@
 .glows.staggered .glow.lit { animation: glow-in 420ms var(--ease-out) both; }
 @keyframes glow-in { 0% { opacity: 0.2; transform: scale(0.4); } 70% { transform: scale(1.35); } 100% { opacity: 1; transform: scale(1); } }
 .page .ledger li { border-bottom-color: rgb(255 240 215 / 0.07); color: var(--color-text-2); }
-.curios { margin: 0; padding-left: var(--space-5); display: flex; flex-direction: column; gap: var(--space-2); }
-.curios li.found { color: var(--color-text); font-family: var(--font-lore); }
-.curios li.missing { color: var(--color-text-3); }
 .secret { border-top: 1px solid rgb(255 240 215 / 0.07); padding-top: var(--space-3); display: flex; flex-direction: column; gap: var(--space-2); align-items: flex-start; }
 .secret h3 { display: flex; gap: var(--space-2); align-items: baseline; font-size: var(--text-md); }
 .how-strip { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); }
@@ -176,7 +173,6 @@
 .part { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 4px; background: rgb(255 240 215 / 0.03); }
 .part .ic { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; color: var(--skill); background: color-mix(in oklch, var(--skill) 16%, transparent); }
 .part strong { font: var(--weight-medium) 17px / 1.1 var(--font-display); letter-spacing: 0.02em; }
-.part .lore { font-size: 14px; }
 .part-body { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .part-needs { display: flex; flex-wrap: wrap; gap: 4px; }
 .part.is-placed { opacity: 0.85; }
@@ -198,8 +194,13 @@
 .ceremony .bar-fill { background: var(--color-stitch); }
 .ceremony-head { display: flex; justify-content: space-between; gap: var(--space-2); align-items: baseline; }
 .ceremony-head strong { font-weight: var(--weight-medium); }
-.rite-log { list-style: none; margin: 0; padding: 0 0 0 var(--space-3); box-shadow: inset 2px 0 0 color-mix(in oklch, var(--place) 50%, transparent); display: flex; flex-direction: column; gap: var(--space-2); }
-.rite-log li { animation: rise-in var(--dur-slow) var(--ease-out); }
+/* The rite's phase checklist: ✓ done, ▸ now, · later (the story lines are in the Grimoire journal) */
+.phase-list { list-style: none; margin: 0; padding: 0 0 0 var(--space-3); box-shadow: inset 2px 0 0 color-mix(in oklch, var(--place) 50%, transparent); display: flex; flex-direction: column; gap: var(--space-1); font-size: var(--text-sm); color: var(--color-text-3); }
+.phase-list li { display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: var(--space-2); align-items: baseline; }
+.phase-list li.is-done { color: var(--color-text-2); }
+.phase-list li.is-done .phase-mark { color: var(--color-success); }
+.phase-list li.is-current { color: var(--color-text); font-weight: var(--weight-medium); }
+.phase-list li.is-current .phase-mark { color: var(--skill); }
 
 /* Experiments at the Circle */
 .exp-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-4); align-items: start; }

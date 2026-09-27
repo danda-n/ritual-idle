@@ -23,7 +23,7 @@ export function formatStop(reason: StopReason): string {
     case "recipe_unknown":
       return "Recipe not yet deciphered";
     case "skill_locked":
-      return "Not yet";
+      return "Skill locked";
     case "rite_in_progress":
       return "The rite is under way";
   }

@@ -5,11 +5,12 @@ import type { GameState } from "../../engine/state";
 import { noteUnlocks, rewardText, stepPlace, stepProgress, stepsOf, taskName, taskPlace, type Place } from "../tasks";
 import { ItemChip } from "./ItemLookup";
 import { Modal } from "./Modal";
+import { Story } from "./Story";
 
 /**
  * A new chapter step, task first: what to do (its small steps, each with its reward), what it
- * needs, and a Go button to the first open step. Grandmother's line is one short quote at the end;
- * the full note is in the Grimoire journal.
+ * needs, and a Go button to the first open step. Grandmother's note sits behind a collapsed "Story"
+ * link (it's also in the Grimoire journal).
  */
 export function TaskCard({ note, state, onClose, onGo }: { note: Note; state: GameState; onClose: () => void; onGo: (p: Place) => void }) {
   const unlocks = noteUnlocks(note);
@@ -71,7 +72,7 @@ export function TaskCard({ note, state, onClose, onGo }: { note: Note; state: Ga
           Continue
         </button>
       )}
-      {"quote" in note && <p className="task-quote">“{note.quote}” — grandmother</p>}
+      <Story lines={[note.text]} />
     </Modal>
   );
 }

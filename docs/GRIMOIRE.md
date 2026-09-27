@@ -22,12 +22,9 @@ The Grimoire is the game's manual, recipe book and lore journal in one.
 | Section | Contents |
 |---|---|
 | **Hidden recipes** | One page each: what it gives, the next step, Belongs / Crossed out / Still possible, the hints, and your tries |
-| **Discovered** | Found recipes and secrets, with what they do |
-| **Grandmother's notes** | Every note, as a journal |
-| **Deciphered pages** | The story pages |
-| **Curios** | The collection (n/5), with stories |
+| **Discovered** | Found recipes and secrets, with what they do (the reveal line collapsed under "Story") |
 | **Secrets** | How many are left, and how to find them |
-| **The black page** | The Chapter 3 teaser, once page 6 is read |
+| **Journal** | All the story, one collapsed entry per line of it (a one-line title that opens to its text): grandmother's notes (titled by task), deciphered pages ("Teaches: Iron ward"), curios (n/5, by name), discoveries (the reveal lines), the Kindling (its phase lines, finale and lore), and the black page (the Chapter 3 teaser, once page 6 is read) |
 
 The "where does X come from / what is it for" lookup lives on every item name (click it), not in the Grimoire.
 
@@ -56,8 +53,8 @@ The ritual circle in the sanctum is where experiments happen. **Experiments are 
 1. Open a silhouette in the Grimoire and choose **Attune the circle**.
 2. The circle shows as many slots as the recipe has ingredients (3 in Chapter 1, 3–4 later). Ingredient order never matters.
 3. Place one item in each slot. You can use only items you currently hold, and proven-wrong items are hidden by default (a toggle shows them).
-4. **Result:** the circle glows once for each correct item: *"The circle stirs twice."*
-5. If every slot is correct, **the recipe is discovered.** It gets a reveal and a lore line, and its reward applies at once and permanently (discovering it *is* making it).
+4. **Result:** the circle glows once for each correct item, with one plain line under it: "2 of 3 right (not which) · swap one at a time".
+5. If every slot is correct, **the recipe is discovered.** A dialog shows the reward (its reveal line waits under "Story", and in the journal), and the reward applies at once and permanently (discovering it *is* making it).
 
 ### 4.2 Free experiment (hunting secrets)
 - If the Circle isn't attuned, you place exactly 3 things (every Chapter 1 secret is 3 things).
@@ -102,7 +99,7 @@ The Grimoire keeps the notes, so the player doesn't have to.
 | A wrong try at the Circle (attuned) | +1 |
 | A deciphered page past the sixth | +2 |
 | A curio story (attic, chest) | +3 |
-| A village contract that mentions a recipe (the aside is a free hint too: *"your grandmother made me a pillow once…"*) | +2 |
+| A village contract that mentions a recipe (the aside is a free hint too: "Grandmother made me a pillow for bad dreams. Bitter-smelling."; it stays on the recipe's page as "Heard in the village") | +2 |
 | Marginalia (a Scholarship talent at level 6; *Footnotes* at 12 gives +2) | +1 per page |
 | Divination vision (Chapter 3+) | Reveals one item's right/wrong status directly |
 
@@ -148,8 +145,8 @@ The Grimoire keeps the notes, so the player doesn't have to.
 
 | Secret | Recipe | Reward |
 |---|---|---|
-| **Honey-light** | Beeswax candle + Chamomile + Glass | A cosmetic: a softly glowing jar in the sanctum window, plus a lore line about grandmother's bees |
-| **Hana's soup** | Nettle + Salt + Bread | +trust with the widow Hana, whose requests pay double for the rest of the chapter, plus a lore line: *"She made it for me the winter my husband died."* |
+| **Honey-light** | Beeswax candle + Chamomile + Glass | A cosmetic: a softly glowing jar in the sanctum window. Its reveal line (grandmother's bees) goes to the journal |
+| **Hana's soup** | Nettle + Salt + Bread | Widow Hana's contracts pay ×2 for the rest of the chapter. Its reveal line (*"She made it for me the winter my husband died."*) goes to the journal. Her contract's label stays "Nettle soup" and her name "Widow Hana": clue 1 leans on them |
 
 ---
 
@@ -157,33 +154,35 @@ The Grimoire keeps the notes, so the player doesn't have to.
 Every screen answers "what is this for, and what do I do next?". Gameplay, not lore. The logic is in `src/ui/guidance.ts` (tested); the screens are `src/ui/screens/Grimoire.tsx` and `Circle.tsx`.
 
 ### 9.1 The Grimoire
-- **A three-step strip** at the top until the first discovery: *1 · Collect insight → 2 · Buy a hint → 3 · Try it at the Circle*.
+- **A three-step strip** at the top until the first discovery, labels only: *1 · Earn insight ✦ → 2 · Buy a hint (4–6 ✦) → 3 · Test at the Circle (1 glow per right item)*.
 - **The pool:** "✦ N insight" in candle gold.
-- **The index:** *Hidden recipes* (each with what it **gives** and "n/3 known"), *Discovered*, then *The rest of the book*: grandmother's notes, deciphered pages, curios (n/5), secrets, and the black page once every page is read.
+- **The index:** *Hidden recipes* (each with what it **gives** and "n/3 known"), *Discovered*, *Secrets* (n/2), then the **Journal**: grandmother's notes, deciphered pages, curios (n/5), discoveries, the Kindling (once the rite begins), and the black page once every page is read. Every journal entry is a one-line title, collapsed; the story opens under it.
 - **A hidden recipe's page:**
   - **Gives** first (the reward, so the player knows why to bother).
-  - Then a **Next step** box that follows progress: "Try any 3 things at the Circle, or buy a hint" → "2 of 3 known: find the last one" → "You know all 3: make it at the Circle". Its button attunes the Circle and goes there.
+  - Then a **Next step** box that follows progress: "Try any 3 things at the Circle, or buy a hint" (under it: "1 glow per right item · wrong try +1 ✦") → "2 of 3 known: find the last one" ("Swap one at a time") → "You know all 3: make it at the Circle". Its button attunes the Circle and goes there.
   - Then *Belongs* (proven, or named by a hint), *Crossed out*, and *Still possible* (things held that aren't ruled out).
-  - The hints come last: the riddle, then buy buttons ("Name one ingredient · 6 ✦", disabled with the shortfall in their tooltip), and one line on where insight comes from.
+  - The hints come last: the riddle, what a villager said ("Heard in the village · Widow Hana", once her contract is done), then buy buttons ("Name one ingredient · 6 ✦", disabled with the shortfall in their tooltip), and one line on where insight comes from.
+- **A discovered recipe's page:** Gives, its ingredients, and a collapsed "Story" with the reveal line. The Threshold nail also shows "Opens: grandmother's hidden note (journal)", so the plot thread is visible with the story folded.
   - Your tries, folded, each with its glow dots.
-- **Secrets:** how many are left, each with its clues to buy, and "set the Circle to Free experiment and try sets of 3".
+- **Secrets:** "N left · clues 4 ✦ · test sets of 3 in Free experiment", each with its clues to buy.
 
 ```
 ┌──────────────────────────────┬──────────────────────────────────────┐
 │ ✦ 7 insight                  │  DREAM PILLOW              3 things  │
-│ HIDDEN RECIPES               │  Gives  +10% speed while you're away │
+│ HIDDEN RECIPES               │  Gives  +10% offline speed           │
 │  Dream pillow   1/3 known    │ ┌ Next step ───────────────────────┐ │
-│   Gives: +10% speed away…    │ │ 1 of 3 known: find the last 2    │ │
-│  Hearth mark    0/3 known    │ │          [ Attune the circle ]   │ │
-│  Threshold nail 0/3 known    │ └──────────────────────────────────┘ │
-│ DISCOVERED                   │  Belongs:        Mugwort (1/3)       │
-│ THE REST OF THE BOOK         │  Crossed out:    Salt · Ash · Tallow │
-│  Grandmother's notes (5)     │  Still possible: Chamomile · Rags …  │
-│  Deciphered pages (4)        │  HINTS                               │
-│  Curios (1/5)                │   I   "…for sleep that listens…"     │
-│  Secrets                     │   II  [ Where each comes from · 4 ✦ ]│
+│   Gives: +10% offline speed  │ │ 1 of 3 known: find the last 2    │ │
+│  Hearth mark    0/3 known    │ │ Swap one at a time               │ │
+│  Threshold nail 0/3 known    │ │     [ Keep trying at the Circle ]│ │
+│ DISCOVERED                   │ └──────────────────────────────────┘ │
+│  Secrets             0/2     │  Belongs:        Mugwort (1/3)       │
+│ JOURNAL                      │  Crossed out:    Salt · Ash · Tallow │
+│  Grandmother's notes    5    │  Still possible: Chamomile · Rags …  │
+│  Deciphered pages       4    │  HINTS                               │
+│  Curios               1/5    │   I   "…for sleep that listens…"     │
+│                              │   II  [ Where each comes from · 4 ✦ ]│
 │                              │   III Mugwort. [ Name another · 6 ✦ ]│
-│                              │  ▸ Your tries (2)                    │
+│                              │  › Your tries (2)                    │
 └──────────────────────────────┴──────────────────────────────────────┘
 ```
 
@@ -191,7 +190,7 @@ Every screen answers "what is this for, and what do I do next?". Gameplay, not l
 - **The Kindling panel comes first** (the chapter's parts and the rite; see [DESIGN.md](DESIGN.md)). Experiments are a separate panel below it, marked optional, once they open.
 - A step strip (① choose what to work on → ② pick things → ③ place them), with the current step lit.
 - A "Working on" line showing the reward and what's known.
-- A plain explanation under every result, honest that the glow is a count ("2 of 3 right, but not which. Swap one thing at a time…"). "Closer!" appears when a try beats your best.
+- A plain line under every result, honest that the glow is a count: "0 right · all crossed out", "2 of 3 right (not which) · swap one at a time", "Two of those match a secret. Swap the third." (the "almost" flicker), "No match · a secret answers only its exact 3". "Closer!" appears when a try beats your best.
 
 ```
             ·  ˚  ·
@@ -204,13 +203,9 @@ Every screen answers "what is this for, and what do I do next?". Gameplay, not l
          ✦ Discovered: Dream pillow ✦
 ```
 
-**Glow lines** *(flavour by count)*:
-- 0: *"The chalk stays cold."*
-- 1: *"The circle stirs once."*
-- 2: *"The circle stirs twice."*
-- all: *"The circle drinks it in."*
+The glow dots carry the moment; there are no flavour lines by count.
 
-A discovery opens its own reveal dialog with the lore line and the reward.
+A discovery opens its own dialog with the rosette and the reward. The reveal line sits under a collapsed "Story" there, on the discovered page, and in the journal.
 
 ---
 
@@ -228,8 +223,9 @@ dream_pillow: {
     plain:    ["mugwort", "chamomile"],            // named in this order
   },
   reward: { kind: "offline_bonus", bonus: 0.1 },   // +10% speed while away
-  rewardText: "+10% speed on everything while you're away.",
-  reveal: "The pillow smells of her. …",
+  rewardText: "+10% offline speed",               // numbers first
+  reveal: "The pillow smells of her. …",           // story: collapsed on its page, and in the journal
+  // opens?: "Opens: grandmother's hidden note (journal)"   (a visible line for a plot thread)
 }
 // Secrets have `clues: [three lines]` instead of `hints`.
 // INSIGHT_COST = { category: 4, name: 6, clue: 4 }
@@ -271,3 +267,4 @@ One short entry per round, oldest first. The reasons are in [CONCEPT.md's decisi
 - **Third patch:** insight became one pool you spend on the hint you choose (categories, a name, a secret's clue); experiments open with the first insight; insight no longer toasts.
 - **Fourth patch:** the list of hidden recipes shows what each gives; item icons in the Circle's picker and slots.
 - **After the fourth patch:** this doc now describes the current Grimoire, with this changelog.
+- **Text trimmed to a spreadsheet style:** "The rest of the book" is now the **Journal**, one collapsed entry per story line (notes, pages, curios by name, discoveries, the Kindling, the black page). The discovery dialog shows the reward only, with the reveal under "Story". Short rewards ("+10% offline speed"), a label-only how-strip, shorter result lines (keeping "not which" and "swap one at a time"). Riddles, clues, category hints, asides and item bridges are unchanged in meaning; the Threshold nail's page says it opens grandmother's hidden note.

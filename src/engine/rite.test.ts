@@ -10,7 +10,7 @@ import { keepsakePicksLeft } from "./keepsakes";
 import { catchUp } from "./offline";
 import { currentNote, isFeatureOpen, isRiteRevealed, isSkillUnlocked, stageChoices } from "./progress";
 import { REQUESTS } from "../content/requests";
-import { canOffer, offeringsMet, qualityFor, riteLog, riteShortfall } from "./rite";
+import { canBeginRite, canOffer, offeringsMet, qualityFor, riteJournal, riteLog, ritePhases, riteShortfall } from "./rite";
 import { deserialize } from "./save";
 import { advance, blockReason, startAction } from "./simulate";
 import { newGame, type GameState } from "./state";
@@ -50,6 +50,31 @@ describe("requirements", () => {
     expect(short.skills).toEqual([{ skill: "ritualism", have: 1, need: HEARTH_RITE.skills.ritualism }]);
     expect(beginRite(s).ok).toBe(false);
     expect(beginRite(ready({ kindling: ["light"] })).ok).toBe(false);
+  });
+
+  it("says why it can't begin, in a label", () => {
+    expect(canBeginRite(ready({ skills: { ...newGame().skills } }))).toBe(`Needs Ritualism ${HEARTH_RITE.skills.ritualism}`);
+    expect(canBeginRite({ ...ready(), notesRevealed: RITE_NOTE })).toBe("Not unlocked yet");
+  });
+});
+
+describe("the phase checklist and the journal entry", () => {
+  it("lists the five phases as done, current or later", () => {
+    expect(ritePhases(ready()).map((p) => p.status)).toEqual(["later", "later", "later", "later", "later"]);
+    const mid = advance(okay(beginRite(ready())), 2.5 * HEARTH_RITE.phaseMs).state;
+    expect(ritePhases(mid)).toEqual(HEARTH_RITE.phases.map((ph, i) => ({ part: ph.part, status: i < 2 ? "done" : i === 2 ? "current" : "later" })));
+    const done = advance(okay(beginRite(ready())), RITE_MS).state;
+    expect(ritePhases(done).every((p) => p.status === "done")).toBe(true);
+  });
+
+  it("the journal gets the log so far, then the finale and lore, and the second-circle line only for Resplendent", () => {
+    expect(riteJournal(ready())).toEqual([]);
+    const mid = advance(okay(beginRite(ready())), 2.5 * HEARTH_RITE.phaseMs).state;
+    expect(riteJournal(mid)).toEqual(riteLog(mid));
+    const done = advance(okay(beginRite(ready())), RITE_MS).state;
+    expect(riteJournal(done)).toEqual([...HEARTH_RITE.phases.map((ph) => ph.log), HEARTH_RITE.finale, HEARTH_RITE.rewards.lore]);
+    const resplendent = { ...done, rite: { ...done.rite, completed: { quality: QUALITIES.indexOf("Resplendent"), endingSeen: false } } };
+    expect(riteJournal(resplendent).at(-1)).toBe(HEARTH_RITE.resplendentLore);
   });
 });
 

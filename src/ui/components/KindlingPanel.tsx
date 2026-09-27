@@ -4,10 +4,11 @@ import { HEARTH_RITE, OFFERINGS, PART_DEFS, PART_IDS, QUALITIES, RITE_MS, type O
 import { SKILLS } from "../../content/skills";
 import { beginRite, canPlace, chooseStage, placePart, type Result } from "../../engine/commands";
 import { stageChoices } from "../../engine/progress";
-import { canBeginRite, canOffer, offeringsMet, riteLog, riteQuality, riteShortfall } from "../../engine/rite";
+import { canBeginRite, canOffer, offeringsMet, ritePhases, riteQuality, riteShortfall } from "../../engine/rite";
+import { KEEPSAKE_PICKS } from "../../content/keepsakes";
 import type { GameState } from "../../engine/state";
 import { SkillIcon } from "../art/icons";
-import { formatClock } from "../format";
+import { formatClock, itemName } from "../format";
 import { useRecentFx } from "../useFx";
 import type { FxEvent } from "../fx";
 import { partState } from "../tasks";
@@ -20,7 +21,8 @@ const pickPlaced = (e: FxEvent) => (e.kind === "placed" ? [e.part] : []);
 /**
  * The Kindling, built in the Circle one part at a time. Each part lists what it needs (as chips,
  * so a short one offers to start what makes it) and a Place button. Parts not reached yet show only
- * their name and the skill they'll bring. Once all five are placed, the rite itself.
+ * their name and the skill they'll bring. Once all five are placed, the rite itself; while it runs
+ * and after, a five-row phase checklist (the story lines are in the Grimoire journal).
  */
 export function KindlingPanel({ state, act }: { state: GameState; act: Act }) {
   const fresh = useRecentFx(pickPlaced, 1600);
@@ -51,7 +53,7 @@ export function KindlingPanel({ state, act }: { state: GameState; act: Act }) {
         {(performing || completed) && (
           <>
             {performing && <Running state={state} />}
-            <RiteLog lines={riteLog(state)} />
+            <PhaseList state={state} />
           </>
         )}
         {allPlaced && !performing && !completed && <Perform state={state} act={act} />}
@@ -70,7 +72,9 @@ function PartRow({ part, state, act, fresh }: { part: PartId; state: GameState; 
         <span className="ic" aria-hidden="true">✓</span>
         <div className="part-body">
           <strong>{def.name}</strong>
-          <p className="lore">{def.placed}</p>
+          <span className="muted part-later num">
+            {(Object.entries(def.items) as [ItemId, number][]).map(([item, n]) => `${n} ${itemName(item).toLowerCase()}`).join(" · ")}
+          </span>
         </div>
       </li>
     );
@@ -162,7 +166,7 @@ function Perform({ state, act }: { state: GameState; act: Act }) {
   const met = offeringsMet(state, chosen);
   return (
     <div className={`perform ${reason === null ? "is-ready" : ""}`}>
-      <h3>Wake it</h3>
+      <h3>The rite</h3>
       <ul className="ledger">
         {Object.entries(HEARTH_RITE.skills).map(([skill, need]) => {
           const missing = short.find((x) => x.skill === skill);
@@ -179,7 +183,7 @@ function Perform({ state, act }: { state: GameState; act: Act }) {
           );
         })}
       </ul>
-      <p className="muted">About {Math.round(RITE_MS / 60_000)} minutes. It runs by itself, even while you're away, and never fails.</p>
+      <p className="muted num">{Math.round(RITE_MS / 60_000)} min · runs offline · can't fail</p>
       <h3>Offerings (optional)</h3>
       <ul className="offerings">
         {OFFERINGS.map((o) => {
@@ -203,8 +207,8 @@ function Perform({ state, act }: { state: GameState; act: Act }) {
           );
         })}
       </ul>
-      <p className="muted">
-        Outcome: <strong>{QUALITIES[riteQuality(state, chosen)]}</strong> · none = Sound, 1–2 = Fine (choose a keepsake), all 3 = Resplendent (choose two, and more lore). The story rewards are the same either way.
+      <p className="muted" title="The story rewards are the same at every quality.">
+        Outcome: <strong>{QUALITIES[riteQuality(state, chosen)]}</strong> · none = Sound · 1–2 = Fine: choose {pickWord(KEEPSAKE_PICKS[1])} · all 3 = Resplendent: choose {pickWord(KEEPSAKE_PICKS[2])}, and the embroidered cloth
       </p>
       <button className="btn btn-primary" disabled={reason !== null} title={reason ?? undefined} onClick={() => act((s) => beginRite(s, chosen))}>
         Begin the rite
@@ -227,18 +231,24 @@ function Running({ state }: { state: GameState }) {
       </div>
       <TimedBar key={`phase${p.phase}`} progress={p.phaseMs / HEARTH_RITE.phaseMs} durationMs={HEARTH_RITE.phaseMs} label="Phase progress" />
       <p className="muted">
-        Outcome: <strong>{QUALITIES[riteQuality(state)]}</strong> · it runs by itself.
+        Outcome: <strong>{QUALITIES[riteQuality(state)]}</strong>
       </p>
     </div>
   );
 }
 
-export function RiteLog({ lines }: { lines: string[] }) {
+const pickWord = (n: number) => (n === 1 ? "a keepsake" : `${n === 2 ? "two" : n} keepsakes`);
+
+/** The rite's five phases, one per part: ✓ done, ▸ running now, · later. */
+function PhaseList({ state }: { state: GameState }) {
   return (
-    <ol className="rite-log" aria-live="polite">
-      {lines.map((l) => (
-        <li key={l} className="note-quote">
-          {l}
+    <ol className="phase-list" aria-label="Rite phases">
+      {ritePhases(state).map(({ part, status }) => (
+        <li key={part} className={`is-${status}`} data-skill={PART_DEFS[part].skill} aria-current={status === "current" ? "step" : undefined}>
+          <span className="phase-mark" aria-hidden="true">
+            {status === "done" ? "✓" : status === "current" ? "▸" : "·"}
+          </span>
+          {PART_DEFS[part].name}
         </li>
       ))}
     </ol>

@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
-import { CURIO_STORIES, GRIMOIRE_DEFS, INSIGHT_GAIN, type GrimoireId } from "../../content/grimoire";
+import { ACTION_DEFS, type ActionId } from "../../content/actions";
+import { CURIOS, GRIMOIRE_DEFS, INSIGHT_COST, INSIGHT_GAIN, type GrimoireId } from "../../content/grimoire";
 import { PAGES } from "../../content/pages";
 import { REQUESTS } from "../../content/requests";
 import { attune, buyHint, type Result } from "../../engine/commands";
@@ -7,15 +8,33 @@ import { GRIMOIRE_IDS, hintCost, isDiscovered, isSilhouetteVisible, progressOf, 
 import { isFeatureOpen } from "../../engine/progress";
 import { pagesRead, revealedNotes } from "../../engine/progress";
 import { EXPERIMENTS_NOTE } from "../../content/notes";
+import { HEARTH_RITE, QUALITIES } from "../../content/rite";
+import { riteJournal } from "../../engine/rite";
 import type { GameState } from "../../engine/state";
 import { BookIcon, CircleRiteIcon, ScrollIcon } from "../art/icons";
 import { ItemChip } from "../components/ItemLookup";
 import { PlaceHero } from "../components/PlaceHero";
+import { Story } from "../components/Story";
+import { noteTitle } from "../tasks";
 import { itemName } from "../format";
 import { INSIGHT_SOURCES, recipeGuide, recipeKnowledge } from "../guidance";
 
 type Act = (command: (s: GameState) => Result) => unknown;
-type Selection = { kind: "recipe"; id: GrimoireId } | { kind: "notes" } | { kind: "pages" } | { kind: "curios" } | { kind: "secrets" } | { kind: "forbidden" };
+type Selection =
+  | { kind: "recipe"; id: GrimoireId }
+  | { kind: "notes" }
+  | { kind: "pages" }
+  | { kind: "curios" }
+  | { kind: "discoveries" }
+  | { kind: "kindling" }
+  | { kind: "secrets" }
+  | { kind: "forbidden" };
+
+const HINT_COSTS = Object.values(INSIGHT_COST);
+/** Where curios turn up, from the data: "Search the attic 0.5% · Open grandmother's chest 1%". */
+const CURIO_SOURCES = (Object.keys(ACTION_DEFS) as ActionId[]).flatMap((id) =>
+  (ACTION_DEFS[id].outputs as readonly { item: string; chance?: number }[]).filter((o) => o.item === "curio").map((o) => `${ACTION_DEFS[id].name} ${Math.round((o.chance ?? 1) * 1000) / 10}%`),
+);
 
 export function Grimoire({ state, act, onAttuned }: { state: GameState; act: Act; onAttuned: () => void }) {
   const silhouettes = GRIMOIRE_IDS.filter((id) => GRIMOIRE_DEFS[id].kind === "hidden" && isSilhouetteVisible(state, id) && !isDiscovered(state, id));
@@ -23,6 +42,8 @@ export function Grimoire({ state, act, onAttuned }: { state: GameState; act: Act
   const secretsTotal = GRIMOIRE_IDS.filter((id) => GRIMOIRE_DEFS[id].kind === "secret").length;
   const secretsLeft = GRIMOIRE_IDS.filter((id) => GRIMOIRE_DEFS[id].kind === "secret" && !isDiscovered(state, id)).length;
   const blackPageRead = pagesRead(state).length >= PAGES.length;
+  const curiosFound = Math.min(state.stats.curiosRead, CURIOS.length);
+  const riteStarted = !!state.rite.performing || !!state.rite.completed;
   const [sel, setSel] = useState<Selection>(silhouettes[0] ? { kind: "recipe", id: silhouettes[0] } : { kind: "pages" });
 
   const item = (s: Selection, label: string, meta?: ReactNode, extra?: ReactNode) => {
@@ -57,13 +78,15 @@ export function Grimoire({ state, act, onAttuned }: { state: GameState; act: Act
       {discovered.length === 0 && isFeatureOpen(state, "experiments") && (
       <ol className="how-strip" aria-label="How the Grimoire works">
         <li>
-          <strong>1 · Collect insight</strong> From wrong tries at the Circle, pages past the sixth, curios and some villagers.
+          <strong>1 · Earn insight ✦</strong>
         </li>
         <li>
-          <strong>2 · Buy a hint</strong> Spend it on what you want: a recipe's categories, one ingredient named, or a secret's clue.
+          <strong>
+            2 · Buy a hint ({Math.min(...HINT_COSTS)}–{Math.max(...HINT_COSTS)} ✦)
+          </strong>
         </li>
         <li>
-          <strong>3 · Try it at the Circle</strong> It glows once per right thing. The right set makes it, and its bonus is yours for good.
+          <strong>3 · Test at the Circle (1 glow per right item)</strong>
         </li>
       </ol>
       )}
@@ -75,7 +98,7 @@ export function Grimoire({ state, act, onAttuned }: { state: GameState; act: Act
         </p>
         <span className="label">Hidden recipes</span>
         {silhouettes.length === 0 ? (
-          <p className="muted">{isFeatureOpen(state, "experiments") ? "None left to find." : "They show here once experiments open at the Circle."}</p>
+          <p className="muted">{isFeatureOpen(state, "experiments") ? "None left" : "Open with experiments"}</p>
         ) : (
           <ul>
             {silhouettes.map((id) => {
@@ -91,12 +114,15 @@ export function Grimoire({ state, act, onAttuned }: { state: GameState; act: Act
             <ul>{discovered.map((id) => item({ kind: "recipe", id }, GRIMOIRE_DEFS[id].name))}</ul>
           </>
         )}
-        <span className="label">The rest of the book</span>
+        <ul>{item({ kind: "secrets" }, "Secrets", `${secretsTotal - secretsLeft}/${secretsTotal}`)}</ul>
+        {/* The story, all of it, collapsed by entry: nothing here is needed to play. */}
+        <span className="label">Journal</span>
         <ul>
-          {item({ kind: "notes" }, "Grandmother's notes", state.notesRevealed)}
+          {item({ kind: "notes" }, "Grandmother's notes", state.notesRevealed + (state.experimentsOpen ? 1 : 0))}
           {item({ kind: "pages" }, "Deciphered pages", pagesRead(state).length)}
-          {item({ kind: "curios" }, "Curios", `${Math.min(state.stats.curiosRead, CURIO_STORIES.length)}/${CURIO_STORIES.length}`)}
-          {item({ kind: "secrets" }, "Secrets")}
+          {item({ kind: "curios" }, "Curios", `${curiosFound}/${CURIOS.length}`)}
+          {discovered.length > 0 && item({ kind: "discoveries" }, "Discoveries", discovered.length)}
+          {riteStarted && item({ kind: "kindling" }, "The Kindling")}
           {blackPageRead && item({ kind: "forbidden" }, "The black page")}
         </ul>
       </nav>
@@ -110,16 +136,24 @@ export function Grimoire({ state, act, onAttuned }: { state: GameState; act: Act
               <ScrollIcon size={18} />
               <h2>Curios</h2>
               <span className="muted panel-aside num">
-                {Math.min(state.stats.curiosRead, CURIO_STORIES.length)}/{CURIO_STORIES.length}
+                {curiosFound}/{CURIOS.length}
               </span>
             </div>
-            <p className="muted">Rare finds from the attic (0.5%) and grandmother's chest (1%). Each one also brings {INSIGHT_GAIN.curio} insight.</p>
-            <ol className="curios">
-              {CURIO_STORIES.map((story, i) => (
-                <li key={i} className={i < state.stats.curiosRead ? "found" : "missing"}>
-                  {i < state.stats.curiosRead ? story : "Not found yet"}
-                </li>
-              ))}
+            <p className="muted num">
+              {CURIO_SOURCES.join(" · ")} · +{INSIGHT_GAIN.curio} insight each
+            </p>
+            <ol className="journal">
+              {CURIOS.map((c, i) =>
+                i < curiosFound ? (
+                  <li key={c.name}>
+                    <Story summary={c.name} lines={[c.story]} />
+                  </li>
+                ) : (
+                  <li key={c.name} className="missing">
+                    Not found yet
+                  </li>
+                ),
+              )}
             </ol>
           </>
         )}
@@ -131,10 +165,43 @@ export function Grimoire({ state, act, onAttuned }: { state: GameState; act: Act
             </div>
             <ol className="journal">
               {[...revealedNotes(state), ...(state.experimentsOpen ? [EXPERIMENTS_NOTE] : [])].map((n) => (
-                <li key={n.text} className="note-quote">
-                  {n.text}
+                <li key={n.text}>
+                  <Story summary={noteTitle(n)} lines={[n.text]} />
                 </li>
               ))}
+            </ol>
+          </>
+        )}
+        {sel.kind === "discoveries" && (
+          <>
+            <div className="panel-title">
+              <BookIcon size={18} />
+              <h2>Discoveries</h2>
+            </div>
+            <ol className="journal">
+              {discovered.map((id) => (
+                <li key={id}>
+                  <Story summary={GRIMOIRE_DEFS[id].name} meta={GRIMOIRE_DEFS[id].rewardText} lines={[GRIMOIRE_DEFS[id].reveal]} />
+                  {GRIMOIRE_DEFS[id].opens && <p className="muted">Plot thread: grandmother's hidden note</p>}
+                </li>
+              ))}
+            </ol>
+          </>
+        )}
+        {sel.kind === "kindling" && (
+          <>
+            <div className="panel-title">
+              <ScrollIcon size={18} />
+              <h2>The Kindling</h2>
+            </div>
+            <ol className="journal">
+              <li>
+                <Story
+                  summary={HEARTH_RITE.name}
+                  meta={state.rite.completed ? `Performed: ${QUALITIES[state.rite.completed.quality]}` : `Phase ${(state.rite.performing?.phase ?? 0) + 1} of ${HEARTH_RITE.phases.length}`}
+                  lines={riteJournal(state)}
+                />
+              </li>
             </ol>
           </>
         )}
@@ -147,7 +214,7 @@ export function Grimoire({ state, act, onAttuned }: { state: GameState; act: Act
                 {secretsTotal - secretsLeft}/{secretsTotal}
               </span>
             </div>
-            <p>{secretsLeft > 0 ? `${secretsLeft} left to find. Read clues with insight, then set the Circle to Free experiment and try sets of 3.` : "You found every secret in this chapter."}</p>
+            <p className="num">{secretsLeft > 0 ? `${secretsLeft} left · clues ${INSIGHT_COST.clue} ✦ · test sets of 3 in Free experiment` : "All found"}</p>
             {GRIMOIRE_IDS.filter((id) => GRIMOIRE_DEFS[id].kind === "secret").map((id) => (
               <SecretEntry key={id} state={state} id={id} act={act} />
             ))}
@@ -160,7 +227,7 @@ export function Grimoire({ state, act, onAttuned }: { state: GameState; act: Act
               <h2>The black page</h2>
             </div>
             <p className="note-quote">Ink of the Unwritten.</p>
-            <p className="muted">The ink is too dark to read. Not yet.</p>
+            <p className="muted">Readable in Chapter 3</p>
           </>
         )}
       </section>
@@ -200,7 +267,6 @@ function SecretEntry({ state, id, act }: { state: GameState; id: GrimoireId; act
               {c}
             </p>
           ))}
-          {read === 0 && <p className="muted">No clues read yet.</p>}
           <BuyHint state={state} id={id} kind="clue" label={read === 0 ? "Read a clue" : "Read another clue"} act={act} />
         </>
       )}
@@ -229,7 +295,7 @@ function SilhouettePage({ state, id, act, onAttuned }: { state: GameState; id: G
       <div className="next-step" role="note">
         <span className="next-step-label">Next step</span>
         <strong>{guide.headline}</strong>
-        <p>{guide.detail}</p>
+        {guide.detail && <p>{guide.detail}</p>}
         {guide.action && (
           <button className="btn btn-primary btn-sm" onClick={() => act((s) => attune(s, id)) && onAttuned()}>
             <CircleRiteIcon size={16} /> {guide.action}
@@ -240,7 +306,7 @@ function SilhouettePage({ state, id, act, onAttuned }: { state: GameState; id: G
       <dl className="proofs">
         <dt>Belongs</dt>
         <dd>
-          {k.belongs.length === 0 ? <span className="muted">Nothing confirmed yet</span> : k.belongs.map((i) => <ItemChip key={i} item={i} qty={1} />)}
+          {k.belongs.length === 0 ? <span className="muted">—</span> : k.belongs.map((i) => <ItemChip key={i} item={i} qty={1} />)}
           <span className="muted num">
             {" "}
             ({k.belongs.length}/{k.size})
@@ -257,7 +323,7 @@ function SilhouettePage({ state, id, act, onAttuned }: { state: GameState; id: G
             <dt>Still possible</dt>
             <dd>
               {k.stillPossible.length === 0 ? (
-                <span className="muted">Nothing you hold. Gather more kinds of things.</span>
+                <span className="muted">None held</span>
               ) : (
                 k.stillPossible.slice(0, 12).map((i) => <span key={i} className="chip">{itemName(i)}</span>)
               )}
@@ -344,7 +410,9 @@ function DiscoveredPage({ id }: { id: GrimoireId }) {
         <h2>{def.name}</h2>
         <span className="panel-aside good">✓ Discovered</span>
       </div>
-      <p className="note-quote">{def.reveal}</p>
+      <p className="gives">
+        <span className="gives-label">Gives</span> {def.rewardText}
+      </p>
       <div className="action-io">
         {def.ingredients.map((i) => (
           <span key={i} className="chip">
@@ -352,9 +420,8 @@ function DiscoveredPage({ id }: { id: GrimoireId }) {
           </span>
         ))}
       </div>
-      <p>
-        <strong>What it does:</strong> {def.rewardText}
-      </p>
+      {def.opens && <p className="muted">{def.opens}</p>}
+      <Story lines={[def.reveal]} />
     </>
   );
 }
@@ -367,13 +434,14 @@ function PagesPage({ state }: { state: GameState }) {
         <ScrollIcon size={18} />
         <h2>Deciphered pages</h2>
       </div>
-      {pages.length === 0 && <p className="muted">Nothing read yet. Burnt pages turn up in the attic.</p>}
-      {pages.map((p) => (
-        <div key={p.title} className="page-entry">
-          <h3>{p.title}</h3>
-          <p className="text-2">{p.text}</p>
-        </div>
-      ))}
+      {pages.length === 0 && <p className="muted">None yet · burnt pages: Search the attic</p>}
+      <ol className="journal">
+        {pages.map((p) => (
+          <li key={p.title}>
+            <Story summary={p.title} meta={p.unlocks.length > 0 ? `Teaches: ${p.unlocks.map((a) => ACTION_DEFS[a].name).join(", ")}` : "Readable in Chapter 3"} lines={[p.text]} />
+          </li>
+        ))}
+      </ol>
     </>
   );
 }

@@ -74,7 +74,7 @@ function Working({ state, onStop, stopNote, onGo }: { state: GameState; onStop: 
             </button>
           </>
         ) : (
-          !stopNote && <span className="muted">Nothing running. Pick something to do.</span>
+          !stopNote && <span className="muted">Idle</span>
         )}
       </div>
     );

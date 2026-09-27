@@ -7,7 +7,6 @@ import type { OmenDef } from "./types";
 export const OMENS = {
   still_night: {
     name: "Still Night",
-    description: "The wind drops and the dogs stop barking.",
     dropChance: 1 / 100,
     buff: "still_night",
   },

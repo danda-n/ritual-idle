@@ -78,7 +78,7 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
       />
       <KindlingPanel state={state} act={act} />
       {!experiments && (
-        <p className="circle-later">Later, the Circle will answer smaller workings too.</p>
+        <p className="circle-later">Experiments: open later</p>
       )}
       {experiments && (
       <div className="exp-grid">
@@ -128,7 +128,7 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
             </p>
           </div>
         ) : (
-          <p className="muted circle-help">No glow count here: only a secret's exact 3 answers.</p>
+          <p className="muted circle-help">No glows · exact set of 3 only</p>
         )}
 
         <div
@@ -205,7 +205,7 @@ export function Circle({ state, act }: { state: GameState; act: Act }) {
 
       <section className="panel" aria-labelledby="picker-heading">
         <div className="panel-title">
-          <h2 id="picker-heading">Pick from what you hold</h2>
+          <h2 id="picker-heading">Your items</h2>
           {attuned && (
             <label className="panel-aside toggle">
               <input type="checkbox" checked={hideWrong} onChange={(e) => setHideWrong(e.target.checked)} /> Hide proven wrong

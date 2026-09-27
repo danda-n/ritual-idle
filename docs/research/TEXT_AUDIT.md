@@ -1,6 +1,8 @@
 # Text audit: toward a spreadsheet style
 
-> Research note, not a decision. It inventories every piece of player-facing text in Chapter 1 and proposes what to keep, shorten, move or cut. Nothing in the code or the other docs has changed yet.
+> **Decided, 2026-09-27.** The designer approved this plan and it has been implemented (see [CONCEPT.md's decision log](../CONCEPT.md#decision-log), "Text trimmed to a spreadsheet style"). This page is a dated snapshot: line numbers and "current" strings are from before the change, and the game now follows the proposals, with two confirmed choices: story placement as in §4 (the ShelfCard and the omen-shelf dialog removed, a toast instead), and a Resplendent rite sold as "choose two keepsakes, and the embroidered cloth" (no "more lore").
+>
+> *Original note:* research, not a decision. It inventories every piece of player-facing text in Chapter 1 and proposes what to keep, shorten, move or cut.
 > The request: *"There is too much fluff text. Lean closer to a spreadsheet style, where text matters (mostly) or tells you something about the gameplay. Trim the lore and flavour text. The flavour should live in the visuals, not in lore nobody wants to read."*
 
 **Classes**

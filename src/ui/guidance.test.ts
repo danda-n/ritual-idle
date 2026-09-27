@@ -19,11 +19,14 @@ function open(extra: Partial<GameState> = {}): GameState {
 
 describe("Grimoire guidance", () => {
   it("before experiments open, says so", () => {
-    expect(recipeGuide({ ...open(), experimentsOpen: false }, "dream_pillow").action).toBeNull();
+    const g = recipeGuide({ ...open(), experimentsOpen: false }, "dream_pillow");
+    expect(g.action).toBeNull();
+    expect(g.headline).toBe("Opens with experiments");
   });
 
   it("first step: try anything at the Circle", () => {
     expect(recipeGuide(open(), "dream_pillow").headline).toBe("Try any 3 things at the Circle, or buy a hint");
+    expect(recipeGuide(open(), "dream_pillow").detail).toBe("1 glow per right item · wrong try +1 ✦");
   });
 
   it("after tries, tracks what's known and what's still possible", () => {
@@ -34,6 +37,7 @@ describe("Grimoire guidance", () => {
     expect(k.belongs.sort()).toEqual(["chamomile", "mugwort"]);
     expect(k.stillPossible).not.toContain("salt");
     expect(recipeGuide(s, "dream_pillow").headline).toBe("2 of 3 known: find the last one");
+    expect(recipeGuide(s, "dream_pillow").detail).toMatch(/swap one at a time/i);
   });
 
   it("when all are known, says to make it", () => {
@@ -55,7 +59,10 @@ describe("Circle guidance", () => {
 
   it("explains results", () => {
     expect(outcomeHelp({ kind: "glow", recipe: "dream_pillow", glows: 0, of: 3 })).toMatch(/crossed out/);
-    expect(outcomeHelp({ kind: "glow", recipe: "dream_pillow", glows: 2, of: 3 })).toMatch(/2 of 3 right, but not which/);
-    expect(outcomeHelp({ kind: "discovered", recipe: "dream_pillow" })).toMatch(/10% speed/);
+    // The glow count's honesty ("not which") and the advice to swap one at a time are logged choices (GRIMOIRE §9.2).
+    expect(outcomeHelp({ kind: "glow", recipe: "dream_pillow", glows: 2, of: 3 })).toMatch(/2 of 3 right \(not which\) · swap one at a time/);
+    expect(outcomeHelp({ kind: "glow", recipe: "dream_pillow", glows: 1, of: 3 })).toMatch(/not which.*swap one at a time/);
+    expect(outcomeHelp({ kind: "almost" })).toBe("Two of those match a secret. Swap the third.");
+    expect(outcomeHelp({ kind: "discovered", recipe: "dream_pillow" })).toMatch(/\+10% offline speed/);
   });
 });

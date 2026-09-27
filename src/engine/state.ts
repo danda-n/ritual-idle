@@ -131,7 +131,7 @@ export interface Settings {
   toastSeconds: number;
   /** Tabs the player has visited (for the "new" dot). */
   seenTabs: string[];
-  /** One-time pointers already shown (e.g. the omen shelf card), so they never repeat. */
+  /** One-time pointers already shown (e.g. "omen_shelf_ready", the shelf's ready toast), so they never repeat. Older saves may also hold "omen_shelf" (the retired shelf card); it's harmless. */
   introsSeen: string[];
   /** Row density: roomy 46px rows (the default), comfortable 36px, compact 32px. */
   density: Density;

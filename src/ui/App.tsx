@@ -16,7 +16,6 @@ import { ChapterTracker } from "./components/ChapterTracker";
 import { TaskCard } from "./components/TaskCard";
 import { OmenShelf } from "./components/OmenShelf";
 import { Projects } from "./components/Projects";
-import { ShelfCard } from "./components/ShelfCard";
 import { omenShelfSuggested, projectsReady } from "../engine/projects";
 import { ChipContext } from "./chipContext";
 import { ItemLookupModal } from "./components/ItemLookup";
@@ -70,11 +69,9 @@ export function App() {
   const shelfReady = omenShelfSuggested(state) && projectsReady(state).includes("omen_shelf");
   useEffect(() => {
     if (!shelfReady || state.settings.introsSeen.includes("omen_shelf_ready")) return;
-    game.notify([{ title: "You could build the omen shelf now", text: "A house project: omens start to turn up once it's built." }]);
+    game.notify([{ title: "Omen shelf: ready to build", text: "Optional house project · omens start dropping" }]);
     game.act((s) => setSetting(s, "introsSeen", [...s.settings.introsSeen, "omen_shelf_ready"]));
   }, [shelfReady]); // eslint-disable-line react-hooks/exhaustive-deps
-  const shelfIntro = omenShelfSuggested(state) && !state.settings.introsSeen.includes("omen_shelf");
-  const seeIntro = (id: string) => game.act((s) => setSetting(s, "introsSeen", [...s.settings.introsSeen, id]));
 
   // Tabs appear as grandmother's notes open them; each shows a dot until first visited.
   const tabs: TabDef<TabId>[] = [
@@ -141,7 +138,6 @@ export function App() {
       {game.story && !game.away && !game.discovery && (!state.rite.completed || state.rite.completed.endingSeen) && (
         <TaskCard note={game.story} state={state} onClose={game.dismissStory} onGo={goTo} />
       )}
-      {shelfIntro && !game.story && !game.away && !game.discovery && <ShelfCard onGo={() => goTo({ tab: "house", anchor: "projects" })} onClose={() => seeIntro("omen_shelf")} />}
       {lookup && <ItemLookupModal state={state} item={lookup} onClose={() => setLookup(null)} />}
       {settingsOpen && (
         <SettingsModal state={state} act={game.act} onLoad={game.load} onReset={game.reset} onClose={() => setSettingsOpen(false)} />

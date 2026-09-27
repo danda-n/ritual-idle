@@ -35,7 +35,7 @@ export function TalentPanel({ state, skill, act }: { state: GameState; skill: Sk
           )}
         </span>
       </div>
-      <p className="muted talent-intro">Take one of each pair. They pull different ways, and some help another skill. Switch any time, for free.</p>
+      <p className="muted talent-intro">One per pair · switch free</p>
       <TalentTree state={state} skill={skill} onChoose={(l, side) => act((s) => chooseTalent(s, skill, l, side))} />
     </section>
   );

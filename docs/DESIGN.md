@@ -56,7 +56,7 @@ The code-drawn **Sanctum** scene keeps its own art palette (`--ink-*`, `--bone-*
 ### Type (`type.css`)
 - **Alegreya Sans** (`--font-ui`): everything interactive and every number. Tabular lining figures everywhere.
 - **Alegreya SC** (`--font-display`): panel titles, tab labels, hero titles, column headers, the wordmark. Column headers and micro-labels are 12px with +0.06em tracking, the only tracked text.
-- **Alegreya** (`--font-lore`), roman only: grandmother's lines, notes, hero lore lines.
+- **Alegreya** (`--font-lore`), roman only: story text (journal entries, "Story" disclosures), riddles and clues, hero lore lines.
 - **Scale:** 12 / 13 / 14 / 15 / 17 / 21 / 28px (`--text-2xs` … `--text-2xl`); hero titles 30px; table rows 15px; lore 17 / 1.5.
 - All three are self-hosted through `@fontsource` (Latin-extended and Cyrillic).
 
@@ -77,7 +77,8 @@ The code-drawn **Sanctum** scene keeps its own art palette (`--ink-*`, `--bone-*
 - **Progress bars:** square ends, flat fills on a sunken track. Action timers and XP take the skill colour; done is verdigris; the rite is stitch red; buff drains are the skill at 70%. Timed bars run on the compositor (`TimedBar`, keyed per repetition).
 - **Item chips** (`ItemChip`): a neutral token with the item's glyph on a tinted badge in the producing skill's colour; counts are pills. Short = red tint and a red pill; clicking a short chip offers to start what makes it. `plain` is a text link for lists.
 - **Tabs:** Alegreya SC 16px in text-3. The active tab gets text-1, its icon in the place colour, a soft glow in the place colour and a stitched red underline.
-- **Dialogs** stack (Escape closes the top one). Task cards and the omen-shelf card close only with their button or Escape. Dialogs are the raised colour; the chapter end is vellum.
+- **Dialogs** stack (Escape closes the top one). Task cards close only with their button or Escape. Dialogs are the raised colour; the chapter end is vellum. No dialog carries a paragraph of prose.
+- **Story disclosure** (`Story`): a collapsed `details` titled "Story" (the base `details > summary` style, with its ›), opening to lines in `.lore sm`. On the task card, the discovery dialog and the chapter end. In the Grimoire journal the same component is each entry, titled with a one-line name.
 - **Toasts** (bottom-left): raised, with a 3px edge (verdigris; gold for rare).
 - **The skill picker:** tiles with the skill stripe; the one you're working on is outlined.
 - **Settings:** fields and a segmented control (`seg`) for choices like Row density.
@@ -118,16 +119,16 @@ Every tab adds four things and nothing more: a **place colour**, a **hero band**
   - **Stock:** two lists per skill, **Inputs** (short ones first, a red pill and "need N") and **Made here**; five rows each, then "Show all N".
   - Then the talent vine and House projects (with the omen-shelf pointers: a New tag and the invite outline).
 - **Stores** (brass): hero with Kinds and Things; the inventory grouped by category, with icons.
-- **Grimoire** (lilac): hero with Insight to spend (✦), Hidden recipes, Secrets. An **open book**: a ribbon index (the active entry marked by a lilac gradient and a 3px edge; insight in a box at the top) and a **vellum page** (title in SC 30px, a "Gives" line, a "Next step" callout with a lilac edge, the proofs grid Belongs / Crossed out / Still possible, hints with glowing roman numerals, your tries with lit glow dots).
-- **Village** (verdigris): hero with Trust (and its bar) and Coin. **Knocks at the door** as pinned notices: daylight paper (`#c9bda6 → #b9ab92`, text `#1a1512`), a red pin and a slight tilt; item icons on dark badges; delivered/needed per item with a bar; a notice you can finish gets a verdigris ring and glow; an empty slot shows the Helped stamp and the refill time. The **shop** is a ledger with a 34px icon tile per item: "Buy · (coin) N", or "Need N more".
-- **Circle** (rowan): hero with Parts placed and Ritualism. The **night stage**: the five-petal Kindling rosette as hero art (the outer ring drifts; a placed petal is filled in its skill colour and glows; the next pulses with a dashed stroke), and the parts beside it (placed: a filled disc and its line; open: skill tint, ring, chips, Place or "Not ready yet"; later: an outlined disc and "Later · brings X"). The rite card with offerings and its outcome sits under the parts. Below: **Experiments** (slots that glow in the place colour when filled) and "Pick from what you hold".
+- **Grimoire** (lilac): hero with Insight to spend (✦), Hidden recipes, Secrets. An **open book**: a ribbon index (the active entry marked by a lilac gradient and a 3px edge; insight in a box at the top; Hidden recipes, Discovered, Secrets, then the **Journal**) and a **vellum page** (title in SC 30px, a "Gives" line, a "Next step" callout with a lilac edge, the proofs grid Belongs / Crossed out / Still possible, hints with glowing roman numerals, your tries with lit glow dots). Journal pages are lists of collapsed entries (`.journal`), one per note, page, curio, discovery or the Kindling, divided by soft rules.
+- **Village** (verdigris): hero with Trust (and its bar) and Coin. **Knocks at the door** as pinned notices: daylight paper (`#c9bda6 → #b9ab92`, text `#1a1512`), a red pin and a slight tilt; item icons on dark badges; delivered/needed per item with a bar; each notice shows who's asking and a short label in plain type (their full line is the hover title); a notice you can finish gets a verdigris ring and glow; an empty slot shows the Helped stamp and the refill time. The **shop** is a ledger with a 34px icon tile per item: "Buy · (coin) N", or "Need N more".
+- **Circle** (rowan): hero with Parts placed and Ritualism. The **night stage**: the five-petal Kindling rosette as hero art (the outer ring drifts; a placed petal is filled in its skill colour and glows; the next pulses with a dashed stroke), and the parts beside it (placed: a filled disc and what was placed; open: skill tint, ring, chips, Place or "Not ready yet"; later: an outlined disc and "Later · brings X"). The rite card with offerings and its outcome sits under the parts. While the rite runs and after, a five-row **phase checklist** (✓ done, ▸ now in the skill colour, · later) replaces the parts. Below: **Experiments** (slots that glow in the place colour when filled) and "Pick from what you hold".
 
 ---
 
 ## 7. Feedback
 
 - **Floats** (`emitFx`): rise from their anchor and queue per anchor (220ms apart). Coin and items are linen, a level uses the skill colour, good is verdigris, rare is gold with ✦ (the only one that glows).
-- **The feed vs toasts:** routine events (steps, plain level-ups, omens, claims, talent picks, partial deliveries) go to the feed. Toasts are for big moments: a part placed, a project built, a contract done, a new tier or talent, a new recipe, rare finds, curios, the rite beginning.
+- **The feed vs toasts:** routine events (steps, plain level-ups, omens, claims, talent picks, partial deliveries) go to the feed. Toasts are for big moments: a part placed, a project built (the omen shelf's says what's stored and what a blessing gives), a contract done, a new tier or talent, a new recipe, rare finds, curios ("+3 insight"), what a villager said ("Heard: Dream pillow"), the rite beginning. Toasts and feed lines are labels: "Contract done — +15 coin · +1 trust".
 - **Small moments:** the level number pops, a skill item flashes on level-up, a new recipe row gets a "New" mark, the Helped stamp, the tracker's stitch pops, staggered Circle glows, "Closer!", the discovery bloom.
 
 ---
@@ -152,6 +153,16 @@ Every tab adds four things and nothing more: a **place colour**, a **hero band**
    RIAudit.run("House");
    ```
    Expect 0 contrast fails, 0 italics and nothing under 12px. Known false positives: floats caught mid-fade, and item icons on the Village notices (the audit measures them against the paper, but they sit on their own dark badge).
+
+---
+
+## Writing
+
+- **Numbers and verbs first, labels over sentences.** "+10% offline speed", "Next contract in 12s", "3 min · runs offline · can't fail". Join facts with `·`; drop articles and "you".
+- **One line per thing.** A second line goes in a hover title.
+- **Flavour lives in names, art, hover titles and the journal.** Theme names (Kupala herb, Hearth ward, the Kindling), the sanctum, the rosette and the embroidery carry the mood. Story text (grandmother's notes, pages, curios, reveal lines, the rite's lines) lives in the Grimoire journal, collapsed, and behind "Story" disclosures; hover titles carry one line of flavour (a contract's full line, a keepsake's lore, Janko).
+- **Puzzle text is gameplay.** Riddles, clues, category hints, villager asides and the item descriptions that bridge riddle words to items ("The dream-herb.") stay, however poetic.
+- **No dead text.** A content field no screen shows gets deleted.
 
 ---
 
@@ -191,3 +202,4 @@ One short entry per round, oldest first. The reasons are in [CONCEPT.md's decisi
 - **After the fourth patch:** pointers to the omen shelf (a one-time card, a tracker block, a "New" tag and glow, a one-time toast). This doc was reorganised by topic, describing the current UI.
 - **Rite quality pays:** the keepsake pick on the chapter-end card (and its tracker button); the rite card says what each quality gives.
 - **Design system v0.4, "Hearth + Folk":** from the design handoff. The brown-and-gold "candlelit vellum" look is replaced: Soot & Linen roles (red acts, verdigris selects, gold is rare) on warm Hearth grounds, Alegreya Sans for the UI, no italics or dashed outlines, brass corner marks, the embroidery band, a now-working band in the top bar, a real recipe table with a filling running row, per-skill stock lists, a place colour and hero band per tab (the Grimoire as a book, Village notices, the Circle at night), and a Row density setting.
+- **Text trimmed to a spreadsheet style:** a writing section (flavour lives in names, art, hover titles and the journal); the Grimoire journal of collapsed entries and the `Story` disclosure; the task card's quote, the omen-shelf card and its after-build note, the rite log, the keepsakes' lore line and the chapter end's finale and lore lines are gone from view (a phase checklist, hover titles and "Story" instead); contracts show short labels.

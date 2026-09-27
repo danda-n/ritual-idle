@@ -1,13 +1,15 @@
 import { BUFF_DEFS, type BuffId } from "../content/buffs";
 import { FOLLOWERS, type FollowerId } from "../content/followers";
 import { ITEMS, type ItemId } from "../content/items";
+import { OMENS, type OmenId } from "../content/omens";
 import { UPGRADE_DEFS, type UpgradeId } from "../content/upgrades";
 import { SKILLS, SKILL_IDS, type SkillId } from "../content/skills";
 import type { UpgradeEffect } from "../content/types";
 import { formatDuration } from "./format";
 
 // Plain statements of what things do, generated from the game data so they can never
-// drift from the real numbers. Lead with these; flavour text comes second, if at all.
+// drift from the real numbers. Lead with these; flavour lives in names, art, hover titles and the
+// Grimoire journal.
 
 const pct = (n: number) => `+${Math.round(n * 100)}%`;
 const skillName = (s: string) => SKILLS[s as SkillId]?.name ?? s;
@@ -42,7 +44,7 @@ export function upgradeEffect(effect: UpgradeEffect): string {
     case "omen_capacity":
       return `Holds ${effect.capacity} omens`;
     case "offline_cap":
-      return `Works ${effect.hours}h while you're away`;
+      return `Offline cap ${effect.hours}h`;
   }
 }
 
@@ -52,5 +54,22 @@ export function upgradeEffectFor(id: UpgradeId): string {
 
 export function followerEffects(id: FollowerId): string[] {
   const f = FOLLOWERS[id];
-  return [`${pct(f.assist)} speed to whatever you do`, `${pct(f.trait.bonus)} more on ${skillName(f.trait.skill)}`];
+  return [`${pct(f.assist)} speed on your current action`, `${pct(f.trait.bonus)} ${skillName(f.trait.skill)} speed`];
+}
+
+/**
+ * The toast for a finished project: what it does, and for an omen shelf, what's stored and what
+ * blessing a skill gives ("Holds 2 omens · 1 Still Night stored · bless a skill: ×2 speed, 2m").
+ */
+export function builtText(id: UpgradeId, stored: Partial<Record<OmenId, number>>): string {
+  const parts = [upgradeEffectFor(id)];
+  if (UPGRADE_DEFS[id].effect.kind === "omen_capacity") {
+    for (const [omen, n] of Object.entries(stored) as [OmenId, number][]) {
+      if (!n) continue;
+      const buff = BUFF_DEFS[OMENS[omen].buff];
+      parts.push(`${n} ${OMENS[omen].name} stored`);
+      if (buff.blessSkill) parts.push(`bless a skill: ×${1 + buff.blessSkill.speed} speed, ${buffDuration(OMENS[omen].buff)}`);
+    }
+  }
+  return parts.join(" · ");
 }

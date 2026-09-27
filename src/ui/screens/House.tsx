@@ -267,7 +267,7 @@ function RecipeRow({ id, state, onStart, fresh }: { id: ActionId; state: GameSta
         ))}
         {def.buff && (
           // A minor rite that gives an effect instead of an item: say exactly what it does.
-          <span className="chip buff-out" title={BUFFS[def.buff as BuffId].description}>
+          <span className="chip buff-out" title={`Each completion: ${buffEffects(def.buff as BuffId).join(", ")} for ${buffDuration(def.buff as BuffId)} (refreshes, never stacks)`}>
             {BUFFS[def.buff as BuffId].name}: {buffEffects(def.buff as BuffId).join(", ")} · {buffDuration(def.buff as BuffId)}
           </span>
         )}

@@ -186,7 +186,6 @@ button.chip:hover { background: var(--color-raised); }
 .effects li { font-size: var(--text-sm); color: var(--color-text); background: var(--color-sunken); border-radius: var(--radius-sm); padding: 2px var(--space-2); }
 .effect-line { color: var(--color-text); font-size: var(--text-sm); }
 .effect-line.big { font-size: var(--text-lg); }
-.flavour { font: var(--text-xs) / 1.4 var(--font-lore); color: var(--color-text-3); }
 .tease { color: var(--color-rare); }
 .lookup { display: grid; grid-template-columns: auto 1fr; gap: var(--space-2) var(--space-4); margin: 0; }
 .lookup dt { font: var(--text-2xs) / 1.6 var(--font-display); letter-spacing: var(--tracking-label); color: var(--color-text-3); }
@@ -477,11 +476,18 @@ button.chip:hover { background: var(--color-raised); }
 .task-steps li.is-done { color: var(--color-text-3); }
 .task-steps li.is-done .task-step-mark { color: var(--color-success); }
 .task-needs { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; font-size: var(--text-sm); }
-.task-quote { font: var(--text-sm) / var(--leading-lore) var(--font-lore); color: var(--color-text-3); }
 .note-hint { font-size: var(--text-sm); color: var(--color-text-2); }
-.journal { margin: 0; padding-left: var(--space-5); display: flex; flex-direction: column; gap: var(--space-3); }
-.page-entry { margin-top: var(--space-3); }
-.page-entry p { font-size: var(--text-sm); }
+
+/* Story, one click away: a collapsed "Story" disclosure (task card, discovery, chapter end) and the
+   Grimoire journal's entries, each a one-line title that opens to its text in the lore serif. */
+.story-text { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-2); padding-left: var(--space-3); box-shadow: inset 2px 0 0 var(--color-border-soft); }
+.story-text p { margin: 0; }
+.story-meta { margin-left: var(--space-2); font-size: var(--text-xs); }
+.journal { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.journal > li { padding: var(--space-2) 0; border-top: 1px solid var(--color-border-soft); }
+.journal > li:first-child { border-top: 0; }
+.journal .story > summary { color: var(--color-text); font-size: var(--text-md); }
+.journal li.missing { color: var(--color-text-3); font-size: var(--text-sm); }
 
 .keepsakes { display: flex; flex-direction: column; gap: var(--space-2); margin: var(--space-3) 0; }
 .keepsakes h3 { font-size: var(--text-md); color: var(--color-rare); }
@@ -493,7 +499,6 @@ button.chip:hover { background: var(--color-raised); }
 .keepsake.is-other { opacity: 0.5; }
 .keepsake-name { font-weight: var(--weight-medium); color: var(--color-rare); }
 .keepsake-text { font-size: var(--text-sm); }
-.keepsake-flavour { font: var(--text-xs) / 1.4 var(--font-lore); color: var(--color-text-3); }
 
 .chapter-painting { border-radius: var(--radius-md); overflow: hidden; box-shadow: inset 0 0 0 1px var(--color-brass-soft), 0 6px 18px rgb(0 0 0 / 0.4); animation: rise-in 900ms var(--ease-out); }
 .modal:has(.chapter-painting) { width: min(620px, 100%); background: var(--color-vellum); }

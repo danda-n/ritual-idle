@@ -5,11 +5,13 @@ import type { SkillId } from "./skills";
 export const FOLLOWERS = {
   janko: {
     name: "Janko",
-    description: "A village orphan who heard the circle wake. He sleeps by the hearth.",
+    /** One line of flavour: the hover title on his chapter-end row. */
+    description: "A village orphan who heard the circle wake.",
     rank: "Initiate",
     /** Speed bonus to your current action. */
     assist: 0.3,
-    trait: { name: "Hearth-born", description: "+20% more on Chandlery.", skill: "chandlery" as SkillId, bonus: 0.2 },
+    /** Extra speed on one skill (its effect line is generated in src/ui/effects.ts). */
+    trait: { skill: "chandlery" as SkillId, bonus: 0.2 },
   },
 } as const;
 

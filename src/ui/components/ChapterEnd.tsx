@@ -4,9 +4,11 @@ import type { GameState } from "../../engine/state";
 import { EmbroideryBand } from "../art/ornaments";
 import { Sanctum } from "../art/Sanctum";
 import { Modal } from "./Modal";
+import { Story } from "./Story";
 import { followerEffects } from "../effects";
 import { KeepsakePick } from "./KeepsakePick";
 import type { Result } from "../../engine/commands";
+import { riteJournal } from "../../engine/rite";
 
 export function ChapterEnd({ state, onClose, act }: { state: GameState; onClose: () => void; act: (c: (s: GameState) => Result) => unknown }) {
   const quality = state.rite.completed!.quality;
@@ -16,16 +18,15 @@ export function ChapterEnd({ state, onClose, act }: { state: GameState; onClose:
       <div className="chapter-painting">
         <Sanctum state={state} />
       </div>
-      <p className="note-quote">{HEARTH_RITE.finale}</p>
       <p>
-        The Kindling was <strong>{QUALITIES[quality]}</strong>.
+        Quality: <strong>{QUALITIES[quality]}</strong>
       </p>
       <ul className="ledger rewards-in">
         <li>
           <span>Skill caps</span>
           <span className="num">rise to {HEARTH_RITE.rewards.levelCap} (for Chapter II)</span>
         </li>
-        <li>
+        <li title={janko.description}>
           <span>A follower: {janko.name}</span>
           <span>{followerEffects("janko").join(" · ")}</span>
         </li>
@@ -36,13 +37,13 @@ export function ChapterEnd({ state, onClose, act }: { state: GameState; onClose:
         {quality === QUALITIES.length - 1 && (
           <li>
             <span>Resplendent</span>
-            <span>an embroidered circle cloth</span>
+            <span>{HEARTH_RITE.resplendentCosmetic}</span>
           </li>
         )}
       </ul>
       <KeepsakePick state={state} act={act} />
-      <p className="note-quote">{HEARTH_RITE.rewards.lore}</p>
-      {quality === QUALITIES.length - 1 && <p className="note-quote">{HEARTH_RITE.resplendentLore}</p>}
+      {/* The finale and lore, collapsed; they're also the journal's Kindling entry. */}
+      <Story lines={riteJournal(state).slice(HEARTH_RITE.phases.length)} />
       <EmbroideryBand className="band" />
       <p className="muted">
         <strong>Chapter II · Grave</strong> comes in a later build.

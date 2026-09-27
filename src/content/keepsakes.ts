@@ -12,9 +12,9 @@ export type KeepsakeEffect =
 
 export interface KeepsakeDef {
   name: string;
-  /** What it does, in plain words. */
+  /** What it does, numbers first. */
   text: string;
-  /** One line of lore. */
+  /** One line of lore: the card's hover title. */
   flavour: string;
   effect: KeepsakeEffect;
 }
@@ -22,19 +22,19 @@ export interface KeepsakeDef {
 export const KEEPSAKES = {
   quilt: {
     name: "Grandmother's quilt",
-    text: "The house works 10% faster while you're away.",
+    text: "+10% offline speed",
     flavour: "Patched a hundred times. It still smells of her stove.",
     effect: { kind: "offline_bonus", bonus: 0.1 },
   },
   embers: {
     name: "A jar of embers",
-    text: "The omen shelf holds one more omen.",
+    text: "+1 omen slot",
     flavour: "Taken from the circle as it woke. They haven't gone out.",
     effect: { kind: "omen_slot", extra: 1 },
   },
   glasses: {
     name: "Her reading glasses",
-    text: "+1 insight from every page deciphered.",
+    text: "+1 insight per page deciphered",
     flavour: "One lens cracked. Through it, the burnt lines almost read themselves.",
     effect: { kind: "page_insight", amount: 1 },
   },

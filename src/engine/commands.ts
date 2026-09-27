@@ -156,7 +156,7 @@ export function releaseOmen(input: GameState, id: OmenId, skill?: SkillId): Resu
 /** Attune the circle to a visible, unsolved silhouette, or pass null for free experiments. */
 export function attune(input: GameState, id: GrimoireId | null): Result {
   if (!isFeatureOpen(input, "experiments")) return no("Experiments open later.");
-  if (id !== null && (!isSilhouetteVisible(input, id) || isDiscovered(input, id))) return no("The circle can't find that shape yet.");
+  if (id !== null && (!isSilhouetteVisible(input, id) || isDiscovered(input, id))) return no("Recipe not available yet");
   return ok({ ...input, attunedTo: id });
 }
 

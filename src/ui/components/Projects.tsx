@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import type { ItemId } from "../../content/items";
 import { UPGRADE_DEFS, UPGRADE_IDS, type UpgradeId } from "../../content/upgrades";
 import { build, canBuild, type Result } from "../../engine/commands";
@@ -7,7 +7,6 @@ import type { GameState } from "../../engine/state";
 import { CandleIcon, HouseIcon, LeafIcon, MoonIcon } from "../art/icons";
 import { upgradeEffect } from "../effects";
 import { ItemChip } from "./ItemLookup";
-import { Modal } from "./Modal";
 
 type Act = (c: (s: GameState) => Result) => unknown;
 
@@ -24,7 +23,6 @@ const ICONS: Record<UpgradeId, (p: { size?: number }) => ReactNode> = {
  * them. Built ones fold into one line at the bottom.
  */
 export function Projects({ state, act }: { state: GameState; act: Act }) {
-  const [omenNote, setOmenNote] = useState(false);
   const ready = projectsReady(state);
   const built = UPGRADE_IDS.filter((id) => state.upgrades.includes(id));
   const open = UPGRADE_IDS.filter((id) => !built.includes(id) && (!UPGRADE_DEFS[id].requires || built.includes(UPGRADE_DEFS[id].requires as UpgradeId)));
@@ -33,7 +31,7 @@ export function Projects({ state, act }: { state: GameState; act: Act }) {
       <div className="panel-title">
         <HouseIcon size={18} />
         <h2 id="projects-heading">House projects</h2>
-        <span className="muted panel-aside">{ready.length > 0 ? <strong className="projects-ready">{ready.length} ready to build</strong> : "Optional · built once, kept for good"}</span>
+        <span className="muted panel-aside">{ready.length > 0 ? <strong className="projects-ready">{ready.length} ready</strong> : "Optional · permanent"}</span>
       </div>
       <ul className="project-list">
         {open.map((id) => {
@@ -51,7 +49,10 @@ export function Projects({ state, act }: { state: GameState; act: Act }) {
                   {def.name}
                   {id === "omen_shelf" && omenShelfSuggested(state) && <span className="new-tag">New</span>}
                 </strong>
-                <p className="muted">{def.description}</p>
+                <p className="muted">
+                  {upgradeEffect(def.effect)}
+                  {def.extra && ` · ${def.extra}`}
+                </p>
                 <div className="action-io">
                   {(Object.entries(def.items) as [ItemId, number][]).map(([item, qty]) => (
                     <ItemChip key={item} item={item} need={qty} />
@@ -62,10 +63,7 @@ export function Projects({ state, act }: { state: GameState; act: Act }) {
                 className={`btn ${reason === null ? "btn-primary" : ""}`}
                 disabled={reason !== null}
                 title={reason ?? undefined}
-                onClick={() => {
-                  act((s) => build(s, id));
-                  if (id === "omen_shelf") setOmenNote(true);
-                }}
+                onClick={() => act((s) => build(s, id))}
               >
                 Build
               </button>
@@ -77,16 +75,6 @@ export function Projects({ state, act }: { state: GameState; act: Act }) {
         <p className="muted project-built">
           In the house: {built.map((id) => `${UPGRADE_DEFS[id].name} (${upgradeEffect(UPGRADE_DEFS[id].effect).toLowerCase()})`).join(" · ")}
         </p>
-      )}
-      {omenNote && (
-        <Modal title="The omen shelf" onClose={() => setOmenNote(false)}>
-          <p>Grandmother kept her omens here: a still night, a bird at the window. Now they'll come to you too, now and then, from any work.</p>
-          <p>Omens wait on the shelf, which holds two. The first is already there.</p>
-          <p>When you want a push, bless a skill with one: twice as fast, and twice the chance finds, for 2 minutes. Nothing is lost by waiting, except omens that find the shelf full.</p>
-          <button className="btn btn-primary" onClick={() => setOmenNote(false)}>
-            I'll keep them
-          </button>
-        </Modal>
       )}
     </section>
   );

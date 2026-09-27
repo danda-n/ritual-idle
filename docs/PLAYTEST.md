@@ -24,7 +24,8 @@ What to try and what to note in a Chapter 1 playtest, for the game as it is now 
 - **Did the first 10 minutes feel hands-on?** Was there always a next click?
 - **Was there ever a moment you didn't know what to do?** Did the tracker, the task card or the top bar's "Next" get you going?
 - **Did you know what the Circle wanted** at each stage, and how to get it?
-- **Did you read grandmother's lines,** or only the steps?
+- **Was the trimmed text clear enough?** Did any short label ("Offline cap 36h", "2 of 3 right (not which) · swap one at a time", a contract's label) leave you unsure what it meant? Did you hover for the full line?
+- **Did anyone miss the story?** Did you open a "Story" link or the Grimoire's Journal? Did the game feel less eerie without grandmother's lines on screen, or did the art and names carry it?
 
 ## Pacing
 - **Is ~30 minutes a good length for this chapter?**
@@ -41,13 +42,13 @@ What to try and what to note in a Chapter 1 playtest, for the game as it is now 
 
 ## Side projects, omens and the village
 - **Did you find the House projects,** and which did you build? Was each worth its materials?
-- **Did the omen shelf make you want omens?** Did you notice it being pointed out (the card, the tracker line, the glow)?
+- **Did the omen shelf make you want omens?** Did you notice it being pointed out (the tracker line, the "New" tag and glow, the ready toast)? After building it, did the toast tell you enough about omens?
 - **Which skill did you bless with Still Night,** and did it feel worth it? Did omens change which skill you worked on?
 - **Did you hold Still Night for the rite, or spend it?** Was the choice clear?
 - **Did delivering contracts in parts feel good,** or did two big contracts feel slow? Did the coin and trust feel rewarding, and did "better work at N" make you want trust?
 
 ## The Grimoire
-- **Hidden recipe:** did you know what to do at each point?
+- **Hidden recipe:** did you know what to do at each point? Did you notice what a villager said about it (the "Heard" toast, then "Heard in the village" on its page)?
 - **What did you buy with insight first?** Did the clues make secrets findable?
 - **Were free experiments fun, or frustrating?**
 
@@ -81,3 +82,4 @@ One short entry per round, oldest first.
 - **After the fourth patch:** one checklist by topic for the current game; the omen-shelf pointers added; priming and other removed features dropped.
 - **Rite quality pays:** questions on whether keepsakes make offerings worth it, and which ones players choose.
 - **Design system v0.4:** a question on the new look (what to press, what's running, which tab you're in) and row density.
+- **Text trimmed to a spreadsheet style:** questions on whether the short labels are clear, whether anyone misses the story (the Journal and "Story" links), the omen shelf's toast, and the villagers' hints.
