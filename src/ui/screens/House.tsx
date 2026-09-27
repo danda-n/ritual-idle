@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ACTION_DEFS, tierOf, type ActionId } from "../../content/actions";
 import { ITEMS, type ItemId } from "../../content/items";
 import { SKILL_IDS, SKILLS, type SkillId } from "../../content/skills";
@@ -18,7 +18,7 @@ import { levelProgress } from "../../engine/xp";
 import { ScrollIcon, SkillIcon } from "../art/icons";
 import { ItemIcon } from "../art/items";
 import { describeSanctum, Sanctum, sanctumView } from "../art/Sanctum";
-import { Bar, TimedBar } from "../components/Bar";
+import { Bar } from "../components/Bar";
 import { ItemChip } from "../components/ItemLookup";
 import type { FxEvent } from "../fx";
 import { useRecentFx } from "../useFx";
@@ -96,14 +96,13 @@ export function SkillNav({ state, skill, onSelect }: { state: GameState; skill: 
   );
 }
 
-/** Under the running skill: the recipe, its timer bar and the time left. */
+/** Under the running skill: the recipe and the time left (the bars are in the top bar and the row). */
 function RunningNow({ state, id, progress }: { state: GameState; id: ActionId; progress: number }) {
   const ms = actionDurationMs(state, id);
   return (
     <span className="now" role="status">
       <span className="now-name">{ACTION_DEFS[id].name}</span>
       <span className="now-time num">{(((1 - progress) * ms) / 1000).toFixed(1)}s</span>
-      <TimedBar key={`${id}:${state.stats.completed[id] ?? 0}:${Math.round(ms)}`} progress={progress} durationMs={ms} label={`${ACTION_DEFS[id].name} progress`} />
     </span>
   );
 }
@@ -152,7 +151,7 @@ function NextSkill({ state }: { state: GameState }) {
 
 const pickUnlocked = (e: FxEvent) => (e.kind === "unlocked" ? e.ids : []);
 
-export function SkillActions({ state, skill, onStart, act }: { state: GameState; skill: SkillId; onStart: (id: ActionId) => void; act: (c: (s: GameState) => Result) => unknown }) {
+export function SkillActions({ state, skill, onStart, onStop, act }: { state: GameState; skill: SkillId; onStart: (id: ActionId) => void; onStop: () => void; act: (c: (s: GameState) => Result) => unknown }) {
   const fresh = useRecentFx(pickUnlocked, 5000);
   const level = skillLevel(state, skill);
   const toCap = timeToCapMs(state, skill);
@@ -196,10 +195,10 @@ export function SkillActions({ state, skill, onStart, act }: { state: GameState;
             <span />
           </div>
           {open.map((id) => (
-            <RecipeRow key={id} id={id} state={state} onStart={() => onStart(id)} fresh={fresh.has(id)} />
+            <RecipeRow key={id} id={id} state={state} onStart={() => onStart(id)} onStop={onStop} fresh={fresh.has(id)} />
           ))}
           {nextUp.map((id) => (
-            <RecipeRow key={id} id={id} state={state} onStart={() => onStart(id)} />
+            <RecipeRow key={id} id={id} state={state} onStart={() => onStart(id)} onStop={onStop} />
           ))}
         </div>
         <SkillStock state={state} skill={skill} recipes={open} />
@@ -210,7 +209,16 @@ export function SkillActions({ state, skill, onStart, act }: { state: GameState;
 }
 
 /** One recipe as a table row. The whole row starts it; the running row fills with its colour. */
-function RecipeRow({ id, state, onStart, fresh }: { id: ActionId; state: GameState; onStart: () => void; fresh?: boolean }) {
+/**
+ * The running row's fill: reads the progress once when it mounts, then a CSS animation carries it
+ * across one repetition (like TimedBar). Never updated per tick, so it can't drift.
+ */
+function RowFill({ progress, durationMs }: { progress: number; durationMs: number }) {
+  const [start] = useState(() => ({ duration: Math.max(1, durationMs), elapsed: Math.max(0, Math.min(1, progress)) * Math.max(1, durationMs) }));
+  return <span className="row-fill" aria-hidden="true" style={{ animationDuration: `${start.duration}ms`, animationDelay: `-${start.elapsed}ms` }} />;
+}
+
+function RecipeRow({ id, state, onStart, onStop, fresh }: { id: ActionId; state: GameState; onStart: () => void; onStop: () => void; fresh?: boolean }) {
   const def = ACTION_DEFS[id];
   if (!isRecipeKnown(state, id)) {
     return (
@@ -228,18 +236,15 @@ function RecipeRow({ id, state, onStart, fresh }: { id: ActionId; state: GameSta
   const inputs = Object.entries(actionInputs(state, id)) as [ItemId, number][];
   const ms = actionDurationMs(state, id);
   const reps = state.stats.completed[id] ?? 0;
-  // The fill restarts with each repetition (the key) and starts part-way on mount (the delay).
-  const style = running ? ({ "--dur": `${Math.round(ms)}ms`, "--delay": `-${Math.round(state.active!.progress * ms)}ms` } as CSSProperties) : undefined;
-
   return (
     <div
-      key={running ? `run:${reps}:${Math.round(ms)}` : "idle"}
       data-skill={def.skill}
-      style={style}
       className={`recipe ${locked ? "is-locked" : ""} ${running ? "is-running" : ""} ${fresh ? "is-fresh" : ""} ${!running && blocked === null ? "can-start" : ""}`}
       // The whole row starts it (the Start button is there for the keyboard; chips have their own menus).
       onClick={() => !running && blocked === null && onStart()}
     >
+      {/* Same clock as the top bar: keyed per repetition and speed, so the two restart together. */}
+      {running && <RowFill key={`${id}:${reps}:${Math.round(ms)}`} progress={state.active!.progress} durationMs={ms} />}
       <SkillIcon skill={def.skill} size={18} />
       <span className="name">
         {def.name}
@@ -277,7 +282,18 @@ function RecipeRow({ id, state, onStart, fresh }: { id: ActionId; state: GameSta
       </span>
       <span className="ctl">
         {running ? (
-          <TimedBar key={`${id}:${reps}:${Math.round(ms)}`} progress={state.active!.progress} durationMs={ms} label={`${def.name} progress`} />
+          <>
+            <span className="ctl-time num">{(((1 - state.active!.progress) * ms) / 1000).toFixed(1)}s</span>
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                onStop();
+              }}
+            >
+              Stop
+            </button>
+          </>
         ) : blocked ? (
           <button className="btn btn-sm" disabled title={formatStop(blocked)}>
             {startLabel(state, id, blocked)}

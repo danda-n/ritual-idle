@@ -290,7 +290,6 @@ button.chip:hover { background: var(--color-raised); }
 .skill-item .now { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; align-items: center; margin-top: 2px; padding-top: 8px; border-top: 1px solid color-mix(in oklch, var(--skill) 30%, transparent); }
 .skill-item .now-name { font-size: var(--text-xs); color: var(--skill); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .skill-item .now-time { font-size: var(--text-xs); color: var(--color-text-2); }
-.skill-item .now .bar { grid-column: 1 / -1; height: 6px; }
 
 /* ---------- Skill panel ---------- */
 .skill-actions { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
@@ -326,7 +325,8 @@ button.chip:hover { background: var(--color-raised); }
 .btn-start:hover, .btn-start:focus-visible, .recipe.can-start:hover .btn-start { background: color-mix(in oklch, var(--skill, var(--color-action)) 22%, var(--color-raised)); border-color: var(--skill, var(--color-action)); color: var(--color-text); }
 /* The running row: fills with its colour over one repetition, with a skill edge, a ring and a glow */
 .recipe.is-running { z-index: 1; background: color-mix(in oklch, var(--skill) 9%, var(--color-raised)); box-shadow: inset 3px 0 0 var(--skill), 0 0 0 1px color-mix(in oklch, var(--skill) 55%, transparent), 0 0 28px -6px color-mix(in oklch, var(--skill) 60%, transparent); }
-.recipe.is-running::before { content: ""; position: absolute; inset: 0; z-index: 0; background: linear-gradient(90deg, color-mix(in oklch, var(--skill) 4%, transparent), color-mix(in oklch, var(--skill) 20%, transparent)); transform-origin: left; animation: sweep var(--dur, 4s) linear var(--delay, 0s) infinite; }
+.recipe .row-fill { position: absolute; inset: 0; z-index: 0; background: linear-gradient(90deg, color-mix(in oklch, var(--skill) 4%, transparent), color-mix(in oklch, var(--skill) 20%, transparent)); transform-origin: left; transform: scaleX(0); animation-name: sweep; animation-timing-function: linear; animation-fill-mode: forwards; pointer-events: none; }
+.ctl-time { flex: 1; text-align: right; font-size: var(--text-sm); color: var(--color-text); }
 @keyframes sweep { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 .recipe.is-running .name { color: var(--skill); }
 .recipe.is-running .ctl .bar { height: 8px; }

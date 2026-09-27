@@ -109,7 +109,7 @@ export function App() {
               <HouseHero state={state} />
               <div className="house">
                 <SkillNav state={state} skill={skill} onSelect={setSkill} />
-                <SkillActions state={state} skill={skill} onStart={game.start} act={game.act} />
+                <SkillActions state={state} skill={skill} onStart={game.start} onStop={game.stop} act={game.act} />
               </div>
               {isSkillUnlocked(state, "chandlery") && <Projects state={state} act={game.act} />}
             </>
