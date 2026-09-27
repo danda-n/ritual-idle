@@ -2,14 +2,14 @@ import type { ItemId } from "../../content/items";
 import { PART_DEFS, type PartId } from "../../content/rite";
 import type { Note } from "../../engine/progress";
 import type { GameState } from "../../engine/state";
-import { noteUnlocks, rewardText, stepPlace, stepProgress, stepsOf, taskName, taskPlace, type Place } from "../tasks";
+import { itemPlace, noteUnlocks, placeLabel, rewardText, stepPlace, stepProgress, stepsOf, taskName, taskPlace, type Place } from "../tasks";
 import { ItemChip } from "./ItemLookup";
 import { Modal } from "./Modal";
 import { Story } from "./Story";
 
 /**
- * A new chapter step, task first: what to do (its small steps, each with its reward), what it
- * needs, and a Go button to the first open step. Grandmother's note sits behind a collapsed "Story"
+ * A new chapter stage, task first: what to do (a part's items, or the stage's step), its reward,
+ * and a button that names where it takes you. Grandmother's note sits behind a collapsed "Story"
  * link (it's also in the Grimoire journal).
  */
 export function TaskCard({ note, state, onClose, onGo }: { note: Note; state: GameState; onClose: () => void; onGo: (p: Place) => void }) {
@@ -19,7 +19,12 @@ export function TaskCard({ note, state, onClose, onGo }: { note: Note; state: Ga
   const { steps, done, current } = stepsOf(state, note);
   const title = experiments ? "New: Experiments at the Circle" : goal ? `New: ${taskName(goal)}` : "Chapter complete";
   const needs = goal?.kind === "place" ? (Object.entries(PART_DEFS[goal.part as PartId].items) as [ItemId, number][]) : [];
-  const go: Place | null = current ? stepPlace(current, state) : experiments ? { tab: "circle" } : goal ? taskPlace(goal) : null;
+  // A part: start where its first missing item is made. Otherwise: where the step is done.
+  const firstShort = needs.find(([item, qty]) => (state.inventory[item] ?? 0) < qty);
+  const go: Place | null = goal?.kind === "place" && firstShort ? itemPlace(state, firstShort[0]) : current ? stepPlace(current, state) : experiments ? { tab: "circle" } : goal ? taskPlace(goal) : null;
+  const reward = steps.map(rewardText).find(Boolean);
+  // A stage whose only step is placing its part lists the part's items instead of steps.
+  const showSteps = steps.length > 0 && goal?.kind !== "place";
 
   return (
     // A stray click outside shouldn't throw the card away: close with its button or Escape.
@@ -31,7 +36,7 @@ export function TaskCard({ note, state, onClose, onGo }: { note: Note; state: Ga
           ))}
         </ul>
       )}
-      {steps.length > 0 ? (
+      {showSteps ? (
         <ol className="task-steps">
           {steps.map((s) => (
             <li key={s.id} className={done(s) ? "is-done" : s === current ? "is-current" : ""}>
@@ -49,6 +54,7 @@ export function TaskCard({ note, state, onClose, onGo }: { note: Note; state: Ga
       ) : (
         "hint" in note && <p className="note-hint">{note.hint}</p>
       )}
+      {goal?.kind === "place" && <p className="muted">Make these, in any order, then place the part in the Circle.{reward ? ` Reward: ${reward}.` : ""}</p>}
       {needs.length > 0 && (
         <div className="task-needs">
           <span className="muted">Needs</span>
@@ -65,7 +71,7 @@ export function TaskCard({ note, state, onClose, onGo }: { note: Note; state: Ga
             onClose();
           }}
         >
-          Go{current ? `: ${current.label}` : ""}
+          {placeLabel(go)}
         </button>
       ) : (
         <button className="btn btn-primary" onClick={onClose}>

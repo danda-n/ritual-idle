@@ -7,7 +7,7 @@ import { ITEMS, type ItemId } from "../content/items";
 import { BUFFS } from "../content/buffs";
 import { OMENS, type OmenId } from "../content/omens";
 import { formatDuration } from "./format";
-import { producerAction } from "../engine/estimates";
+import { makerOf, producerAction } from "../engine/estimates";
 import { actionInputs } from "../engine/modifiers";
 import { blockReason } from "../engine/simulate";
 import type { GameState } from "../engine/state";
@@ -55,7 +55,20 @@ export function noteUnlocks(note: Note): string[] {
 /** Where a Go button leads. On the House tab: a skill's recipes, or the House projects panel. */
 export type Place = { tab: "house"; skill: keyof typeof SKILLS } | { tab: "house"; anchor: "projects" } | { tab: "village" } | { tab: "circle" } | { tab: "grimoire" };
 
-/** Where a task is done, so a "Go" button can take the player there. */
+/** A button label that says where it takes you: "Sigilcraft ›", "Circle ›", "Projects ›". */
+export function placeLabel(place: Place): string {
+  if (place.tab === "house") return "skill" in place ? `${SKILLS[place.skill].name} ›` : "Projects ›";
+  const names: Record<Exclude<Place["tab"], "house">, string> = { village: "Village", circle: "Circle", grimoire: "Grimoire" };
+  return `${names[place.tab]} ›`;
+}
+
+/** Where to make an item: the skill of the recipe that makes it, or the Village for bought things. */
+export function itemPlace(state: GameState, item: ItemId): Place {
+  const maker = makerOf(state, item);
+  return maker ? { tab: "house", skill: ACTION_DEFS[maker].skill } : { tab: "village" };
+}
+
+/** Where a task is done, so a button can take the player there. */
 export function taskPlace(goal: GoalDef<ActionId>): Place {
   switch (goal.kind) {
     case "complete":

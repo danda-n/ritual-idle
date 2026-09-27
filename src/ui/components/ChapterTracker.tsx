@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ACTION_DEFS } from "../../content/actions";
-import { HEARTH_RITE, PART_DEFS, type PartId } from "../../content/rite";
+import { HEARTH_RITE, type PartId } from "../../content/rite";
 import type { ItemId } from "../../content/items";
 import { SKILL_IDS, SKILLS } from "../../content/skills";
 import { goalProgress } from "../../engine/progress";
@@ -10,14 +10,14 @@ import type { SkillId } from "../../content/skills";
 import { GRIMOIRE_DEFS } from "../../content/grimoire";
 import { UPGRADE_IDS } from "../../content/upgrades";
 import { GRIMOIRE_IDS, isDiscovered } from "../../engine/grimoire";
-import { nextTrustAt } from "../../engine/estimates";
+import { nextTrustAt, shortfall } from "../../engine/estimates";
+import { itemName } from "../format";
 import { isFeatureOpen } from "../../engine/progress";
 import { SkillPicker } from "./SkillPicker";
 import { skillLevel } from "../../engine/simulate";
-import { actionInputs } from "../../engine/modifiers";
 import type { GameState } from "../../engine/state";
 import { CircleRiteIcon } from "../art/icons";
-import { chapterSteps, rewardText, stepPlace, stepProgress, stepsOf, taskName, taskPlace, type Place } from "../tasks";
+import { chapterSteps, itemPlace, placeLabel, rewardText, stepPlace, stepsOf, taskName, taskPlace, type Place } from "../tasks";
 import { isSkillUnlocked, stageChoices } from "../../engine/progress";
 import { NOTES } from "../../content/notes";
 import { PART_DEFS as PARTS, type PartId as Part } from "../../content/rite";
@@ -89,64 +89,53 @@ export function ChapterTracker({ state, onGo, act }: { state: GameState; onGo: (
           if (i === done && !state.rite.completed) {
             const p = goalProgress(state, s.note);
             const action = goal.kind === "complete" ? ACTION_DEFS[goal.action] : null;
-            // A part lists its items; an action its inputs. Chips show have/need.
-            const inputs = (goal.kind === "place" ? Object.entries(PART_DEFS[goal.part as PartId].items) : action && goal.kind === "complete" ? Object.entries(actionInputs(state, goal.action)) : []) as [ItemId, number][];
             const needLevel =
               action && skillLevel(state, action.skill) < action.level
                 ? { skill: action.skill, level: action.level }
                 : goal.kind === "rite" && skillLevel(state, "ritualism") < HEARTH_RITE.skills.ritualism!
                   ? { skill: "ritualism" as const, level: HEARTH_RITE.skills.ritualism! }
                   : null;
-            const { steps, done: stepDone, current: now } = stepsOf(state, s.note);
-            const doneCount = steps.filter(stepDone).length;
+            const { steps, current: now } = stepsOf(state, s.note);
+            const reward = steps.map(rewardText).find(Boolean);
+            const place = now ? stepPlace(now, state) : taskPlace(goal);
             return (
               <li key={i} className="step current">
                 <span className="step-mark" aria-hidden="true">▶</span>
                 <div className="step-body">
                   <div className="step-head">
                     <strong>{taskName(goal)}</strong>
-                    {steps.length > 0 ? (
-                      <span className="num muted">
-                        step {Math.min(doneCount + 1, steps.length)} of {steps.length}
+                    {p && p.target > 1 && goal.kind !== "place" && (
+                      <span className="num">
+                        {p.done}/{p.target}
                       </span>
-                    ) : (
-                      p &&
-                      p.target > 1 && (
-                        <span className="num">
-                          {p.done}/{p.target}
-                        </span>
-                      )
                     )}
                   </div>
-                  {steps.length > 0 ? <Bar thin value={doneCount / steps.length} label="Steps done" /> : p && p.target > 1 && <Bar thin value={p.done / p.target} label="Task progress" />}
-                  {now && (
-                    <div className="step-now">
-                      <span>{now.label}</span>
-                      {stepProgress(state, now) && <span className="num muted">{stepProgress(state, now)}</span>}
-                      {rewardText(now) && <span className="task-reward num">{rewardText(now)}</span>}
-                    </div>
-                  )}
-                  {(inputs.length > 0 || needLevel) && (
-                    <div className="step-needs">
+                  {goal.kind === "place" ? (
+                    <PartChecklist state={state} part={goal.part as PartId} onGo={onGo} />
+                  ) : (
+                    <>
+                      {p && p.target > 1 && <Bar thin value={p.done / p.target} label="Task progress" />}
                       {needLevel && (
-                        <span className="chip short">
-                          {SKILLS[needLevel.skill].name} {needLevel.level}
-                        </span>
+                        <div className="step-needs">
+                          <span className="chip short">
+                            {SKILLS[needLevel.skill].name} {needLevel.level}
+                          </span>
+                        </div>
                       )}
-                      {inputs.map(([item, qty]) => (
-                        <ItemChip key={item} item={item} need={qty} />
-                      ))}
-                    </div>
+                    </>
                   )}
+                  {reward && <p className="step-reward">Reward: <span className="task-reward num">{reward}</span></p>}
                   {steps.length === 0 && "hint" in s.note && <p className="step-hint">{s.note.hint as string}</p>}
                   {goal.kind === "place" && canPlace(state, goal.part as PartId) === null ? (
                     <button className="btn btn-primary step-go" onClick={() => act((st) => placePart(st, goal.part as PartId))}>
                       Place in the Circle
                     </button>
                   ) : (
-                    <button className="btn btn-ghost step-go" onClick={() => onGo(now ? stepPlace(now, state) : taskPlace(goal))}>
-                      Go
-                    </button>
+                    goal.kind !== "place" && (
+                      <button className="btn btn-ghost step-go" onClick={() => onGo(place)}>
+                        {placeLabel(place)}
+                      </button>
+                    )
                   )}
                 </div>
               </li>
@@ -187,6 +176,60 @@ export function ChapterTracker({ state, onGo, act }: { state: GameState; onGo: (
         </>
       )}
     </section>
+  );
+}
+
+/**
+ * A part's checklist: each item with have/need and a button to the skill that makes it, then one
+ * line of what's still short further down (talents applied), and any level a recipe still needs.
+ * Order is free: make them however you like.
+ */
+function PartChecklist({ state, part, onGo }: { state: GameState; part: PartId; onGo: (p: Place) => void }) {
+  const sf = shortfall(state, part);
+  return (
+    <div className="part-checklist">
+      <ul className="checklist">
+        {sf.items.map((it) => {
+          const done = it.have >= it.need;
+          const where = itemPlace(state, it.item);
+          return (
+            <li key={it.item} className={done ? "is-done" : ""} data-skill={it.maker ? ACTION_DEFS[it.maker].skill : undefined}>
+              <span className="check-mark" aria-hidden="true">
+                {done ? "✓" : ""}
+              </span>
+              <ItemChip item={it.item} plain />
+              <span className="num check-count">
+                {Math.min(it.have, it.need)}/{it.need}
+              </span>
+              {!done && (
+                <button className="btn btn-text btn-sm" onClick={() => onGo(where)} title={it.maker ? `Made with ${ACTION_DEFS[it.maker].name.toLowerCase()}` : "Bought at the Village, with coin from contracts"}>
+                  {placeLabel(where)}
+                </button>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+      {sf.short.length > 0 && (
+        <p className="short-line">
+          <span className="label">Short of</span>{" "}
+          {sf.short
+            .slice()
+            .sort((a, b) => b.depth - a.depth)
+            .map((l) => `${l.qty} ${itemName(l.item).toLowerCase()}`)
+            .join(" · ")}
+        </p>
+      )}
+      {sf.levels.length > 0 && (
+        <div className="step-needs">
+          {sf.levels.map((l) => (
+            <span key={l.for} className="chip short" title={`${ACTION_DEFS[l.for].name} opens at ${SKILLS[l.skill].name} level ${l.level}`}>
+              {SKILLS[l.skill].name} {l.level} for {ACTION_DEFS[l.for].name.toLowerCase()}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 

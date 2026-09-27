@@ -9,6 +9,7 @@ import { SHOP } from "../content/shop";
 import type { SkillId } from "../content/skills";
 import { beginRite, buy, chooseStage, claimReward, declineRequest, deliver, placePart, setSetting, chooseTalent, type Result } from "./commands";
 import { actionDurationMs, actionInputs } from "./modifiers";
+import { makerOf, shortfall } from "./estimates";
 import { currentNote, isRecipeKnown, isSkillUnlocked, isStepMet, stageChoices, stageOrder, stepById, type Step } from "./progress";
 import { advance, blockReason, skillLevel, startAction } from "./simulate";
 import { newGame, type GameState } from "./state";
@@ -207,6 +208,27 @@ class Bot {
     for (const [item] of items) {
       if (item !== "bread" && !isSkillUnlocked(this.state, ACTION_DEFS[this.producer(item)].skill)) throw new Error(`${part} needs ${item}, from a skill not yet open`);
     }
+    // Like a player reading the checklist: work up from the lowest-level recipe, raw things before
+    // what's made from them, so each step earns the levels the next one needs.
+    const plan = shortfall(this.state, part);
+    const lvl = (item: ItemId) => {
+      const m = makerOf(this.state, item);
+      return m ? ACTION_DEFS[m].level : 0;
+    };
+    // One target per item: the part's own need plus what other recipes on the way use of it.
+    const byItem = new Map<ItemId, { item: ItemId; target: number; depth: number }>();
+    for (const l of plan.items) byItem.set(l.item, { item: l.item, target: l.need, depth: 0 });
+    for (const l of plan.short) {
+      const had = byItem.get(l.item);
+      if (had) byItem.set(l.item, { ...had, target: had.target + l.qty, depth: Math.max(had.depth, l.depth) });
+      else byItem.set(l.item, { item: l.item, target: (this.state.inventory[l.item] ?? 0) + l.qty, depth: l.depth });
+    }
+    const tasks = [...byItem.values()].sort((a, b) => lvl(a.item) - lvl(b.item) || b.depth - a.depth);
+    for (const t of tasks) {
+      this.doing = `${part}: ${t.item}`;
+      this.ensure(t.item, t.target);
+    }
+    this.doing = `${part}.place`;
     while (!items.every(([item, qty]) => (this.state.inventory[item] ?? 0) >= qty)) {
       for (const [item, qty] of items) this.ensure(item, qty);
       this.guard();

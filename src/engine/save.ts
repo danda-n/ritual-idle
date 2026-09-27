@@ -11,6 +11,7 @@ import { BOARD_SLOTS } from "../content/requests";
 import { UPGRADE_IDS, UPGRADES, type UpgradeId } from "../content/upgrades";
 import type { Feature } from "../content/types";
 import { SAVE_EPOCH, SAVE_VERSION, newGame, type GameState, type RecipeProgress } from "./state";
+import { stepById } from "./progress";
 
 const STORAGE_KEY = "ritual-idle.save";
 
@@ -80,6 +81,9 @@ export function deserialize(json: string): GameState {
     const running = state.active ? ACTION_DEFS[state.active.id].skill : "scholarship";
     state.buffs = state.buffs.map((b) => (b.id === "still_night" && !b.skill ? { ...b, skill: running } : b));
   }
+  // Steps that no longer exist (stages lost their sub-steps: each is its part's checklist now).
+  state.stepsDone = (state.stepsDone ?? []).filter((id) => stepById(id));
+  state.rewardsWaiting = state.rewardsWaiting.filter((id) => stepById(id));
   return state;
 }
 

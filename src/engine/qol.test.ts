@@ -5,7 +5,7 @@ import { ITEM_CATEGORIES, ITEMS } from "../content/items";
 import { NOTES } from "../content/notes";
 import { PAGES } from "../content/pages";
 import { setSetting, start, type Result } from "./commands";
-import { effectiveOutputs, revealedRecipes, bestXpAction, inputsLastMs, lookupItem, nextTrustAt, outputPerHour, producerAction, producingSkill, repsPerHour, timeToCapMs, timeToNextLevelMs, xpPerHour } from "./estimates";
+import { effectiveOutputs, shortfall, revealedRecipes, bestXpAction, inputsLastMs, lookupItem, nextTrustAt, outputPerHour, producerAction, producingSkill, repsPerHour, timeToCapMs, timeToNextLevelMs, xpPerHour } from "./estimates";
 import { catchUp } from "./offline";
 import { deserialize } from "./save";
 import { advance, blockReason, fallbackFor, startAction } from "./simulate";
@@ -67,6 +67,40 @@ describe("what a recipe really gives", () => {
     expect(salt).toMatchObject({ chance: 1, changedBy: ["Deep shelves", "Sealed salt crock"] });
     const blessed = { ...base, buffs: [{ id: "still_night", endsAt: T0 + 60_000, skill: "scavenging" }] } as GameState;
     expect(effectiveOutputs(blessed, "search_pantry", T0)[1]).toMatchObject({ chance: 1, changedBy: ["Still Night"] });
+  });
+});
+
+describe("a part's checklist (shortfall)", () => {
+  const ward = (extra: Partial<GameState> = {}) => ({ ...open(), skills: { ...open().skills, sigilcraft: { xp: xpForLevel(3) } }, ...extra }) as GameState;
+  const shortOf = (s: GameState, item: string) => shortfall(s, "ward").short.find((l) => l.item === item)?.qty ?? 0;
+
+  it("lists the part's items with have/need, and everything further down still to make", () => {
+    const r = shortfall(ward(), "ward");
+    expect(r.items.map((i) => [i.item, i.have, i.need, i.maker])).toEqual([
+      ["salt_line", 0, 40, "salt_line"],
+      ["ash_sigil", 0, 12, "ash_sigil"],
+    ]);
+    // 40 salt lines + 12 sigils: 52 salt; 12 sigils × 2 ash.
+    expect(shortOf(ward(), "salt")).toBe(52);
+    expect(shortOf(ward(), "ash")).toBe(24);
+  });
+
+  it("follows your talents: Fine ash halves the ash, Long lines halves the salt-line work", () => {
+    expect(shortOf(ward({ talents: { sigilcraft: { 3: "b" } } }), "ash")).toBe(12);
+    const long = { ...ward(), skills: { ...open().skills, sigilcraft: { xp: xpForLevel(6) } }, talents: { sigilcraft: { 3: "a", 6: "a" } } } as GameState;
+    expect(shortOf(long, "salt")).toBe(20 + 12);
+  });
+
+  it("counts what you hold once, however many recipes want it", () => {
+    const s = ward({ inventory: { salt_line: 10, salt: 30, ash: 4 } });
+    expect(shortfall(s, "ward").items[0]).toMatchObject({ have: 10, need: 40 });
+    expect(shortOf(s, "salt")).toBe(30 + 12 - 30);
+    expect(shortOf(s, "ash")).toBe(20);
+  });
+
+  it("names the levels a recipe on the way still needs", () => {
+    const s = { ...open(), skills: { ...open().skills, sigilcraft: { xp: 0 } } } as GameState;
+    expect(shortfall(s, "ward").levels).toEqual([{ skill: "sigilcraft", level: 3, for: "ash_sigil" }]);
   });
 });
 

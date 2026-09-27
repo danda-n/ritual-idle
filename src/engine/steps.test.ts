@@ -5,11 +5,10 @@ import { claimReward, type Result } from "./commands";
 import { xpForLevel } from "./xp";
 import { BUFFS } from "../content/buffs";
 import { actionDurationMs } from "./modifiers";
-import { currentSteps, revealNotes, stepById, type Step } from "./progress";
-import { PART_DEFS, type PartId } from "../content/rite";
+import { currentSteps, stepById, type Step } from "./progress";
 import { deserialize } from "./save";
 import { advance, startAction } from "./simulate";
-import { newGame, type GameState } from "./state";
+import { newGame } from "./state";
 
 const T0 = 1_000_000;
 const okay = (r: Result) => {
@@ -72,40 +71,8 @@ describe("stage steps", () => {
     expect(state.notesRevealed).toBe(2);
   });
 
-  it("count from the stage's start, so earlier work doesn't count twice", () => {
-    const need = NOTES[1].steps[0].goal.count;
-    // 99 candles poured before this stage began (and none held): the step isn't done.
-    const s: GameState = { ...newGame(T0, 1), notesRevealed: 2, stageStart: { tallow_candle: 99 }, stats: { ...newGame().stats, completed: { tallow_candle: 99 + need - 1 } } };
-    const claimed: Step[] = [];
-    revealNotes(s, claimed);
-    expect(claimed.map((x) => x.id)).toEqual([]);
-    s.stats.completed.tallow_candle = 99 + need;
-    revealNotes(s, claimed);
-    expect(claimed.map((x) => x.id)).toEqual(["light.candles"]);
-  });
 
-  it("a craft step is also met by holding enough already (no pouring 10 more when you have 200)", () => {
-    const need = NOTES[1].steps[0].goal.count;
-    const s: GameState = { ...newGame(T0, 1), notesRevealed: 2, stageStart: { tallow_candle: 500 }, stats: { ...newGame().stats, completed: { tallow_candle: 500 } }, inventory: { tallow_candle: need } };
-    const claimed: Step[] = [];
-    revealNotes(s, claimed);
-    expect(claimed.map((x) => x.id)).toEqual(["light.candles"]);
-  });
 
-  it("step counts match what the part needs, plus what later steps of the stage use", () => {
-    for (const n of NOTES) {
-      if (!("goal" in n) || n.goal.kind !== "place" || !("steps" in n)) continue;
-      const part = PART_DEFS[n.goal.part as PartId];
-      const steps = n.steps as readonly Step[];
-      steps.forEach((st, i) => {
-        if (st.goal.kind !== "complete") return;
-        const made = ACTION_DEFS[st.goal.action].outputs[0]!.item;
-        if (!(made in part.items)) return;
-        const usedLater = steps.slice(i + 1).reduce((sum, later) => (later.goal.kind === "complete" ? sum + (ACTION_DEFS[later.goal.action].inputs[made as never] ?? 0) * later.goal.count : sum), 0);
-        expect(st.goal.count, st.id).toBe((part.items[made as keyof typeof part.items] ?? 0) + usedLater);
-      });
-    }
-  });
 
   it("every stage ends with placing its part, and names only open skills' actions", () => {
     for (let i = 0; i < NOTES.length; i++) {
@@ -133,18 +100,31 @@ describe("stage steps", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it("the stage moves on when its goal is met, whatever steps are left", () => {
+  it("each stage after the first has one step, placing its part (what to make is the part's checklist)", () => {
+    for (const n of NOTES) {
+      if (!("goal" in n) || n.goal.kind !== "place" || !("steps" in n)) continue;
+      expect((n.steps as readonly Step[]).map((st) => st.goal)).toEqual([{ kind: "place", part: n.goal.part }]);
+    }
     const s = startAction(newGame(T0, 1), "search_pantry");
     const { state } = advance(s, NOTES[0].goal.count * actionDurationMs(s, "search_pantry") + 10);
     expect(state.notesRevealed).toBe(2);
-    expect(currentSteps(state)[0]!.id).toBe("light.candles");
+    expect(currentSteps(state)[0]!.id).toBe("light.place");
   });
 
   it("older saves count every step of stages already passed", () => {
     const old = { ...newGame(T0, 1), version: 5, notesRevealed: 3, stepsDone: undefined };
     const loaded = deserialize(JSON.stringify(old));
-    expect(loaded.stepsDone).toContain("light.beeswax");
-    expect(loaded.stepsDone).not.toContain("ward.lines");
+    expect(loaded.stepsDone).toContain("light.place");
+    expect(loaded.stepsDone).not.toContain("ward.place");
+  });
+});
+
+describe("older saves (sub-steps)", () => {
+  it("drop steps that no longer exist, and their waiting rewards", () => {
+    const old = { ...newGame(T0, 1), notesRevealed: 3, stepsDone: ["start.pantry", "light.candles", "light.place", "ward.lines"], rewardsWaiting: ["ward.lines", "light.place"] };
+    const loaded = deserialize(JSON.stringify(old));
+    expect(loaded.stepsDone).toEqual(["start.pantry", "light.place"]);
+    expect(loaded.rewardsWaiting).toEqual(["light.place"]);
   });
 });
 

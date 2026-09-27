@@ -57,7 +57,7 @@ export const ACTIONS = {
   pick_nettle: { name: "Pick nettle", skill: "herbalism", level: 1, seconds: 3, xp: 8, inputs: {}, outputs: [{ item: "nettle", qty: 1 }] },
   pick_chamomile: { name: "Pick chamomile", skill: "herbalism", level: 3, seconds: 3, xp: 8, inputs: {}, outputs: [{ item: "chamomile", qty: 1 }] },
   smudge_bundle: { name: "Bind a smudge bundle", skill: "herbalism", level: 3, seconds: 5, xp: 24, inputs: { nettle: 2, chamomile: 1 }, outputs: [{ item: "smudge", qty: 1 }] },
-  pick_mugwort: { name: "Pick mugwort", skill: "herbalism", level: 6, seconds: 4, xp: 10, inputs: {}, outputs: [{ item: "mugwort", qty: 1 }] },
+  pick_mugwort: { name: "Pick mugwort", skill: "herbalism", level: 5, seconds: 4, xp: 10, inputs: {}, outputs: [{ item: "mugwort", qty: 1 }] },
   mugwort_incense: { name: "Mugwort incense", skill: "herbalism", level: 6, seconds: 5, xp: 24, inputs: { mugwort: 2, tallow: 1 }, outputs: [{ item: "mugwort_incense", qty: 1 }] },
   pick_yarrow: { name: "Pick yarrow", skill: "herbalism", level: 9, seconds: 3, xp: 9, inputs: {}, outputs: [{ item: "yarrow", qty: 1 }] },
   pick_stjohns: { name: "Pick St John's wort", skill: "herbalism", level: 9, seconds: 4, xp: 12, inputs: {}, outputs: [{ item: "stjohns", qty: 1 }] },
@@ -74,7 +74,7 @@ export const ACTIONS = {
     ],
   },
   decipher_page: {
-    name: "Decipher a burnt page", skill: "scholarship", level: 3, seconds: 5, xp: 22,
+    name: "Decipher a burnt page", skill: "scholarship", level: 2, seconds: 5, xp: 22,
     inputs: { burnt_page: 1, tallow_candle: 1 }, outputs: [{ item: "deciphered_page", qty: 1 }],
   },
   copy_litany: {

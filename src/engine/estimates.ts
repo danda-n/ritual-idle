@@ -238,3 +238,77 @@ export function producerAction(state: GameState, item: ItemId, canRun: (id: Acti
   const known = ACTION_IDS.filter((a) => ACTION_DEFS[a].outputs.some((o) => o.item === item) && isRecipeRevealed(state, a));
   return known.find(canRun) ?? known[0] ?? null;
 }
+
+// ---------- What a Kindling part still needs ----------
+
+/**
+ * The recipe a checklist expects you to make an item with: one you can run that makes it every
+ * time, highest level first (the salt barrel over the pantry once it's open), else the first
+ * recipe that makes it at all. Null for things only bought (bread).
+ */
+export function makerOf(state: GameState, item: ItemId): ActionId | null {
+  const makers = ACTION_IDS.filter((a) => ACTION_DEFS[a].outputs.some((o) => o.item === item));
+  const canRun = (a: ActionId) => isSkillUnlocked(state, ACTION_DEFS[a].skill) && isRecipeKnown(state, a) && ACTION_DEFS[a].level <= skillLevel(state, ACTION_DEFS[a].skill);
+  const sure = makers.filter((a) => canRun(a) && ACTION_DEFS[a].outputs.some((o) => o.item === item && o.chance === undefined)).sort((a, b) => ACTION_DEFS[b].level - ACTION_DEFS[a].level);
+  // Bread's only maker is a 5% find: it's bought, not made.
+  const any = makers.filter((a) => ACTION_DEFS[a].outputs.some((o) => o.item === item && (o.chance === undefined || o.chance >= 0.1)));
+  return sure[0] ?? any[0] ?? null;
+}
+
+export interface PartNeed {
+  item: ItemId;
+  have: number;
+  need: number;
+  /** The recipe that makes it (see makerOf), or null if it's bought. */
+  maker: ActionId | null;
+}
+
+export interface Shortfall {
+  /** The part's own items, with have/need. */
+  items: PartNeed[];
+  /** Everything further down still to make or gather, with how many: "16 burnt pages · 26 tallow". */
+  short: { item: ItemId; qty: number; depth: number }[];
+  /** Skill levels a recipe on the way needs that you don't have yet. */
+  levels: { skill: SkillId; level: number; for: ActionId }[];
+}
+
+/**
+ * What a part still needs, all the way down: its items, then what's short to make them, using the
+ * recipes as they really are for you (thrift talents, bulk) and what you already hold. Each item
+ * held counts once, however many recipes want it.
+ */
+export function shortfall(state: GameState, part: PartId, needs: Partial<Record<ItemId, number>> = PART_DEFS[part].items): Shortfall {
+  const pool: Partial<Record<ItemId, number>> = { ...state.inventory };
+  const short = new Map<ItemId, { qty: number; depth: number }>();
+  const levels = new Map<ActionId, { skill: SkillId; level: number; for: ActionId }>();
+  const top = new Set(Object.keys(needs));
+
+  const want = (item: ItemId, qty: number, depth: number) => {
+    const take = Math.min(pool[item] ?? 0, qty);
+    pool[item] = (pool[item] ?? 0) - take;
+    const rest = qty - take;
+    if (rest <= 0) return;
+    if (!top.has(item) || depth > 0) {
+      const had = short.get(item);
+      short.set(item, { qty: (had?.qty ?? 0) + rest, depth: Math.max(had?.depth ?? 0, depth) });
+    }
+    const maker = makerOf(state, item);
+    if (!maker) return;
+    const def = ACTION_DEFS[maker];
+    if (skillLevel(state, def.skill) < def.level) levels.set(maker, { skill: def.skill, level: def.level, for: maker });
+    const inputs = Object.entries(actionInputs(state, maker)) as [ItemId, number][];
+    if (inputs.length === 0) return;
+    const out = def.outputs.find((o) => o.item === item)!;
+    const perRep = out.qty + (def.outputs[0] === out ? bulkExtra(state, maker) : 0);
+    const reps = Math.ceil(rest / perRep);
+    for (const [input, n] of inputs) want(input, reps * n, depth + 1);
+  };
+
+  const items = (Object.entries(needs) as [ItemId, number][]).map(([item, need]) => ({ item, have: state.inventory[item] ?? 0, need, maker: makerOf(state, item) }));
+  for (const { item, need } of items) want(item, need, 0);
+  return {
+    items,
+    short: [...short].map(([item, v]) => ({ item, qty: v.qty, depth: v.depth })),
+    levels: [...levels.values()],
+  };
+}

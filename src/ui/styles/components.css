@@ -398,6 +398,18 @@ button.chip:hover { background: var(--color-raised); }
 .step-needs, .needs { display: flex; flex-wrap: wrap; gap: 4px; }
 .step-hint { font-size: var(--text-xs); color: var(--color-text-2); }
 .step-go { align-self: flex-start; }
+/* A part's checklist: item · have/need · where it's made. Done rows go quiet with a verdigris tick. */
+.part-checklist { display: flex; flex-direction: column; gap: 6px; }
+.checklist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.checklist li { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto auto; gap: var(--space-2); align-items: center; min-height: 26px; font-size: var(--text-sm); }
+.checklist .check-mark { color: var(--color-success); font-size: var(--text-xs); }
+.checklist .check-count { color: var(--color-text-2); }
+.checklist li.is-done { color: var(--color-text-3); }
+.checklist li.is-done .check-count { color: var(--color-text-3); }
+.checklist .btn-text { justify-self: end; white-space: nowrap; }
+.short-line { font-size: var(--text-xs); color: var(--color-text-2); margin: 0; }
+.short-line .label { margin-right: 2px; }
+.step-reward { font-size: var(--text-xs); color: var(--color-text-2); margin: 0; }
 .task-reward { font-size: var(--text-xs); color: var(--color-rare); white-space: nowrap; font-weight: var(--weight-regular); }
 .rewards-waiting { display: flex; flex-direction: column; gap: var(--space-1); margin-bottom: var(--space-3); }
 .claim-btn { justify-content: flex-start; min-height: 30px; font-size: var(--text-xs); text-align: left; }
