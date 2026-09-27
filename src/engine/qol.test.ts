@@ -5,7 +5,7 @@ import { ITEM_CATEGORIES, ITEMS } from "../content/items";
 import { NOTES } from "../content/notes";
 import { PAGES } from "../content/pages";
 import { setSetting, start, type Result } from "./commands";
-import { effectiveOutputs, shortfall, revealedRecipes, bestXpAction, inputsLastMs, lookupItem, nextTrustAt, outputPerHour, producerAction, producingSkill, repsPerHour, timeToCapMs, timeToNextLevelMs, xpPerHour } from "./estimates";
+import { chanceBreakdown, effectiveOutputs, shortfall, revealedRecipes, bestXpAction, inputsLastMs, lookupItem, nextTrustAt, outputPerHour, producerAction, producingSkill, repsPerHour, timeToCapMs, timeToNextLevelMs, xpPerHour } from "./estimates";
 import { catchUp } from "./offline";
 import { actionDurationMs } from "./modifiers";
 import { deserialize } from "./save";
@@ -72,6 +72,25 @@ describe("what a recipe really gives", () => {
     expect(salt).toMatchObject({ chance: 1.125, changedBy: ["Deep shelves", "Sealed salt crock"] });
     const blessed = { ...base, buffs: [{ id: "still_night", endsAt: T0 + 60_000, skill: "scavenging" }] } as GameState;
     expect(effectiveOutputs(blessed, "search_pantry", T0)[1]).toMatchObject({ chance: 1, changedBy: ["Still Night"] });
+  });
+});
+
+describe("chance bonuses apply to every chance find", () => {
+  const charmed = (s: GameState) => ({ ...s, buffs: [{ id: "charm_window", endsAt: T0 + 60_000 }] }) as GameState;
+
+  it("a charm on all finds raises charcoal (10% -> 15%), and names itself", () => {
+    const s = charmed(open());
+    const charcoal = effectiveOutputs(s, "sweep_hearth", T0).find((o) => o.item === "charcoal")!;
+    expect(charcoal.chance).toBeCloseTo(0.15);
+    expect(charcoal.changedBy).toEqual(["Window charm"]);
+    expect(chanceBreakdown(s, "sweep_hearth", "charcoal", T0)).toEqual({ base: 0.1, factors: [{ source: "Window charm", mult: 1.5 }], chance: expect.closeTo(0.15) });
+  });
+
+  it("byproducts are chance finds too (Wick ash), shown on the recipe", () => {
+    const s = { ...open(), skills: { ...open().skills, chandlery: { xp: xpForLevel(6) } }, talents: { chandlery: { 6: "b" } } } as GameState;
+    const ash = effectiveOutputs(s, "tallow_candle").find((o) => o.item === "ash")!;
+    expect(ash).toMatchObject({ baseChance: 0.33, byproductOf: "Wick ash" });
+    expect(effectiveOutputs(charmed(s), "tallow_candle", T0).find((o) => o.item === "ash")!.chance).toBeCloseTo(0.495);
   });
 });
 

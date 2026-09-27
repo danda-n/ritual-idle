@@ -4,6 +4,7 @@ import { CURIOS, GRIMOIRE_DEFS, INSIGHT_COST, INSIGHT_GAIN, type GrimoireId } fr
 import { PAGES } from "../../content/pages";
 import { REQUESTS } from "../../content/requests";
 import { attune, buyHint, type Result } from "../../engine/commands";
+import { effectiveOutputs } from "../../engine/estimates";
 import { GRIMOIRE_IDS, hintCost, isDiscovered, isSilhouetteVisible, progressOf, type HintKind } from "../../engine/grimoire";
 import { isFeatureOpen } from "../../engine/progress";
 import { pagesRead, revealedNotes } from "../../engine/progress";
@@ -32,10 +33,14 @@ type Selection =
   | { kind: "forbidden" };
 
 const HINT_COSTS = Object.values(INSIGHT_COST);
-/** Where curios turn up, from the data: "Search the attic 0.5% · Open grandmother's chest 1%". */
-const CURIO_SOURCES = (Object.keys(ACTION_DEFS) as ActionId[]).flatMap((id) =>
-  (ACTION_DEFS[id].outputs as readonly { item: string; chance?: number }[]).filter((o) => o.item === "curio").map((o) => `${ACTION_DEFS[id].name} ${Math.round((o.chance ?? 1) * 1000) / 10}%`),
-);
+/** Where curios turn up, with the live chances (bonuses applied): "Search the attic 0.5% · Open grandmother's chest 1%". */
+function curioSources(state: GameState): string[] {
+  return (Object.keys(ACTION_DEFS) as ActionId[]).flatMap((id) =>
+    effectiveOutputs(state, id)
+      .filter((o) => o.item === "curio")
+      .map((o) => `${ACTION_DEFS[id].name} ${Math.round((o.chance ?? 1) * 1000) / 10}%`),
+  );
+}
 
 export function Grimoire({ state, act, onAttuned }: { state: GameState; act: Act; onAttuned: () => void }) {
   const silhouettes = GRIMOIRE_IDS.filter((id) => GRIMOIRE_DEFS[id].kind === "hidden" && isSilhouetteVisible(state, id) && !isDiscovered(state, id));
@@ -144,7 +149,7 @@ export function Grimoire({ state, act, onAttuned }: { state: GameState; act: Act
               </span>
             </div>
             <p className="muted num">
-              {CURIO_SOURCES.join(" · ")} · +{INSIGHT_GAIN.curio} insight each
+              {curioSources(state).join(" · ")} · +{INSIGHT_GAIN.curio} insight each
             </p>
             <ol className="journal">
               {CURIOS.map((c, i) =>

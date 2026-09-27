@@ -6,9 +6,8 @@ import { GRIMOIRE_DEFS } from "../content/grimoire";
 import { UPGRADE_DEFS, UPGRADE_IDS, type UpgradeId } from "../content/upgrades";
 import type { ItemId } from "../content/items";
 import type { SkillId } from "../content/skills";
-import { actionDurationMs, actionInputs, activeBuffs, bulkExtra, chanceMultiplier, doubleChance, extraYieldChance, xpBonus } from "./modifiers";
+import { actionDurationMs, actionInputs, bulkExtra, byproducts, chanceFactors, chanceMultiplier, doubleChance, extraYieldChance, xpBonus } from "./modifiers";
 import { TALENT_LEVELS, TALENTS, type TalentEffect } from "../content/talents";
-import { BUFF_DEFS } from "../content/buffs";
 import { isDiscovered } from "./grimoire";
 import { currentNote, isRecipeKnown, isSkillUnlocked, revealedNotes, type Step } from "./progress";
 import { skillLevel } from "./simulate";
@@ -102,12 +101,14 @@ export interface EffectiveOutput {
   baseChance?: number;
   /** Names of what changed this output ("Deep shelves", "Sealed salt crock", "Still Night"). */
   changedBy: string[];
+  /** For a byproduct, the talent that gives it ("Wick ash"). */
+  byproductOf?: string;
 }
 
 export function effectiveOutputs(state: GameState, id: ActionId, now: number = state.lastTickAt): EffectiveOutput[] {
   const def = ACTION_DEFS[id];
   const bulk = bulkExtra(state, id);
-  return def.outputs.map((o, i) => {
+  const outs: EffectiveOutput[] = def.outputs.map((o, i) => {
     if (o.chance === undefined) {
       const qty = o.qty + (i === 0 ? bulk : 0);
       return { item: o.item, qty, baseQty: o.qty, changedBy: qty !== o.qty ? talentNames(state, def.skill, (e) => e.kind === "bulk" && e.actions.includes(id)) : [] };
@@ -116,6 +117,13 @@ export function effectiveOutputs(state: GameState, id: ActionId, now: number = s
     const chance = o.chance * chanceMultiplier(state, o.item, now, def.skill);
     return { item: o.item, qty: o.qty, baseQty: o.qty, chance, baseChance: o.chance, changedBy: chance !== o.chance ? chanceSources(state, o.item, def.skill, now) : [] };
   });
+  // Byproducts (Wick ash) are chance finds too: the same bonuses apply.
+  const extras = byproducts(state, id).map((b) => {
+    const chance = b.chance * chanceMultiplier(state, b.item, now, def.skill);
+    const from = talentNames(state, def.skill, (e) => e.kind === "byproduct" && e.item === b.item);
+    return { item: b.item, qty: 1, baseQty: 1, chance, baseChance: b.chance, changedBy: chance !== b.chance ? chanceSources(state, b.item, def.skill, now) : [], byproductOf: from[0] };
+  });
+  return [...outs, ...extras];
 }
 
 /** Names of this skill's taken talents whose effects match. */
@@ -127,21 +135,24 @@ function talentNames(state: GameState, skill: SkillId, match: (e: TalentEffect) 
   });
 }
 
-/** What makes an item's chance differ from the recipe's: find talents, projects, buffs. */
+/** What makes an item's chance differ from the recipe's (the names from chanceFactors). */
 function chanceSources(state: GameState, item: ItemId, skill: SkillId, now: number): string[] {
-  const out = talentNames(state, skill, (e) => e.kind === "find" && (!e.item || e.item === item));
-  for (const u of state.upgrades) {
-    const e = UPGRADE_DEFS[u].effect;
-    if (e.kind === "find" && e.item === item) out.push(UPGRADE_DEFS[u].name);
-  }
-  for (const b of activeBuffs(state, now)) {
-    const d = BUFF_DEFS[b.id];
-    if (d.chanceMultiplier?.[item] || (b.skill === skill && d.blessSkill?.chanceMultiplier)) out.push(d.name);
-  }
-  return out;
+  return chanceFactors(state, item, now, skill).map((f) => f.source);
 }
 
-/** Expected output per hour, counting drop chances and yield bonuses (every-nth and byproducts aside). */
+/**
+ * A chance find, explained: the recipe's base chance, each bonus and its multiplier, and the
+ * result ("Salt 112.5% = 50% × Deep shelves 1.5 × Sealed salt crock 1.5"). For tooltips.
+ */
+export function chanceBreakdown(state: GameState, id: ActionId, item: ItemId, now: number = state.lastTickAt): { base: number; factors: { source: string; mult: number }[]; chance: number } | null {
+  const def = ACTION_DEFS[id];
+  const base = def.outputs.find((o) => o.item === item)?.chance ?? byproducts(state, id).find((b) => b.item === item)?.chance;
+  if (base === undefined) return null;
+  const factors = chanceFactors(state, item, now, def.skill);
+  return { base, factors, chance: factors.reduce((c, f) => c * f.mult, base) };
+}
+
+/** Expected output per hour, counting drop chances, byproducts and yield bonuses (every-nth aside). */
 export function outputPerHour(state: GameState, id: ActionId): { item: ItemId; perHour: number }[] {
   const reps = repsPerHour(state, id);
   const extra = extraYieldChance(state, id);

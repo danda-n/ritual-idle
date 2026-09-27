@@ -7,7 +7,7 @@ import type { RequestDef, UpgradeEffect } from "../content/types";
 import type { SkillId } from "../content/skills";
 import { discoveredRewards } from "./grimoire";
 import type { GameState } from "./state";
-import type { TalentEffect } from "../content/talents";
+import { TALENT_LEVELS, TALENTS, type TalentEffect } from "../content/talents";
 import { talentEffects } from "./talents";
 import { keepsakeEffects } from "./keepsakes";
 import { levelForXp } from "./xp";
@@ -130,20 +130,43 @@ export function omenChanceMultiplier(state: GameState): number {
 }
 
 /**
- * Multiplier on an item's drop chance from active buffs (e.g. Still Night doubles burnt pages),
- * from House projects (the salt crock), and from the skill's find talents when `skill` is given.
+ * Everything that multiplies an item's chance find, by name (docs/CHAPTER1.md "Chances"). The rule:
+ * chance-find bonuses apply to **every** chance find, outputs and byproducts alike: the skill's find
+ * talents (when `skill` is given), House projects (the salt crock), buffs that name the item, buffs
+ * on all finds (charms), and a blessed skill (Still Night). Omens, doubles, extras and saves are
+ * their own kinds and never use these.
  */
-export function chanceMultiplier(state: GameState, item: ItemId, now: number = state.lastTickAt, skill?: SkillId): number {
-  let mult = 1;
-  if (skill) for (const t of talents(state, "find", skill)) if (!t.item || t.item === item) mult *= t.multiplier;
-  for (const e of effects(state)) if (e.kind === "find" && e.item === item) mult *= e.multiplier;
-  for (const b of activeBuffs(state, now)) {
-    mult *= BUFF_DEFS[b.id].chanceMultiplier?.[item] ?? 1;
-    mult *= BUFF_DEFS[b.id].findMultiplier ?? 1;
-    // A blessed skill's chance finds (Still Night): only with the skill known.
-    if (skill && b.skill === skill) mult *= BUFF_DEFS[b.id].blessSkill?.chanceMultiplier ?? 1;
+export function chanceFactors(state: GameState, item: ItemId, now: number = state.lastTickAt, skill?: SkillId): { source: string; mult: number }[] {
+  const out: { source: string; mult: number }[] = [];
+  if (skill) {
+    for (const l of TALENT_LEVELS) {
+      const side = state.talents[skill]?.[l];
+      if (!side) continue;
+      const t = TALENTS[skill][l][side];
+      for (const e of t.effects) if (e.kind === "find" && (!e.item || e.item === item)) out.push({ source: t.name, mult: e.multiplier });
+    }
   }
-  return mult;
+  for (const u of state.upgrades) {
+    const e = UPGRADE_DEFS[u].effect;
+    if (e.kind === "find" && e.item === item) out.push({ source: UPGRADE_DEFS[u].name, mult: e.multiplier });
+  }
+  for (const b of activeBuffs(state, now)) {
+    const d = BUFF_DEFS[b.id];
+    const m = (d.chanceMultiplier?.[item] ?? 1) * (d.findMultiplier ?? 1) * (skill && b.skill === skill ? (d.blessSkill?.chanceMultiplier ?? 1) : 1);
+    if (m !== 1) out.push({ source: d.name, mult: m });
+  }
+  for (const f of charmFindFactors(state)) out.push(f);
+  return out;
+}
+
+/** Charms that raise every chance find (filled in by the charms: see charmFindFactors). */
+function charmFindFactors(_state: GameState): { source: string; mult: number }[] {
+  return [];
+}
+
+/** The product of chanceFactors: past 1 it's one for sure plus a chance of another (rollOutputs). */
+export function chanceMultiplier(state: GameState, item: ItemId, now: number = state.lastTickAt, skill?: SkillId): number {
+  return chanceFactors(state, item, now, skill).reduce((m, f) => m * f.mult, 1);
 }
 
 /** Chance of one extra unit on each guaranteed output (the drying rack, Green thumb). */

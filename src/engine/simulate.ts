@@ -137,7 +137,12 @@ export function rollOutputs(state: GameState, id: ActionId, now: number, roll: (
     if (doubled) qty *= 2;
     add(items, out.item, qty);
   });
-  for (const b of byproducts(state, id)) if (roll() < b.chance) add(items, b.item, 1);
+  // Byproducts are chance finds too: the same bonuses, and past 100% one for sure plus a chance.
+  for (const b of byproducts(state, id)) {
+    const c = b.chance * chanceMultiplier(state, b.item, now, def.skill);
+    const times = Math.floor(c) + (roll() < c - Math.floor(c) ? 1 : 0);
+    if (times > 0) add(items, b.item, times);
+  }
   return { items, doubled };
 }
 
