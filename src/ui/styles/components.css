@@ -418,7 +418,9 @@ button.chip:hover { background: var(--color-raised); }
 .stage-choice-title { font-size: var(--text-sm); color: var(--color-text); }
 .stage-pick { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 2px var(--space-2); align-items: center; width: 100%; text-align: left; padding: var(--space-2) var(--space-3); border: 0; border-radius: var(--radius-sm); background: color-mix(in oklch, var(--skill) 10%, var(--color-surface)); box-shadow: inset 3px 0 0 var(--skill); color: var(--color-text); cursor: pointer; }
 .stage-pick:hover { background: color-mix(in oklch, var(--skill) 18%, var(--color-surface)); }
-.stage-pick svg { color: var(--skill); grid-row: span 2; }
+.stage-pick svg { color: var(--skill); grid-row: span 3; align-self: start; margin-top: 2px; }
+.stage-pick-blurb { font-size: var(--text-sm); color: var(--color-text-2); }
+.stage-pick-meta { font-size: var(--text-xs); color: var(--color-text-3); }
 .side-project { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--color-border-soft); }
 .side-project .step-head { justify-content: flex-start; font-size: var(--text-sm); }
 .tracker.advanced .stitch-row .is-done:last-of-type { animation: pop 600ms var(--ease-out); }
@@ -486,6 +488,7 @@ details.talents:not([open]) > .talents-summary { margin-bottom: 0; }
 .project-info { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .project-info strong { font-weight: var(--weight-medium); }
 .project-info p { font-size: var(--text-xs); color: var(--skill, var(--color-text-3)); }
+.project-info p.project-blurb { color: var(--color-text-2); font-size: var(--text-sm); }
 .project.is-new { margin: 0 calc(-1 * var(--space-2)); padding-left: var(--space-2); padding-right: var(--space-2); border-radius: var(--radius-md); box-shadow: 0 0 0 1px var(--color-stitch); animation: invite 1.6s ease-in-out 3; }
 .projects-ready { color: var(--color-selected); font-weight: var(--weight-medium); }
 .project-built { font-size: var(--text-sm); color: var(--color-text-3); margin-top: var(--space-2); }
@@ -570,9 +573,8 @@ details.talents:not([open]) > .talents-summary { margin-bottom: 0; }
 }
 
 /* After the rite: what's left in the chapter */
-.still-to-find { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--color-border-soft); }
-.still-to-find .step-head { flex: 1; align-items: center; }
-.still-to-find .step-head .row { gap: var(--space-2); flex-wrap: nowrap; }
+.chapter-done { display: flex; flex-direction: column; gap: 4px; margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--color-border-soft); }
+.chapter-done strong { font: var(--weight-medium) var(--text-md) / 1.2 var(--font-display); color: var(--color-rare); }
 .skill-pick:disabled { cursor: not-allowed; background: var(--color-sunken); box-shadow: inset 3px 0 0 var(--color-border); }
 .skill-pick:disabled svg, .skill-pick:disabled .skill-pick-name { color: var(--color-text-3); }
 

@@ -7,19 +7,14 @@ import { goalProgress } from "../../engine/progress";
 import { atCap, canPlace, chooseKeepsakes, claimReward, placePart, type Result } from "../../engine/commands";
 import { stepById } from "../../engine/progress";
 import type { SkillId } from "../../content/skills";
-import { GRIMOIRE_DEFS } from "../../content/grimoire";
-import { UPGRADE_IDS } from "../../content/upgrades";
-import { GRIMOIRE_IDS, isDiscovered } from "../../engine/grimoire";
-import { nextTrustAt, shortfall } from "../../engine/estimates";
+import { shortfall } from "../../engine/estimates";
 import { itemName } from "../format";
-import { isFeatureOpen } from "../../engine/progress";
 import { SkillPicker } from "./SkillPicker";
 import { skillLevel } from "../../engine/simulate";
 import type { GameState } from "../../engine/state";
 import { CircleRiteIcon } from "../art/icons";
-import { chapterSteps, itemPlace, placeLabel, rewardText, stepPlace, stepsOf, taskName, taskPlace, type Place } from "../tasks";
+import { chapterSteps, itemPlace, placeLabel, rewardText, stageInfo, stepPlace, stepsOf, taskName, taskPlace, type Place } from "../tasks";
 import { isSkillUnlocked, stageChoices } from "../../engine/progress";
-import { NOTES } from "../../content/notes";
 import { PART_DEFS as PARTS, type PartId as Part } from "../../content/rite";
 import { SkillIcon } from "../art/icons";
 import { chooseStage } from "../../engine/commands";
@@ -33,7 +28,8 @@ import { followerEffects } from "../effects";
 
 /**
  * The chapter as a checklist: done steps, the current task with what it needs (as chips,
- * so a short one offers to start what makes it) and a Go button, and one "???" ahead.
+ * so a short one offers to start what makes it) and a button that names where it goes, and one
+ * "???" ahead.
  */
 export function ChapterTracker({ state, onGo, act }: { state: GameState; onGo: (p: Place) => void; act: (c: (s: GameState) => Result) => unknown }) {
   const STEPS = chapterSteps(state);
@@ -164,15 +160,19 @@ export function ChapterTracker({ state, onGo, act }: { state: GameState; onGo: (
             ))}
           </div>
           <button className="btn btn-ghost step-go" onClick={() => onGo({ tab: "house", anchor: "projects" })}>
-            {projectsReady(state).includes("omen_shelf") ? "Build it" : "Go"}
+            {projectsReady(state).includes("omen_shelf") ? "Build it" : "Projects ›"}
           </button>
         </div>
       )}
       {state.rite.completed && (
-        <>
-          <p className="step-hint">Chapter complete · Janko joined ({followerEffects("janko")[0]})</p>
-          <StillToFind state={state} onGo={onGo} />
-        </>
+        // The chapter's done: a small card, then on to Chapter II (nothing to grind here).
+        <div className="chapter-done">
+          <strong>Chapter I complete</strong>
+          <p className="step-hint">
+            Janko joined ({followerEffects("janko")[0]}) · skill caps rise to {HEARTH_RITE.rewards.levelCap}
+          </p>
+          <p className="step-hint">Chapter II · Grave comes in a later build.</p>
+        </div>
       )}
     </section>
   );
@@ -228,72 +228,6 @@ function PartChecklist({ state, part, onGo }: { state: GameState; part: PartId; 
           ))}
         </div>
       )}
-    </div>
-  );
-}
-
-/**
- * After the rite: what's left in Chapter 1, each with a count and a Go to where it's done, so the
- * chapter end isn't a dead end.
- */
-function StillToFind({ state, onGo }: { state: GameState; onGo: (p: Place) => void }) {
-  const hidden = GRIMOIRE_IDS.filter((id) => GRIMOIRE_DEFS[id].kind === "hidden");
-  const secrets = GRIMOIRE_IDS.filter((id) => GRIMOIRE_DEFS[id].kind === "secret");
-  const open = SKILL_IDS.filter((k) => isSkillUnlocked(state, k));
-  const trustAt = nextTrustAt(state);
-  const rows: { label: string; have: number; of: number; go?: Place }[] = [
-    { label: "Hidden recipes", have: hidden.filter((id) => isDiscovered(state, id)).length, of: hidden.length, go: { tab: "grimoire" } },
-    { label: "Secrets", have: secrets.filter((id) => isDiscovered(state, id)).length, of: secrets.length, go: { tab: "grimoire" } },
-    { label: "House projects", have: UPGRADE_IDS.filter((id) => state.upgrades.includes(id)).length, of: UPGRADE_IDS.length, go: { tab: "house", anchor: "projects" } },
-    { label: `Skills at level ${state.levelCap}`, have: open.filter((k) => atCap(state, k)).length, of: open.length },
-  ];
-  return (
-    <div className="still-to-find">
-      <span className="label">Still to find</span>
-      <ul className="steps">
-        {rows.map((r) => {
-          const complete = r.have >= r.of;
-          return (
-            <li key={r.label} className={`step ${complete ? "done" : ""}`}>
-              <span className="step-mark" aria-hidden="true">
-                {complete ? "✓" : "·"}
-              </span>
-              <span className="step-head">
-                <span>{r.label}</span>
-                <span className="row">
-                  <span className="num muted">
-                    {r.have}/{r.of}
-                  </span>
-                  {!complete && r.go && (
-                    <button className="btn btn-text btn-sm" onClick={() => onGo(r.go!)}>
-                      Go
-                    </button>
-                  )}
-                </span>
-              </span>
-            </li>
-          );
-        })}
-        {trustAt !== null && (
-          <li className="step">
-            <span className="step-mark" aria-hidden="true">
-              ·
-            </span>
-            <span className="step-head">
-              <span>Better contracts at trust {trustAt}</span>
-              <span className="row">
-                <span className="num muted">{Math.floor(state.trust)}</span>
-                {isFeatureOpen(state, "village") && (
-                  <button className="btn btn-text btn-sm" onClick={() => onGo({ tab: "village" })}>
-                    Go
-                  </button>
-                )}
-              </span>
-            </span>
-          </li>
-        )}
-      </ul>
-      <p className="step-hint">Chapter II · Grave comes in a later build.</p>
     </div>
   );
 }
@@ -371,15 +305,21 @@ function RewardsWaiting({ state, act }: { state: GameState; act: (c: (s: GameSta
 function StageChoice({ state, choices, act }: { state: GameState; choices: Part[]; act: (c: (s: GameState) => Result) => unknown }) {
   return (
     <div className="stage-choice" role="group" aria-label="Choose what to make next">
-      <p className="stage-choice-title">{state.middleOrder.length === 0 ? "Choose the next part (any order)" : "Choose the next part"}</p>
+      <p className="stage-choice-title">{state.middleOrder.length === 0 ? "Choose the next part (any order; you'll make all three)" : "Choose the next part"}</p>
       {choices.map((p) => {
-        const note = NOTES.find((n) => "goal" in n && n.goal.kind === "place" && n.goal.part === p)!;
-        const skill = note.unlocks[0]!;
+        const info = stageInfo(p);
         return (
-          <button key={p} data-skill={skill} className="skill-pick stage-pick" onClick={() => act((s) => chooseStage(s, p))}>
-            <SkillIcon skill={skill} size={20} />
-            <span className="skill-pick-name">{PARTS[p].name}</span>
-            <span className="skill-pick-level">brings {SKILLS[skill].name}</span>
+          <button key={p} data-skill={info.skill} className="skill-pick stage-pick" onClick={() => act((s) => chooseStage(s, p))}>
+            <SkillIcon skill={info.skill} size={20} />
+            <span className="skill-pick-name">
+              {PARTS[p].name} <span className="muted">· brings {SKILLS[info.skill].name}</span>
+            </span>
+            <span className="stage-pick-blurb">{info.blurb}</span>
+            <span className="stage-pick-meta num">
+              {info.items.map(([item, qty]) => `${qty} ${itemName(item).toLowerCase()}`).join(" · ")}
+              {info.uses.length > 0 && ` · uses ${info.uses.join(", ")}`}
+              {info.opens.length > 0 && ` · opens ${info.opens.join(", ")}`}
+            </span>
           </button>
         );
       })}

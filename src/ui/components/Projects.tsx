@@ -8,6 +8,7 @@ import { CandleIcon, HouseIcon, LeafIcon, MoonIcon } from "../art/icons";
 import { upgradeEffect } from "../effects";
 import { ItemChip } from "./ItemLookup";
 import { ItemIcon } from "../art/items";
+import { Term } from "./Term";
 
 type Act = (c: (s: GameState) => Result) => unknown;
 
@@ -32,7 +33,9 @@ export function Projects({ state, act }: { state: GameState; act: Act }) {
     <section className="panel projects" aria-labelledby="projects-heading">
       <div className="panel-title">
         <HouseIcon size={18} />
-        <h2 id="projects-heading">House projects</h2>
+        <h2 id="projects-heading">
+          <Term id="project">House projects</Term>
+        </h2>
         <span className="muted panel-aside">{ready.length > 0 ? <strong className="projects-ready">{ready.length} ready</strong> : "Optional · permanent"}</span>
       </div>
       <ul className="project-list">
@@ -51,9 +54,19 @@ export function Projects({ state, act }: { state: GameState; act: Act }) {
                   {def.name}
                   {id === "omen_shelf" && omenShelfSuggested(state) && <span className="new-tag">New</span>}
                 </strong>
-                <p className="muted">
+                <p className="project-effect">
                   {upgradeEffect(def.effect)}
                   {def.extra && ` · ${def.extra}`}
+                </p>
+                {/* What it's for; the omen shelves explain the new word. */}
+                <p className="muted project-blurb">
+                  {def.effect.kind === "omen_capacity" && (
+                    <>
+                      <Term id="omen">Omens</Term>
+                      {" · "}
+                    </>
+                  )}
+                  {def.blurb}
                 </p>
                 <div className="action-io">
                   {(Object.entries(def.items) as [ItemId, number][]).map(([item, qty]) => (

@@ -3,7 +3,7 @@ import { BUFFS } from "../../content/buffs";
 import { HEARTH_RITE, RITE_MS } from "../../content/rite";
 import { actionDurationMs, activeBuffs } from "../../engine/modifiers";
 import { currentNote, isFeatureOpen } from "../../engine/progress";
-import { taskName, taskPlace, type Place } from "../tasks";
+import { taskName, placeLabel, taskPlace, type Place } from "../tasks";
 import type { GameState } from "../../engine/state";
 import { CircleRiteIcon, CoinIcon, CogIcon, MoonIcon, SkillIcon } from "../art/icons";
 import { Rosette } from "../art/ornaments";
@@ -71,7 +71,7 @@ function Working({ state, onStop, stopNote, onGo }: { state: GameState; onStop: 
             <span className="muted">Next:</span>
             <span className="working-name">{taskName(goal)}</span>
             <button className="btn btn-ghost btn-sm" onClick={() => onGo(taskPlace(goal))}>
-              Go
+              {placeLabel(taskPlace(goal))}
             </button>
           </>
         ) : (

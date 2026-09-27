@@ -1,4 +1,5 @@
 import { ACTION_DEFS, type ActionId } from "../content/actions";
+import { NOTES } from "../content/notes";
 import { PART_DEFS, type PartId } from "../content/rite";
 import { SKILLS } from "../content/skills";
 import type { GoalDef } from "../content/types";
@@ -155,4 +156,26 @@ export function stepProgress(state: GameState, step: Step): string | null {
   const def = ACTION_DEFS[g.action];
   const held = Object.keys(def.inputs).length > 0 && def.outputs[0] ? state.inventory[def.outputs[0].item] ?? 0 : 0;
   return `${Math.min(g.count, Math.max(sinceStageStart(state, g.action), held))}/${g.count}`;
+}
+
+/**
+ * What choosing a middle part means, for the stage choice: the skill it brings and what that skill
+ * is, the part's items, what it opens, and what it needs from skills you already have.
+ */
+export function stageInfo(part: PartId): { skill: keyof typeof SKILLS; blurb: string; items: [ItemId, number][]; opens: string[]; uses: string[] } {
+  const skill = PART_DEFS[part].skill;
+  const items = Object.entries(PART_DEFS[part].items) as [ItemId, number][];
+  const note = NOTES.find((n) => "goal" in n && n.goal.kind === "place" && n.goal.part === part);
+  const opens = note && "opens" in note ? (note.opens as readonly string[]).map((f) => (f === "grimoire" ? "the Grimoire, then Experiments" : f)) : [];
+  // Inputs of the part's recipes that another skill makes (Words: tallow and beeswax candles).
+  const uses = new Set<string>();
+  for (const [item] of items) {
+    const maker = (Object.keys(ACTION_DEFS) as ActionId[]).find((a) => ACTION_DEFS[a].outputs.some((o) => o.item === item));
+    if (!maker) continue;
+    for (const input of Object.keys(ACTION_DEFS[maker].inputs) as ItemId[]) {
+      const from = (Object.keys(ACTION_DEFS) as ActionId[]).find((a) => ACTION_DEFS[a].outputs.some((o) => o.item === input));
+      if (from && ACTION_DEFS[from].skill !== skill) uses.add(ITEMS[input].name.toLowerCase());
+    }
+  }
+  return { skill, blurb: SKILLS[skill].blurb, items, opens, uses: [...uses] };
 }

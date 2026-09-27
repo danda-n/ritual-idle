@@ -8,6 +8,8 @@ export interface SkillDef {
   category: SkillCategory;
   /** Chapter in which the skill first becomes available. */
   chapter: number;
+  /** What the skill is, in one plain line (shown when you choose which part comes next). */
+  blurb: string;
 }
 
 export interface ItemDef {
@@ -131,6 +133,8 @@ export interface UpgradeDef<I extends string> {
   name: string;
   /** One extra fact shown after the generated effect, where the effect alone doesn't say it all. */
   extra?: string;
+  /** What it's for, in a plain line (shown under the effect). */
+  blurb: string;
   items: Partial<Record<I, number>>;
   effect: UpgradeEffect;
   /** Another project that has to be built first. */
