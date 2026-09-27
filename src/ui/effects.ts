@@ -30,6 +30,10 @@ export function buffEffects(id: BuffId, skill?: SkillId): string[] {
   // The Major Rite has a fixed length, so Ritualism speed only helps minor rites.
   else for (const [skill, bonus] of speed) out.push(`${pct(bonus)} ${skillName(skill)} speed${skill === "ritualism" ? " (minor rites)" : ""}`);
   for (const [item, mult] of Object.entries(def.chanceMultiplier ?? {}) as [ItemId, number][]) out.push(`${ITEMS[item].name}s ×${mult} as likely`);
+  if (def.findMultiplier) out.push(`Chance finds ×${def.findMultiplier}, all skills`);
+  if (def.xpBonus) out.push(`${pct(def.xpBonus)} XP, all skills`);
+  if (def.saveChance) out.push(`${Math.round(def.saveChance * 100)}% of crafts use no inputs`);
+  if (def.coinBonus) out.push(`Contracts pay ${pct(def.coinBonus)} coin`);
   return out;
 }
 

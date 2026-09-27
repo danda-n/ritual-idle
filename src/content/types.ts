@@ -146,6 +146,14 @@ export interface BuffDef<S extends string, I extends string> {
   chanceMultiplier?: Partial<Record<I, number>>;
   /** For a buff that blesses one skill chosen on release: its speed bonus and chance-find multiplier. */
   blessSkill?: { speed: number; chanceMultiplier: number };
+  /** Every chance find, in every skill, is this much more likely (a charm). */
+  findMultiplier?: number;
+  /** More XP in every skill (0.25 = +25%). */
+  xpBonus?: number;
+  /** A chance that any craft uses no inputs. */
+  saveChance?: number;
+  /** Contracts pay this much more coin. */
+  coinBonus?: number;
 }
 
 export interface OmenDef<B extends string> {
@@ -157,6 +165,12 @@ export interface OmenDef<B extends string> {
 }
 
 export type GrimoireReward =
+  /** Every skill works faster. */
+  | { kind: "speed_all"; bonus: number }
+  /** One skill works faster. */
+  | { kind: "speed"; skill: string; bonus: number }
+  /** More XP in every skill. */
+  | { kind: "xp_all"; bonus: number }
   | { kind: "offline_bonus"; bonus: number }
   | { kind: "rite_quality"; steps: number }
   | { kind: "trust_multiplier"; multiplier: number }
@@ -169,12 +183,16 @@ export interface GrimoireEntryDef<I extends string> {
   kind: "hidden" | "secret";
   /** Unordered; each ingredient is distinct. */
   ingredients: I[];
-  /** Hidden recipes: a free riddle, categories and names you buy with insight. */
-  hints?: { riddle: string; category: string[]; plain: I[] };
+  /**
+   * Hidden recipes: a free riddle, categories and names you buy with insight. `close` narrows the
+   * one ingredient that's never named (a nudge, not its name), so every ingredient has a hint.
+   */
+  hints?: { riddle: string; category: string[]; plain: I[]; close?: string };
   /** Secrets: written clues you buy with insight, one at a time. */
   clues?: string[];
-  reward: GrimoireReward;
-  /** What the reward does, numbers first ("+10% offline speed"). */
+  /** What discovering it gives, for good (one reward or several). */
+  reward: GrimoireReward | readonly GrimoireReward[];
+  /** What the reward does, numbers first ("+10% speed, all skills"). */
   rewardText: string;
   /** Story line: shown collapsed on the discovered page and in the Grimoire journal. */
   reveal: string;

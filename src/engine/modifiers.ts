@@ -55,6 +55,8 @@ export function speedMultiplier(state: GameState, id: ActionId, now: number = st
   let bonus = 0;
   for (const t of talents(state, "speed", skill)) bonus += t.bonus;
   for (const e of effects(state)) if (e.kind === "speed" && e.skill === skill) bonus += e.bonus;
+  // Discovered recipes (the Window charm: all skills; the Hearth mark: Sigilcraft).
+  for (const r of discoveredRewards(state)) if (r.kind === "speed_all" || (r.kind === "speed" && r.skill === skill)) bonus += r.bonus;
   for (const b of activeBuffs(state, now)) {
     bonus += BUFF_DEFS[b.id].speed?.[skill] ?? 0;
     if (b.skill === skill) bonus += BUFF_DEFS[b.id].blessSkill?.speed ?? 0;
@@ -86,9 +88,11 @@ export function actionInputs(state: GameState, id: ActionId): Partial<Record<Ite
   return inputs;
 }
 
-/** Chance a repetition uses no inputs (Steady hand, By one candle…). */
-export function saveChance(state: GameState, id: ActionId): number {
-  return Math.min(1, talentsOn(state, "save", id).reduce((n, t) => n + t.chance, 0));
+/** Chance a repetition uses no inputs (Steady hand, By one candle…; a Hearth mark charm). */
+export function saveChance(state: GameState, id: ActionId, now: number = state.lastTickAt): number {
+  let chance = talentsOn(state, "save", id).reduce((n, t) => n + t.chance, 0);
+  for (const b of activeBuffs(state, now)) chance += BUFF_DEFS[b.id].saveChance ?? 0;
+  return Math.min(1, chance);
 }
 
 /** Items an action sometimes gives besides its own (Wick ash). */
@@ -135,6 +139,7 @@ export function chanceMultiplier(state: GameState, item: ItemId, now: number = s
   for (const e of effects(state)) if (e.kind === "find" && e.item === item) mult *= e.multiplier;
   for (const b of activeBuffs(state, now)) {
     mult *= BUFF_DEFS[b.id].chanceMultiplier?.[item] ?? 1;
+    mult *= BUFF_DEFS[b.id].findMultiplier ?? 1;
     // A blessed skill's chance finds (Still Night): only with the skill known.
     if (skill && b.skill === skill) mult *= BUFF_DEFS[b.id].blessSkill?.chanceMultiplier ?? 1;
   }
@@ -150,9 +155,12 @@ export function extraYieldChance(state: GameState, id: ActionId): number {
   return chance;
 }
 
-/** Extra XP as a fraction (Devout, Busy hands, The rite's words…). */
-export function xpBonus(state: GameState, id: ActionId): number {
-  return talents(state, "xp", ACTION_DEFS[id].skill).reduce((n, t) => n + t.bonus, 0);
+/** Extra XP as a fraction (Devout, Busy hands…; the Dream pillow, found or bound). */
+export function xpBonus(state: GameState, id: ActionId, now: number = state.lastTickAt): number {
+  let bonus = talents(state, "xp", ACTION_DEFS[id].skill).reduce((n, t) => n + t.bonus, 0);
+  for (const r of discoveredRewards(state)) if (r.kind === "xp_all") bonus += r.bonus;
+  for (const b of activeBuffs(state, now)) bonus += BUFF_DEFS[b.id].xpBonus ?? 0;
+  return bonus;
 }
 
 export function offlineCapMs(state: GameState): number {
@@ -198,5 +206,7 @@ export function requestCoin(state: GameState, req: RequestDef<string>): number {
   let mult = 1;
   const chapterOver = state.rite.completed !== null;
   for (const r of discoveredRewards(state)) if (r.kind === "patron_coin" && r.from === req.from && !chapterOver) mult *= r.multiplier;
+  // A Threshold nail charm: contracts pay more while it lasts.
+  for (const b of activeBuffs(state)) mult *= 1 + (BUFF_DEFS[b.id].coinBonus ?? 0);
   return Math.round(req.coin * mult);
 }

@@ -77,7 +77,7 @@ export interface GameState {
   settings: Settings;
   /** The Kindling's parts placed in the Circle so far. */
   kindling: PartId[];
-  /** Experiments at the Circle open with the first hint toward a hidden recipe. */
+  /** Experiments (their own tab) open with the first hint toward a hidden recipe. */
   experimentsOpen: boolean;
   /** The side taken at each talent level, per skill (docs/CHAPTER1.md §11). */
   talents: Partial<Record<SkillId, Talents>>;
@@ -115,7 +115,7 @@ export interface RecipeProgress {
   /** The player's own pencil marks. */
   marks: Partial<Record<ItemId, "suspect" | "doubt">>;
   /** Hints bought with insight (hidden recipes). */
-  bought: { category: boolean; named: ItemId[] };
+  bought: { category: boolean; named: ItemId[]; close?: boolean };
   /** Clues read (secrets). */
   clues: number;
   /** A villager mentioned it (their words stay on the recipe's page). */

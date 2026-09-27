@@ -63,6 +63,6 @@ describe("Circle guidance", () => {
     expect(outcomeHelp({ kind: "glow", recipe: "dream_pillow", glows: 2, of: 3 })).toMatch(/2 of 3 right \(not which\) · swap one at a time/);
     expect(outcomeHelp({ kind: "glow", recipe: "dream_pillow", glows: 1, of: 3 })).toMatch(/not which.*swap one at a time/);
     expect(outcomeHelp({ kind: "almost" })).toBe("Two of those match a secret. Swap the third.");
-    expect(outcomeHelp({ kind: "discovered", recipe: "dream_pillow" })).toMatch(/\+10% offline speed/);
+    expect(outcomeHelp({ kind: "discovered", recipe: "dream_pillow" })).toMatch(/\+10% XP, all skills/);
   });
 });

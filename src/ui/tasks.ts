@@ -37,9 +37,9 @@ export function taskName(goal: GoalDef<ActionId>): string {
   }
 }
 
-/** A note's one-line title: its task, "Experiments at the Circle", or "Chapter complete" for the last. */
+/** A note's one-line title: its task, "Experiments", or "Chapter complete" for the last. */
 export function noteTitle(note: Note): string {
-  if ("opens" in note && (note.opens as readonly string[]).includes("experiments")) return "Experiments at the Circle";
+  if ("opens" in note && (note.opens as readonly string[]).includes("experiments")) return "Experiments";
   return "goal" in note ? taskName(note.goal) : "Chapter complete";
 }
 
@@ -47,18 +47,18 @@ export function noteTitle(note: Note): string {
 export function noteUnlocks(note: Note): string[] {
   const out: string[] = [];
   for (const s of note.unlocks as readonly (keyof typeof SKILLS)[]) out.push(`New skill: ${SKILLS[s].name}`);
-  const places: Record<string, string> = { grimoire: "the Grimoire", village: "the Village", circle: "the Circle", experiments: "experiments at the Circle" };
+  const places: Record<string, string> = { grimoire: "the Grimoire", village: "the Village", circle: "the Circle", experiments: "the Experiments tab" };
   if ("opens" in note) for (const f of note.opens as readonly string[]) out.push(`Opens ${places[f] ?? f}`);
   return out;
 }
 
 /** Where a Go button leads. On the House tab: a skill's recipes, or the House projects panel. */
-export type Place = { tab: "house"; skill: keyof typeof SKILLS } | { tab: "house"; anchor: "projects" } | { tab: "village" } | { tab: "circle" } | { tab: "grimoire" };
+export type Place = { tab: "house"; skill: keyof typeof SKILLS } | { tab: "house"; anchor: "projects" } | { tab: "village" } | { tab: "circle" } | { tab: "grimoire" } | { tab: "experiments" };
 
 /** A button label that says where it takes you: "Sigilcraft ›", "Circle ›", "Projects ›". */
 export function placeLabel(place: Place): string {
   if (place.tab === "house") return "skill" in place ? `${SKILLS[place.skill].name} ›` : "Projects ›";
-  const names: Record<Exclude<Place["tab"], "house">, string> = { village: "Village", circle: "Circle", grimoire: "Grimoire" };
+  const names: Record<Exclude<Place["tab"], "house">, string> = { village: "Village", circle: "Circle", grimoire: "Grimoire", experiments: "Experiments" };
   return `${names[place.tab]} ›`;
 }
 

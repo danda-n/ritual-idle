@@ -4,7 +4,7 @@ import type { SkillId } from "../content/skills";
 import { dismissEnding, setSetting } from "../engine/commands";
 import type { ItemId } from "../content/items";
 import { isFeatureOpen, isSkillUnlocked } from "../engine/progress";
-import { BookIcon, CircleRiteIcon, HouseIcon, LanternIcon, JarIcon } from "./art/icons";
+import { BookIcon, CircleRiteIcon, HouseIcon, LanternIcon, JarIcon, MoonIcon } from "./art/icons";
 import { EmbroideryBand } from "./art/ornaments";
 import { AwaySummary } from "./components/AwaySummary";
 import { DevPanel } from "./components/DevPanel";
@@ -28,13 +28,14 @@ import { formatStop } from "./format";
 import { HouseHero, SkillActions, SkillNav } from "./screens/House";
 import { Circle } from "./screens/Circle";
 import { Grimoire } from "./screens/Grimoire";
+import { Experiments } from "./screens/Experiments";
 import { Village } from "./screens/Village";
 import type { Place } from "./tasks";
 import { useGame } from "./useGame";
 import { RiteReady, RiteScene } from "./components/Rite";
 import { PART_IDS } from "../content/rite";
 
-type TabId = "house" | "inventory" | "grimoire" | "village" | "circle";
+type TabId = "house" | "inventory" | "grimoire" | "village" | "circle" | "experiments";
 
 export function App() {
   const game = useGame();
@@ -86,6 +87,7 @@ export function App() {
   if (isFeatureOpen(state, "grimoire")) place("grimoire", "Grimoire", <BookIcon size={18} />);
   if (isFeatureOpen(state, "village")) place("village", "Village", <LanternIcon size={18} />);
   if (isFeatureOpen(state, "circle")) place("circle", "Circle", <CircleRiteIcon size={18} />);
+  if (isFeatureOpen(state, "experiments")) place("experiments", "Experiments", <MoonIcon size={18} />);
 
   return (
     <ChipContext.Provider value={{ state, lookup: setLookup, start: game.start }}>
@@ -106,8 +108,9 @@ export function App() {
         <div className="main" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
           {tab === "inventory" && <InventoryTab state={state} />}
           {tab === "village" && <Village state={state} act={game.act} />}
-          {tab === "grimoire" && <Grimoire state={state} act={game.act} onAttuned={() => setTab("circle")} />}
+          {tab === "grimoire" && <Grimoire state={state} act={game.act} onAttuned={() => setTab("experiments")} />}
           {tab === "circle" && <Circle state={state} act={game.act} />}
+          {tab === "experiments" && <Experiments state={state} act={game.act} />}
           {tab === "house" && state.rite.performing && <RiteScene state={state} act={game.act} />}
           {tab === "house" && !state.rite.performing && (
             <>

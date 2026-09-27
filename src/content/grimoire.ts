@@ -2,8 +2,24 @@ import type { ItemId } from "./items";
 import type { GrimoireEntryDef } from "./types";
 
 // Hidden recipes and secrets for Chapter 1 (docs/GRIMOIRE.md §8).
-// Discovering one at the circle *is* making it: the reward applies at once and stays forever.
+// Discovering one at the circle *is* making it: the reward applies at once and stays forever, and a
+// hidden recipe can then be bound again as a charm for a timed boost (content/charms.ts).
 export const GRIMOIRE = {
+  // The first one, made from what every path has by the time experiments open (the Words stage).
+  window_charm: {
+    name: "Window charm",
+    kind: "hidden",
+    ingredients: ["tallow_candle", "glass", "salt"],
+    hints: {
+      riddle: "…a light for the window, glass to hold it, salt along the sill.",
+      category: ["Something from the chandler", "Something from the attic", "Something from the pantry"],
+      plain: ["tallow_candle", "salt"],
+      close: "It's sharp, and it catches the light.",
+    },
+    reward: { kind: "speed_all", bonus: 0.1 },
+    rewardText: "+10% speed, all skills",
+    reveal: "Candlelight in the glass, salt on the sill. The house feels watched over, and the work goes quicker.",
+  },
   dream_pillow: {
     name: "Dream pillow",
     kind: "hidden",
@@ -12,10 +28,11 @@ export const GRIMOIRE = {
       riddle: "…for sleep that listens: the bitter dream-herb, the gentle flower, a scrap of cloth.",
       category: ["A herb from the forest edge", "A herb from the garden", "Something from the attic"],
       plain: ["mugwort", "chamomile"],
+      close: "It's soft, and it was torn from something old.",
     },
-    reward: { kind: "offline_bonus", bonus: 0.1 },
-    rewardText: "+10% offline speed",
-    reveal: "The pillow smells of her. You sleep, and the house keeps working in your dreams.",
+    reward: { kind: "xp_all", bonus: 0.1 },
+    rewardText: "+10% XP, all skills",
+    reveal: "The pillow smells of her. You sleep, and wake knowing things you didn't learn.",
   },
   hearth_mark: {
     name: "Hearth mark",
@@ -25,9 +42,13 @@ export const GRIMOIRE = {
       riddle: "…where the fire lived, draw its name in what it left behind, and salt to keep it.",
       category: ["Something from the hearth", "Something from the hearth", "Something from the pantry"],
       plain: ["charcoal", "salt"],
+      close: "It's grey and fine, and there's always more of it in the grate.",
     },
-    reward: { kind: "rite_quality", steps: 1 },
-    rewardText: "+1 rite quality step",
+    reward: [
+      { kind: "rite_quality", steps: 1 },
+      { kind: "speed", skill: "sigilcraft", bonus: 0.1 },
+    ],
+    rewardText: "+1 rite quality · +10% Sigilcraft speed",
     reveal: "The mark on the hearthstone was always there, under the soot. Now it is yours.",
   },
   threshold_nail: {
@@ -38,9 +59,10 @@ export const GRIMOIRE = {
       riddle: "…cold iron under the door, and the Kupala herb to make it sing.",
       category: ["Something from the midden", "A herb from the forest edge", "Something from the pantry"],
       plain: ["iron_nail", "stjohns"],
+      close: "It keeps things in. The pantry is full of it.",
     },
-    reward: { kind: "trust_multiplier", multiplier: 1.5 },
-    rewardText: "Trust gains ×1.5",
+    reward: { kind: "trust_multiplier", multiplier: 2 },
+    rewardText: "Trust gains ×2",
     reveal: "Under the threshold, where the nail goes in, a folded note: \"There was a child I could not keep. Find her, if the circle lets you.\"",
     // A plot thread (the hidden fifth follower): say so on the page, even with the story collapsed.
     opens: "Opens: grandmother's hidden note (journal)",
@@ -70,9 +92,10 @@ export const GRIMOIRE_DEFS: Record<GrimoireId, GrimoireEntryDef<ItemId>> = GRIMO
 
 /**
  * Insight is one pool, spent on the hint you want (docs/GRIMOIRE.md §6): a hidden recipe's
- * categories, one of its ingredients named, or a secret's next clue.
+ * categories, one of its ingredients named, a nudge toward the one that's never named, or a
+ * secret's next clue.
  */
-export const INSIGHT_COST = { category: 4, name: 6, clue: 4 } as const;
+export const INSIGHT_COST = { category: 4, name: 6, close: 6, clue: 4 } as const;
 
 /** Insight from each source. */
 export const INSIGHT_GAIN = { failedAttempt: 1, page: 2, curio: 3, request: 2 } as const;

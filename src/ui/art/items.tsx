@@ -196,6 +196,33 @@ const GLYPHS: Record<ItemId, ReactNode> = {
       <path d="M8 11l1.5 2M12 10.5v2.5M16 11l-1.5 2" />
     </>
   ),
+  // Charms
+  charm_window: (
+    <>
+      <path d="M5 4h14v16H5V4Z" />
+      <path d="M12 4v16M5 12h14" />
+      <path d="M12 9.5c-1 1.2-1 2.2 0 3 1-.8 1-1.8 0-3Z" />
+    </>
+  ),
+  charm_pillow: (
+    <>
+      <path d="M4 9c0-2 1.5-3 3-3h10c1.5 0 3 1 3 3v6c0 2-1.5 3-3 3H7c-1.5 0-3-1-3-3V9Z" />
+      <path d="M9 10.5c1 .5 1 2.5 0 3M15 12h-3" />
+    </>
+  ),
+  charm_mark: (
+    <>
+      <path d="M4 19h16" />
+      <path d="M12 5l5 9H7l5-9Z" />
+      <path d="M12 9v3" />
+    </>
+  ),
+  charm_nail: (
+    <>
+      <path d="M8 4h8M12 4v14l-1.5 2" />
+      <path d="M9 10c1.5 1 4.5 1 6 0" />
+    </>
+  ),
   // Rites
   consecrated_salt: (
     <>

@@ -274,7 +274,7 @@ function SecretEntry({ state, id, act }: { state: GameState; id: GrimoireId; act
   );
 }
 
-function SilhouettePage({ state, id, act, onAttuned }: { state: GameState; id: GrimoireId; act: Act; onAttuned: () => void }) {
+export function SilhouettePage({ state, id, act, onAttuned }: { state: GameState; id: GrimoireId; act: Act; onAttuned: () => void }) {
   const def = GRIMOIRE_DEFS[id];
   const p = progressOf(state, id);
   const names = p.bought.named;
@@ -353,11 +353,13 @@ function SilhouettePage({ state, id, act, onAttuned }: { state: GameState; id: G
         <span className="hint-num">II</span>
         {p.bought.category ? <p>{def.hints?.category.join(" · ")}</p> : <BuyHint state={state} id={id} kind="category" label="Where each thing comes from" act={act} />}
       </div>
-      <div className={`hint ${names.length === 0 ? "locked" : ""}`}>
+      <div className={`hint ${names.length === 0 && !p.bought.close ? "locked" : ""}`}>
         <span className="hint-num">III</span>
         <div>
           {names.length > 0 && <p>{names.map(itemName).join(", ")}.</p>}
           <BuyHint state={state} id={id} kind="name" label={names.length === 0 ? "Name one ingredient" : "Name another"} act={act} />
+          {/* The one ingredient never named gets a nudge instead: finding it stays yours. */}
+          {def.hints?.close && (p.bought.close ? <p className="note-quote">The last one: {def.hints.close}</p> : <BuyHint state={state} id={id} kind="close" label="A nudge toward the last one (never its name)" act={act} />)}
         </div>
       </div>
       <ul className="insight-sources" aria-label="Where insight comes from">

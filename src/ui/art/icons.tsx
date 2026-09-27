@@ -161,4 +161,5 @@ export const CATEGORY_ICONS: Record<ItemCategory, (p: IconProps) => ReactNode> =
   sigils: SigilIcon,
   pages: ScrollIcon,
   rites: CircleRiteIcon,
+  charms: MoonIcon,
 };

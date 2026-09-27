@@ -1,5 +1,6 @@
 import { CURIO_STORIES, GRIMOIRE_DEFS, INSIGHT_COST, INSIGHT_GAIN, type GrimoireId } from "../content/grimoire";
 import type { ItemId } from "../content/items";
+import type { GrimoireReward } from "../content/types";
 import type { GameState, RecipeProgress } from "./state";
 
 // The Grimoire's discovery model (docs/GRIMOIRE.md). Helpers here mutate `state`;
@@ -45,7 +46,7 @@ export function readCurio(state: GameState): { story: string; fragment: Fragment
 
 // Hints you buy (docs/GRIMOIRE.md §6)
 
-export type HintKind = "category" | "name" | "clue";
+export type HintKind = "category" | "name" | "close" | "clue";
 
 /** The ingredient names a hidden recipe's hints can reveal, in order. */
 export function nameable(id: GrimoireId): ItemId[] {
@@ -59,6 +60,7 @@ export function hintCost(state: GameState, id: GrimoireId, kind: HintKind): numb
   if (isDiscovered(state, id)) return null;
   if (kind === "category") return def.hints && !p.bought.category ? INSIGHT_COST.category : null;
   if (kind === "name") return p.bought.named.length < nameable(id).length ? INSIGHT_COST.name : null;
+  if (kind === "close") return def.hints?.close && !p.bought.close ? INSIGHT_COST.close : null;
   return p.clues < (def.clues?.length ?? 0) ? INSIGHT_COST.clue : null;
 }
 
@@ -69,6 +71,7 @@ export function buyHintInto(state: GameState, id: GrimoireId, kind: HintKind): v
   const p = entry(state, id);
   if (kind === "category") p.bought.category = true;
   else if (kind === "name") p.bought.named.push(nameable(id)[p.bought.named.length]!);
+  else if (kind === "close") p.bought.close = true;
   else p.clues++;
 }
 
@@ -111,6 +114,13 @@ export function markDiscovered(state: GameState, id: GrimoireId): void {
   entry(state, id).discovered = true;
 }
 
-export function discoveredRewards(state: GameState) {
-  return GRIMOIRE_IDS.filter((id) => isDiscovered(state, id)).map((id) => GRIMOIRE_DEFS[id].reward);
+/** Every reward from what's been discovered (an entry can give several). */
+export function discoveredRewards(state: GameState): GrimoireReward[] {
+  return GRIMOIRE_IDS.filter((id) => isDiscovered(state, id)).flatMap((id) => rewardsOf(id));
+}
+
+/** A recipe's rewards, as a list. */
+export function rewardsOf(id: GrimoireId): GrimoireReward[] {
+  const r = GRIMOIRE_DEFS[id].reward;
+  return Array.isArray(r) ? [...r] : [r as GrimoireReward];
 }

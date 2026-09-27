@@ -8,6 +8,7 @@ export const ITEM_CATEGORIES = {
   sigils: { name: "Sigils & wards" },
   pages: { name: "Pages & texts" },
   rites: { name: "Rites" },
+  charms: { name: "Charms" },
 } as const;
 
 export type ItemCategory = keyof typeof ITEM_CATEGORIES;
@@ -52,6 +53,11 @@ export const ITEMS = {
   bread: { name: "Bread", category: "house" },
   // Ritualism
   consecrated_salt: { name: "Consecrated salt", category: "rites" },
+  // Charms: bound at Experiments from a discovered recipe, used for a timed boost (content/charms.ts)
+  charm_window: { name: "Window charm", category: "charms" },
+  charm_pillow: { name: "Dream pillow", category: "charms" },
+  charm_mark: { name: "Hearth mark", category: "charms" },
+  charm_nail: { name: "Threshold nail", category: "charms" },
 } as const satisfies Record<string, ItemDef>;
 
 export type ItemId = keyof typeof ITEMS;

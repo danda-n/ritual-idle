@@ -4,17 +4,17 @@ import { ITEMS, type ItemId } from "../content/items";
 import { NOTES } from "../content/notes";
 import { PAGES } from "../content/pages";
 import { REQUESTS } from "../content/requests";
-import { attune, buyHint, experiment, deliver, setSetting, type Result, type Success } from "./commands";
+import { attune, bindCharm, buyHint, experiment, deliver, setSetting, useCharm, type Result, type Success } from "./commands";
+import { charmFor } from "../content/charms";
+import { producingSkill } from "./estimates";
 import { addInsight, deduce, hintCost, isDiscovered, isSilhouetteVisible, progressOf } from "./grimoire";
-import { actionDurationMs, offlineBonus, requestCoin, riteQualitySteps, trustMultiplier } from "./modifiers";
-import { catchUp } from "./offline";
+import { actionDurationMs, chanceMultiplier, offlineBonus, requestCoin, riteQualitySteps, saveChance, speedMultiplier, trustMultiplier, xpBonus } from "./modifiers";
 import { deserialize } from "./save";
 import { advance, startAction } from "./simulate";
 import { newGame, type GameState } from "./state";
 import { xpForLevel } from "./xp";
 
 const T0 = 1_000_000;
-const HOUR = 60 * 60 * 1000;
 
 function open(extra: Partial<GameState> = {}): GameState {
   const base = newGame(T0, 5);
@@ -201,15 +201,21 @@ describe("free experiments", () => {
 describe("rewards", () => {
   const discover = (s: GameState, id: GrimoireId) => ({ ...s, grimoire: { ...s.grimoire, [id]: { ...progressOf(s, id), discovered: true } } });
 
-  it("Dream pillow gives +10% speed while away, without moving timers", () => {
-    const s = discover(startAction(open(), "pick_nettle"), "dream_pillow");
-    expect(offlineBonus(s)).toBeCloseTo(0.1);
-    const away = catchUp(s, T0 + HOUR);
-    const plain = catchUp(startAction(open(), "pick_nettle"), T0 + HOUR);
-    expect(away.report.elapsedMs).toBe(HOUR);
-    // About 10% more done than without the pillow (level speed-ups apply to both).
-    expect(away.report.actionsCompleted / plain.report.actionsCompleted).toBeCloseTo(1.1, 1);
-    expect(away.state.lastTickAt).toBe(T0 + HOUR);
+  it("the Window charm speeds up every skill; the Dream pillow adds XP everywhere (no longer offline)", () => {
+    const base = open();
+    const w = discover(base, "window_charm");
+    expect(speedMultiplier(w, "pick_nettle") / speedMultiplier(base, "pick_nettle")).toBeCloseTo(1.1);
+    expect(speedMultiplier(w, "tallow_candle") / speedMultiplier(base, "tallow_candle")).toBeCloseTo(1.1);
+    const d = discover(base, "dream_pillow");
+    expect(xpBonus(d, "pick_nettle")).toBeCloseTo(0.1);
+    expect(offlineBonus(d)).toBe(0);
+  });
+
+  it("the Hearth mark also speeds up Sigilcraft", () => {
+    const base = open();
+    const m = discover(base, "hearth_mark");
+    expect(speedMultiplier(m, "salt_line") / speedMultiplier(base, "salt_line")).toBeCloseTo(1.1);
+    expect(speedMultiplier(m, "pick_nettle")).toBe(speedMultiplier(base, "pick_nettle"));
   });
 
   it("Hearth mark adds a rite quality step", () => {
@@ -218,9 +224,9 @@ describe("rewards", () => {
 
   it("Threshold nail multiplies trust gains", () => {
     const s = discover(open({ inventory: { ...REQUESTS.hana_soup.needs } }), "threshold_nail");
-    expect(trustMultiplier(s)).toBe(1.5);
+    expect(trustMultiplier(s)).toBe(2);
     s.board = [{ request: "hana_soup", refillAt: 0, delivered: {} }];
-    expect(okay(deliver(s, 0)).state.trust).toBe(1.5);
+    expect(okay(deliver(s, 0)).state.trust).toBe(2);
   });
 
   it("Hana's soup doubles Hana's pay only", () => {
@@ -246,5 +252,65 @@ describe("settings and saves", () => {
     const p = progressOf(open(), "dream_pillow");
     deduce(p);
     expect(p.provenWrong).toEqual([]);
+  });
+});
+
+describe("charms (bound again and again from a discovered recipe)", () => {
+  const discover = (s: GameState, id: GrimoireId) => ({ ...s, grimoire: { ...s.grimoire, [id]: { ...progressOf(s, id), discovered: true } } });
+  const found = (id: GrimoireId, inventory: Partial<Record<ItemId, number>> = {}) => ({ ...discover(open(), id), inventory }) as GameState;
+  const ok = (r: Result) => {
+    if (!r.ok) throw new Error(r.reason);
+    return r.state;
+  };
+
+  it("bind at once from the recipe's ingredients, only once it's discovered", () => {
+    expect(bindCharm({ ...open(), inventory: { tallow_candle: 1, glass: 1, salt: 1 } }, "charm_window").ok).toBe(false);
+    const s = ok(bindCharm(found("window_charm", { tallow_candle: 2, glass: 1, salt: 1 }), "charm_window"));
+    expect(s.inventory).toMatchObject({ tallow_candle: 1, glass: 0, salt: 0, charm_window: 1 });
+    expect(bindCharm(s, "charm_window").ok).toBe(false); // out of glass and salt
+  });
+
+  it("using one starts its boost for ten minutes, and spends it", () => {
+    const s = ok(useCharm(found("dream_pillow", { charm_pillow: 1 }), "charm_pillow"));
+    expect(s.inventory.charm_pillow).toBe(0);
+    expect(xpBonus(s, "pick_nettle")).toBeCloseTo(0.1 + 0.25);
+    expect(xpBonus(s, "pick_nettle", T0 + 10 * 60_000)).toBeCloseTo(0.1);
+    expect(useCharm(s, "charm_pillow").ok).toBe(false);
+  });
+
+  it("each charm's boost: finds, inputs saved, contract coin", () => {
+    const w = ok(useCharm(found("window_charm", { charm_window: 1 }), "charm_window"));
+    expect(chanceMultiplier(w, "salt", T0)).toBeCloseTo(1.5);
+    const m = ok(useCharm(found("hearth_mark", { charm_mark: 1 }), "charm_mark"));
+    expect(saveChance(m, "tallow_candle", T0)).toBeCloseTo(0.15);
+    const n = ok(useCharm(found("threshold_nail", { charm_nail: 1 }), "charm_nail"));
+    expect(requestCoin(n, REQUESTS.grave_candles)).toBe(Math.round(REQUESTS.grave_candles.coin * 1.5));
+  });
+
+  it("every hidden recipe teaches a charm", () => {
+    for (const id of Object.keys(GRIMOIRE) as GrimoireId[]) if (GRIMOIRE[id].kind === "hidden") expect(charmFor(id), id).not.toBeNull();
+  });
+});
+
+describe("the first experiment", () => {
+  it("the Window charm is made from what every path has when experiments open (the Words stage)", () => {
+    // The Light (Chandlery), the Words (Scholarship) and Scavenging are open by then, in any order.
+    for (const i of GRIMOIRE.window_charm.ingredients) expect(["scavenging", "chandlery", "scholarship"], i).toContain(producingSkill(i));
+  });
+
+  it("the one ingredient never named gets a nudge you can buy, not its name", () => {
+    const s = { ...open(), insight: 20 };
+    for (const id of Object.keys(GRIMOIRE) as GrimoireId[]) {
+      const h = (GRIMOIRE[id] as { hints?: { close?: string; plain: readonly string[] } }).hints;
+      if (!h) continue;
+      expect(h.close, id).toBeTruthy();
+      const unnamed = GRIMOIRE[id].ingredients.find((i) => !h.plain.includes(i))!;
+      expect(h.close!.toLowerCase(), id).not.toContain(ITEMS[unnamed].name.toLowerCase());
+    }
+    expect(hintCost(s, "window_charm", "close")).toBe(INSIGHT_COST.close);
+    const bought = buyHint(s, "window_charm", "close");
+    if (!bought.ok) throw new Error(bought.reason);
+    expect(progressOf(bought.state, "window_charm").bought.close).toBe(true);
+    expect(hintCost(bought.state, "window_charm", "close")).toBeNull();
   });
 });

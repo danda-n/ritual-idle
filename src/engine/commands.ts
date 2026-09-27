@@ -5,7 +5,8 @@ import { isRecipeRevealed } from "./estimates";
 import { blockReason, startAction } from "./simulate";
 import { SHOP, type ShopId } from "../content/shop";
 import { UPGRADE_DEFS, type UpgradeId } from "../content/upgrades";
-import type { ItemId } from "../content/items";
+import { ITEM_DEFS, type ItemId } from "../content/items";
+import { CHARMS, type CharmId } from "../content/charms";
 import { OMENS, type OmenId } from "../content/omens";
 import { addInsight, buyHintInto, deduce, GRIMOIRE_IDS, glowCount, hintCost, isDiscovered, isSilhouetteVisible, markDiscovered, matches, progressOf, type Fragment, type HintKind } from "./grimoire";
 import { requestCoin, trustMultiplier } from "./modifiers";
@@ -228,6 +229,33 @@ function consolation(state: GameState): void {
 }
 
 /** Spend insight on a hint: a hidden recipe's categories, one more ingredient named, or a secret's next clue. */
+/** Why a charm can't be bound now, or null if it can: its recipe must be discovered, its ingredients held. */
+export function canBindCharm(state: GameState, charm: CharmId): string | null {
+  const recipe = CHARMS[charm].from;
+  if (!isDiscovered(state, recipe)) return "Discover its recipe first.";
+  const short = GRIMOIRE_DEFS[recipe].ingredients.find((i) => (state.inventory[i] ?? 0) < 1);
+  return short ? `Needs ${ITEM_DEFS[short].name.toLowerCase()}.` : null;
+}
+
+/** Bind a charm at once from its discovered recipe: uses 1 of each ingredient, gives 1 charm. */
+export function bindCharm(input: GameState, charm: CharmId): Result {
+  const reason = canBindCharm(input, charm);
+  if (reason) return no(reason);
+  const state = structuredClone(input);
+  for (const i of GRIMOIRE_DEFS[CHARMS[charm].from].ingredients) state.inventory[i] = (state.inventory[i] ?? 0) - 1;
+  state.inventory[charm] = (state.inventory[charm] ?? 0) + 1;
+  return ok(state);
+}
+
+/** Use a charm: its boost starts (or refreshes, never stacking), and the charm is spent. */
+export function useCharm(input: GameState, charm: CharmId): Result {
+  if ((input.inventory[charm] ?? 0) < 1) return no(`No ${ITEM_DEFS[charm].name.toLowerCase()} to use.`);
+  const state = structuredClone(input);
+  state.inventory[charm] = state.inventory[charm]! - 1;
+  applyBuff(state, CHARMS[charm].buff, state.lastTickAt, false);
+  return ok(state);
+}
+
 export function buyHint(input: GameState, id: GrimoireId, kind: HintKind): Result {
   if (!isFeatureOpen(input, "experiments")) return no("Experiments open later.");
   const cost = hintCost(input, id, kind);

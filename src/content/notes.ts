@@ -80,7 +80,7 @@ export const NOTES = [
  */
 export const EXPERIMENTS_NOTE = {
   text: "You've found the edge of one of my small workings. The circle answers those too, if you give it the right three things.",
-  hint: "Optional · place 3 items at the Circle · 1 glow per right item · start with Dream pillow",
+  hint: "Optional · the Experiments tab · place 3 items · 1 glow per right item · start with the Window charm",
   unlocks: [],
   opens: ["experiments"],
 } as const satisfies NoteDef<SkillId, ActionId>;

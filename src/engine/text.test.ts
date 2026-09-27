@@ -93,7 +93,7 @@ describe("numbers first", () => {
       expect(g.rewardText.length, id).toBeLessThanOrEqual(48);
       expect(g.rewardText.endsWith("."), id).toBe(false);
     }
-    expect(GRIMOIRE.dream_pillow.rewardText).toBe("+10% offline speed");
+    expect(GRIMOIRE.dream_pillow.rewardText).toBe("+10% XP, all skills");
   });
 
   it("keepsakes: a short effect, with the lore line kept for the hover title", () => {

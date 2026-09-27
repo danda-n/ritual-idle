@@ -17,11 +17,11 @@ export function TaskCard({ note, state, onClose, onGo }: { note: Note; state: Ga
   const experiments = "opens" in note && (note.opens as readonly string[]).includes("experiments");
   const goal = "goal" in note ? note.goal : null;
   const { steps, done, current } = stepsOf(state, note);
-  const title = experiments ? "New: Experiments at the Circle" : goal ? `New: ${taskName(goal)}` : "Chapter complete";
+  const title = experiments ? "New: Experiments" : goal ? `New: ${taskName(goal)}` : "Chapter complete";
   const needs = goal?.kind === "place" ? (Object.entries(PART_DEFS[goal.part as PartId].items) as [ItemId, number][]) : [];
   // A part: start where its first missing item is made. Otherwise: where the step is done.
   const firstShort = needs.find(([item, qty]) => (state.inventory[item] ?? 0) < qty);
-  const go: Place | null = goal?.kind === "place" && firstShort ? itemPlace(state, firstShort[0]) : current ? stepPlace(current, state) : experiments ? { tab: "circle" } : goal ? taskPlace(goal) : null;
+  const go: Place | null = goal?.kind === "place" && firstShort ? itemPlace(state, firstShort[0]) : current ? stepPlace(current, state) : experiments ? { tab: "experiments" } : goal ? taskPlace(goal) : null;
   const reward = steps.map(rewardText).find(Boolean);
   // A stage whose only step is placing its part lists the part's items instead of steps.
   const showSteps = steps.length > 0 && goal?.kind !== "place";
