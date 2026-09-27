@@ -120,8 +120,15 @@ export function rollOutputs(state: GameState, id: ActionId, now: number, roll: (
   const items: Partial<Record<ItemId, number>> = {};
   def.outputs.forEach((out, i) => {
     const sure = out.chance === undefined;
-    if (!sure && roll() >= Math.min(1, out.chance! * chanceMultiplier(state, out.item, now, def.skill))) return;
-    let qty = out.qty;
+    // A chance past 100% is a sure find plus a chance of another: 110% salt = 1, and 10% for a 2nd.
+    // One roll per chance output, always, so the random sequence doesn't depend on the bonuses.
+    let times = 1;
+    if (!sure) {
+      const c = out.chance! * chanceMultiplier(state, out.item, now, def.skill);
+      times = Math.floor(c) + (roll() < c - Math.floor(c) ? 1 : 0);
+      if (times === 0) return;
+    }
+    let qty = out.qty * times;
     if (sure) {
       if (i === 0) qty += bulk;
       if (extra > 0 && roll() < extra) qty += 1;

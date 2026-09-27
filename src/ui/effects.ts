@@ -89,16 +89,6 @@ const list = (xs: string[]) => (xs.length <= 1 ? xs.join("") : `${xs.slice(0, -1
 /** A chance as a percent: whole numbers, with one decimal under 10% (5% → 7.5%). */
 const round = (n: number) => `${n < 0.1 ? Math.round(n * 1000) / 10 : Math.round(n * 100)}%`;
 
-/** A skill's chance finds, as `[item, base chance]` (the first action that finds each). */
-function chanceFinds(skill: SkillId): [ItemId, number][] {
-  const out = new Map<ItemId, number>();
-  for (const a of Object.values(ACTION_DEFS)) {
-    if (a.skill !== skill) continue;
-    for (const o of a.outputs) if (o.chance !== undefined && !out.has(o.item as ItemId)) out.set(o.item as ItemId, o.chance);
-  }
-  return [...out];
-}
-
 /**
  * What a talent effect does, generated from its numbers, in the same words everywhere:
  * "bulk" (always 2 per action, but slower) and "double" (a chance of twice as much) never read alike.
@@ -111,16 +101,9 @@ export function talentEffect(effect: TalentEffect, skill: SkillId): string {
       return `${pct(effect.bonus)} ${skillName(effect.skill ?? skill)} speed`;
     case "xp":
       return `${pct(effect.bonus)} ${skillName(effect.skill ?? skill)} XP`;
-    case "find": {
-      if (effect.item) {
-        const base = chanceFinds(skill).find(([i]) => i === effect.item)?.[1];
-        return base !== undefined
-          ? `${ITEMS[effect.item].name}: ${round(base)} → ${round(Math.min(1, base * effect.multiplier))} chance`
-          : `${ITEMS[effect.item].name} ×${effect.multiplier} as likely`;
-      }
-      const finds = chanceFinds(skill).map(([i, c]) => `${ITEMS[i].name.toLowerCase()} ${round(c)} → ${round(Math.min(1, c * effect.multiplier))}`);
-      return `${own} chance finds ×${effect.multiplier} (${finds.join(", ")})`;
-    }
+    case "find":
+      // Just the multiplier: the recipe rows show what it does to each chance.
+      return effect.item ? `${ITEMS[effect.item].name} ×${effect.multiplier} as likely` : `${own} chance finds ×${effect.multiplier}`;
     case "bulk": {
       // Only the main output doubles; chance finds still roll once.
       const rolls = effect.actions.some((a) => ACTION_DEFS[a].outputs.some((o) => o.chance !== undefined));

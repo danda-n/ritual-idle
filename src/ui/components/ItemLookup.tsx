@@ -23,6 +23,13 @@ const lookUpTitle = (item: ItemId) => `Look up ${itemName(item)}${ITEM_DEFS[item
  *   and clicking it offers to start the action that makes it.
  * - `plain`: text-style link for lists (`bare` drops its icon, where the list draws its own).
  */
+/** A chance past 100%, in words: 1.1 → "1 for sure, 10% chance of a 2nd". */
+export function overflowText(chance: number): string {
+  const sure = Math.floor(chance);
+  const more = Math.round((chance - sure) * 1000) / 10;
+  return more > 0 ? `${sure} for sure, ${more}% chance of a ${sure + 1 === 2 ? "2nd" : `${sure + 1}th`}` : `${sure} for sure`;
+}
+
 export function ItemChip({ item, qty, need, chance, plain, bare, boostedBy }: { item: ItemId; qty?: number; need?: number; chance?: number; plain?: boolean; bare?: boolean; boostedBy?: string[] }) {
   const { state, lookup, start } = useChipActions();
   const [menu, setMenu] = useState(false);
@@ -93,7 +100,7 @@ export function ItemChip({ item, qty, need, chance, plain, bare, boostedBy }: { 
           if (short) setMenu((m) => !m);
           else lookup(item);
         }}
-        title={short ? `Short of ${itemName(item)}: you have ${have}, need ${need}` : boostedBy?.length ? `${lookUpTitle(item)} · raised by ${boostedBy.join(", ")}` : lookUpTitle(item)}
+        title={short ? `Short of ${itemName(item)}: you have ${have}, need ${need}` : [lookUpTitle(item), chance !== undefined && chance > 1 ? overflowText(chance) : null, boostedBy?.length ? `raised by ${boostedBy.join(", ")}` : null].filter(Boolean).join(" · ")}
       >
         <ItemIcon item={item} size={15} />
         {(need ?? qty) !== undefined && <span className="num">{need ?? qty}</span>}

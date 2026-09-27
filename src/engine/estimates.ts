@@ -91,7 +91,7 @@ export function isRecipeRevealed(state: GameState, id: ActionId): boolean {
 
 /**
  * What one repetition really gives, with every bonus applied: each output's chance (find talents,
- * projects, buffs; capped at 100%) and its sure quantity (bulk talents), plus what changed it.
+ * projects, buffs; past 100% it's one for sure plus a chance of another) and its sure quantity (bulk talents), plus what changed it.
  * `baseChance`/`baseQty` are the recipe's own numbers, so the UI can mark what a bonus changed.
  */
 export interface EffectiveOutput {
@@ -112,7 +112,8 @@ export function effectiveOutputs(state: GameState, id: ActionId, now: number = s
       const qty = o.qty + (i === 0 ? bulk : 0);
       return { item: o.item, qty, baseQty: o.qty, changedBy: qty !== o.qty ? talentNames(state, def.skill, (e) => e.kind === "bulk" && e.actions.includes(id)) : [] };
     }
-    const chance = Math.min(1, o.chance * chanceMultiplier(state, o.item, now, def.skill));
+    // Uncapped: past 100% it's one for sure plus a chance of another (see rollOutputs).
+    const chance = o.chance * chanceMultiplier(state, o.item, now, def.skill);
     return { item: o.item, qty: o.qty, baseQty: o.qty, chance, baseChance: o.chance, changedBy: chance !== o.chance ? chanceSources(state, o.item, def.skill, now) : [] };
   });
 }

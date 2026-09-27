@@ -7,6 +7,7 @@ import { PAGES } from "../content/pages";
 import { setSetting, start, type Result } from "./commands";
 import { effectiveOutputs, shortfall, revealedRecipes, bestXpAction, inputsLastMs, lookupItem, nextTrustAt, outputPerHour, producerAction, producingSkill, repsPerHour, timeToCapMs, timeToNextLevelMs, xpPerHour } from "./estimates";
 import { catchUp } from "./offline";
+import { actionDurationMs } from "./modifiers";
 import { deserialize } from "./save";
 import { advance, blockReason, fallbackFor, startAction } from "./simulate";
 import { xpForLevel } from "./xp";
@@ -45,12 +46,16 @@ describe("salt relief", () => {
     expect(state.inventory.salt).toBe(10);
   });
 
-  it("the salt crock raises the pantry's salt from 50% to 75%, never past 100%", () => {
+  it("the salt crock raises the pantry's salt from 50% to 75%; past 100% it's one for sure plus a chance of another", () => {
     expect(perRep(scav(1), "search_pantry", "salt")).toBeCloseTo(0.5);
     expect(perRep(scav(1, { upgrades: ["salt_crock"] }), "search_pantry", "salt")).toBeCloseTo(0.75);
-    // With Deep shelves (×1.5) as well: 1.125, capped at 1.
+    // With Deep shelves (×1.5) as well: 112.5%, so 1 salt and a 12.5% chance of a 2nd.
     const both = scav(3, { upgrades: ["salt_crock"], talents: { ...open().talents, scavenging: { 3: "b" } } } as Partial<GameState>);
-    expect(perRep(both, "search_pantry", "salt")).toBeCloseTo(1);
+    expect(perRep(both, "search_pantry", "salt")).toBeCloseTo(1.125);
+    // 200 searches at 112.5%: never less than 1 each, about 225 in all.
+    const { state } = advance(startAction(both, "search_pantry"), actionDurationMs(both, "search_pantry") * 200 + 1);
+    expect(state.inventory.salt).toBeGreaterThanOrEqual(200);
+    expect(state.inventory.salt).toBeLessThan(260);
   });
 });
 
@@ -64,7 +69,7 @@ describe("what a recipe really gives", () => {
     const built = { ...base, upgrades: ["salt_crock"], talents: { scavenging: { 3: "b", 6: "a" } } } as GameState;
     const [tallow, salt] = effectiveOutputs(built, "search_pantry");
     expect(tallow).toMatchObject({ qty: 2, changedBy: ["Full arms"] });
-    expect(salt).toMatchObject({ chance: 1, changedBy: ["Deep shelves", "Sealed salt crock"] });
+    expect(salt).toMatchObject({ chance: 1.125, changedBy: ["Deep shelves", "Sealed salt crock"] });
     const blessed = { ...base, buffs: [{ id: "still_night", endsAt: T0 + 60_000, skill: "scavenging" }] } as GameState;
     expect(effectiveOutputs(blessed, "search_pantry", T0)[1]).toMatchObject({ chance: 1, changedBy: ["Still Night"] });
   });

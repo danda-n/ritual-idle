@@ -33,8 +33,10 @@ describe("talent text is generated from the effects", () => {
     expect(t("chandlery", 12, "a")).toBe("Hearth candle: makes 2 per action instead of 1, XP ×2, no extra time");
   });
 
-  it("finds state the real chances; thrift states the real inputs; buff length the real time", () => {
-    expect(t("scavenging", 12, "b")).toBe("Salt: 50% → 100% chance");
+  it("finds give the multiplier; thrift states the real inputs; buff length the real time", () => {
+    // Finds say only the multiplier; the recipe rows show the chances.
+    expect(t("scavenging", 12, "b")).toBe("Salt ×2 as likely");
+    expect(t("scavenging", 3, "b")).toBe("Scavenging chance finds ×1.5");
     expect(t("sigilcraft", 3, "b")).toBe("Ash sigil: 1 ash (was 2)");
     expect(t("ritualism", 6, "a")).toBe("Blessing lasts ×2 (15m → 30m)");
     expect(t("scavenging", 6, "a")).toContain("chance finds still roll once");
