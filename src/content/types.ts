@@ -114,6 +114,8 @@ export interface RequestDef<I extends string> {
 export type UpgradeEffect =
   | { kind: "speed"; skill: string; bonus: number }
   | { kind: "extra_yield"; skill: string; chance: number }
+  /** An item turns up more often wherever it's a chance find (the salt crock: salt ×1.5). */
+  | { kind: "find"; item: string; multiplier: number }
   | { kind: "omen_capacity"; capacity: number }
   | { kind: "offline_cap"; hours: number };
 

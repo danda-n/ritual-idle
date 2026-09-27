@@ -41,6 +41,8 @@ export function upgradeEffect(effect: UpgradeEffect): string {
       return `${pct(effect.bonus)} ${skillName(effect.skill)} speed`;
     case "extra_yield":
       return `${pct(effect.chance)} ${skillName(effect.skill)} yield`;
+    case "find":
+      return `${ITEMS[effect.item as ItemId].name} finds ×${effect.multiplier}`;
     case "omen_capacity":
       return `Holds ${effect.capacity} omens`;
     case "offline_cap":

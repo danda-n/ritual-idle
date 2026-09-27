@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ACTION_DEFS, TIER_LEVELS, tierOf } from "../content/actions";
+import { ACTION_DEFS } from "../content/actions";
 import { PART_DEFS } from "../content/rite";
 import { ITEM_CATEGORIES, ITEMS } from "../content/items";
 import { NOTES } from "../content/notes";
@@ -27,6 +27,30 @@ const okay = (r: Result) => {
 describe("content", () => {
   it("every item has a known category", () => {
     for (const [id, item] of Object.entries(ITEMS)) expect(item.category in ITEM_CATEGORIES, id).toBe(true);
+  });
+});
+
+describe("salt relief", () => {
+  const scav = (lvl: number, extra: Partial<GameState> = {}) => ({ ...open(), skills: { ...open().skills, scavenging: { xp: xpForLevel(lvl) } }, ...extra }) as GameState;
+  const perRep = (s: GameState, id: "search_pantry" | "salt_barrel", item: string) => {
+    const reps = repsPerHour(s, id);
+    return outputPerHour(s, id).find((o) => o.item === item)!.perHour / reps;
+  };
+
+  it("the salt barrel gives salt every time, some tallow, and now and then bread", () => {
+    expect(perRep(scav(7), "salt_barrel", "salt")).toBeCloseTo(1);
+    expect(perRep(scav(7), "salt_barrel", "tallow")).toBeCloseTo(0.4);
+    expect(perRep(scav(7), "salt_barrel", "bread")).toBeCloseTo(0.05);
+    const { state } = advance(startAction(scav(7), "salt_barrel"), 4000 * 10);
+    expect(state.inventory.salt).toBe(10);
+  });
+
+  it("the salt crock raises the pantry's salt from 50% to 75%, never past 100%", () => {
+    expect(perRep(scav(1), "search_pantry", "salt")).toBeCloseTo(0.5);
+    expect(perRep(scav(1, { upgrades: ["salt_crock"] }), "search_pantry", "salt")).toBeCloseTo(0.75);
+    // With Deep shelves (×1.5) as well: 1.125, capped at 1.
+    const both = scav(3, { upgrades: ["salt_crock"], talents: { ...open().talents, scavenging: { 3: "b" } } } as Partial<GameState>);
+    expect(perRep(both, "search_pantry", "salt")).toBeCloseTo(1);
   });
 });
 
@@ -166,15 +190,16 @@ describe("recipe reveal", () => {
     expect(revealedRecipes(light, "scavenging")).toContain("sift_midden");
   });
 
-  it("lists recipes in tier order: the hives (tier 2) before the midden (tier 3)", () => {
+  it("lists recipes in level order: pantry, hives, midden, then the salt barrel (level 7)", () => {
     const s = { ...open(), skills: { ...open().skills, scavenging: { xp: xpForLevel(9) } } };
-    expect(revealedRecipes(s, "scavenging").slice(0, 2)).toEqual(["search_pantry", "rob_hives"]);
-    expect(tierOf(ACTION_DEFS.rob_hives.level)).toBe(2);
-    expect(tierOf(ACTION_DEFS.sift_midden.level)).toBe(3);
+    expect(revealedRecipes(s, "scavenging").slice(0, 4)).toEqual(["search_pantry", "rob_hives", "sift_midden", "salt_barrel"]);
   });
 
-  it("every recipe sits on a tier level", () => {
-    for (const [id, a] of Object.entries(ACTION_DEFS)) expect((TIER_LEVELS as readonly number[]).includes(a.level), id).toBe(true);
+  it("recipes can open between the usual every-3-levels steps (the salt barrel at 7)", () => {
+    const at6 = { ...open(), skills: { ...open().skills, scavenging: { xp: xpForLevel(6) } } };
+    // At 6 the barrel is the next recipe: it shows, but can't start yet.
+    expect(revealedRecipes(at6, "scavenging")).toContain("salt_barrel");
+    expect(blockReason(at6, "salt_barrel")).toEqual({ kind: "level_too_low", level: 7 });
   });
 
   it("skips recipes still in burnt pages", () => {
@@ -196,7 +221,9 @@ describe("producers (for item chips)", () => {
   it("knows which skill makes an item", () => {
     expect(producingSkill("tallow")).toBe("scavenging");
     expect(producingSkill("tallow_candle")).toBe("chandlery");
-    expect(producingSkill("bread")).toBeNull();
+    // Bread is bought, but the salt barrel sometimes turns some up too.
+    expect(producingSkill("bread")).toBe("scavenging");
+    expect(producingSkill("coin" as never)).toBeNull();
   });
 
   it("offers an action that can run, and only ones the player knows", () => {

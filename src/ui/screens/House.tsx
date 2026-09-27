@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { ACTION_DEFS, tierOf, type ActionId } from "../../content/actions";
+import { ACTION_DEFS, type ActionId } from "../../content/actions";
 import { ITEMS, type ItemId } from "../../content/items";
 import { SKILL_IDS, SKILLS, type SkillId } from "../../content/skills";
 import { inputsLastMs, outputPerHour, producingSkill, revealedRecipes, timeToCapMs, timeToNextLevelMs, xpPerHour } from "../../engine/estimates";
@@ -187,7 +187,7 @@ export function SkillActions({ state, skill, onStart, onStop, act }: { state: Ga
           <div className="recipes-head" aria-hidden="true">
             <span />
             <span className="label">Recipe</span>
-            <span className="label r">Tier</span>
+            <span className="label r">Lvl</span>
             <span className="label r">Time</span>
             <span className="label r">XP</span>
             <span className="label col-io">Inputs → makes</span>
@@ -225,7 +225,7 @@ function RecipeRow({ id, state, onStart, onStop, fresh }: { id: ActionId; state:
       <div className="recipe is-unknown" data-skill={def.skill}>
         <ScrollIcon size={16} />
         <span className="span">
-          Unknown recipe · <span className="num">Tier {tierOf(def.level)}</span> · learned from a burnt page
+          Unknown recipe · <span className="num">Lvl {def.level}</span> · learned from a burnt page
         </span>
       </div>
     );
@@ -250,8 +250,8 @@ function RecipeRow({ id, state, onStart, onStop, fresh }: { id: ActionId; state:
         {def.name}
         {fresh && <span className="new">New</span>}
       </span>
-      <span className="r num" title={`Tier ${tierOf(def.level)} · level ${def.level}`}>
-        {tierOf(def.level)}
+      <span className="r num" title={`Opens at ${SKILLS[def.skill].name} level ${def.level}`}>
+        {def.level}
       </span>
       <span className="r num">
         {+(ms / 1000).toFixed(1)}

@@ -12,6 +12,12 @@ export const UPGRADES = {
     items: { tallow_candle: 10, beeswax_candle: 4 },
     effect: { kind: "omen_capacity", capacity: 2 },
   },
+  salt_crock: {
+    name: "Sealed salt crock",
+    extra: "Pantry salt 50% → 75%",
+    items: { beeswax: 8, tallow_candle: 6 },
+    effect: { kind: "find", item: "salt", multiplier: 1.5 },
+  },
   reading_lamp: {
     name: "Reading lamp",
     items: { beeswax_candle: 6, glass: 8 },

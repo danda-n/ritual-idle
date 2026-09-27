@@ -8,7 +8,8 @@ type Action = ActionDef<SkillId, ItemId>;
 // src/engine/playthrough.test.ts checks the chapter is still finishable in every order, on pace,
 // and that following the steps never needs grinding.
 // Rules (docs/CHAPTER1.md §2):
-// - Recipes come in tiers, a new tier every 3 levels: T1 L1, T2 L3, T3 L6, T4 L9, T5 L12, T6 L15.
+// - Each recipe opens at its own level. Most come every 3 levels (1, 3, 6, 9, 12), but any level
+//   is allowed (the salt barrel at 7 fills the gap before the Offering).
 // - Each skill owns what its stage needs (Sigilcraft sweeps its ash, Scholarship searches for its
 //   pages, Herbalism binds its smudge), so the middle stages can come in any order.
 // - A craft gives about the XP of gathering its inputs.
@@ -22,6 +23,10 @@ export const ACTIONS = {
   sift_midden: {
     name: "Sift the village midden", skill: "scavenging", level: 6, seconds: 4, xp: 10, inputs: {},
     outputs: [{ item: "iron_nail", qty: 1 }, { item: "rags", qty: 1, chance: 0.3 }],
+  },
+  salt_barrel: {
+    name: "Scrape the salt barrel", skill: "scavenging", level: 7, seconds: 4, xp: 11, inputs: {},
+    outputs: [{ item: "salt", qty: 1 }, { item: "tallow", qty: 1, chance: 0.4 }, { item: "bread", qty: 1, chance: 0.05 }],
   },
   open_chest: {
     name: "Open grandmother's chest", skill: "scavenging", level: 9, seconds: 4, xp: 13, inputs: {},
@@ -93,11 +98,3 @@ export type ActionId = keyof typeof ACTIONS;
 /** Widened view for engine code that iterates generically. */
 export const ACTION_DEFS: Record<ActionId, Action> = ACTIONS;
 
-/** Tier N unlocks at TIER_LEVELS[N - 1]: a new tier every 3 levels. */
-export const TIER_LEVELS = [1, 3, 6, 9, 12, 15, 18] as const;
-
-/** A recipe's tier, from its level. */
-export function tierOf(level: number): number {
-  const i = TIER_LEVELS.findIndex((l) => l === level);
-  return i >= 0 ? i + 1 : TIER_LEVELS.filter((l) => l <= level).length;
-}

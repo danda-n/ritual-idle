@@ -127,11 +127,12 @@ export function omenChanceMultiplier(state: GameState): number {
 
 /**
  * Multiplier on an item's drop chance from active buffs (e.g. Still Night doubles burnt pages),
- * and from the skill's find talents when `skill` is given.
+ * from House projects (the salt crock), and from the skill's find talents when `skill` is given.
  */
 export function chanceMultiplier(state: GameState, item: ItemId, now: number = state.lastTickAt, skill?: SkillId): number {
   let mult = 1;
   if (skill) for (const t of talents(state, "find", skill)) if (!t.item || t.item === item) mult *= t.multiplier;
+  for (const e of effects(state)) if (e.kind === "find" && e.item === item) mult *= e.multiplier;
   for (const b of activeBuffs(state, now)) {
     mult *= BUFF_DEFS[b.id].chanceMultiplier?.[item] ?? 1;
     // A blessed skill's chance finds (Still Night): only with the skill known.

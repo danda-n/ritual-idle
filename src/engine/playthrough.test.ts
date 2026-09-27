@@ -88,10 +88,18 @@ class Bot {
     }
   }
 
+  /**
+   * What to make an item with: a recipe it can already run that makes the item every time, the
+   * highest level first (salt from the barrel once Scavenging reaches 7), else the first maker.
+   */
   producer(item: ItemId): ActionId {
-    const id = ACTION_IDS.find((a) => ACTION_DEFS[a].outputs.some((o) => o.item === item));
-    if (!id) throw new Error(`Nothing makes ${item}`);
-    return id;
+    const makers = ACTION_IDS.filter((a) => ACTION_DEFS[a].outputs.some((o) => o.item === item));
+    if (makers.length === 0) throw new Error(`Nothing makes ${item}`);
+    const sure = makers
+      .filter((a) => ACTION_DEFS[a].outputs.some((o) => o.item === item && o.chance === undefined))
+      .filter((a) => isSkillUnlocked(this.state, ACTION_DEFS[a].skill) && isRecipeKnown(this.state, a) && ACTION_DEFS[a].level <= skillLevel(this.state, ACTION_DEFS[a].skill))
+      .sort((a, b) => ACTION_DEFS[b].level - ACTION_DEFS[a].level);
+    return sure[0] ?? makers[0]!;
   }
 
   /** Make sure an action can run: its skill unlocked, recipe known, level reached (else it's grinding). */

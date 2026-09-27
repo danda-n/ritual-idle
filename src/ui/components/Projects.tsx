@@ -7,11 +7,13 @@ import type { GameState } from "../../engine/state";
 import { CandleIcon, HouseIcon, LeafIcon, MoonIcon } from "../art/icons";
 import { upgradeEffect } from "../effects";
 import { ItemChip } from "./ItemLookup";
+import { ItemIcon } from "../art/items";
 
 type Act = (c: (s: GameState) => Result) => unknown;
 
 const ICONS: Record<UpgradeId, (p: { size?: number }) => ReactNode> = {
   omen_shelf: MoonIcon,
+  salt_crock: (p) => <ItemIcon item="salt" {...p} />,
   reading_lamp: CandleIcon,
   drying_rack: LeafIcon,
   mended_shutters: HouseIcon,
