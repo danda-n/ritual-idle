@@ -14,6 +14,12 @@ import { SKILL_IDS, type SkillId } from "../content/skills";
 import { randomSeed } from "./rng";
 
 export const SAVE_VERSION = 9;
+/**
+ * The playtest reset number. Raise it by one to wipe every player's save on their next load
+ * (after big changes, when old saves would give a misleading playtest). Saves from an older
+ * reset start a new game with a notice. Decided at the end of each session (CLAUDE.md).
+ */
+export const SAVE_EPOCH = 1;
 
 export interface ActiveAction {
   id: ActionId;
@@ -36,6 +42,8 @@ export interface BoardSlot {
 
 export interface GameState {
   version: number;
+  /** The playtest reset this save belongs to (see SAVE_EPOCH). */
+  epoch: number;
   /** Total XP per skill. Levels are derived from XP and the chapter cap. */
   skills: Record<SkillId, { xp: number }>;
   inventory: Partial<Record<ItemId, number>>;
@@ -152,6 +160,7 @@ export interface ActiveBuff {
 export function newGame(now: number = Date.now(), seed: number = randomSeed()): GameState {
   return {
     version: SAVE_VERSION,
+    epoch: SAVE_EPOCH,
     skills: Object.fromEntries(SKILL_IDS.map((id) => [id, { xp: 0 }])) as GameState["skills"],
     inventory: {},
     active: null,

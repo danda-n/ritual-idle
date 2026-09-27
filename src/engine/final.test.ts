@@ -5,9 +5,9 @@ import { PAGES } from "../content/pages";
 import { attune, beginRite, experiment, deliver, releaseOmen, setSetting, type Result } from "./commands";
 import { addInsight } from "./grimoire";
 import { catchUp } from "./offline";
-import { deserialize, exportSave, importSave, serialize } from "./save";
+import { deserialize, exportSave, importSave, isFromBeforeReset, serialize } from "./save";
 import { advance, startAction } from "./simulate";
-import { newGame, SAVE_VERSION, type GameState } from "./state";
+import { newGame, SAVE_EPOCH, SAVE_VERSION, type GameState } from "./state";
 import { refillBoard } from "./village";
 
 const T0 = 1_000_000;
@@ -109,5 +109,24 @@ describe("the village never jams", () => {
     for (let i = 0; i < s.board.length; i++) expect(deliver(s, i).ok).toBe(false);
     const after = catchUp(s, T0 + 60_000).state;
     expect(after.board.every((b) => b.request !== null)).toBe(true);
+  });
+});
+
+describe("playtest reset", () => {
+  it("a save from before the current reset is dropped; a current one loads", () => {
+    const current = newGame(T0, 3);
+    expect(current.epoch).toBe(SAVE_EPOCH);
+    expect(isFromBeforeReset(serialize(current))).toBe(false);
+    const old = { ...current, epoch: SAVE_EPOCH - 1 };
+    expect(isFromBeforeReset(JSON.stringify(old))).toBe(true);
+    const noEpoch = { ...current } as Partial<GameState>;
+    delete noEpoch.epoch;
+    expect(isFromBeforeReset(JSON.stringify(noEpoch))).toBe(true);
+  });
+
+  it("an imported save is kept (importing is the player's own choice)", () => {
+    const noEpoch = { ...newGame(T0, 3) } as Partial<GameState>;
+    delete noEpoch.epoch;
+    expect(deserialize(JSON.stringify(noEpoch)).epoch).toBe(SAVE_EPOCH);
   });
 });

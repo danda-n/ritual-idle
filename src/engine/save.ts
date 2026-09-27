@@ -10,7 +10,7 @@ import { KEEPSAKES } from "../content/keepsakes";
 import { BOARD_SLOTS } from "../content/requests";
 import { UPGRADE_IDS, UPGRADES, type UpgradeId } from "../content/upgrades";
 import type { Feature } from "../content/types";
-import { SAVE_VERSION, newGame, type GameState, type RecipeProgress } from "./state";
+import { SAVE_EPOCH, SAVE_VERSION, newGame, type GameState, type RecipeProgress } from "./state";
 
 const STORAGE_KEY = "ritual-idle.save";
 
@@ -204,12 +204,31 @@ export function importSave(text: string): GameState {
 }
 
 // Browser storage can be unavailable (private windows, blocked storage), so every access is guarded.
-export function loadLocal(): GameState | null {
+/** True if this save comes from before the current playtest reset (SAVE_EPOCH), so it's discarded. */
+export function isFromBeforeReset(json: string): boolean {
+  try {
+    const data = JSON.parse(json) as { epoch?: number };
+    return (data.epoch ?? 0) < SAVE_EPOCH;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * The saved game, if any. A save from before the current playtest reset is dropped (`reset`
+ * says so, for a one-time notice) and the game starts fresh.
+ */
+export function loadLocal(): { state: GameState | null; reset: boolean } {
   try {
     const json = localStorage.getItem(STORAGE_KEY);
-    return json ? deserialize(json) : null;
+    if (!json) return { state: null, reset: false };
+    if (isFromBeforeReset(json)) {
+      localStorage.removeItem(STORAGE_KEY);
+      return { state: null, reset: true };
+    }
+    return { state: deserialize(json), reset: false };
   } catch {
-    return null;
+    return { state: null, reset: false };
   }
 }
 

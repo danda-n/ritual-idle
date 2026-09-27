@@ -37,6 +37,7 @@ Vite + React + TypeScript, Vitest. Electron (Steam) and PixiJS (sanctum scene) c
 - Engine functions are pure and deterministic: randomness comes from `state.rngSeed` via `engine/rng.ts`, never `Math.random()` inside the simulation.
 - Every engine behavior gets a test in `src/engine/*.test.ts`.
 - Save format changes: bump `SAVE_VERSION` and make `deserialize` upgrade older saves. Never break existing saves.
+- **Playtest save resets:** at the end of every session, ask the designer whether the next build should wipe players' saves, with a recommendation based on what changed (yes after big changes to the chapter, balance or systems, where old saves would give a misleading playtest; no for small fixes). If yes, raise `SAVE_EPOCH` in `src/engine/state.ts` by one: saves from an older reset start a new game on their next load, with a one-time notice. Imported saves are kept.
 - Design guardrails (from the decision log): no real-time gating, no failure on rites, low follower management, generous offline progress, no pay-to-win.
 - Dev builds show a Dev tools panel at the bottom of the page: time skip (through the real offline path), give items, +100 coin, +omen, next note, items for the next part, +5 levels, +5 insight. When you add a new timestamp to the state, add it to `rewind` in `devtools.ts` as well.
 - Test in the browser on a separate origin (e.g. `http://test.localhost:5391`), which has its own save. Never use the designer's `localhost` save for testing.

@@ -99,11 +99,11 @@ function heardTitle(aside: string): string {
   return "Heard in the village";
 }
 
-function boot(): { state: GameState; away: CatchUp | null; fresh: boolean } {
-  const saved = loadLocal();
-  if (!saved) return { state: newGame(), away: null, fresh: true };
+function boot(): { state: GameState; away: CatchUp | null; fresh: boolean; wasReset: boolean } {
+  const { state: saved, reset } = loadLocal();
+  if (!saved) return { state: newGame(), away: null, fresh: true, wasReset: reset };
   const result = catchUp(saved, Date.now());
-  return { state: result.state, away: result.awayMs >= SUMMARY_THRESHOLD_MS ? result : null, fresh: false };
+  return { state: result.state, away: result.awayMs >= SUMMARY_THRESHOLD_MS ? result : null, fresh: false, wasReset: false };
 }
 
 /**
@@ -139,6 +139,14 @@ export function useGame() {
     const ids = new Set(fresh.map((f) => f.id));
     setTimeout(() => setToasts((t) => t.filter((x) => !ids.has(x.id))), (ref.current.settings.toastSeconds ?? TOAST_MS / 1000) * 1000);
   }, []);
+
+  // A save from before the playtest reset was dropped on load: say so once.
+  const resetNoticed = useRef(false);
+  useEffect(() => {
+    if (!initial.wasReset || resetNoticed.current) return;
+    resetNoticed.current = true;
+    pushToasts([{ title: "New playtest build: fresh start", text: "The game changed a lot, so saves were reset." }]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // New notes and pages pop up while playing; after an absence they appear in the summary instead.
   const announce = useCallback(

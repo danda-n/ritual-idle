@@ -676,3 +676,4 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
 - **The last stage is just "Wake the Circle":** its two steps (bind 2 smudge bundles, smoke the rooms twice) never blocked the rite, so they read as busywork.
 - **After the rite, the tracker lists what's still to find** (hidden recipes, secrets, projects, skills at the cap, better contracts), so the chapter end isn't a dead end.
 - **The talent panel shows only what's reached** and folds while nothing waits; **XP rewards can't go into a capped skill.**
+- **Playtest save resets:** the game can wipe saves on purpose (`SAVE_EPOCH`), so a playtest after big changes starts clean instead of from a save shaped by old rules. Whether to reset is decided at the end of every session. The first reset ships with this build.

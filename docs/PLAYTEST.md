@@ -7,6 +7,7 @@ What to try and what to note in a Chapter 1 playtest, for the game as it is now 
 - **Keep dev tools out of the playtest.** They appear only in `npm run dev`. For a clean run use `npm run build` and then `npm run preview`.
 - **Target times:** about 30–35 minutes for the chapter, the rite included (about 3 minutes; it runs by itself). A new skill every 4–7 minutes. Side projects and experiments add time on top.
 
+- **Saves may reset between builds.** After big changes the game starts fresh on its next load, with a notice ("New playtest build: fresh start"). That's on purpose, so each playtest starts clean.
 ## Try each of these once
 1. **Follow grandmother's notes using only the Go, Place and Claim buttons.** Is the next step always obvious?
 2. **Get stuck on purpose.** Start a candle without tallow and click the short chip. Does it get you moving again?
@@ -86,3 +87,4 @@ One short entry per round, oldest first.
 - **Design system v0.4:** a question on the new look (what to press, what's running, which tab you're in) and row density.
 - **Text trimmed to a spreadsheet style:** questions on whether the short labels are clear, whether anyone misses the story (the Journal and "Story" links), the omen shelf's toast, and the villagers' hints.
 - **Before the next playtest:** questions on fixed talents and on the goals after the rite.
+- **Playtest resets:** a note in Setup that saves may reset between builds.
