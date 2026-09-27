@@ -286,7 +286,6 @@ function SecretEntry({ state, id, act }: { state: GameState; id: GrimoireId; act
 export function SilhouettePage({ state, id, act, onAttuned }: { state: GameState; id: GrimoireId; act: Act; onAttuned: () => void }) {
   const def = GRIMOIRE_DEFS[id];
   const p = progressOf(state, id);
-  const names = p.bought.named;
   const guide = recipeGuide(state, id);
   const k = recipeKnowledge(state, id);
 
@@ -342,6 +341,38 @@ export function SilhouettePage({ state, id, act, onAttuned }: { state: GameState
       </dl>
 
       <h3 className="hints-title">Hints</h3>
+      <HintList state={state} id={id} act={act} />
+      <ul className="insight-sources" aria-label="Where insight comes from">
+        <li className="insight-have num">✦ {state.insight} to spend</li>
+        {INSIGHT_SOURCES.map((x) => (
+          <li key={x}>{x}</li>
+        ))}
+      </ul>
+
+      {p.attempts.length > 0 && (
+        <details className="attempts">
+          <summary>Your tries ({p.attempts.length})</summary>
+          <ol className="ledger">
+            {[...p.attempts].reverse().map((a, i) => (
+              <li key={i}>
+                <span>{a.items.map(itemName).join(" · ")}</span>
+                <Glows glows={a.glows} of={a.items.length} />
+              </li>
+            ))}
+          </ol>
+        </details>
+      )}
+    </>
+  );
+}
+
+/** A hidden recipe's hints, I to III (the riddle, what a villager said, categories, names, the nudge), with buy buttons. */
+export function HintList({ state, id, act }: { state: GameState; id: GrimoireId; act: Act }) {
+  const def = GRIMOIRE_DEFS[id];
+  const p = progressOf(state, id);
+  const names = p.bought.named;
+  return (
+    <>
       <div className="hint">
         <span className="hint-num">I</span>
         <p className="note-quote">{def.hints?.riddle}</p>
@@ -371,26 +402,6 @@ export function SilhouettePage({ state, id, act, onAttuned }: { state: GameState
           {def.hints?.close && (p.bought.close ? <p className="note-quote">The last one: {def.hints.close}</p> : <BuyHint state={state} id={id} kind="close" label="A nudge toward the last one (never its name)" act={act} />)}
         </div>
       </div>
-      <ul className="insight-sources" aria-label="Where insight comes from">
-        <li className="insight-have num">✦ {state.insight} to spend</li>
-        {INSIGHT_SOURCES.map((x) => (
-          <li key={x}>{x}</li>
-        ))}
-      </ul>
-
-      {p.attempts.length > 0 && (
-        <details className="attempts">
-          <summary>Your tries ({p.attempts.length})</summary>
-          <ol className="ledger">
-            {[...p.attempts].reverse().map((a, i) => (
-              <li key={i}>
-                <span>{a.items.map(itemName).join(" · ")}</span>
-                <Glows glows={a.glows} of={a.items.length} />
-              </li>
-            ))}
-          </ol>
-        </details>
-      )}
     </>
   );
 }

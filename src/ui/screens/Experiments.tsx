@@ -12,9 +12,9 @@ import { Term } from "../components/Term";
 import { itemName } from "../format";
 import { ItemIcon } from "../art/items";
 import { producingSkill } from "../../engine/estimates";
-import { circleStep, outcomeHelp, recipeKnowledge } from "../guidance";
+import { outcomeHelp, recipeKnowledge } from "../guidance";
 import { charmEffects, charmLasts } from "../effects";
-import { Glows, SilhouettePage } from "./Grimoire";
+import { Glows, HintList } from "./Grimoire";
 
 type Act = (command: (s: GameState) => Result) => Success | null;
 
@@ -32,6 +32,23 @@ export function Experiments({ state, act }: { state: GameState; act: Act }) {
   // Counts tries, so each result re-plays its animation.
   const [tryNo, setTry] = useState(0);
   const attuned = state.attunedTo;
+  // Two views, remembered in this browser: the Circle (finding recipes) and the charms.
+  const [view, setView] = useState<"circle" | "charms">(() => {
+    try {
+      return localStorage.getItem("ritual-idle.expView") === "charms" ? "charms" : "circle";
+    } catch {
+      return "circle";
+    }
+  });
+  const pickView = (v: "circle" | "charms") => {
+    setView(v);
+    try {
+      localStorage.setItem("ritual-idle.expView", v);
+    } catch {
+      /* private window: the view just isn't remembered */
+    }
+  };
+  const charmsHeld = CHARM_IDS.reduce((n, c) => n + (state.inventory[c] ?? 0), 0);
   const progress = attuned ? progressOf(state, attuned) : null;
 
   // Empty the slots when the attunement changes (the number of slots may change). The last result
@@ -47,7 +64,6 @@ export function Experiments({ state, act }: { state: GameState; act: Act }) {
   const knowledge = attuned ? recipeKnowledge(state, attuned) : null;
 
   const choices = GRIMOIRE_IDS.filter((id) => isSilhouetteVisible(state, id) && !isDiscovered(state, id));
-  const step = circleStep(attuned !== null, choices.length > 0, placed.length, slots);
   // What you hold, known ingredients first (proven at the Circle, or named by a hint you bought).
   const known = new Set(knowledge?.belongs ?? []);
   const held = (Object.entries(state.inventory) as [ItemId, number][])
@@ -84,57 +100,82 @@ export function Experiments({ state, act }: { state: GameState; act: Act }) {
           { label: "Insight", term: "insight", value: `✦ ${state.insight}` },
         ]}
       />
-      <Charms state={state} act={act} />
-      <div className="exp-grid">
-      <section className="panel circle-panel" aria-labelledby="circle-heading">
-        <div className="panel-title">
-          <CircleRiteIcon size={18} />
-          <h2 id="circle-heading">At the Circle</h2>
-          <span className="panel-aside muted">Optional</span>
-        </div>
+      <div className="exp-views" role="tablist" aria-label="Experiments">
+        {(["circle", "charms"] as const).map((v) => (
+          <button key={v} role="tab" aria-selected={view === v} className={`exp-view ${view === v ? "is-on" : ""}`} onClick={() => pickView(v)}>
+            {v === "circle" ? "The Circle" : `Charms${charmsHeld > 0 ? ` (${charmsHeld})` : ""}`}
+          </button>
+        ))}
+      </div>
+      {view === "charms" ? (
+        <Charms state={state} act={act} />
+      ) : (
+        <div className="exp-grid">
+          {/* Left: what you're working on, what you know, and the hints. */}
+          <section className="panel recipe-card" aria-labelledby="recipe-heading">
+            <div className="panel-title">
+              <h2 id="recipe-heading">Working on</h2>
+              <span className="panel-aside num">✦ {state.insight}</span>
+            </div>
+            <select
+              id="attune"
+              className="field"
+              aria-label="Hidden recipe"
+              value={attuned ?? ""}
+              onChange={(e) => {
+                setLast(null);
+                act((s) => attune(s, (e.target.value || null) as GrimoireId | null));
+              }}
+            >
+              <option value="">Free experiment: hunt secrets (no hints)</option>
+              {choices.map((id) => (
+                <option key={id} value={id}>
+                  {GRIMOIRE_DEFS[id].name} ({GRIMOIRE_DEFS[id].ingredients.length} things)
+                </option>
+              ))}
+            </select>
+            {attuned && knowledge ? (
+              <>
+                <p className="gives">
+                  <span className="gives-label">Gives</span> {GRIMOIRE_DEFS[attuned].rewardText}
+                </p>
+                <dl className="proofs">
+                  <dt>Belongs</dt>
+                  <dd>
+                    {knowledge.belongs.length === 0 ? <span className="muted">none yet</span> : knowledge.belongs.map((i) => <span key={i} className="chip right">✓ {itemName(i)}</span>)}
+                    <span className="muted num"> {knowledge.belongs.length}/{knowledge.size}</span>
+                  </dd>
+                  {knowledge.ruledOut.length > 0 && (
+                    <>
+                      <dt>Crossed out</dt>
+                      <dd>
+                        {knowledge.ruledOut.map((i) => (
+                          <span key={i} className="chip struck">
+                            {itemName(i)}
+                          </span>
+                        ))}
+                      </dd>
+                    </>
+                  )}
+                </dl>
+                {GRIMOIRE_DEFS[attuned].kind === "hidden" && (
+                  <div className="hints">
+                    <HintList state={state} id={attuned} act={act} />
+                  </div>
+                )}
+              </>
+            ) : (
+              <p className="muted circle-help">No glows here: only the exact set of 3 answers, and it finds a secret.</p>
+            )}
+          </section>
 
-        <ol className="circle-steps" aria-label="How to use the Circle">
-          {["Choose what to work on", `Pick ${slots} things below`, "Place them in the Circle"].map((label, i) => (
-            <li key={label} className={step === i + 1 ? "current" : step > i + 1 ? "done" : ""} aria-current={step === i + 1 ? "step" : undefined}>
-              <span className="circle-step-num">{i + 1}</span> {label}
-            </li>
-          ))}
-        </ol>
-
-        <label className="field-label" htmlFor="attune">
-          Hidden recipe
-        </label>
-        <select
-          id="attune"
-          className="field"
-          value={attuned ?? ""}
-          onChange={(e) => {
-            setLast(null);
-            act((s) => attune(s, (e.target.value || null) as GrimoireId | null));
-          }}
-        >
-          <option value="">Free experiment: hunt secrets (no hints)</option>
-          {choices.map((id) => (
-            <option key={id} value={id}>
-              {GRIMOIRE_DEFS[id].name} ({GRIMOIRE_DEFS[id].ingredients.length} things)
-            </option>
-          ))}
-        </select>
-        {attuned && knowledge ? (
-          <div className="working-on">
-            <p className="gives">
-              <span className="gives-label">Gives</span> {GRIMOIRE_DEFS[attuned].rewardText}
-            </p>
-            <p className="muted">
-              Known {knowledge.belongs.length}/{knowledge.size}
-              {knowledge.belongs.length > 0 && `: ${knowledge.belongs.map(itemName).join(", ")}`}
-              {knowledge.ruledOut.length > 0 && ` · ${knowledge.ruledOut.length} crossed out (hidden below)`}
-            </p>
-          </div>
-        ) : (
-          <p className="muted circle-help">No glows · exact set of 3 only</p>
-        )}
-
+          {/* Right: the Circle itself, the result, and what you can place. */}
+          <section className="panel circle-panel" aria-labelledby="circle-heading">
+            <div className="panel-title">
+              <CircleRiteIcon size={18} />
+              <h2 id="circle-heading">At the Circle</h2>
+              <span className="panel-aside muted">Pick {slots}, then place them</span>
+            </div>
         <div
           className={`ring ${placed.length > 0 ? "is-filling" : ""} ${fill === 1 ? "is-full" : ""} ${last?.kind === "discovered" ? "is-answered" : ""}`}
           style={{ "--fill": fill } as CSSProperties}
@@ -205,17 +246,14 @@ export function Experiments({ state, act }: { state: GameState; act: Act }) {
             </button>
           )}
         </div>
-      </section>
-
-      <section className="panel" aria-labelledby="picker-heading">
-        <div className="panel-title">
-          <h2 id="picker-heading">Your items</h2>
-          {attuned && (
-            <label className="panel-aside toggle">
-              <input type="checkbox" checked={hideWrong} onChange={(e) => setHideWrong(e.target.checked)} /> Hide proven wrong
-            </label>
-          )}
-        </div>
+            <div className="picker-head">
+              <span className="label">Your items</span>
+              {attuned && (
+                <label className="toggle">
+                  <input type="checkbox" checked={hideWrong} onChange={(e) => setHideWrong(e.target.checked)} /> Hide proven wrong
+                </label>
+              )}
+            </div>
         {held.length === 0 ? (
           <p className="muted">Nothing to place yet.</p>
         ) : (
@@ -234,25 +272,21 @@ export function Experiments({ state, act }: { state: GameState; act: Act }) {
             ))}
           </div>
         )}
-        {progress && progress.attempts.length > 0 && (
-          <div className="attempts">
-            <h3>Recent attempts</h3>
-            <ol className="ledger">
-              {[...progress.attempts].reverse().slice(0, 5).map((a, i) => (
-                <li key={i}>
-                  <span>{a.items.map(itemName).join(" · ")}</span>
-                  <Glows glows={a.glows} of={a.items.length} />
-                </li>
-              ))}
-            </ol>
-          </div>
-        )}
-      </section>
-      </div>
-            {attuned && !isDiscovered(state, attuned) && GRIMOIRE_DEFS[attuned].kind === "hidden" && (
-        <section className="panel exp-hints">
-          <SilhouettePage state={state} id={attuned} act={act} onAttuned={() => {}} />
-        </section>
+            {progress && progress.attempts.length > 0 && (
+              <details className="attempts">
+                <summary>Tries ({progress.attempts.length})</summary>
+                <ol className="ledger">
+                  {[...progress.attempts].reverse().map((a, i) => (
+                    <li key={i}>
+                      <span>{a.items.map(itemName).join(" · ")}</span>
+                      <Glows glows={a.glows} of={a.items.length} />
+                    </li>
+                  ))}
+                </ol>
+              </details>
+            )}
+          </section>
+        </div>
       )}
     </>
   );

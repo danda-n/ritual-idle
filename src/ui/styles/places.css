@@ -258,7 +258,15 @@
 .phase-list li.is-current .phase-mark { color: var(--skill); }
 
 /* Experiments (their own tab) */
-.exp-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-4); align-items: start; }
+.exp-grid { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: var(--space-4); align-items: start; }
+/* The two views of the Experiments tab: a segmented control. */
+.exp-views { display: inline-flex; gap: 2px; padding: 3px; border-radius: var(--radius-sm); background: var(--color-sunken); align-self: flex-start; }
+.exp-view { padding: 6px 14px; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--color-text-2); font: inherit; font-size: var(--text-sm); cursor: pointer; }
+.exp-view.is-on { background: var(--color-raised); color: var(--color-text); box-shadow: inset 0 -2px 0 var(--place); }
+.recipe-card { display: flex; flex-direction: column; gap: var(--space-3); }
+.recipe-card .proofs { grid-template-columns: 90px minmax(0, 1fr); gap: 6px 10px; }
+.recipe-card .hints { display: flex; flex-direction: column; gap: var(--space-2); }
+.picker-head { display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); margin-top: var(--space-2); }
 .circle-panel { display: flex; flex-direction: column; gap: var(--space-3); }
 .circle-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-1); }
 .circle-steps li { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-xs); color: var(--color-text-3); padding: var(--space-2); border-radius: var(--radius-sm); }
