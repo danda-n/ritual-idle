@@ -10,7 +10,7 @@ The designer is not a programmer. Explain technical choices plainly, and keep ga
 - `docs/RESEARCH.md`: market and community research behind the decisions
 - `docs/DESIGN.md`: design system (tokens, type, components, art rules, feedback, layout rules, screens, words). Follow it for every UI change
 - `docs/PLAYTEST.md`: what to try and what to note in a Chapter 1 playtest
-- `docs/research/`: dated research notes (e.g. `RITE_QUALITY.md`: sacrifices and rewards for rite quality, undecided)
+- `docs/research/`: dated research notes (e.g. `RITE_QUALITY.md`: sacrifices and rewards for rite quality, decided 2026-09-26)
 - `src/engine/playthrough.test.ts`: a headless bot plays all of Chapter 1 on the real engine (it's the pacing check; `npm run pacing` prints the timings)
 
 If code and docs disagree, ask which should change. Never silently diverge from a logged decision.

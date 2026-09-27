@@ -1,7 +1,7 @@
 # Ritual Idle — Core Concept (v0.3)
 
 > Working title. This document fixes the **core idea**: fantasy, pillars, loops, skill shape and constraints.
-> v0.2: all 10 open questions from v0.1 are decided. v0.3: the main sections describe the game as it is after four playtest patches, and are kept current after every patch.
+> v0.2: all 10 open questions from v0.1 are decided. v0.3: the main sections describe the game as it is now (after four patches and two playtest rounds), and are kept current after every patch.
 > The decision log at the end records what changed and why; Chapter 1's own changelog is at the end of [CHAPTER1.md](CHAPTER1.md#changelog).
 > Anything marked *(draft)* is a starting point for the next brainstorm, not a decision.
 > Evidence behind the choices lives in [RESEARCH.md](RESEARCH.md).
@@ -25,11 +25,11 @@ Every skill feeds the ritual circle. Followers take over the work you have maste
 | Parallel work | You do one action at a time, plus 4 (up to ~6) low-management followers |
 | Structure | A finite main story with a real ending, then Patron Cycles as the prestige endgame |
 | Discovery | Forgiving and permanent: the Grimoire fills itself and hints are generous. Major Rite recipes are listed; discovery lives in side rites, hidden recipes, forbidden variants and lore |
-| Challenge | Major Rites and summonings take the place of bosses. No auto-combat, and rites never fail; they run by themselves, and optional offerings set the outcome quality |
+| Challenge | Major Rites and summonings take the place of bosses. No auto-combat, and rites never fail; they run by themselves (tending can hurry them, never required), and optional offerings set the outcome quality |
 | Visuals | A readable UI plus one illustrated "living sanctum" scene |
 | Business | Premium one-time purchase, with paid expansions later |
 | Core systems | Omens and invoked moons (never a time-lock), Taint |
-| Time scale | 3–6s actions. The Chapter 1 rite is about 3 minutes and runs by itself; longer rites (30 min–8h) are the target for later chapters. Offline cap 24h, raised to 72h and then 7 days by upgrades |
+| Time scale | 3–6s actions. The Chapter 1 rite is about 3 minutes and runs by itself (about 1.5 if tended); longer rites (30 min–8h) are the target for later chapters. Offline cap 24h, raised to 72h and then 7 days by upgrades |
 | Pacing | About 4 weeks of real time to the Great Rite; the first session reaches the Chapter 1 Rite |
 | Endgame | New Game+ Patron cycles; the Moon and the Hunger at launch |
 | Art | Folk-art / woodcut style; placeholders until the loop is proven |
@@ -149,7 +149,8 @@ Every skill feeds the ritual circle. Followers take over the work you have maste
 - **The recipe is fully listed upfront.** You always know what a Rite needs; the challenge is producing it. Components come from several skills. In Chapter 1 the rite is the **Kindling**, built in five parts (candles, a ward, smoke, words, an offering), one per stage of the chapter, each placed in the Circle as you make it. Later rites may also ask for, for example:
   - a focus
   - a follower to assist
-- **Rites run by themselves.** Once the requirements are met, you begin it (or let it begin by itself) and it runs in the action slot, offline too. There's nothing to answer while it runs, and it never fails.
+- **Rites run by themselves.** Once the requirements are met, you begin it (or let it begin by itself) and it runs in the action slot, offline too. There's nothing to answer, and it never fails.
+- **Tending is optional.** While a rite runs, things to tend appear on screen (in Chapter 1: wicks, salt, smoke, words, bread); each click takes a few seconds off, up to half the rite. An idle player loses nothing but time.
 - **Quality comes from optional offerings, never from failure.** In Chapter 1 there are three: a hearth candle, a discovered hidden recipe (the Hearth mark) and an active Still Night blessing. None = *Sound*, 1–2 = *Fine*, all 3 = *Resplendent*.
   - Later chapters can add more kinds of offering: consecrated materials, followers assisting, a matching omen or invoked moon, low Taint.
   - **Quality adds lasting extras, never the story rewards.** A plain (Sound) rite always gives the whole story reward. In Chapter 1 a Fine rite lets you choose **one keepsake** of three, a Resplendent one **two** (small lasting perks: faster time away, one more omen place, insight from pages), and a Resplendent one adds a cosmetic (the embroidered cloth). Keepsakes are kept for good and can be swapped at Ascension. Later, quality also adds a capped share of Offerings (§5.5).
@@ -161,7 +162,7 @@ Every skill feeds the ritual circle. Followers take over the work you have maste
 - **Promises** *(later chapters)*: optional bonus goals you can take on before a rite, e.g. *"Before the next rite, finish two contracts."* Keeping one pays at the next rite; breaking one costs nothing. Promises never restrict or block play.
 - **No time as a price.** Nothing asks you to wait or leave a rite "steeping"; the only time-like price is a curse, and it passes by working, not waiting.
 - **Length:** the Chapter 1 rite is about 3 minutes. Longer rites (30 minutes to 8 hours) are the target for later chapters, which is where **priming** (queueing a prepared rite so it begins by itself, even offline) matters most.
-- **Rites are presented as events:** the rosette's petals light phase by phase beside a short phase checklist; the rite's story lines ("the third candle gutters… the ward holds") collect in the Grimoire journal.
+- **Rites are presented as events:** when the parts are all in, a banner ("The Circle is ready. Wake it.") takes the House's hero, with the offerings and a quality ladder (offerings → Sound, Fine, Resplendent and what each adds). While it runs, the House becomes the rite scene: the phase in large letters, its line, the time left and the things to tend. The rosette's petals light phase by phase; the rite's story lines collect in the Grimoire journal. The chapter end is in sections: the rite, what it gave, keepsakes to choose (kept when you leave), and the story, folded.
 - **Rewards of a Major Rite:**
   - all skill caps raised
   - the next material tier
@@ -195,7 +196,7 @@ Every skill feeds the ritual circle. Followers take over the work you have maste
 | Cycle 2 (NG+) | About 1 week | 7 days |
 
 - **Unlock cadence:** something new every few minutes in Chapter 1, something every session in the mid game, a Major Rite every 1–2 weeks late.
-- **Active vs idle:** active play wins **only through decisions** (switching actions, experimenting, spending omens), roughly 1.3–1.5× over pure idle. **No click or "stay on screen" bonuses.**
+- **Active vs idle:** active play wins mostly **through decisions** (switching actions, experimenting, spending omens, using charms), roughly 1.3–1.5× over pure idle. The one click bonus is tending a running rite: optional, capped at half the rite, and never needed for anything but time. No other click or "stay on screen" bonuses.
 - **The Great Rite is a real ending with credits.** Afterwards the house, the Grimoire and your skills stay, and the endgame opens.
 
 ### 5.5 Cycle loop (endgame / prestige) *(decided in Q6)*
@@ -293,7 +294,9 @@ We deliberately **do not** use:
 
 - **Grimoire and discovery** *(full model in [GRIMOIRE.md](GRIMOIRE.md))*
   - **Attune the circle** to a hidden recipe's silhouette and experiment instantly. The glow count shows how many items are right. Items proven wrong are crossed out automatically.
-  - **Hints escalate** from riddle to category to plain names. **Insight** is one pool, filled by failed attempts, pages, curios and village contracts, and **spent on the hint you choose** (a recipe's categories, one ingredient named, a secret's next clue), so nobody gets stuck.
+  - **Hints escalate** from riddle to category to plain names. **Insight** is one pool, filled by failed attempts, pages, curios and village contracts, and **spent on the hint you choose** (a recipe's categories, one ingredient named, a nudge toward the one never named, a secret's next clue), so nobody gets stuck.
+  - Experiments have their **own tab**. Chapter 1 has four hidden recipes; the first (the Window charm) is made from what every path holds when experiments open.
+  - **Charms:** a discovered hidden recipe can be bound again, at once and as often as you like, and used for a 10-minute boost. It's the active side of discovery; nothing needs it.
   - **Each attempt costs 1 of each item** and always gives a little consolation XP.
   - **Secrets** turn up by free experimenting (1–2 per chapter); insight can buy their written clues.
   - **Divination** (Chapter 3) gives per-item feedback.
@@ -305,13 +308,15 @@ We deliberately **do not** use:
   - Omens that drop offline are collected automatically, so nothing is ever missed.
 - **Talents: small builds** *(Chapter 1 onwards)*
   - At levels 3, 6, 9 and 12 each skill offers a **pair of talents, and you pick one side**. The sides pull different ways (speed, bulk, thrift, chance finds, doubles, insight, help for another skill).
-  - Switching and resetting are free. Each level also makes its own skill 1% faster.
+  - A pick is fixed until the next pair's level (3 levels on), then it can be changed; there's no reset. Each level also makes its own skill 1% faster.
+  - **Talent text is generated from the effects,** in one vocabulary with the real numbers ("makes 2 per action instead of 1, XP ×2 · each takes 80% longer, so +11% per hour"), and recipe rows show the outputs as boosted.
 - **The village and the house** *(Chapter 1 onwards)*
   - **Village contracts:** the board holds **2 contracts** at a time, each asking for a good amount of one or two things. You can **deliver in parts** (what's delivered stays delivered), and finishing one pays coin and trust. Trust opens better-paying contracts. A contract can be turned away at no cost.
   - **Coin buys provisions** (bread, tallow). Later it's meant to buy some exclusive or rare projects and rare rewards too. There's no "sell anything" market.
-  - **House projects** are side work built once from items you make, with no coin: the omen shelf, a reading lamp, a drying rack, mended shutters (a longer offline cap) and so on. Nothing on the main path needs them; they give deeper recipes and odds and ends a use.
+  - **House projects** are side work built once from items you make, with no coin: the omen shelf, a sealed salt crock (more salt), a reading lamp, a drying rack, mended shutters (a longer offline cap) and so on. Nothing on the main path needs them; they give deeper recipes and odds and ends a use.
 - **Calm feedback**
-  - Routine events (steps done, plain level-ups, omens, claims) go to a quiet **activity feed** under the top bar. **Toasts are kept for big moments** (a part placed, a project built, a contract done, a new tier, rare finds, the rite beginning).
+  - Routine events (plain level-ups, omens, claims) go to a quiet **activity feed** under the top bar. **Toasts are kept for big moments** (a part placed, a project built, a contract done, a new recipe or talent, rare finds, the rite beginning).
+  - **New words are explained on click** (keepsake, omen, blessing, offering, rite quality, insight, charm, house project), and buttons name where they take you ("Chandlery ›").
   - The inventory has its own **Inventory** tab, and every item has its own woodcut icon.
 - **Taint and afflictions** *(decided in Q4; numbers are draft)*
   - **Sources:** forbidden recipe variants, some bound entities, and rites performed with forbidden components.
@@ -412,7 +417,7 @@ We deliberately **do not** use:
 11. **Deferred ideas:** Notoriety and investigators (outside pressure on the cult), a desktop-corner mode, a cosmetic real-moon sync option.
 
 **Next layer: detail passes, now that the core is set**
-- ~~**Chapter 1 content pass**~~ → done and built, see [CHAPTER1.md](CHAPTER1.md). It's now in playtest rounds (four patches so far; see its changelog).
+- ~~**Chapter 1 content pass**~~ → done and built, see [CHAPTER1.md](CHAPTER1.md). It's now in playtest rounds (four patches and two playtest rounds so far; see its changelog).
 - ~~**The Grimoire hint model**~~ → done, see [GRIMOIRE.md](GRIMOIRE.md).
 - **Economy math:** tithe rates and Offerings → Boons. (Chapter 1's XP curve and action times are set; see [CHAPTER1.md](CHAPTER1.md) §3 and §10.)
 - **Afflictions and follower traits:** first lists.
@@ -566,7 +571,7 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
 ### Playtest-readiness round
 - **Rite quality:** Sound / Fine / Resplendent by factors met (0 / 1–2 / 3). Every factor now matters.
 - **Curios** became a collection, not an item. There's **no sound** in this build.
-- **The Dream pillow** is +10% speed while away. It used to add extra simulated time, which pushed timers into the future.
+- **The Dream pillow** is +10% speed while away. It used to add extra simulated time, which pushed timers into the future. *(→ changed: +10% XP; see Playtest round 2)*
 - **After the rite,** the house resumes work through the fallback rule.
 - **Inputs are checked again when a repetition finishes,** so nothing is ever made for free.
 
@@ -576,7 +581,7 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
 - **One new skill per stage**, only when that stage needs it: Scavenging, then Chandlery, Sigilcraft, Herbalism, Scholarship, Ritualism. Skills are about 10–15 minutes apart; the pacing test fails if two open within 8 minutes (after the tutorial pair).
 - **Parts are mostly early-tier plus one stretch item.** Deeper recipes feed the village, trust, upgrades, hidden recipes and Chapter II.
 - **Within a skill,** only what you've reached plus the next recipe shows. A recipe stays hidden while one of its ingredients comes from a skill that isn't open yet.
-- **Experiments come mid-chapter,** introduced by their own note when the first hint arrives. They're optional, with the Dream pillow as the stated goal.
+- **Experiments come mid-chapter,** introduced by their own note when the first hint arrives. They're optional, with the Dream pillow as the stated goal *(→ changed: the Window charm comes first; see Playtest round 2)*.
 - **Levels speed up their skill:** +1% per level, compounding.
 - **Talents** *(→ replaced; see Fourth patch)*:
   - 1 point every 3 levels.
@@ -613,13 +618,13 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
   - Smoke the rooms states its effect.
 
 ### Fourth patch: calm, choices, builds and side projects
-- **Tend is removed** (the meter, the Space key, the Tending talent branch and the "Tend once" step). Active play is choices, not clicking. This **restores Q8** ("active play only helps through decisions"), which the second patch had changed.
-- **The Major Rite runs by itself.** Five phases of 36 seconds (about 3 minutes), no moments to answer, and it carries on offline. It needs Ritualism 3.
+- **Tend is removed** (the meter, the Space key, the Tending talent branch and the "Tend once" step). Active play is choices, not clicking. This **restores Q8** ("active play only helps through decisions"), which the second patch had changed. *(→ one exception since: tending the running rite; see Playtest round 2)*
+- **The Major Rite runs by itself.** Five phases of 36 seconds (about 3 minutes), no moments to answer, and it carries on offline. It needs Ritualism 3. *(→ it can now be tended to finish sooner; see Playtest round 2)*
   - **Quality comes only from optional offerings** chosen before beginning: a hearth candle (an item, used when the rite begins), the Hearth mark (a discovered hidden recipe) and an active Still Night blessing. None = Sound, 1–2 = Fine, all 3 = Resplendent.
   - **Quality is cosmetic:** it changes only the lore and a keepsake, never the rewards. It still never fails. *(→ changed; see Rite quality, after the fourth patch)*
 - **Free order of the middle parts.** After the Light, the player chooses the order of the Ward, the Smoke and the Words; the Offering stays last. Each middle skill gathers for itself (Sigilcraft sweeps its ash, Scholarship searches the attic, Herbalism binds smudge and makes mugwort incense), so every order works without grinding. The playthrough bot plays all six orders.
-- **Honest steps:** steps count from the stage's start, a craft step is also met by holding enough, step counts match each part's needs, and there's at most one reward per stage (on placing its part, plus the Start Surge).
-- **Recipes come in tiers, a new tier every 3 levels** (Tier 1 at level 1, then 3, 6, 9, 12, 15, 18), shown on each row. The XP curve is flatter to match: 110 × 1.1^(level − 1), with no easing. The rite begins at about 30–32 minutes for an efficient idle player.
+- **Honest steps** *(→ replaced by part checklists; see Playtest round 2)*: steps count from the stage's start, a craft step is also met by holding enough, step counts match each part's needs, and there's at most one reward per stage (on placing its part, plus the Start Surge).
+- **Recipes come in tiers, a new tier every 3 levels** (Tier 1 at level 1, then 3, 6, 9, 12, 15, 18), shown on each row *(→ changed: each recipe at its own level; see Playtest round 2)*. The XP curve is flatter to match: 110 × 1.1^(level − 1), with no easing. The rite begins at about 30–32 minutes for an efficient idle player.
 - **Talents are builds:** at levels 3, 6, 9 and 12 each skill offers a pair, and you take one side. The sides pull different ways (speed, bulk, thrift, finds, doubles, insight, help for another skill…). Switching and resetting are free. Old branch ranks are dropped on load. Drawn as a vine.
 - **Side projects:**
   - **House upgrades are projects built from items**, with no coin: the omen shelf, reading lamp, drying rack, mended shutters and carved omen shelf. They give the deeper recipes and the attic's odds and ends a use. Nothing on the main path needs them.
@@ -674,7 +679,18 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
 ### Before the next playtest (after the text trim)
 - **Talents are fixed until the next tier** (changes "switching is free"): a pick at level L can be changed from level L+3; taking one asks first; no reset. The designer wants talent choices to be real decisions, with a way back once you've grown past them.
 - **The last stage is just "Wake the Circle":** its two steps (bind 2 smudge bundles, smoke the rooms twice) never blocked the rite, so they read as busywork.
-- **After the rite, the tracker lists what's still to find** (hidden recipes, secrets, projects, skills at the cap, better contracts), so the chapter end isn't a dead end.
+- **After the rite, the tracker lists what's still to find** (hidden recipes, secrets, projects, skills at the cap, better contracts), so the chapter end isn't a dead end. *(→ removed; see Playtest round 2)*
 - **The talent panel shows only what's reached** and folds while nothing waits; **XP rewards can't go into a capped skill.**
 - **Playtest save resets:** the game can wipe saves on purpose (`SAVE_EPOCH`), so a playtest after big changes starts clean instead of from a save shaped by old rules. Whether to reset is decided at the end of every session. The first reset ships with this build.
 - **The inventory tab is called "Inventory"** (it was "Stores"): the designer preferred a plain, generic name players know at a glance.
+
+### Playtest round 2 (2026-09-27)
+- **Salt was the choke point** (about 70 needed for the rite, all from the pantry at 50%). New: **Scrape the salt barrel** (Scavenging 7, 4s, 11 XP: salt every time, tallow 40%, bread 5%) and the **Sealed salt crock** project (8 beeswax + 6 tallow candles: salt finds ×1.5, so pantry salt 50% → 75%).
+- **Fixed recipe tiers are dropped** (changes the fourth patch's "a new tier every 3 levels"). Each recipe opens at its own level; most still come every 3, but the salt barrel sits at 7, Decipher a burnt page at Scholarship 2 (was 3) and Pick mugwort at Herbalism 5 (was 6). The recipe table's column is "Lvl". A recipe can now sit where the chapter needs it (the salt barrel just before the Offering).
+- **Steps are replaced by part checklists** (changes the fourth patch's "honest steps"). Fixed sub-steps ("Pour 24 candles", then "Decipher") told players an order the game didn't need. Each stage's one step is placing its part; the tracker lists the part's items with have/need, a button to the skill that makes each, a "Short of" line worked out down the recipe tree with the player's talents, and level chips for recipes on the way. Any order. "No grinding" is now checked by the bot planning from the same checklist (hence the lower levels for Decipher and mugwort). The Offering's "finish a contract" step is gone: bread is bought with coin from contracts anyway. The rite still begins at 29–32 minutes.
+- **The rite is the focus, and can be tended** (changes Q8 again, narrowly). The rite is the chapter's payoff, so it takes the screen: a banner replaces the House's hero when the Circle is ready, and while it runs the House becomes the rite scene. Tending: things appear to click (wicks, salt, smoke, words, bread); each takes 3 seconds off, up to half the rite (90 seconds). It's never required, it only saves time, and it's the game's only click bonus (short, capped and optional). Keepsakes are chosen freely on the chapter-end screen and kept when you leave it. Save version 10.
+- **Experiments get their own tab, and pay active play.** A new first hidden recipe, the **Window charm** (tallow candle, glass shard, salt), can be made on every path when experiments open (a Scholarship-first player had nothing to start with). Rewards were re-aimed at active play: Window charm +10% speed (all skills); **Dream pillow +10% XP instead of +10% offline speed** (an early experiment shouldn't reward being away); Hearth mark a rite offering plus +10% Sigilcraft speed; Threshold nail trust ×2 (was ×1.5). **Charms:** a discovered hidden recipe can be bound again at once and used for a 10-minute boost (chance finds ×1.5, +25% XP, 15% of crafts free, contracts +50% coin), a reason to come back to the Circle. The one ingredient never named gets a buyable **nudge** (6 insight), never its name, so no recipe leaves a player stuck.
+- **Talent text is generated from the effects,** and recipe rows show what you really get. Hand-written talent lines could drift from the numbers. Now one vocabulary, real numbers, and a raised output is marked with a ▲ and a hover naming its source.
+- **"Still to find" is removed** after the rite (changes "Before the next playtest"). Level 40 in every skill read as stuck at 0/6, and players are meant to move on to Chapter II. A small "Chapter I complete" card remains.
+- **New words are explained on click** (a small "i": keepsake, omen, blessing, offering, rite quality, insight, charm, house project), House projects say what they're for, and the stage choice explains each part (the skill's one line, its items, what it uses, what it opens). **Buttons name where they go** ("Chandlery ›", "Projects ›"); no button just says "Go".
+- **Fixed:** an item's Start shortcut could start a recipe not yet on its skill's list (the midden via the drying rack's nails). Shortcuts now use only revealed recipes, a `start` command refuses unreached ones, and a House project counts as a use for a gatherer's finds.

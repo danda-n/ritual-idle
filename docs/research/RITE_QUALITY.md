@@ -7,6 +7,8 @@
 ---
 
 > **Decided on 2026-09-26** (see [CONCEPT.md's decision log](../CONCEPT.md#decision-log), "Rite quality: the kiss and the curse"): Proposal B with A's ladder, named **"The Circle Asks"**. Chapter 1 gets **only the keepsake pick** (Fine 1, Resplendent 2); bargains start in Chapter 2. Answers to §7: Q1 (c) · Q2 any work · Q3 a gentle blessing on the same skill (−25% for ~150 repetitions → +3%) · Q4 a choice of 2–3 per rite · Q5 (b) · Q6 (c) swap at Ascension · Q7 vows reworked as Promises (bonus goals, never restrictions) · Q8 (a) no steeping · Q9 "The Circle Asks".
+>
+> **Update 2026-09-27** (CONCEPT.md's decision log, "Playtest round 2"): keepsakes are chosen freely on the chapter-end screen and kept when you leave it, and the Chapter 1 rite can be tended to finish sooner (optional, up to half its length). Quality still comes only from offerings.
 
 ## 1. Summary (the one-screen answer)
 
