@@ -17,12 +17,13 @@ const lookUpTitle = (item: ItemId) => `Look up ${itemName(item)}${ITEM_DEFS[item
 
 /**
  * An item as a chip, coloured and marked with the skill that makes it.
- * - `qty` alone: an output ("1 Ash"), with an optional drop `chance`.
+ * - `qty` alone: an output ("1 Ash"), with an optional drop `chance`. `boostedBy` names what raised
+ *   the numbers shown (a talent, project or buff): they're marked, and the hover title says why.
  * - `need`: an input; shows have/need. Enough is quiet; short is dashed with a warning pill,
  *   and clicking it offers to start the action that makes it.
  * - `plain`: text-style link for lists (`bare` drops its icon, where the list draws its own).
  */
-export function ItemChip({ item, qty, need, chance, plain, bare }: { item: ItemId; qty?: number; need?: number; chance?: number; plain?: boolean; bare?: boolean }) {
+export function ItemChip({ item, qty, need, chance, plain, bare, boostedBy }: { item: ItemId; qty?: number; need?: number; chance?: number; plain?: boolean; bare?: boolean; boostedBy?: string[] }) {
   const { state, lookup, start } = useChipActions();
   const [menu, setMenu] = useState(false);
   const wrap = useRef<HTMLSpanElement>(null);
@@ -82,7 +83,7 @@ export function ItemChip({ item, qty, need, chance, plain, bare }: { item: ItemI
     <span className="item-chip-wrap" ref={wrap}>
       <button
         type="button"
-        className={`chip item-chip ${short ? "short" : ""} ${need !== undefined && !short ? "enough" : ""}`}
+        className={`chip item-chip ${short ? "short" : ""} ${need !== undefined && !short ? "enough" : ""} ${boostedBy?.length ? "boosted" : ""}`}
         data-skill={skill ?? undefined}
         aria-haspopup={short ? "menu" : undefined}
         aria-expanded={short ? menu : undefined}
@@ -92,7 +93,7 @@ export function ItemChip({ item, qty, need, chance, plain, bare }: { item: ItemI
           if (short) setMenu((m) => !m);
           else lookup(item);
         }}
-        title={short ? `Short of ${itemName(item)}: you have ${have}, need ${need}` : lookUpTitle(item)}
+        title={short ? `Short of ${itemName(item)}: you have ${have}, need ${need}` : boostedBy?.length ? `${lookUpTitle(item)} · raised by ${boostedBy.join(", ")}` : lookUpTitle(item)}
       >
         <ItemIcon item={item} size={15} />
         {(need ?? qty) !== undefined && <span className="num">{need ?? qty}</span>}

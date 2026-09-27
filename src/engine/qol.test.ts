@@ -5,7 +5,7 @@ import { ITEM_CATEGORIES, ITEMS } from "../content/items";
 import { NOTES } from "../content/notes";
 import { PAGES } from "../content/pages";
 import { setSetting, start, type Result } from "./commands";
-import { revealedRecipes, bestXpAction, inputsLastMs, lookupItem, nextTrustAt, outputPerHour, producerAction, producingSkill, repsPerHour, timeToCapMs, timeToNextLevelMs, xpPerHour } from "./estimates";
+import { effectiveOutputs, revealedRecipes, bestXpAction, inputsLastMs, lookupItem, nextTrustAt, outputPerHour, producerAction, producingSkill, repsPerHour, timeToCapMs, timeToNextLevelMs, xpPerHour } from "./estimates";
 import { catchUp } from "./offline";
 import { deserialize } from "./save";
 import { advance, blockReason, fallbackFor, startAction } from "./simulate";
@@ -51,6 +51,22 @@ describe("salt relief", () => {
     // With Deep shelves (×1.5) as well: 1.125, capped at 1.
     const both = scav(3, { upgrades: ["salt_crock"], talents: { ...open().talents, scavenging: { 3: "b" } } } as Partial<GameState>);
     expect(perRep(both, "search_pantry", "salt")).toBeCloseTo(1);
+  });
+});
+
+describe("what a recipe really gives", () => {
+  it("applies find talents, projects and blessings to chances, bulk to quantities, and says what changed them", () => {
+    const base = { ...open(), skills: { ...open().skills, scavenging: { xp: xpForLevel(6) } } } as GameState;
+    expect(effectiveOutputs(base, "search_pantry")).toEqual([
+      { item: "tallow", qty: 1, baseQty: 1, changedBy: [] },
+      { item: "salt", qty: 1, baseQty: 1, chance: 0.5, baseChance: 0.5, changedBy: [] },
+    ]);
+    const built = { ...base, upgrades: ["salt_crock"], talents: { scavenging: { 3: "b", 6: "a" } } } as GameState;
+    const [tallow, salt] = effectiveOutputs(built, "search_pantry");
+    expect(tallow).toMatchObject({ qty: 2, changedBy: ["Full arms"] });
+    expect(salt).toMatchObject({ chance: 1, changedBy: ["Deep shelves", "Sealed salt crock"] });
+    const blessed = { ...base, buffs: [{ id: "still_night", endsAt: T0 + 60_000, skill: "scavenging" }] } as GameState;
+    expect(effectiveOutputs(blessed, "search_pantry", T0)[1]).toMatchObject({ chance: 1, changedBy: ["Still Night"] });
   });
 });
 

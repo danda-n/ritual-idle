@@ -4,6 +4,7 @@ import { skillLevel } from "../../engine/simulate";
 import type { GameState } from "../../engine/state";
 import { canChoose, choiceAt, unlocksAt } from "../../engine/talents";
 import { SkillIcon } from "../art/icons";
+import { talentText } from "../effects";
 
 /**
  * A skill's talents as an embroidered vine: the skill at the root, and at each talent level a pair
@@ -48,10 +49,10 @@ export function TalentTree({ state, skill, onChoose }: { state: GameState; skill
                   disabled={!taken && !changeable}
                   aria-pressed={taken}
                   onClick={() => !taken && changeable && onChoose(at, side)}
-                  title={title}
+                  title={t.flavour ? `${title} · ${t.flavour}` : title}
                 >
                   <span className="vine-leaf-name">{t.name}</span>
-                  <span className="vine-leaf-text">{t.text}</span>
+                  <span className="vine-leaf-text">{talentText(t, skill)}</span>
                 </button>
               );
             })}

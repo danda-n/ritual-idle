@@ -52,12 +52,11 @@ describe("level speed", () => {
 });
 
 describe("talent pairs", () => {
-  it("every skill has a pair at levels 3, 6, 9 and 12, each side with a name, words and an effect", () => {
+  it("every skill has a pair at levels 3, 6, 9 and 12, each side with a name and an effect", () => {
     for (const skill of SKILL_IDS)
       for (const level of TALENT_LEVELS)
         for (const t of [TALENTS[skill][level].a, TALENTS[skill][level].b]) {
           expect(t.name.length, `${skill} ${level}`).toBeGreaterThan(0);
-          expect(t.text.length).toBeGreaterThan(0);
           expect(t.effects.length).toBeGreaterThan(0);
         }
   });

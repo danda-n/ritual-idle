@@ -562,3 +562,8 @@ details.talents:not([open]) > .talents-summary { margin-bottom: 0; }
 .still-to-find .step-head .row { gap: var(--space-2); flex-wrap: nowrap; }
 .skill-pick:disabled { cursor: not-allowed; background: var(--color-sunken); box-shadow: inset 3px 0 0 var(--color-border); }
 .skill-pick:disabled svg, .skill-pick:disabled .skill-pick-name { color: var(--color-text-3); }
+
+/* An output a talent, project or buff raised: its numbers in the "improved" colour, with a small mark. */
+.chip.item-chip.boosted > .num,
+.chip.item-chip.boosted .chip-chance { color: var(--color-success); font-weight: 600; }
+.chip.item-chip.boosted .chip-chance::before { content: "▲ "; font-size: 0.7em; vertical-align: 0.1em; }

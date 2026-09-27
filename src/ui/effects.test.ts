@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { buffDuration, buffEffects, builtText, followerEffects, upgradeEffectFor } from "./effects";
+import { buffDuration, buffEffects, builtText, followerEffects, talentText, upgradeEffectFor } from "./effects";
+import { TALENT_LEVELS, TALENTS } from "../content/talents";
+import { SKILL_IDS } from "../content/skills";
 
 describe("effects are stated plainly, from the data", () => {
   it("Still Night", () => {
@@ -19,5 +21,27 @@ describe("effects are stated plainly, from the data", () => {
     expect(builtText("reading_lamp", { still_night: 1 })).toBe("+15% Scholarship speed");
     expect(builtText("omen_shelf", { still_night: 1 })).toBe("Holds 2 omens · 1 Still Night stored · bless a skill: ×2 speed, 2m");
     expect(builtText("omen_shelf", {})).toBe("Holds 2 omens");
+  });
+});
+
+describe("talent text is generated from the effects", () => {
+  const t = (skill: keyof typeof TALENTS, level: 3 | 6 | 9 | 12, side: "a" | "b") => talentText(TALENTS[skill][level][side], skill);
+
+  it("bulk (always 2, but slower) and double (a chance of twice) never read alike", () => {
+    expect(t("chandlery", 6, "a")).toBe("Tallow candle and Beeswax candle: makes 2 per action instead of 1, XP ×2 · each takes 80% longer, so +11% per hour");
+    expect(t("chandlery", 9, "a")).toBe("10% of Chandlery actions give double output and XP");
+    expect(t("chandlery", 12, "a")).toBe("Hearth candle: makes 2 per action instead of 1, XP ×2, no extra time");
+  });
+
+  it("finds state the real chances; thrift states the real inputs; buff length the real time", () => {
+    expect(t("scavenging", 12, "b")).toBe("Salt: 50% → 100% chance");
+    expect(t("sigilcraft", 3, "b")).toBe("Ash sigil: 1 ash (was 2)");
+    expect(t("ritualism", 6, "a")).toBe("Blessing lasts ×2 (15m → 30m)");
+    expect(t("scavenging", 6, "a")).toContain("chance finds still roll once");
+  });
+
+  it("every talent's words (a snapshot, so wording changes show up in review)", () => {
+    const all = SKILL_IDS.flatMap((s) => TALENT_LEVELS.flatMap((l) => (["a", "b"] as const).map((side) => `${s} ${l}${side} ${TALENTS[s][l][side].name}: ${t(s, l, side)}`)));
+    expect(all).toMatchSnapshot();
   });
 });

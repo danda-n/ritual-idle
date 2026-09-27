@@ -6,7 +6,9 @@ import { GRIMOIRE_DEFS } from "../content/grimoire";
 import { UPGRADE_DEFS, UPGRADE_IDS, type UpgradeId } from "../content/upgrades";
 import type { ItemId } from "../content/items";
 import type { SkillId } from "../content/skills";
-import { actionDurationMs, actionInputs, bulkExtra, chanceMultiplier, doubleChance, extraYieldChance, xpBonus } from "./modifiers";
+import { actionDurationMs, actionInputs, activeBuffs, bulkExtra, chanceMultiplier, doubleChance, extraYieldChance, xpBonus } from "./modifiers";
+import { TALENT_LEVELS, TALENTS, type TalentEffect } from "../content/talents";
+import { BUFF_DEFS } from "../content/buffs";
 import { isDiscovered } from "./grimoire";
 import { currentNote, isRecipeKnown, isSkillUnlocked, revealedNotes, type Step } from "./progress";
 import { skillLevel } from "./simulate";
@@ -87,16 +89,65 @@ export function isRecipeRevealed(state: GameState, id: ActionId): boolean {
   return revealedRecipes(state, ACTION_DEFS[id].skill).includes(id);
 }
 
+/**
+ * What one repetition really gives, with every bonus applied: each output's chance (find talents,
+ * projects, buffs; capped at 100%) and its sure quantity (bulk talents), plus what changed it.
+ * `baseChance`/`baseQty` are the recipe's own numbers, so the UI can mark what a bonus changed.
+ */
+export interface EffectiveOutput {
+  item: ItemId;
+  qty: number;
+  baseQty: number;
+  chance?: number;
+  baseChance?: number;
+  /** Names of what changed this output ("Deep shelves", "Sealed salt crock", "Still Night"). */
+  changedBy: string[];
+}
+
+export function effectiveOutputs(state: GameState, id: ActionId, now: number = state.lastTickAt): EffectiveOutput[] {
+  const def = ACTION_DEFS[id];
+  const bulk = bulkExtra(state, id);
+  return def.outputs.map((o, i) => {
+    if (o.chance === undefined) {
+      const qty = o.qty + (i === 0 ? bulk : 0);
+      return { item: o.item, qty, baseQty: o.qty, changedBy: qty !== o.qty ? talentNames(state, def.skill, (e) => e.kind === "bulk" && e.actions.includes(id)) : [] };
+    }
+    const chance = Math.min(1, o.chance * chanceMultiplier(state, o.item, now, def.skill));
+    return { item: o.item, qty: o.qty, baseQty: o.qty, chance, baseChance: o.chance, changedBy: chance !== o.chance ? chanceSources(state, o.item, def.skill, now) : [] };
+  });
+}
+
+/** Names of this skill's taken talents whose effects match. */
+function talentNames(state: GameState, skill: SkillId, match: (e: TalentEffect) => boolean): string[] {
+  return TALENT_LEVELS.flatMap((l) => {
+    const side = state.talents[skill]?.[l];
+    const t = side ? TALENTS[skill][l][side] : null;
+    return t && t.effects.some(match) ? [t.name] : [];
+  });
+}
+
+/** What makes an item's chance differ from the recipe's: find talents, projects, buffs. */
+function chanceSources(state: GameState, item: ItemId, skill: SkillId, now: number): string[] {
+  const out = talentNames(state, skill, (e) => e.kind === "find" && (!e.item || e.item === item));
+  for (const u of state.upgrades) {
+    const e = UPGRADE_DEFS[u].effect;
+    if (e.kind === "find" && e.item === item) out.push(UPGRADE_DEFS[u].name);
+  }
+  for (const b of activeBuffs(state, now)) {
+    const d = BUFF_DEFS[b.id];
+    if (d.chanceMultiplier?.[item] || (b.skill === skill && d.blessSkill?.chanceMultiplier)) out.push(d.name);
+  }
+  return out;
+}
+
 /** Expected output per hour, counting drop chances and yield bonuses (every-nth and byproducts aside). */
 export function outputPerHour(state: GameState, id: ActionId): { item: ItemId; perHour: number }[] {
   const reps = repsPerHour(state, id);
   const extra = extraYieldChance(state, id);
   const double = 1 + doubleChance(state, id);
-  const skill = ACTION_DEFS[id].skill;
-  return ACTION_DEFS[id].outputs.map((o, i) => {
-    const chance = o.chance === undefined ? 1 : Math.min(1, o.chance * chanceMultiplier(state, o.item, state.lastTickAt, skill));
-    const qty = o.qty + (o.chance === undefined ? extra + (i === 0 ? bulkExtra(state, id) : 0) : 0);
-    return { item: o.item, perHour: reps * chance * qty * double };
+  return effectiveOutputs(state, id).map((o) => {
+    const qty = o.qty + (o.chance === undefined ? extra : 0);
+    return { item: o.item, perHour: reps * (o.chance ?? 1) * qty * double };
   });
 }
 

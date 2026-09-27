@@ -7,6 +7,7 @@ import type { GameState } from "../../engine/state";
 import { choicesWaiting, takenTalents } from "../../engine/talents";
 import { Modal } from "./Modal";
 import { TalentTree } from "./TalentTree";
+import { talentText } from "../effects";
 
 type Act = (c: (s: GameState) => Result) => unknown;
 
@@ -47,7 +48,7 @@ export function TalentPanel({ state, skill, act }: { state: GameState; skill: Sk
       <TalentTree state={state} skill={skill} onChoose={(at, side) => setConfirm({ at, side })} />
       {confirm && pick && (
         <Modal title={`Take ${pick.name}?`} onClose={() => setConfirm(null)}>
-          <p>{pick.text}</p>
+          <p>{talentText(pick, skill)}</p>
           <p className="muted">
             {level < confirm.at + TALENT_RELOCK ? `Fixed until level ${confirm.at + TALENT_RELOCK}, then you can change it.` : "You're past the next tier, so you can change it again any time."}
           </p>

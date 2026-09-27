@@ -5,6 +5,8 @@ import { OMENS, type OmenId } from "../content/omens";
 import { UPGRADE_DEFS, type UpgradeId } from "../content/upgrades";
 import { SKILLS, SKILL_IDS, type SkillId } from "../content/skills";
 import type { UpgradeEffect } from "../content/types";
+import { ACTION_DEFS, type ActionId } from "../content/actions";
+import type { TalentDef, TalentEffect } from "../content/talents";
 import { formatDuration } from "./format";
 
 // Plain statements of what things do, generated from the game data so they can never
@@ -74,4 +76,86 @@ export function builtText(id: UpgradeId, stored: Partial<Record<OmenId, number>>
     }
   }
   return parts.join(" · ");
+}
+
+// ---------- Talents ----------
+
+const actionName = (id: ActionId) => ACTION_DEFS[id].name;
+const list = (xs: string[]) => (xs.length <= 1 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
+/** A chance as a percent: whole numbers, with one decimal under 10% (5% → 7.5%). */
+const round = (n: number) => `${n < 0.1 ? Math.round(n * 1000) / 10 : Math.round(n * 100)}%`;
+
+/** A skill's chance finds, as `[item, base chance]` (the first action that finds each). */
+function chanceFinds(skill: SkillId): [ItemId, number][] {
+  const out = new Map<ItemId, number>();
+  for (const a of Object.values(ACTION_DEFS)) {
+    if (a.skill !== skill) continue;
+    for (const o of a.outputs) if (o.chance !== undefined && !out.has(o.item as ItemId)) out.set(o.item as ItemId, o.chance);
+  }
+  return [...out];
+}
+
+/**
+ * What a talent effect does, generated from its numbers, in the same words everywhere:
+ * "bulk" (always 2 per action, but slower) and "double" (a chance of twice as much) never read alike.
+ * `skill` is the skill the talent belongs to.
+ */
+export function talentEffect(effect: TalentEffect, skill: SkillId): string {
+  const own = SKILLS[skill].name;
+  switch (effect.kind) {
+    case "speed":
+      return `${pct(effect.bonus)} ${skillName(effect.skill ?? skill)} speed`;
+    case "xp":
+      return `${pct(effect.bonus)} ${skillName(effect.skill ?? skill)} XP`;
+    case "find": {
+      if (effect.item) {
+        const base = chanceFinds(skill).find(([i]) => i === effect.item)?.[1];
+        return base !== undefined
+          ? `${ITEMS[effect.item].name}: ${round(base)} → ${round(Math.min(1, base * effect.multiplier))} chance`
+          : `${ITEMS[effect.item].name} ×${effect.multiplier} as likely`;
+      }
+      const finds = chanceFinds(skill).map(([i, c]) => `${ITEMS[i].name.toLowerCase()} ${round(c)} → ${round(Math.min(1, c * effect.multiplier))}`);
+      return `${own} chance finds ×${effect.multiplier} (${finds.join(", ")})`;
+    }
+    case "bulk": {
+      // Only the main output doubles; chance finds still roll once.
+      const rolls = effect.actions.some((a) => ACTION_DEFS[a].outputs.some((o) => o.chance !== undefined));
+      const what = `${list(effect.actions.map(actionName))}: makes 2 per action instead of 1, XP ×2${rolls ? " (chance finds still roll once)" : ""}`;
+      if (effect.slower <= 0) return `${what}, no extra time`;
+      const perHour = 2 / (1 + effect.slower) - 1;
+      return `${what} · each takes ${round(effect.slower)} longer, so ${perHour >= 0 ? "+" : ""}${round(perHour)} per hour`;
+    }
+    case "double":
+      return `${round(effect.chance)} of ${own} actions give double output and XP`;
+    case "extra":
+      return `${round(effect.chance)} chance of +1 of each sure ${own} output`;
+    case "everyNth":
+      return `Every ${effect.n}th ${own} action gives +1 of each sure output`;
+    case "thrift": {
+      const was = ACTION_DEFS[effect.action].inputs[effect.item] ?? 0;
+      const now = Math.max(0, was - effect.less);
+      return `${actionName(effect.action)}: ${now === 0 ? `no ${ITEMS[effect.item].name.toLowerCase()}` : `${now} ${ITEMS[effect.item].name.toLowerCase()}`} (was ${was})`;
+    }
+    case "save": {
+      const crafts = Object.entries(ACTION_DEFS).filter(([, a]) => a.skill === skill && Object.keys(a.inputs).length > 0).map(([id]) => id);
+      const all = crafts.every((id) => effect.actions.includes(id as ActionId));
+      return all ? `${round(effect.chance)} of ${own} crafts use no inputs` : `${list(effect.actions.map(actionName))}: ${round(effect.chance)} chance to use no inputs`;
+    }
+    case "byproduct":
+      return `${list(effect.actions.map(actionName))}: ${round(effect.chance)} chance of +1 ${ITEMS[effect.item].name.toLowerCase()}`;
+    case "insight":
+      return `${actionName(effect.action)}: +${effect.amount} insight each`;
+    case "buffLength": {
+      const buffs = [...new Set(Object.values(ACTION_DEFS).filter((a) => a.skill === skill && a.buff).map((a) => a.buff as BuffId))];
+      if (buffs.length === 0) return `${own} buffs last ×${effect.multiplier}`;
+      return buffs.map((b) => `${BUFF_DEFS[b].name} lasts ×${effect.multiplier} (${formatDuration(BUFF_DEFS[b].durationMs)} → ${formatDuration(BUFF_DEFS[b].durationMs * effect.multiplier)})`).join(" · ");
+    }
+    case "omenChance":
+      return `Omens ×${effect.multiplier} as likely, from any work`;
+  }
+}
+
+/** A talent's full text: each effect, generated, joined. */
+export function talentText(t: TalentDef, skill: SkillId): string {
+  return t.effects.map((e) => talentEffect(e, skill)).join(" · ");
 }

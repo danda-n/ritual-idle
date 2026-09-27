@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ACTION_DEFS, type ActionId } from "../../content/actions";
 import { ITEMS, type ItemId } from "../../content/items";
 import { SKILL_IDS, SKILLS, type SkillId } from "../../content/skills";
-import { inputsLastMs, outputPerHour, producingSkill, revealedRecipes, timeToCapMs, timeToNextLevelMs, xpPerHour } from "../../engine/estimates";
+import { effectiveOutputs, inputsLastMs, outputPerHour, producingSkill, revealedRecipes, timeToCapMs, timeToNextLevelMs, xpPerHour } from "../../engine/estimates";
 import { PART_DEFS, type PartId } from "../../content/rite";
 import type { Result } from "../../engine/commands";
 import { choicesWaiting } from "../../engine/talents";
@@ -267,8 +267,9 @@ function RecipeRow({ id, state, onStart, onStop, fresh }: { id: ActionId; state:
             →
           </span>
         )}
-        {def.outputs.map((o) => (
-          <ItemChip key={o.item} item={o.item} qty={o.qty} chance={o.chance} />
+        {/* What you really get: talents, projects and buffs applied (marked when they changed it). */}
+        {effectiveOutputs(state, id).map((o) => (
+          <ItemChip key={o.item} item={o.item} qty={o.qty} chance={o.chance} boostedBy={o.changedBy} />
         ))}
         {def.buff && (
           // A minor rite that gives an effect instead of an item: say exactly what it does.
