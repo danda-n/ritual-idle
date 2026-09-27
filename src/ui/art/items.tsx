@@ -196,6 +196,14 @@ const GLYPHS: Record<ItemId, ReactNode> = {
       <path d="M8 11l1.5 2M12 10.5v2.5M16 11l-1.5 2" />
     </>
   ),
+  // Heirlooms
+  circle_cloth: (
+    <>
+      <path d="M4 7h16l-2 11H6L4 7Z" />
+      <path d="M7 10.5l1.5 1.5L10 10.5l1.5 1.5 1.5-1.5 1.5 1.5 1.5-1.5 1.5 1.5" />
+      <path d="M8 15h8" />
+    </>
+  ),
   // Charms
   charm_window: (
     <>

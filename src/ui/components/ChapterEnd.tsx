@@ -10,6 +10,7 @@ import { KeepsakePick, useKeepsakeChoice } from "./KeepsakePick";
 import { chooseKeepsakes, type Result } from "../../engine/commands";
 import { riteJournal } from "../../engine/rite";
 import { QualityLadder } from "./QualityLadder";
+import { ItemIcon } from "../art/items";
 import { Term } from "./Term";
 
 /**
@@ -56,9 +57,11 @@ export function ChapterEnd({ state, onClose, act }: { state: GameState; onClose:
             <span>open</span>
           </li>
           {quality === QUALITIES.length - 1 && (
-            <li>
-              <span>Resplendent</span>
-              <span>{HEARTH_RITE.resplendentCosmetic}</span>
+            <li className="rare">
+              <span>
+                <ItemIcon item="circle_cloth" size={16} /> Embroidered circle cloth
+              </span>
+              <span>in your inventory · kept for Chapter II</span>
             </li>
           )}
         </ul>

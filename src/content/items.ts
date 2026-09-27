@@ -9,6 +9,7 @@ export const ITEM_CATEGORIES = {
   pages: { name: "Pages & texts" },
   rites: { name: "Rites" },
   charms: { name: "Charms" },
+  heirlooms: { name: "Heirlooms" },
 } as const;
 
 export type ItemCategory = keyof typeof ITEM_CATEGORIES;
@@ -53,6 +54,8 @@ export const ITEMS = {
   bread: { name: "Bread", category: "house" },
   // Ritualism
   consecrated_salt: { name: "Consecrated salt", category: "rites" },
+  // Heirlooms: kept, never used up
+  circle_cloth: { name: "Embroidered circle cloth", category: "heirlooms", description: "Grandmother's embroidered cloth, from a Resplendent rite. It will matter in Chapter II." },
   // Charms: bound at Experiments from a discovered recipe, used for a timed boost (content/charms.ts)
   charm_window: { name: "Window charm", category: "charms" },
   charm_pillow: { name: "Dream pillow", category: "charms" },

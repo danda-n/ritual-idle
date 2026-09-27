@@ -243,6 +243,15 @@ describe("keepsakes", () => {
   const fine = () => advance(okay(beginRite(ready({ inventory: { hearth_candle: 1 } }), ["hearth_candle"])), RITE_MS).state;
   const resplendent = () => advance(okay(beginRite(ready({ inventory: { hearth_candle: 1 }, grimoire: mark, buffs: night }), ["hearth_candle"])), RITE_MS).state;
 
+  it("a Resplendent rite leaves the embroidered cloth (a real item, kept); Sound and Fine don't", () => {
+    expect(resplendent().inventory.circle_cloth).toBe(1);
+    expect(fine().inventory.circle_cloth).toBeUndefined();
+    expect(sound().inventory.circle_cloth).toBeUndefined();
+    // An older save with a Resplendent rite gets its cloth on load.
+    const old = { ...resplendent(), version: 10, inventory: {} };
+    expect(deserialize(JSON.stringify(old)).inventory.circle_cloth).toBe(1);
+  });
+
   it("none to choose before the rite, or after a Sound one", () => {
     expect(keepsakePicksLeft(ready())).toBe(0);
     expect(keepsakePicksLeft(sound())).toBe(0);

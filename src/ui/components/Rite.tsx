@@ -91,7 +91,8 @@ export function RiteScene({ state, act, compact = false }: { state: GameState; a
   const canTend = p.tendedMs < TEND_MAX_MS;
 
   const [targets, setTargets] = useState<Target[]>([]);
-  const [bursts, setBursts] = useState<Target[]>([]);
+  const [pulses, setPulses] = useState<Target[]>([]);
+  const [ticked, setTicked] = useState(0);
   const next = useRef(1);
   useEffect(() => {
     if (!canTend) {
@@ -111,8 +112,10 @@ export function RiteScene({ state, act, compact = false }: { state: GameState; a
 
   const hit = (t: Target) => {
     setTargets((ts) => ts.filter((x) => x.id !== t.id));
-    setBursts((bs) => [...bs, { ...t, born: Date.now() }]);
-    setTimeout(() => setBursts((bs) => bs.filter((b) => b.id !== t.id)), 700);
+    // A small ring where it was, and the counter below ticks up. No text over the field.
+    setPulses((ps) => [...ps, { ...t, born: Date.now() }]);
+    setTimeout(() => setPulses((ps) => ps.filter((b) => b.id !== t.id)), 500);
+    setTicked((n) => n + 1);
     act(tendRite);
   };
 
@@ -131,21 +134,18 @@ export function RiteScene({ state, act, compact = false }: { state: GameState; a
       </div>
       <div className="rite-field" role="group" aria-label="Tend the rite">
         {targets.map((t) => (
-          <button key={t.id} type="button" className="rite-target" style={{ left: `${t.x}%`, top: `${t.y}%`, animationDuration: `${LIFE_MS}ms` }} onClick={() => hit(t)} aria-label={`${tend.verb} (−${TEND_MS / 1000}s)`} title={tend.verb}>
+          <button key={t.id} type="button" className="rite-target" style={{ left: `${t.x}%`, top: `${t.y}%`, animationDuration: `${LIFE_MS}ms` }} onClick={() => hit(t)} aria-label={`${tend.verb} (−${TEND_MS / 1000}s)`}>
             <ItemIcon item={tend.item} size={26} />
           </button>
         ))}
-        {bursts.map((b) => (
-          <span key={`b${b.id}`} className="rite-burst num" style={{ left: `${b.x}%`, top: `${b.y}%` }} aria-hidden="true">
-            −{TEND_MS / 1000}s
-          </span>
+        {pulses.map((b) => (
+          <span key={`p${b.id}`} className="rite-pulse" style={{ left: `${b.x}%`, top: `${b.y}%` }} aria-hidden="true" />
         ))}
-        {targets.length === 0 && (
-          <p className="rite-field-hint muted">{canTend ? `${tend.verb}: click what appears to hurry the rite` : "Tended as far as it goes. The rite finishes on its own."}</p>
-        )}
       </div>
+      {/* A steady caption under the field (never text flickering in its middle). */}
+      <p className="rite-field-hint muted">{canTend ? `${tend.verb}: click what appears to hurry the rite` : "Tended as far as it goes. The rite finishes on its own."}</p>
       <p className="rite-foot muted">
-        <span className="num">
+        <span key={ticked} className={`num rite-taken ${ticked > 0 ? "is-ticked" : ""}`}>
           Time taken off: {formatClock(p.tendedMs)} of {formatClock(TEND_MAX_MS)}
         </span>{" "}
         · optional · leave any time, it keeps going

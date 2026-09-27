@@ -162,4 +162,5 @@ export const CATEGORY_ICONS: Record<ItemCategory, (p: IconProps) => ReactNode> =
   pages: ScrollIcon,
   rites: CircleRiteIcon,
   charms: MoonIcon,
+  heirlooms: CircleRiteIcon,
 };

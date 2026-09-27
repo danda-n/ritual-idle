@@ -155,8 +155,14 @@ export function Sanctum({ state }: { state: GameState }) {
         <rect x="210" y="160" width="210" height="10" fill="var(--ink-600)" />
         <rect x="222" y="170" width="10" height="35" fill="var(--ink-600)" />
         <rect x="398" y="170" width="10" height="35" fill="var(--ink-600)" />
-        {v.cloth && <path d="M235 160h160l-8 18h-144Z" fill="var(--bone-100)" opacity="0.9" />}
-        {v.cloth && <path d="M245 165h140" stroke="var(--ember-600)" strokeWidth="3" strokeDasharray="6 4" />}
+        {/* The embroidered circle cloth (a Resplendent rite): linen with a red cross-stitch border. */}
+        {v.cloth && (
+          <g className="cloth">
+            <path d="M228 158h174l-10 22h-154Z" fill="var(--bone-100)" />
+            <path d="M240 164l6 6 6-6 6 6 6-6 6 6 6-6 6 6 6-6 6 6 6-6 6 6 6-6 6 6 6-6 6 6 6-6 6 6 6-6 6 6 6-6 6 6 6-6" fill="none" stroke="var(--ember-600)" strokeWidth="2.2" />
+            <path d="M246 176h138" stroke="var(--ember-600)" strokeWidth="1.5" />
+          </g>
+        )}
         {/* The grimoire */}
         <path d="M300 160l-26-4v-8l26 4 26-4v8Z" fill="var(--ember-600)" />
         <path d="M300 152v8" stroke="var(--ink-950)" strokeWidth="1" />

@@ -230,16 +230,19 @@
 .rite-time .bar-fill { background: var(--skill); }
 .rite-field { position: relative; height: 240px; border-radius: var(--radius-md); background: radial-gradient(circle at 50% 50%, color-mix(in oklch, var(--skill) 10%, var(--color-sunken)), var(--color-sunken) 70%); box-shadow: inset 0 0 0 1px var(--color-border-soft); overflow: hidden; }
 .rite-scene.is-compact .rite-field { height: 180px; }
-.rite-field-hint { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: var(--space-4); font-size: var(--text-sm); }
+.rite-field-hint { margin: calc(var(--space-2) * -1) 0 0; text-align: center; font-size: var(--text-xs); }
 .rite-target { position: absolute; width: 48px; height: 48px; margin: -24px 0 0 -24px; display: grid; place-items: center; border: 0; border-radius: 50%; cursor: pointer; color: var(--color-text); background: radial-gradient(circle, color-mix(in oklch, var(--skill) 45%, transparent), transparent 70%); box-shadow: 0 0 0 1px color-mix(in oklch, var(--skill) 70%, transparent), 0 0 18px color-mix(in oklch, var(--skill) 55%, transparent); animation: tend-life linear forwards; }
 .rite-target:hover, .rite-target:focus-visible { transform: scale(1.12); box-shadow: 0 0 0 2px var(--color-focus), 0 0 22px color-mix(in oklch, var(--skill) 75%, transparent); }
 @keyframes tend-life { 0% { opacity: 0; scale: 0.5; } 12% { opacity: 1; scale: 1; } 75% { opacity: 1; } 100% { opacity: 0; scale: 0.85; } }
-.rite-burst { position: absolute; transform: translate(-50%, -50%); font-weight: 700; color: var(--color-text); pointer-events: none; animation: float-up 700ms var(--ease-out) forwards; }
+.rite-pulse { position: absolute; width: 48px; height: 48px; margin: -24px 0 0 -24px; border-radius: 50%; box-shadow: 0 0 0 2px var(--skill); pointer-events: none; animation: tend-pulse 500ms var(--ease-out) forwards; }
+@keyframes tend-pulse { from { opacity: 0.9; transform: scale(0.8); } to { opacity: 0; transform: scale(1.6); } }
+.rite-taken.is-ticked { animation: tend-tick 600ms var(--ease-out); }
+@keyframes tend-tick { 0% { color: var(--color-text); text-shadow: 0 0 8px var(--skill); } 100% { color: inherit; text-shadow: none; } }
 .rite-foot { font-size: var(--text-xs); text-align: center; }
 .rite-scene .phase-list { align-self: center; flex-direction: row; flex-wrap: wrap; gap: var(--space-1) var(--space-3); box-shadow: none; padding: 0; }
 [data-motion="reduced"] .rite-target { animation: none; }
-[data-motion="reduced"] .rite-burst { animation: none; opacity: 0; }
-@media (prefers-reduced-motion: reduce) { .rite-target { animation: none; } .rite-burst { display: none; } }
+[data-motion="reduced"] .rite-pulse, [data-motion="reduced"] .rite-taken.is-ticked { animation: none; opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .rite-target { animation: none; } .rite-pulse { display: none; } .rite-taken.is-ticked { animation: none; } }
 
 /* The chapter's end, in sections */
 .end-section { display: flex; flex-direction: column; gap: var(--space-2); padding-top: var(--space-3); border-top: 1px solid var(--color-border-soft); }

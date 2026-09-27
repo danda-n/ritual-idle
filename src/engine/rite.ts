@@ -109,6 +109,8 @@ export function stepRite(state: GameState, ms: number, now: number): { used: num
   state.rite.completed = { quality, endingSeen: false, offered };
   state.levelCap = Math.max(state.levelCap, HEARTH_RITE.rewards.levelCap);
   if (!state.followers.includes(HEARTH_RITE.rewards.follower)) state.followers.push(HEARTH_RITE.rewards.follower);
+  // A Resplendent rite leaves grandmother's embroidered cloth: a real thing, kept for Chapter II.
+  if (quality === QUALITY_RESPLENDENT) state.inventory.circle_cloth = Math.max(1, state.inventory.circle_cloth ?? 0);
   return { used, completedQuality: quality };
 }
 

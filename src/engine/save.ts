@@ -95,6 +95,8 @@ export function deserialize(json: string): GameState {
   // v11: the board has one slot per place (two, plus projects), and each contract its scaled offer.
   state.upgrades = state.upgrades.filter((u) => u in UPGRADES);
   state.board = state.board.slice(0, boardSlots(state)).map((b, i) => (b.request && !(b.request in REQUESTS) ? { request: null, refillAt: b.refillAt, delivered: {} } : b.request && !b.offer ? { ...b, offer: scaleOffer(b.request, trustLevel(state), i) } : b));
+  // v11: a Resplendent rite already done gets its cloth (it used to be only a line of text).
+  if (state.rite.completed?.quality === 2 && !state.inventory.circle_cloth) state.inventory.circle_cloth = 1;
   // Steps that no longer exist (stages lost their sub-steps: each is its part's checklist now).
   state.stepsDone = (state.stepsDone ?? []).filter((id) => stepById(id));
   state.rewardsWaiting = state.rewardsWaiting.filter((id) => stepById(id));
