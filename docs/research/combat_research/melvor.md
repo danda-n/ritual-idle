@@ -1,6 +1,6 @@
 # Melvor Idle combat (raw research report, 2026-09-29)
 
-One of eight source reports behind [../COMBAT.md](../COMBAT.md), kept as written by the researcher. Unverified; see the evidence notes there.
+One of eight source reports behind [../COMBAT_RESEARCH.md](../COMBAT_RESEARCH.md), kept as written by the researcher. Unverified; see the evidence notes there.
 
 ## Summary
 - The evidence here is mostly Steam discussions, Steam negative reviews and wiki text as quoted in search snippets. Search returned no Reddit posts, and direct wiki fetches returned HTTP 403. Reddit-specific claims below are therefore unverified.

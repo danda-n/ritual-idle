@@ -1,6 +1,6 @@
 # Bosses, gates, gear tiers and parallel actions (raw research report, 2026-09-29)
 
-One of eight source reports behind [../COMBAT.md](../COMBAT.md), kept as written by the researcher. Unverified; see the evidence notes there.
+One of eight source reports behind [../COMBAT_RESEARCH.md](../COMBAT_RESEARCH.md), kept as written by the researcher. Unverified; see the evidence notes there.
 
 ## Summary
 - Bosses work best in idle games as gates. A stuck player thinks "I need upgrades to beat this." That is the healthiest loop the sources describe. Evidence: several single sources, one repeated pattern (Melvor dungeons, NGU titans, Magic Research bosses).

@@ -1,17 +1,17 @@
 # Combat in idle games (research note, 2026-09-29)
 
-A dated snapshot. **Decided so far:** nothing. This note feeds the pitch revision in [CONCEPT.md](../CONCEPT.md) and the combat design doc. What the designer has already said (before this research): auto-combat after preparing a loadout, you can lose (HP, healing with items, recovery), offline fights against weaker foes, combat takes the action slot, more action slots later, mid-fight switching only for min-maxing and bosses.
+A dated snapshot. **Decided (2026-09-29, CONCEPT's decision log):** losing costs only the supplies spent and that foe's loot; offline fights only when a readiness tag says Safe (a tag worked out from the chances replaced the forecast recommended here, so fights keep some surprise); the story may ask for combat, but announced; a first taste in the cellar after the Kindling, combat in full in Chapter II. The rest is being designed. This note feeds the pitch revision in [CONCEPT.md](../CONCEPT.md) and the combat design, [COMBAT.md](../COMBAT.md). What the designer has already said (before this research): auto-combat after preparing a loadout, you can lose (HP, healing with items, recovery), offline fights against weaker foes, combat takes the action slot, more action slots later, mid-fight switching only for min-maxing and bosses.
 
 ## Method
 - Eight researchers (Sonnet 5.5) each searched one area on the web (Steam reviews and discussions, wikis, dev notes, folklore sources), then one (Opus 5.5) combined them. The source reports:
-- [Melvor Idle combat](combat/melvor.md)
-- [Idle MMO-likes and AFK combat](combat/mmo-likes.md)
-- [Prep-then-watch depth](combat/prep-watch.md)
-- [Incremental and active-idle RPGs](combat/incremental-rpg.md)
-- [Why people like or avoid combat in idle games](combat/psychology.md)
-- [Losing, HP and healing, offline combat](combat/loss-offline.md)
-- [Bosses, gates, gear tiers and parallel actions](combat/bosses-gear.md)
-- [Slavic folklore bestiary and apotropaic methods](combat/folklore.md)
+- [Melvor Idle combat](combat_research/melvor.md)
+- [Idle MMO-likes and AFK combat](combat_research/mmo-likes.md)
+- [Prep-then-watch depth](combat_research/prep-watch.md)
+- [Incremental and active-idle RPGs](combat_research/incremental-rpg.md)
+- [Why people like or avoid combat in idle games](combat_research/psychology.md)
+- [Losing, HP and healing, offline combat](combat_research/loss-offline.md)
+- [Bosses, gates, gear tiers and parallel actions](combat_research/bosses-gear.md)
+- [Slavic folklore bestiary and apotropaic methods](combat_research/folklore.md)
 - Reddit was not reachable, and the Melvor wiki refused direct fetches, so many claims rest on Steam threads and search snippets. Treat the findings as directional.
 - Spot-checks on 2026-09-29: Idle Clans' auto-eat costs 100,000 gold (confirmed on its wiki); the upiór's poppy seeds, iron and knots to untangle (confirmed on Wikipedia); Milky Way Idle's 150-second respawn was **not** on its wiki's combat page.
 

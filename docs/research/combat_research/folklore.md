@@ -1,6 +1,6 @@
 # Slavic folklore bestiary and apotropaic methods (raw research report, 2026-09-29)
 
-One of eight source reports behind [../COMBAT.md](../COMBAT.md), kept as written by the researcher. Unverified; see the evidence notes there.
+One of eight source reports behind [../COMBAT_RESEARCH.md](../COMBAT_RESEARCH.md), kept as written by the researcher. Unverified; see the evidence notes there.
 
 ## Summary
 

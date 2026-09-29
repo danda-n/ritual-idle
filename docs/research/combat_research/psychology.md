@@ -1,6 +1,6 @@
 # Why people like or avoid combat in idle games (raw research report, 2026-09-29)
 
-One of eight source reports behind [../COMBAT.md](../COMBAT.md), kept as written by the researcher. Unverified; see the evidence notes there.
+One of eight source reports behind [../COMBAT_RESEARCH.md](../COMBAT_RESEARCH.md), kept as written by the researcher. Unverified; see the evidence notes there.
 
 ## Summary
 - Evidence is thin. Reddit was not fetchable (searches surfaced no usable r/incremental_games threads), so almost everything comes from Melvor Idle and IdleOn Steam threads plus a few design articles. Most findings are single-thread anecdotes. Only two patterns recur across sources: the "idle contract" complaint and the "decisions must stay interesting" claim.

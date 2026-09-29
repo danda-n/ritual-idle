@@ -1,6 +1,6 @@
 # Prep-then-watch depth (raw research report, 2026-09-29)
 
-One of eight source reports behind [../COMBAT.md](../COMBAT.md), kept as written by the researcher. Unverified; see the evidence notes there.
+One of eight source reports behind [../COMBAT_RESEARCH.md](../COMBAT_RESEARCH.md), kept as written by the researcher. Unverified; see the evidence notes there.
 
 ## Summary
 - Evidence is a mix of fetched player threads (Steam), reviews and web-search summaries. Several games in the brief (The Bazaar, Idle Slayer, Nodebuster, Dungeon Clawler) got only thin or off-topic results. I could not reach Reddit or the wikis through these tools, so no Reddit evidence is included.

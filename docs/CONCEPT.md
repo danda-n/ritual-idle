@@ -139,13 +139,13 @@ Every skill feeds the ritual circle. Followers take over the work you have maste
   - Very rarely, a *curio*: a unique item that starts a story thread.
 - **Mastery:** each action levels on its own, like Melvor's mastery. A mastered action can be handed to a follower.
 
-### 5.1b Combat loop (minutes to hours) *(v0.4; details in the combat design doc, to come)*
-- **Prepare:** choose a foe or place, and a loadout from what you've made: a ward, a light, an herb, a charm *(slots are draft)*. A forecast says what to expect before you start: time per kill, the worst hit (special attacks included), how long your supplies last, and whether it's **Safe** to leave running.
+### 5.1b Combat loop (minutes to hours) *(v0.4; details in [COMBAT.md](COMBAT.md))*
+- **Prepare:** choose a foe or place, and a loadout from what you've made: a ward, a light, a remedy, a charm. A **readiness tag** (Safe, Likely, Risky, Deadly, Hopeless) sums up your chances, worked out from the fight's real rules, special attacks included; the exact outcome isn't shown, so a lucky win (or an unlucky loss) can still surprise you. Only Safe fights run offline.
 - **Fight:** it runs by itself in the action slot and repeats until you stop, like any action. Healing follows a simple rule you set from the start ("use a poultice below 40% HP").
 - **Loot:** spirit-only reagents, coin and curios, mostly ingredients rather than finished gear, so combat feeds the crafting skills and the rites.
 - **Driven off:** if your HP runs out, the fight ends. It costs only the supplies spent and that fight's unbanked loot. HP comes back while you do anything else, or at once with food and herbs. Never a timed wait, never lost gear.
-- **Offline:** fights marked Safe keep going while you're away, with an automatic retreat at your HP line or when supplies run low, and the away summary says why it stopped.
-- **Bosses:** few, named, opt-in, each shown with its weakness and what beating it opens. A good loadout beats a boss on auto; switching mid-fight only makes it faster or pays better.
+- **Offline:** fights tagged Safe keep going while you're away, until a Ward or Light runs out (or, rarely, you're driven off), and the away summary says why it stopped.
+- **Bosses:** few, named, opt-in, each shown with what beating it opens and the lasting gift it leaves (a fixed passive bonus). A good loadout beats a boss on auto; switching mid-fight only makes it faster or pays better.
 - **Foes come from the folklore**, and each has its traditional counter: poppy seeds keep the upiór counting, iron and salt water turn the zmora, the południca is answered, not fought. Matching the counter is the depth; the wrong ward only slows you down.
 
 ### 5.2 Session loop (a session, minutes to hours)
@@ -349,10 +349,10 @@ We deliberately **do not** use:
   - **Upkeep is a soft tithe:** a small draw of common goods (bread, candles, herbs) from **one shared pantry**. If it runs dry they slow to 50% instead of stopping, and the away summary warns you.
   - **No per-follower inventories, gear or micromanagement.** Presets save a full setup in one click and survive Ascension.
   - **Never lost, except by choice:** no death and no desertion. At Ascension you may *sacrifice* a follower for Offerings.
-- **Combat** *(v0.4; the full model comes in its own design doc)*
-  - Auto-combat you prepare for, in the action slot: a foe or place, a loadout of crafted goods, a forecast before you start, a healing rule from the start, and named loadout presets with "same as last time".
-  - Losing costs only the supplies spent and that fight's loot. Fights marked Safe run offline, with an automatic retreat.
-  - Bosses are few and opt-in; each opens something (a recipe, a place, a rite option) and can be beaten on auto with good prep.
+- **Combat** *(v0.4; the full model is in [COMBAT.md](COMBAT.md))*
+  - Auto-combat you prepare for, in the action slot: a foe or place, a loadout of crafted goods, a readiness tag before you start, a healing rule from the start, and named loadout presets with "same as last time".
+  - Losing costs only the supplies spent and that fight's loot. Fights tagged Safe run offline, until a supply runs out.
+  - Bosses are few and opt-in; each opens something (a recipe, a place, a rite option), leaves a **lasting gift** (a fixed passive bonus), and can be beaten on auto with good prep.
   - **Where it starts:** after the Kindling, the **cellar** opens with a few foes and a small boss, a first taste in Chapter 1 that never touches the chapter's path to the rite. Combat opens in full in Chapter II (the Grave tier, the restless dead).
   - The main story can ask for combat (a boss, or an offering only spirits leave), but always announced, never a surprise wall.
 - **Summoning contracts**
@@ -404,7 +404,7 @@ We deliberately **do not** use:
 | Needing a wiki | Melvor, Book of Hours | In-game ETAs, tooltips, Grimoire as the manual |
 | Endless slowdown with no end | NGU late game | A finite arc with an ending; the endgame is optional |
 | Losing gear on death | Melvor | Losing costs only supplies spent and the fight's loot |
-| Deaths the numbers didn't predict | Melvor (stuns, multi-hits) | A forecast before every fight, with the worst hit including special attacks |
+| Deaths the numbers didn't predict | Melvor (stuns, multi-hits) | A readiness tag worked out from the real rules, special attacks included, and special attacks named on the foe's card |
 | Auto-heal behind a big purchase | Melvor, Idle Clans | A simple healing rule from the first fight |
 | Timed respawns | Milky Way Idle | HP recovers while you do anything else, or by eating |
 
@@ -445,7 +445,7 @@ We deliberately **do not** use:
 - **Afflictions and follower traits:** first lists.
 - **Story bible:** grandmother, the village, the Patrons, and chapter beats.
 - **Sanctum layout:** what's in the scene, and how it grows by Chapter.
-- **Combat design doc** *(next)*: stats, loadout slots, damage rules, losing and recovering, offline fights, bosses, loot, the cellar taste, and the first slice to build. Research: [research/COMBAT.md](research/COMBAT.md).
+- **Combat design doc** *([COMBAT.md](COMBAT.md), v0.1 draft)*: stats, loadout slots, damage rules, losing and recovering, offline fights, bosses, loot, the cellar taste, and the first slice to build. Research: [research/COMBAT_RESEARCH.md](research/COMBAT_RESEARCH.md).
 
 ---
 
@@ -741,9 +741,12 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
 - **The first playthrough is active-first** (changes Q8's "about 4 weeks of real time, checking in about 3 times a day"). After several playthroughs of Chapter 1 the designer found the game missing something to always do. A player who wants to keep playing always has a useful next step; idle and offline play still progress, more slowly. The playthrough should be long, but it isn't tied to a number of hours or weeks: chapter lengths are found by building and playtesting. A new pillar says it: *always something to do, never something you must do.*
 - **Auto-combat is a major activity** (changes the locked "No auto-combat"; rites still take the place of bosses in the story, and still never fail). It's a different activity with its own loot, gear, danger and bosses to beat. The theme is warding off spirits and the restless dead with what you craft (salt, candles, sigils, herbs), each foe with its folklore counter. You prepare a loadout, and it fights in the action slot until you stop. Mid-fight switching is only for min-maxing and bosses.
 - **Losing is allowed, and cheap:** being driven off costs the supplies spent and that fight's loot, never gear or anything permanent. HP comes back while you do anything else, or with food and herbs; never a timed wait.
-- **Offline fights** only against foes the forecast marks Safe, with an automatic retreat at your HP line or when supplies run low.
+- **Offline fights** only against foes the readiness tag marks Safe; a fight stops when a Ward or Light runs out, or when you're driven off.
 - **The main story may ask for combat,** but always announced, never a surprise wall.
+- **Fights have chance, and a tag instead of a forecast.** Blows vary and can land hard, so a long shot can come off. Before a fight the game works the chances out in the background and shows a **readiness tag** (Safe, Likely, Risky, Deadly, Hopeless), with the rough chance on hover, not the exact result: the designer wants fights to keep their surprise. Special attacks are named on the foe's card and counted in the tag, so nothing is hidden that could catch a player out.
+- **Bosses leave lasting gifts:** a fixed passive bonus each (no choice, for now).
+- **Nothing of combat shows before Warding opens:** no combat words, stats, recipes, loot, projects or talents. When it opens, a large introduction explains how it works.
 - **Where it starts:** a small taste in the **cellar** after the Kindling (a few foes, a small boss), which also gives the chapter end something to do and lets the combat screens be built and tested before Chapter II. Combat opens in full in Chapter II. Chapter 1's path to the rite doesn't change.
 - **More action slots later** is a direction, not a decision: the research found players ask for them and developers resist, and warns about two loops competing for one resource.
-- **Research:** [research/COMBAT.md](research/COMBAT.md) (eight areas: Melvor, idle MMO-likes, prep-then-watch games, incremental RPGs, what draws and drives players, losing and offline, bosses and gear, Slavic folklore). Its strongest lessons: a forecast before every fight, a healing rule from the start, loss that costs supplies only, few loadout slots with matching counters, named presets, and bosses that each open something. Reddit couldn't be read (it blocks these tools), so the evidence is mostly Steam and wikis.
+- **Research:** [research/COMBAT_RESEARCH.md](research/COMBAT_RESEARCH.md) (eight areas: Melvor, idle MMO-likes, prep-then-watch games, incremental RPGs, what draws and drives players, losing and offline, bosses and gear, Slavic folklore). Its strongest lessons: a forecast before every fight, a healing rule from the start, loss that costs supplies only, few loadout slots with matching counters, named presets, and bosses that each open something. Reddit couldn't be read (it blocks these tools), so the evidence is mostly Steam and wikis.
 - **Logged decisions this adjusts:** Q8 (pacing in weeks of check-ins); the locked "No auto-combat"; §5.2's check-in loop (now a session loop); §5.3's "the boss equivalent"; the "Cycle 2 takes about 1 week" target.

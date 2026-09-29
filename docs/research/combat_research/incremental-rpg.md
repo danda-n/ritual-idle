@@ -1,6 +1,6 @@
 # Incremental and active-idle RPGs (raw research report, 2026-09-29)
 
-One of eight source reports behind [../COMBAT.md](../COMBAT.md), kept as written by the researcher. Unverified; see the evidence notes there.
+One of eight source reports behind [../COMBAT_RESEARCH.md](../COMBAT_RESEARCH.md), kept as written by the researcher. Unverified; see the evidence notes there.
 
 ## Summary
 - Coverage is thin. Search returned mostly Steam threads, wikis and guides, and no Reddit posts. I did not research Increlution, Idle Wizard, Grim Tides, Progress Knight/Quest or Kittens Game. Trimps player sentiment came back empty. Treat everything below as directional.

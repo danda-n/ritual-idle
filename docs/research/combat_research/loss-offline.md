@@ -1,6 +1,6 @@
 # Losing, HP and healing, offline combat (raw research report, 2026-09-29)
 
-One of eight source reports behind [../COMBAT.md](../COMBAT.md), kept as written by the researcher. Unverified; see the evidence notes there.
+One of eight source reports behind [../COMBAT_RESEARCH.md](../COMBAT_RESEARCH.md), kept as written by the researcher. Unverified; see the evidence notes there.
 
 ## Summary
 - Melvor Idle is the closest analogue to what the designer wants. It runs a full tick-by-tick offline simulation, including food use and death. Its penalty is losing one random equipped item. Gold is never lost, and a prayer can prevent the item loss. Players treat this as fair, but only once they can predict when they are safe.

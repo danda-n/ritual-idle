@@ -1,6 +1,6 @@
 # Idle MMO-likes and AFK combat (raw research report, 2026-09-29)
 
-One of eight source reports behind [../COMBAT.md](../COMBAT.md), kept as written by the researcher. Unverified; see the evidence notes there.
+One of eight source reports behind [../COMBAT_RESEARCH.md](../COMBAT_RESEARCH.md), kept as written by the researcher. Unverified; see the evidence notes there.
 
 ## Summary
 - Evidence was thinner than hoped. Reddit was not reachable through these tools. What I found comes from Steam threads, official wikis, patch notes, and a few review sites. Where a point rests on a search-tool paraphrase and not a page I read, I say so.

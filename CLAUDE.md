@@ -7,10 +7,12 @@ The designer is not a programmer. Explain technical choices plainly, and keep ga
 - `docs/CONCEPT.md`: core concept, pillars, loops, and the decision log (read that first)
 - `docs/CHAPTER1.md`: Chapter 1 content: actions, items, notes, village, omen, Rite
 - `docs/GRIMOIRE.md`: discovery and hint model
+- `docs/COMBAT.md`: combat (Warding, the loadout, the forecast, the cellar); a draft until it's built
 - `docs/RESEARCH.md`: market and community research behind the decisions
 - `docs/DESIGN.md`: design system (tokens, type, components, art rules, feedback, layout rules, screens, words). Follow it for every UI change
 - `docs/PLAYTEST.md`: what to try and what to note in a Chapter 1 playtest
-- `docs/research/`: dated research notes (e.g. `RITE_QUALITY.md`: sacrifices and rewards for rite quality, decided 2026-09-26; `COMBAT.md`: combat in idle games, 2026-09-29, with its source reports in `combat/`)
+- `docs/design_briefs/`: briefs for Claude Design mockups (e.g. `COMBAT_UI.md`), dated
+- `docs/research/`: dated research notes (e.g. `RITE_QUALITY.md`: sacrifices and rewards for rite quality, decided 2026-09-26; `COMBAT_RESEARCH.md`: combat in idle games, 2026-09-29, with its source reports in `combat_research/`)
 - `src/engine/playthrough.test.ts`: a headless bot plays all of Chapter 1 on the real engine (it's the pacing check; `npm run pacing` prints the timings)
 
 If code and docs disagree, ask which should change. Never silently diverge from a logged decision.
