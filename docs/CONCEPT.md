@@ -1,7 +1,7 @@
 # Ritual Idle — Core Concept (v0.3)
 
 > Working title. This document fixes the **core idea**: fantasy, pillars, loops, skill shape and constraints.
-> v0.2: all 10 open questions from v0.1 are decided. v0.3: the main sections describe the game as it is now (after four patches and three playtest rounds), and are kept current after every patch.
+> v0.2: all 10 open questions from v0.1 are decided. v0.3: the main sections describe the game as it is now (after four patches and three playtest rounds), and are kept current after every patch. v0.4: an active-first playthrough, and auto-combat (warding off spirits) as a major activity; the combat design comes in its own doc.
 > The decision log at the end records what changed and why; Chapter 1's own changelog is at the end of [CHAPTER1.md](CHAPTER1.md#changelog).
 > Anything marked *(draft)* is a starting point for the next brainstorm, not a decision.
 > Evidence behind the choices lives in [RESEARCH.md](RESEARCH.md).
@@ -11,9 +11,9 @@
 ## 1. Elevator pitch
 
 You inherit your grandmother's house, the village witch's, at the edge of a Carpathian-style forest. Over many moons you gather, craft and **discover** the rites needed to perform the **Great Rite**.
-Every skill feeds the ritual circle. Followers take over the work you have mastered. Omens and moons are power you capture, store, and later learn to call down yourself.
+Every skill feeds the ritual circle. Followers take over the work you have mastered. Omens and moons are power you capture, store, and later learn to call down yourself. And the house is not empty: the restless dead, night-spirits and worse come to it, and you drive them off with what you make (salt, candles, sigils, herbs), prepared beforehand and left to hold.
 
-*Melvor-style skilling depth, a real occult identity, discovery that remembers what you found, and a sanctum you can watch come alive.*
+*Melvor-style skilling and combat depth, a real occult identity, discovery that remembers what you found, and a sanctum you can watch come alive.*
 
 **Locked decisions**
 
@@ -22,15 +22,15 @@ Every skill feeds the ritual circle. Followers take over the work you have maste
 | Theme | Ritual / occult (witchcraft, alchemy, summoning, a hidden order) |
 | Platform | PC: Steam + browser, single-player, fully offline-capable |
 | Setting | Invented Slavic/Carpathian folk-horror region, 1800s. You inherit your grandmother's witch-house; the Great Rite is an apotheosis |
-| Parallel work | You do one action at a time, plus 4 (up to ~6) low-management followers |
+| Parallel work | You do one action at a time (combat included), plus 4 (up to ~6) low-management followers. More personal action slots later in the game *(draft)* |
 | Structure | A finite main story with a real ending, then Patron Cycles as the prestige endgame |
 | Discovery | Forgiving and permanent: the Grimoire fills itself and hints are generous. Major Rite recipes are listed; discovery lives in side rites, hidden recipes, forbidden variants and lore |
-| Challenge | Major Rites and summonings take the place of bosses. No auto-combat, and rites never fail; they run by themselves (tending can hurry them, never required), and optional offerings set the outcome quality |
+| Challenge | Two kinds. **Rites** never fail: they run by themselves (tending can hurry them, never required), and optional offerings set the outcome quality. **Combat** is auto-combat you prepare for: pick a foe and a loadout (wards, lights, herbs, charms), and it fights until you stop. You can be driven off, which costs only the supplies spent and that fight's loot, never anything permanent. Bosses are prep puzzles that open something |
 | Visuals | A readable UI plus one illustrated "living sanctum" scene |
 | Business | Premium one-time purchase, with paid expansions later |
 | Core systems | Omens and invoked moons (never a time-lock), Taint |
 | Time scale | 3–6s actions. The Chapter 1 rite is about 3 minutes and runs by itself (about 1.5 if tended); longer rites (30 min–8h) are the target for later chapters. Offline cap 24h, raised to 72h and then 7 days by upgrades |
-| Pacing | About 4 weeks of real time to the Great Rite; the first session reaches the Chapter 1 Rite |
+| Pacing | An **active-first playthrough**: there's always something useful to do if you want it, and idle and offline time still progress. The first session reaches the Chapter 1 Rite, and the cellar gives a first taste of combat after it. The whole playthrough should be long, with no fixed length: chapter lengths are found by building and playtesting |
 | Endgame | New Game+ Patron cycles; the Moon and the Hunger at launch |
 | Art | Folk-art / woodcut style; placeholders until the loop is proven |
 | Tech | TypeScript web + Electron; local saves + Steam Cloud + export |
@@ -56,7 +56,7 @@ Every skill feeds the ritual circle. Followers take over the work you have maste
 
 ## 3. Design pillars
 
-1. **Everything feeds the Rite.** Skills depend on each other. Major rites draw from *every* tier of material, so no skill or early resource ever becomes obsolete.
+1. **Everything feeds the Rite.** Skills depend on each other, and combat feeds them too: what you craft is what you fight with, and what spirits leave behind goes into rites. Major rites draw from *every* tier of material, so no skill or early resource ever becomes obsolete.
 2. **Knowledge you keep.** The Grimoire of discovered recipes, rites and lore is permanent. It survives every reset. Discovery is the game's second progression track, next to XP.
 3. **Time is a reagent.** You have one personal action and a few scarce followers. Stored omens and invoked moons are boosts you choose when to spend. **Nothing is ever time-locked.**
 4. **Power has a price.** Forbidden work builds Taint. Taint raises yields but brings afflictions. They are always reversible and never end the game.
@@ -65,6 +65,7 @@ Every skill feeds the ritual circle. Followers take over the work you have maste
    - Quality-of-life is built in: ETAs, a fallback when work stops, presets.
    - A readable UI that doesn't require a wiki.
    - A real ending.
+6. **Always something to do, never something you must do.** An active player always has a useful next step: an action to switch, an experiment, a contract, a fight to prepare, a boss to beat. An idle or offline player still progresses, just more slowly. No waiting screens: what recovers (HP, for one) recovers while you do anything else.
 
 ---
 
@@ -138,13 +139,23 @@ Every skill feeds the ritual circle. Followers take over the work you have maste
   - Very rarely, a *curio*: a unique item that starts a story thread.
 - **Mastery:** each action levels on its own, like Melvor's mastery. A mastered action can be handed to a follower.
 
-### 5.2 Check-in loop (a session, 2–20 minutes)
-- **Collect:** read the "while you were away" summary: materials, omens seen, rites completed.
+### 5.1b Combat loop (minutes to hours) *(v0.4; details in the combat design doc, to come)*
+- **Prepare:** choose a foe or place, and a loadout from what you've made: a ward, a light, an herb, a charm *(slots are draft)*. A forecast says what to expect before you start: time per kill, the worst hit (special attacks included), how long your supplies last, and whether it's **Safe** to leave running.
+- **Fight:** it runs by itself in the action slot and repeats until you stop, like any action. Healing follows a simple rule you set from the start ("use a poultice below 40% HP").
+- **Loot:** spirit-only reagents, coin and curios, mostly ingredients rather than finished gear, so combat feeds the crafting skills and the rites.
+- **Driven off:** if your HP runs out, the fight ends. It costs only the supplies spent and that fight's unbanked loot. HP comes back while you do anything else, or at once with food and herbs. Never a timed wait, never lost gear.
+- **Offline:** fights marked Safe keep going while you're away, with an automatic retreat at your HP line or when supplies run low, and the away summary says why it stopped.
+- **Bosses:** few, named, opt-in, each shown with its weakness and what beating it opens. A good loadout beats a boss on auto; switching mid-fight only makes it faster or pays better.
+- **Foes come from the folklore**, and each has its traditional counter: poppy seeds keep the upiór counting, iron and salt water turn the zmora, the południca is answered, not fought. Matching the counter is the depth; the wrong ward only slows you down.
+
+### 5.2 Session loop (a session, minutes to hours)
+- **Play:** in an active session there's always a next thing: switch actions, experiment, deliver a contract, prepare the next fight or boss.
+- **Collect:** after time away, read the "while you were away" summary: materials, omens seen, fights won, rites completed.
 - **Delegate:** reassign followers and load presets.
 - **Experiment:** put combinations into the circle to test hints (cheap, safe, and every attempt is recorded).
 - **Plan:** queue or *prime* the next rite, and decide whether to spend a stored omen or invoke a moon now.
 
-### 5.3 Rite loop (days): the boss equivalent *(decided in Q5)*
+### 5.3 Rite loop (hours to days): the chapter milestones *(decided in Q5)*
 - **Major Rites** are the milestones of the game, one per Chapter.
 - **The recipe is fully listed upfront.** You always know what a Rite needs; the challenge is producing it. Components come from several skills. In Chapter 1 the rite is the **Kindling**, built in five parts (candles, a ward, smoke, words, an offering), one per stage of the chapter, each placed in the Circle as you make it. Later rites may also ask for, for example:
   - a focus
@@ -184,24 +195,22 @@ Every skill feeds the ritual circle. Followers take over the work you have maste
 | 5 | Starlit | **The Great Rite** | — | The ending, then Patron cycles |
 
 - Chapter 1 starts with caps at 20.
-- **Pacing target** *(decided in Q8; to be tuned after playtests)*: about **4 weeks of real time** to the Great Rite, front-loaded, for a player checking in about 3 times a day.
+- **Pacing target** *(v0.4, replaces Q8's four weeks of check-ins)*: an **active-first playthrough**. A player who wants to keep playing always has something useful to do, so a chapter can be played through in sittings; a player who steps away still progresses offline. The whole playthrough should be long, but it isn't tied to a number of hours: each chapter's length is found by building it and playtesting.
 
-| Chapter | Real time | Offline cap by then |
+| Chapter | Target | Offline cap by then |
 |---|---|---|
-| 1 Hearth | **First session:** about 30–35 min for an efficient idle player, about 45–60 with side projects. The first Rite lands before the player leaves | 24h |
-| 2 Grave | Days 2–5 | 24h → 72h upgrade |
-| 3 Fern | About week 2 | 72h |
-| 4 Drowned | Weeks 2–3.5 | 72h |
-| 5 Starlit | About week 4, the ending | 7 days |
-| Cycle 2 (NG+) | About 1 week | 7 days |
+| 1 Hearth | **First session:** about 30–35 min to the rite for an efficient player, about 45–60 with side projects. Then the cellar: a first taste of combat | 24h |
+| 2 Grave | Combat in full. Length found in building and playtesting | 24h → 72h upgrade |
+| 3–5 | Found chapter by chapter | 72h → 7 days |
+| Cycle 2 (NG+) | Much faster than the first playthrough | 7 days |
 
-- **Unlock cadence:** something new every few minutes in Chapter 1, something every session in the mid game, a Major Rite every 1–2 weeks late.
-- **Active vs idle:** active play wins mostly **through decisions** (switching actions, experimenting, spending omens, using charms), roughly 1.3–1.5× over pure idle. The one click bonus is tending a running rite: optional, capped at half the rite, and never needed for anything but time. No other click or "stay on screen" bonuses.
+- **Unlock cadence:** something new every few minutes in Chapter 1, and a steady supply of goals later: the next skill tier, the next foe, the next boss, the next rite.
+- **Active vs idle:** active play wins **through decisions and by keeping busy** (switching actions, experimenting, spending omens, using charms, preparing fights and beating bosses sooner). Idle and offline play keep going on what you set up, so they're slower but never stuck. The one click bonus is tending a running rite: optional, capped at half the rite, and never needed for anything but time. No other click or "stay on screen" bonuses, and combat has no manual attack.
 - **The Great Rite is a real ending with credits.** Afterwards the house, the Grimoire and your skills stay, and the endgame opens.
 
 ### 5.5 Cycle loop (endgame / prestige) *(decided in Q6)*
 - **The Rite of Ascension is a New Game+ reset.** Pledge the order to a **Patron** and replay Chapters 1–5 under that Patron's rules.
-  - It's much faster: cycle 2 takes about 1 week of real time and later cycles get shorter.
+  - It's much faster than the first playthrough, and later cycles get shorter still.
   - It ends in that **Patron's own final rite and ending**, so each cycle has a story reward.
 - **What resets:** skill levels, mastery and materials.
 - **What carries over:**
@@ -276,11 +285,12 @@ KNOWLEDGE    candles ────► Divination ───────┤        
 
 | Constraint | Effect | What we avoid |
 |---|---|---|
-| **One personal action** | Your time is the main currency | — |
+| **One personal action** | Your time is the main currency: a fight uses the same slot as crafting. More slots come later in the game *(draft)* | Two automated loops fighting over one resource |
 | **4 (up to ~6) followers** | Extra parallel work on mastered actions, or "assist me" by default. A soft tithe from one shared pantry | IdleOn's "eleven inventories to empty" chores |
 | **Omen stock** | Stored omens and invoked moons are limited boosts; *when* to spend them is the choice | Any real-time lockout; content is never gated behind waiting |
 | **Taint thresholds** | Power now vs. affliction later | Game-over and run loss |
 | **Circle slots per rite** | Choosing which components to bring is a build choice | — |
+| **Loadout slots per fight** | A few slots, each matched to a foe's weakness; every fight spends some supplies | A best-in-slot that solves everything |
 
 We deliberately **do not** use:
 - bank-space taxes
@@ -339,6 +349,12 @@ We deliberately **do not** use:
   - **Upkeep is a soft tithe:** a small draw of common goods (bread, candles, herbs) from **one shared pantry**. If it runs dry they slow to 50% instead of stopping, and the away summary warns you.
   - **No per-follower inventories, gear or micromanagement.** Presets save a full setup in one click and survive Ascension.
   - **Never lost, except by choice:** no death and no desertion. At Ascension you may *sacrifice* a follower for Offerings.
+- **Combat** *(v0.4; the full model comes in its own design doc)*
+  - Auto-combat you prepare for, in the action slot: a foe or place, a loadout of crafted goods, a forecast before you start, a healing rule from the start, and named loadout presets with "same as last time".
+  - Losing costs only the supplies spent and that fight's loot. Fights marked Safe run offline, with an automatic retreat.
+  - Bosses are few and opt-in; each opens something (a recipe, a place, a rite option) and can be beaten on auto with good prep.
+  - **Where it starts:** after the Kindling, the **cellar** opens with a few foes and a small boss, a first taste in Chapter 1 that never touches the chapter's path to the rite. Combat opens in full in Chapter II (the Grave tier, the restless dead).
+  - The main story can ask for combat (a boss, or an offering only spirits leave), but always announced, never a surprise wall.
 - **Summoning contracts**
   - Binding an entity means choosing its terms: a longer duration or stronger effects cost more (or add Taint). Binding never fails.
   - Bound entities act as powerful timed buffs or special workers.
@@ -387,6 +403,10 @@ We deliberately **do not** use:
 | Always-online / server dependency | Idle Clans, Milky Way Idle | Single-player, local and cloud save, save export |
 | Needing a wiki | Melvor, Book of Hours | In-game ETAs, tooltips, Grimoire as the manual |
 | Endless slowdown with no end | NGU late game | A finite arc with an ending; the endgame is optional |
+| Losing gear on death | Melvor | Losing costs only supplies spent and the fight's loot |
+| Deaths the numbers didn't predict | Melvor (stuns, multi-hits) | A forecast before every fight, with the worst hit including special attacks |
+| Auto-heal behind a big purchase | Melvor, Idle Clans | A simple healing rule from the first fight |
+| Timed respawns | Milky Way Idle | HP recovers while you do anything else, or by eating |
 
 ---
 
@@ -396,6 +416,7 @@ We deliberately **do not** use:
 |---|---|---|---|---|---|
 | Parallel work | 1 action | ~10 characters | Queue in one life | Card slots | 1 action + 4–6 followers |
 | Scarce resource | Time | Attention | Lifespan | Time and sanity | Time and **stored omens** |
+| Combat | Auto, gear-heavy | Auto, per character | Scripted | None | **Auto, prep-first, folklore counters** |
 | Direction | Self-set goals | Worlds and quests | Fixed story | Hidden story | **Story arc + Rites** |
 | Reset | None | None | Every life | On death | **Optional Patron Cycles** |
 | Discovery | Low | Low | Medium | Very high, punishing | **Medium-high, forgiving, in side content** |
@@ -424,6 +445,7 @@ We deliberately **do not** use:
 - **Afflictions and follower traits:** first lists.
 - **Story bible:** grandmother, the village, the Patrons, and chapter beats.
 - **Sanctum layout:** what's in the scene, and how it grows by Chapter.
+- **Combat design doc** *(next)*: stats, loadout slots, damage rules, losing and recovering, offline fights, bosses, loot, the cellar taste, and the first slice to build. Research: [research/COMBAT.md](research/COMBAT.md).
 
 ---
 
@@ -509,7 +531,7 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
 - Tiers and Rites are renamed to fit the folklore (draft).
 
 ### Q8: Pacing (decided)
-- **About 4 weeks of real time to the Great Rite**, front-loaded (see §5.4), with cycle 2 taking about 1 week. That's roughly 6–8 weeks of engagement at launch. It's a tuning knob to adjust after playtests.
+- **About 4 weeks of real time to the Great Rite**, front-loaded (see §5.4), with cycle 2 taking about 1 week. That's roughly 6–8 weeks of engagement at launch. It's a tuning knob to adjust after playtests. *(→ changed: an active-first playthrough; see Combat and an active-first playthrough)*
 - **The first session (1–2h active) reaches the Chapter 1 Rite.**
 - **Active play only helps through decisions.** No click bonuses.
 
@@ -714,3 +736,14 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
 - **The Grimoire as a book:** deciphered pages as a grid of 100 page slots by chapter (Chapter I's 6, then 14, 20, 25 and 35 locked), "6/100" in the index, loose leaves with their insight, and curios as tiles with live chances. The book should look mostly still to find.
 - **Logged decisions this adjusts:** Chapter 1 build (M1) "Mended shutters give 36h"; the fourth patch's talent pairs at 3, 6, 9 and 12 and its project list; "Before the next playtest"'s "changed from level L+3"; Playtest round 2's 10-minute charms (and the Hearth mark charm's 15%); the text trim's "hover titles" for contracts, keepsakes and flavour (now tooltips).
 - **Read words turn plain, and a Guide keeps them.** An explained word stops calling for attention once its explanation is read (its "i" goes); the "?" Guide in the top bar lists every word read, so nothing explained is ever lost.
+
+### Combat and an active-first playthrough (2026-09-29)
+- **The first playthrough is active-first** (changes Q8's "about 4 weeks of real time, checking in about 3 times a day"). After several playthroughs of Chapter 1 the designer found the game missing something to always do. A player who wants to keep playing always has a useful next step; idle and offline play still progress, more slowly. The playthrough should be long, but it isn't tied to a number of hours or weeks: chapter lengths are found by building and playtesting. A new pillar says it: *always something to do, never something you must do.*
+- **Auto-combat is a major activity** (changes the locked "No auto-combat"; rites still take the place of bosses in the story, and still never fail). It's a different activity with its own loot, gear, danger and bosses to beat. The theme is warding off spirits and the restless dead with what you craft (salt, candles, sigils, herbs), each foe with its folklore counter. You prepare a loadout, and it fights in the action slot until you stop. Mid-fight switching is only for min-maxing and bosses.
+- **Losing is allowed, and cheap:** being driven off costs the supplies spent and that fight's loot, never gear or anything permanent. HP comes back while you do anything else, or with food and herbs; never a timed wait.
+- **Offline fights** only against foes the forecast marks Safe, with an automatic retreat at your HP line or when supplies run low.
+- **The main story may ask for combat,** but always announced, never a surprise wall.
+- **Where it starts:** a small taste in the **cellar** after the Kindling (a few foes, a small boss), which also gives the chapter end something to do and lets the combat screens be built and tested before Chapter II. Combat opens in full in Chapter II. Chapter 1's path to the rite doesn't change.
+- **More action slots later** is a direction, not a decision: the research found players ask for them and developers resist, and warns about two loops competing for one resource.
+- **Research:** [research/COMBAT.md](research/COMBAT.md) (eight areas: Melvor, idle MMO-likes, prep-then-watch games, incremental RPGs, what draws and drives players, losing and offline, bosses and gear, Slavic folklore). Its strongest lessons: a forecast before every fight, a healing rule from the start, loss that costs supplies only, few loadout slots with matching counters, named presets, and bosses that each open something. Reddit couldn't be read (it blocks these tools), so the evidence is mostly Steam and wikis.
+- **Logged decisions this adjusts:** Q8 (pacing in weeks of check-ins); the locked "No auto-combat"; §5.2's check-in loop (now a session loop); §5.3's "the boss equivalent"; the "Cycle 2 takes about 1 week" target.
