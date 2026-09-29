@@ -35,7 +35,7 @@ Every skill feeds the ritual circle. Followers take over the work you have maste
 | Art | Folk-art / woodcut style; placeholders until the loop is proven |
 | Tech | TypeScript web + Electron; local saves + Steam Cloud + export |
 | Currency | Village coin, earned only from villagers' contracts. Buys provisions (bread, tallow); later also some exclusive or rare projects and rare rewards. House projects are built from items, not bought. No free-sell market |
-| Skill unlocks | Ch1: 6 skills · Ch2: +4 · Ch3: +3 (Taint arrives) · Ch4–5: depth only |
+| Skill unlocks | Ch1: 6 skills, then Warding and Crafting with the cellar after the rite · Ch2: +4 · Ch3: +3 (Taint arrives) · Ch4–5: depth only |
 
 ---
 
@@ -140,9 +140,9 @@ Every skill feeds the ritual circle. Followers take over the work you have maste
 - **Mastery:** each action levels on its own, like Melvor's mastery. A mastered action can be handed to a follower.
 
 ### 5.1b Combat loop (minutes to hours) *(v0.4; details in [COMBAT.md](COMBAT.md))*
-- **Prepare:** choose a foe or place, and a loadout from what you've made: a ward, a light, a remedy, a charm. A **readiness tag** (Safe, Likely, Risky, Deadly, Hopeless) sums up your chances, worked out from the fight's real rules, special attacks included; the exact outcome isn't shown, so a lucky win (or an unlucky loss) can still surprise you. Only Safe fights run offline.
+- **Prepare:** choose a foe or place, and your gear: five durable pieces made with the **Crafting** skill (tiers, fixed and random affixes, sets), plus a few remedies and a charm. A **readiness tag** (Safe, Likely, Risky, Deadly, Hopeless) sums up your chances, worked out from the fight's real rules, special attacks included; the exact outcome isn't shown, so a lucky win (or an unlucky loss) can still surprise you. Only Safe fights run offline.
 - **Fight:** it runs by itself in the action slot and repeats until you stop, like any action. Healing follows a simple rule you set from the start ("use a poultice below 40% HP").
-- **Loot:** spirit-only reagents, coin and curios, mostly ingredients rather than finished gear, so combat feeds the crafting skills and the rites.
+- **Loot:** spirit-only reagents and curios (no coin), ingredients rather than finished gear, so combat feeds Crafting and the rites.
 - **Driven off:** if your HP runs out, the fight ends. It costs only the supplies spent and that fight's unbanked loot. HP comes back while you do anything else, or at once with food and herbs. Never a timed wait, never lost gear.
 - **Offline:** fights tagged Safe keep going while you're away, until a Ward or Light runs out (or, rarely, you're driven off), and the away summary says why it stopped.
 - **Bosses:** few, named, opt-in, each shown with what beating it opens and the lasting gift it leaves (a fixed passive bonus). A good loadout beats a boss on auto; switching mid-fight only makes it faster or pays better.
@@ -232,7 +232,7 @@ Every skill feeds the ritual circle. Followers take over the work you have maste
 
 ---
 
-## 6. Skill map *(13 skills decided in Q2; contents are draft)*
+## 6. Skill map *(13 skills decided in Q2, plus Warding and Crafting in v0.4; contents are draft)*
 
 Every skill trains the same way: **timed actions that consume inputs and produce outputs.** Knowledge skills included.
 
@@ -241,7 +241,7 @@ Every skill trains the same way: **timed actions that consume inputs and produce
 | **Gathering** | Herbalism | — | Herbs, fungi, roots, resins | Alchemy, Chandlery, Purification |
 | | Gravetending | — | Bone, grave-earth, coffin nails, burial curios | Sigilcraft, Binding-craft, Alchemy, offerings |
 | | Scavenging | — | Salt, iron, glass, wax and tallow, feathers, old texts, curios | Chandlery, Binding-craft, Sigilcraft, Scholarship |
-| **Crafting** | Alchemy | Herbs, salts, bone ash | Tinctures, anointing oils, inks, ritual salts | Sigilcraft, Scholarship, Ritualism, Summoning |
+| **Making** | Alchemy | Herbs, salts, bone ash | Tinctures, anointing oils, inks, ritual salts | Sigilcraft, Scholarship, Ritualism, Summoning |
 | | Chandlery | Wax or tallow, resins, herbs | Candles, incense | Divination, Ritualism, Summoning, Purification |
 | | Sigilcraft | Salt, chalk, bone, inks | Circle chalk, wards, talismans | Ritualism (safety), Summoning (containment) |
 | | Binding-craft | Glass, iron, bone, inks | Vessels, fetters, fetishes | Summoning (holding entities), Astrology (omen jars) |
@@ -250,6 +250,8 @@ Every skill trains the same way: **timed actions that consume inputs and produce
 | | Astrology | Omen fragments, vessels | Captured omens; later, **invoked moons** | Every skill (temporary boosts) |
 | **Ritual** | Ritualism | Everything | Minor rites (repeatable; *consecrate* materials to a higher grade), Major Rites (milestones) | Progress, Patron favour |
 | | Summoning | Wards, vessels, offerings | Bound entities (timed buffs, special workers) | Everything |
+| **Combat** | Warding | Gear, remedies | Victories, spirits' leavings | Crafting, rites |
+| | Crafting | Iron, linen, glass, candles, leavings | Gear pieces (tiers, affixes, sets) and their components | Warding |
 | **Support** | Purification | *Low-tier* herbs, salt, incense | Taint removal, holy water | Taint control; keeps early materials useful |
 
 **Folded into systems:**
@@ -259,7 +261,7 @@ Every skill trains the same way: **timed actions that consume inputs and produce
 **Resource chains**
 
 ```
-GATHERING              CRAFTING                         RITUAL
+GATHERING              MAKING                           RITUAL
 Herbalism ──┬──────► Alchemy ──(inks, oils)──┐
             ├──────► Chandlery ─(candles)────┤
             └──────► Purification ◄── Taint ─┼──────────────┐
@@ -350,7 +352,7 @@ We deliberately **do not** use:
   - **No per-follower inventories, gear or micromanagement.** Presets save a full setup in one click and survive Ascension.
   - **Never lost, except by choice:** no death and no desertion. At Ascension you may *sacrifice* a follower for Offerings.
 - **Combat** *(v0.4; the full model is in [COMBAT.md](COMBAT.md))*
-  - Auto-combat you prepare for, in the action slot: a foe or place, a loadout of crafted goods, a readiness tag before you start, a healing rule from the start, and named loadout presets with "same as last time".
+  - Auto-combat you prepare for, in the action slot: a foe or place, gear made with the Crafting skill (tiered pieces, affixes, sets), a few remedies, a readiness tag before you start, a healing rule from the start, and named loadout presets with "same as last time".
   - Losing costs only the supplies spent and that fight's loot. Fights tagged Safe run offline, until a supply runs out.
   - Bosses are few and opt-in; each opens something (a recipe, a place, a rite option), leaves a **lasting gift** (a fixed passive bonus), and can be beaten on auto with good prep.
   - **Where it starts:** after the Kindling, the **cellar** opens with a few foes and a small boss, a first taste in Chapter 1 that never touches the chapter's path to the rite. Combat opens in full in Chapter II (the Grave tier, the restless dead).
@@ -745,6 +747,7 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
 - **The main story may ask for combat,** but always announced, never a surprise wall.
 - **Fights have chance, and a tag instead of a forecast.** Blows vary and can land hard, so a long shot can come off. Before a fight the game works the chances out in the background and shows a **readiness tag** (Safe, Likely, Risky, Deadly, Hopeless), with the rough chance on hover, not the exact result: the designer wants fights to keep their surprise. Special attacks are named on the foe's card and counted in the tag, so nothing is hidden that could catch a player out.
 - **Bosses leave lasting gifts:** a fixed passive bonus each (no choice, for now).
+- **Gear, made with a new skill, Crafting** (changes the first loadout of crafted consumables). The designer wanted tiered equipment with stats, bonuses, triggers and sets, not generic items from anywhere. Crafting trains on repeatable components and makes pieces in a crafting window. Five slots. Each piece has fixed affixes (its identity) and random ones: 1 + 1 at tier 1, growing to 2 + 2. A random affix offers 2 options to choose from (3 with a Cellar project), so rolls surprise without a grind. Pieces are upgraded in place and can be reforged. Consumables are kept very small: remedies and charms, a help and never the key. The skill-map category of the other making skills is renamed "Making" to keep "Crafting" for the skill.
 - **Nothing of combat shows before Warding opens:** no combat words, stats, recipes, loot, projects or talents. When it opens, a large introduction explains how it works.
 - **Where it starts:** a small taste in the **cellar** after the Kindling (a few foes, a small boss), which also gives the chapter end something to do and lets the combat screens be built and tested before Chapter II. Combat opens in full in Chapter II. Chapter 1's path to the rite doesn't change.
 - **More action slots later** is a direction, not a decision: the research found players ask for them and developers resist, and warns about two loops competing for one resource.

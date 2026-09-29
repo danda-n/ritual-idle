@@ -1,16 +1,16 @@
 # Design brief: the Cellar and combat screens (2026-09-29)
 
-A brief for Claude Design. What the screens must do comes from [../COMBAT.md](../COMBAT.md) (v0.2); how they must look comes from the existing design system, "Hearth + Folk" ([../DESIGN.md](../DESIGN.md), and the handoff in [../design_handoff/](../design_handoff/README.md)). The result comes back as a handoff like the last one, and the game's code is built to it.
+A brief for Claude Design. What the screens must do comes from [../COMBAT.md](../COMBAT.md) (v0.3); how they must look comes from the existing design system, "Hearth + Folk" ([../DESIGN.md](../DESIGN.md), and the handoff in [../design_handoff/](../design_handoff/README.md)). The result comes back as a handoff like the last one, and the game's code is built to it.
 
 ---
 
 ## Paste this into Claude Design
 
-> I'm designing new screens for **Ritual Idle**, a single-player idle/skilling game (Melvor-like) with a Slavic folk-horror theme. You inherit your grandmother's witch-house, and craft candles, salt wards, sigils and herbs. We're adding **auto-combat**: after the chapter's great rite, the cellar opens and the house's spirits have gathered there. You **prepare a loadout** from what you've crafted, and the fight runs by itself until you stop.
+> I'm designing new screens for **Ritual Idle**, a single-player idle/skilling game (Melvor-like) with a Slavic folk-horror theme. You inherit your grandmother's witch-house, and craft candles, salt wards, sigils and herbs. We're adding **auto-combat**: after the chapter's great rite, the cellar opens and the house's spirits have gathered there. You **craft gear** with a new Crafting skill (tiered pieces with fixed and random affixes and set bonuses), put it on, and the fight runs by itself until you stop.
 >
 > Use the existing **Ritual Idle design system ("Hearth + Folk" on "Soot & Linen")**, attached (or in this project). Follow its hard rules exactly: no italics, no dashed or dotted outlines, red fill only on the one thing to press, gold only for rare things, skill colours only on icons, stripes, bars and the running row, text contrast ≥ 4.5:1, colour never the only signal, reduced motion stops all loops except progress bars, no browser tooltips (use the Tip card). Reuse its class vocabulary (`btn`, `panel`, `bar`, `chip`, `tabs`, `topbar`, `tracker`, `ledger`, `toast`…) and the places pattern (a place colour, a hero band, a material, one signature glow).
 >
-> The full brief follows: the screens, their states, the words and the mock data. Please deliver HTML/CSS mocks in the same structure as the existing `reference/ui_kits/ritual-idle/` (a `cellar.html`, plus any new component cards), at 1280px and 375px wide, that pass the kit's `audit.js` (0 contrast fails, 0 italics, nothing under 12px).
+> The full brief follows: the screens, their states, the words and the mock data. Please deliver HTML/CSS mocks in the same structure as the existing `reference/ui_kits/ritual-idle/` (a `cellar.html` and a `crafting.html`, plus any new component cards), at 1280px and 375px wide, that pass the kit's `audit.js` (0 contrast fails, 0 italics, nothing under 12px).
 
 Then paste or attach everything below.
 
@@ -18,14 +18,23 @@ Then paste or attach everything below.
 
 ## 1. What combat is (in one screen of text)
 
-- **One foe at a time, repeating.** Choose a foe, fill four loadout slots, press **Begin**. It fights by itself (in the player's single action slot, like crafting) until you stop, a Ward or Light runs out, or you're **driven off**. No clicking during the fight.
-- **The loadout** has four slots:
-  - **Ward:** salt lines, sigils, iron and hearth wards. It gives Ward, which softens blows.
-  - **Light:** candles and incense. It gives Strike, how hard you hit.
-  - **Remedy:** one kind of food or herb, used by a healing rule ("below 40% Health").
-  - **Charm:** a charm from the Experiments tab, or the red thread knot.
+- **One foe at a time, repeating.** Choose a foe, check your gear, press **Begin**. It fights by itself (in the player's single action slot, like any recipe) until you stop or you're **driven off**. No clicking during the fight.
+- **Gear:** five slots, each holding one durable **piece**:
+  - **Amulet:** gives Ward (softens blows) and a tag.
+  - **Hand:** gives Strike (how hard you hit) and a tag.
+  - **Lantern:** gives Strike and a tag.
+  - **Garment:** gives Health and softer special attacks.
+  - **Belt:** holds remedies.
+  
+  Plus a few **remedies** (one kind, used by a healing rule, "below 40% Health") and one **charm**. Remedies are a help, not a need: you catch your breath between foes.
+- **Pieces are made with the Crafting skill.** Each has:
+  - base stats by **tier**
+  - **fixed affixes** (its identity: its tag, one trait)
+  - **random affixes:** when you craft it, each random slot rolls **2 options** (3 with a project) and you **choose one**
+  
+  Pieces can be **reforged** (re-roll one random affix, keep the old one if you like) and **upgraded in place** to the next tier. Matching pieces make a **set** ("Grandmother's set: 2 pieces +10% Ward").
 - **Four stats:** Health, Ward, Strike, Speed.
-- **Weakness:** every foe fears one tag (salt, smoke, iron, hearth…). The right Ward or Light makes it much easier. It's shown as "?" until you've beaten that foe 10 times.
+- **Weakness:** every foe fears one tag (salt, smoke, fire, iron, hearth…). If your Hand or Lantern carries it, your blows are ×1.5; if your Amulet does, its blows are halved. It's shown as "?" until you've beaten that foe 10 times.
 - **Chance:** blows vary, and some land as **telling blows** (×2). The game plays each fight out 1,000 times in the background and shows a **readiness tag**:
   - **Safe** (999 in 1,000 or better: leave it running, offline too)
   - **Likely** (9 in 10)
@@ -34,7 +43,7 @@ Then paste or attach everything below.
   - **Hopeless** (less than 1 in 20)
   
   Hovering the tag gives the rough chance in words ("about 3 in 4"). **Never the exact outcome:** fights should keep their surprise.
-- **Losing is cheap:** only the supplies spent on that foe and its loot. Health comes back during any other work.
+- **Losing is cheap:** only the remedies used on that foe and its loot. Gear is never lost. Health comes back during any other work.
 - **Bosses:** one in the cellar, the sour **Domovoi** (the house spirit, sulking since grandmother died). You don't banish him, you *calm* him: his bar reads **Temper**. Calming him opens the way down to the crypt (the next chapter) and leaves a lasting **gift** (+5% speed in all skills, Health returns twice as fast).
 
 ---
@@ -48,27 +57,32 @@ A new tab next to the others, with its own place colour, hero band, material and
   - **Left, the foes:** a card per foe with its woodcut glyph, name, one line, readiness tag, weakness (or "?"), and a level lock where one applies ("Warding 8"). The boss's card is set apart, and bigger.
   - **Right, the chosen foe:**
     - **The foe card:** its Health, Strike, Ward and Speed; its specials by name ("every 4th blow: the Press, ×2.5"; "telling blows 10%"); its weakness and any resistance; what it leaves behind as item chips with chances.
-    - **The loadout:** four slots, each showing the item, what it gives ("Ward 30 · iron") and how many you hold. Any empty or short slot says so in words.
+    - **Your gear:**
+      - Five slots, each showing its piece (icon, name, tier, its tag, the affixes in one line each).
+      - A mark where a tag matches this foe's known weakness.
+      - The set bonus, if two or more pieces match.
+      - Remedies (kind and count, "Belt holds 10") and the charm.
+      - An empty slot says so in words.
     - **The healing line** (a small control: "Use a remedy below 40% Health").
     - **The readiness tag,** large, with the rough chance in a Tip.
-    - "Supplies last about N foes".
+    - With remedies: "Remedies last about N foes".
     - Saved loadouts: "Same as last time", and a named-preset menu.
-    - One red **Begin** button. When disabled, the reason is in words ("Needs a Light").
+    - One red **Begin** button. When disabled, the reason is in words.
 - **A "How it works" link** reopens the introduction (§2.6).
 
-### 2.2 Choosing an item for a slot
-Clicking a slot opens a picker listing what you hold that fits it:
-- The item icon, name, count held, and what it gives (Ward 18, heals 15).
-- Its tag.
-- A mark when it matches this foe's known weakness.
+### 2.2 Choosing a piece for a slot
+Clicking a slot opens a picker listing the pieces you hold for it:
+- Icon, name, tier and tag.
+- Its affixes.
+- A mark if it matches this foe's known weakness.
 
-Items you don't hold aren't listed. Items you could craft next could be a quiet second group ("Make it: Sigilcraft ›"). It's a popover on desktop and a sheet on phones.
+The same kind of picker chooses the remedy and the charm. One quiet link at the bottom: "Make more: Crafting ›". It's a popover on desktop and a sheet on phones.
 
 ### 2.3 A fight running
 The right column turns into the fight while it runs:
 - Two bars: yours (Health) and the foe's (Health, or Temper for the Domovoi), with numbers.
 - The blow beat: whose blow is next and when (a slim timer, like the recipe rows).
-- Supplies left per slot (ward 7, light 3, remedy 12, charm 18 foes).
+- Remedies left, and the charm's uses left.
 - A short log of the last 4–6 blows. Telling blows and specials stand out through text and a glyph, not colour alone.
 - Counters: foes beaten this run, and loot gathered.
 - A **Stop** button.
@@ -79,9 +93,8 @@ The right column turns into the fight while it runs:
 
 ### 2.4 How a fight ends (states)
 - **Stopped by you:** back to the foe view, with a one-line summary ("Skrzat ×23 · 7 lost buttons").
-- **A supply ran out:** the same, plus which one ("Out of salt lines").
-- **Driven off:** a calm, clear state, not a game-over screen. What happened ("Driven off by the Zmora: the Press"), what it cost (the supplies spent on that foe, its loot), what's kept (everything else), and that you've gone back to your previous action. One line of advice where it helps ("Its weakness is iron").
-- **Away summary:** one line in the existing "while you were away" dialog ("The cellar: 212 Skrzats warded off · 64 lost buttons · stopped after 3h 20m: out of salt lines").
+- **Driven off:** a calm, clear state, not a game-over screen. What happened ("Driven off by the Zmora: the Press"), what it cost (the remedies used on that foe, its loot), what's kept (gear and everything else), and that you've gone back to your previous action. One line of advice where it helps ("Its weakness is iron").
+- **Away summary:** one line in the existing "while you were away" dialog ("The cellar: 212 Skrzats warded off · 64 lost buttons · 3h 20m").
 
 ### 2.5 The boss
 - **The Domovoi's card:** set apart from the others, with Temper instead of Health, his specials, his weakness, and two things shown up front: **what calming him opens** (the way down to the crypt) and **his gift** (+5% speed in all skills, Health returns twice as fast). His readiness tag starts as Hopeless.
@@ -91,10 +104,10 @@ The right column turns into the fight while it runs:
 It appears when the Cellar opens and can be reread from the Cellar tab and the Guide. Its scale is like the chapter end: vellum, sections divided by soft rules, and a small drawing or glyph for each. It must be scannable in about 30 seconds.
 1. **The cellar:** what's down there and why now (two lines from grandmother).
 2. **How a fight goes:** pick a foe, fill the loadout, Begin; it fights on by itself.
-3. **Your loadout:** the four slots and what each gives.
+3. **Gear:** the five slots, and that Crafting makes the pieces (choose one of the rolled options for each random affix).
 4. **Weakness:** each foe fears something; "?" until you've beaten it 10 times.
 5. **Readiness:** the five tags and what Safe means.
-6. **Losing:** what it costs, and what it never costs.
+6. **Losing:** what it costs (remedies and that foe's loot), and what it never costs (gear, anything else).
 7. **Away:** Safe fights keep going while you're away.
 8. **Bosses:** the Domovoi, what calming him opens, his gift.
 
@@ -119,6 +132,30 @@ A new entry in the Grimoire's ribbon index, in the book's style (vellum page, SC
 
 Unmet foes are locked tiles, like the page grid.
 
+### 2.9 The crafting window (new)
+**Crafting** is a skill like the others on the House tab: its page has the usual recipe rows (the **components**: stitched linen, iron blank, lantern frame, red thread, red thread knot) and talents. Its page also opens the **crafting window**, a large dialog or panel, where gear pieces are made. This is the screen that should make crafting feel good.
+- **Choose a slot** (Amulet, Hand, Lantern, Garment, Belt), then **a piece** from that slot's list (locked ones show their Crafting level).
+- **The piece's card:**
+  - its base stats by tier
+  - its **fixed affix** (always the same)
+  - its **random affix slot** with the **pool** it rolls from and each option's range ("Strike +1–2 · Speed +3–5% · telling blows +2–3%")
+  - its set, if any
+  - the materials with have/need (short ones in the usual red "short" chip style)
+  - one red **Craft** button
+- **The roll:** after Craft, the random slot shows its **2 options** side by side (3 with the Workbench), each with its rolled value. **You choose one**, and the piece is done.
+  - This is the moment of surprise: a short, satisfying reveal. It must stay calm and readable, and reduced motion must show it without animation.
+  - A strong roll (near the top of its range) can be marked with words ("high roll"), not gold. Gold means rare only.
+- **A piece you hold:**
+  - **Reforge** one random affix: the new options appear beside the current one, and "Keep the old one" is a clear option.
+  - **Upgrade** to the next tier, shown with what it adds and what it costs. Tier 2 says "Chapter II materials" and is locked for now.
+- **States to show:**
+  - nothing crafted yet
+  - choosing between 2 options
+  - choosing between 3
+  - reforging (old vs new)
+  - an upgrade locked
+  - not enough materials
+
 ---
 
 ## 3. New art needed (woodcut glyphs, in the icon set's style)
@@ -134,9 +171,15 @@ Unmet foes are locked tiles, like the page grid.
   - lost button
   - spun thread
   - tangled lock (of hair)
+  - stitched linen
+  - iron blank
+  - lantern frame
+  - red thread
+- **Gear pieces:** salt pouch, iron amulet, iron knife, hearth poker, tallow lantern, censer, embroidered shirt (red cross-stitch border), herb belt.
+- **The five slot glyphs:** Amulet, Hand, Lantern, Garment, Belt.
 - **Stats:** Health, Ward, Strike, Speed.
 - **The Cellar's place mark,** and a small cellar-door ornament.
-- **A skill colour for Warding** that stays distinct from the six skill colours in lightness and hue, for colour-blind players:
+- **Skill colours for Warding and for Crafting** that stay distinct from each other and from the six skill colours in lightness and hue, for colour-blind players:
   - Herbalism lichen `#94be58`
   - Scavenging river `#469bd1`
   - Chandlery beeswax `#ebd56a`
@@ -160,26 +203,33 @@ Unmet foes are locked tiles, like the page grid.
 | Zmora | the nightmare on the sleeper's chest | 70 | 7 | 20 | 3.5 s | iron | every 4th: the Press ×2.5 · telling blows 10% | Tangled lock 40% | Risky |
 | Domovoi (boss) | the house spirit, sour since grandmother died | Temper 300 | 9 | 30 | 3 s | hearth | every 3rd: Pots off the shelf ×2 | calming opens the crypt · gift | Hopeless |
 
-- **The mock player:** Warding 7, Health 54.
-- **The mock loadout:**
-  - salt line ×14 (Ward 10 · salt)
-  - tallow candle ×9 (Strike 4 · fire)
-  - chamomile ×20 (heals 4)
-  - Window charm (63 uses left)
+- **The mock player:** Warding 7, Crafting 8, Health 73 (52 from level, +15 shirt, +6 pouch).
+- **The mock gear:**
+  - Amulet: Salt pouch, tier 1 (Ward 10 · salt · Health +6)
+  - Hand: Iron knife, tier 1 (Strike 5 · iron · Speed +4%)
+  - Lantern: Tallow lantern, tier 1 (Strike 3 · fire · loot chances +12%)
+  - Garment: Embroidered shirt, tier 1 (Health +15 · special attacks −20% · +1 Health per foe beaten)
+  - Belt: Herb belt, tier 1 (holds 10 · remedies heal +10% · holds +3)
+  - Grandmother's set: 3 pieces (+10% Ward · the first special attack each fight misses)
+- **Remedies:** chamomile ×13 (heals 4).
+- **Charm:** Window charm (63 uses left).
 - **Healing line:** 40%.
-- **Supplies last** about 27 foes.
-- **A running fight:** Skrzat 11/20, you 49/54. The last blows:
-  - "You 4.6"
+- **A running fight:** Skrzat 11/20, you 68/73. The last blows:
+  - "You 6.9"
   - "Skrzat 1.3"
-  - "You 8.2 · telling blow"
+  - "You 12.4 · telling blow"
   - "Skrzat 1.5"
+- **The crafting window mock:** crafting a Censer (Crafting 6).
+  - Base Strike 4, fixed: smoke.
+  - Its random slot rolled 2 options: "Strike +2" (a high roll) and "Warding XP +7%".
+  - Materials: 1 lantern frame (have 2), 2 mugwort incense (have 1: short).
 
 ---
 
 ## 5. Words (use exactly these)
 
-- **Places, skills and core terms:** the Cellar · Warding · loadout · Ward, Light, Remedy, Charm (the slots) · Health, Ward, Strike, Speed (the stats) · weakness · telling blow · readiness · Safe, Likely, Risky, Deadly, Hopeless · driven off · remedy · healing rule · Temper · calm (the Domovoi) · gift · the Bestiary.
-- **Button labels:** Begin · Stop · Same as last time · Go down to the cellar · How it works.
+- **Places, skills and core terms:** the Cellar · Warding · Crafting · gear · piece · tier · affix (fixed, random) · set · reforge · upgrade · component · loadout · Amulet, Hand, Lantern, Garment, Belt (the slots) · remedy · charm · Health, Ward, Strike, Speed (the stats) · weakness · telling blow · readiness · Safe, Likely, Risky, Deadly, Hopeless · driven off · remedy · healing rule · Temper · calm (the Domovoi) · gift · the Bestiary.
+- **Button labels:** Begin · Stop · Craft · Choose · Reforge · Keep the old one · Upgrade · Same as last time · Go down to the cellar · How it works.
 - **Style:** numbers and verbs first, labels over sentences, facts joined with " · ", no "you" where it can be dropped. One line per thing; a second line goes in a Tip. Flavour lives in names and art, not in paragraphs.
 
 ---
