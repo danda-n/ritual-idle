@@ -159,6 +159,10 @@ export const GLOSSARY = {
     name: "Gift",
     text: "What a boss leaves when you beat it: a lasting bonus, kept for good.",
   },
+  mastery: {
+    name: "Mastery",
+    text: "Beating one kind of foe again and again makes you better against it, for good: more loot at 25 beaten, more XP at 100, harder blows at 250.",
+  },
   bestiary: {
     name: "The Bestiary",
     text: "The Grimoire's pages on the spirits you've met: what each fears, its special attacks and what it leaves behind.",
@@ -166,6 +170,6 @@ export const GLOSSARY = {
 } as const satisfies Record<string, { name: string; text: string }>;
 
 /** Words of the cellar: never shown before it opens (combat.test.ts checks it). */
-export const CELLAR_TERMS = ["cellar", "warding", "crafting", "gear", "piece", "affix", "set", "reforge", "loadout", "readiness", "weakness", "telling", "driven", "remedy", "healing", "gift", "bestiary"] as const;
+export const CELLAR_TERMS = ["cellar", "warding", "crafting", "gear", "piece", "affix", "set", "reforge", "loadout", "readiness", "weakness", "telling", "driven", "remedy", "healing", "gift", "mastery", "bestiary"] as const;
 
 export type TermId = keyof typeof GLOSSARY;

@@ -69,8 +69,9 @@ export function deserialize(json: string): GameState {
       ...data.cellar,
       gear: { ...base.cellar.gear, ...data.cellar?.gear },
       pieces: (data.cellar?.pieces ?? []).filter((p) => p.id in PIECES),
+      lastFight: data.cellar?.lastFight ? Object.assign({ ms: 0, xp: 0, bestDealt: 0, worstTaken: 0 }, data.cellar.lastFight) : null,
     },
-    fight: data.fight && data.fight.foe in FOES ? { ...data.fight, loot: data.fight.loot ?? {}, remediesUsed: data.fight.remediesUsed ?? 0 } : null,
+    fight: data.fight && data.fight.foe in FOES ? { ...Object.assign({ ms: 0, xp: 0, bestDealt: 0, worstTaken: 0 }, data.fight), loot: data.fight.loot ?? {}, remediesUsed: data.fight.remediesUsed ?? 0 } : null,
     job: data.job && data.job.piece in PIECES ? data.job : null,
     version: SAVE_VERSION,
   };

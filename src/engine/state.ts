@@ -12,7 +12,7 @@ import type { UpgradeId } from "../content/upgrades";
 import type { KeepsakeId } from "../content/keepsakes";
 import type { CharmId } from "../content/charms";
 import { SKILL_IDS, type SkillId } from "../content/skills";
-import { BASE, type Affix, type FoeId, type GiftId, type PieceId, type RemedyId, type Slot } from "../content/combat";
+import { BASE, type Affix, type FoeId, type GiftId, type PieceId, type RemedyId, type Slot, type StopRule } from "../content/combat";
 import { randomSeed } from "./rng";
 
 export const SAVE_VERSION = 12;
@@ -158,12 +158,33 @@ export interface CellarState {
   pending: PendingRoll | null;
   /** How the last fight ended, for the Cellar's summary (cleared when dismissed or a new fight begins). */
   lastFight: FightSummary | null;
+  /** Best and worst per foe, kept for good (the Bestiary). */
+  records: Partial<Record<FoeId, FoeRecord>>;
+  /** When a fight stops by itself. */
+  stopRule: StopRule;
 }
 
-export interface FightSummary {
+export interface FoeRecord {
+  /** Your biggest blow against it, and its biggest against you. */
+  bestDealt: number;
+  worstTaken: number;
+  /** The most of it beaten in one fight. */
+  longestRun: number;
+}
+
+/** A fight's running numbers (also kept in its summary when it ends). */
+export interface FightTally {
+  /** Time spent fighting (ms). */
+  ms: number;
+  xp: number;
+  bestDealt: number;
+  worstTaken: number;
+}
+
+export interface FightSummary extends FightTally {
   foe: FoeId;
-  /** stopped: by you (or other work) · driven: driven off · calmed: a boss calmed · away: not Safe, so it stopped when you left. */
-  end: "stopped" | "driven" | "calmed" | "away";
+  /** stopped: by you (or other work) · driven: driven off · calmed: a boss calmed · away: not Safe, so it stopped when you left · rule: your stop rule. */
+  end: "stopped" | "driven" | "calmed" | "away" | "rule";
   beaten: number;
   loot: Partial<Record<ItemId, number>>;
   remediesUsed: number;
@@ -196,7 +217,7 @@ export interface BlowLine {
   down?: boolean;
 }
 
-export interface FightState {
+export interface FightState extends FightTally {
   foe: FoeId;
   foeHealth: number;
   /** Time until your next blow, and its next blow. */
@@ -238,6 +259,8 @@ export function newCellar(): CellarState {
     gifts: [],
     pending: null,
     lastFight: null,
+    records: {},
+    stopRule: { kind: "never" },
   };
 }
 

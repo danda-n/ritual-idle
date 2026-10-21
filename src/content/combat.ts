@@ -255,5 +255,22 @@ export const GIFTS = {
 } as const satisfies Partial<Record<FoeId, unknown>>;
 export type GiftId = keyof typeof GIFTS;
 
-/** The foe's log line for a special that the set made miss. */
-export const MISSED = "missed";
+/**
+ * Foe mastery: beating one kind of foe again and again makes you better against it, for good.
+ * Each tier comes at a number beaten and adds to the ones before. Not for bosses (beaten once).
+ */
+export const MASTERY = [
+  { beaten: 25, loot: 1.25, text: "Loot chances ×1.25 against it" },
+  { beaten: 100, xp: 0.25, text: "+25% Warding XP from it" },
+  { beaten: 250, strike: 0.1, text: "Your blows +10% against it" },
+] as const satisfies readonly { beaten: number; loot?: number; xp?: number; strike?: number; text: string }[];
+
+/**
+ * When a fight stops by itself (checked after each foe): never, after a number of foes, once you
+ * hold enough of an item, or when the Belt is empty. Work then goes back to what ran before.
+ */
+export type StopRule =
+  | { kind: "never" }
+  | { kind: "foes"; n: number }
+  | { kind: "item"; item: ItemId; n: number }
+  | { kind: "remedies" };

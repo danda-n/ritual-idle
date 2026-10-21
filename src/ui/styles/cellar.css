@@ -90,12 +90,19 @@
 .fcard:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
 
 /* ---------- Go bar: the chosen foe, readiness, Begin ---------- */
-.go-bar { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto auto; gap: 14px; align-items: center; padding: 14px 16px; background: linear-gradient(90deg, color-mix(in oklch, var(--place) 12%, var(--color-surface)), var(--color-surface) 60%); box-shadow: inset 3px 0 0 var(--place); }
+.go-bar { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px; background: linear-gradient(90deg, color-mix(in oklch, var(--place) 12%, var(--color-surface)), var(--color-surface) 60%); box-shadow: inset 3px 0 0 var(--place); }
+.go-top { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto auto; gap: 14px; align-items: center; }
+.go-facts { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 6px 12px; margin: 0; padding-top: 10px; border-top: 1px solid var(--color-border-soft); font-size: 15px; }
+.go-facts dt { font: 12px / 1.6 var(--font-display); letter-spacing: var(--tracking-label); color: var(--color-text-3); }
+.go-facts dd { margin: 0; color: var(--color-text); }
+.stop-rule { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.stop-rule .field { min-height: 32px; padding: 4px 8px; font: 14px / 1.2 var(--font-ui); color: var(--color-text); background: var(--color-sunken); border: 1px solid var(--color-border); border-radius: 3px; }
+.stop-rule .stop-n { width: 72px; }
 .go-what { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .go-what h2 { font: 500 24px / 1.05 var(--font-display); letter-spacing: 0.02em; }
 .go-what > span { font-size: 14px; }
-.go-bar .btn-begin { min-height: 46px; padding: 0 26px; font-size: 17px; }
-.go-bar .btn:disabled { min-height: 46px; padding: 0 16px; font-size: 15px; font-weight: 500; color: var(--color-text-2); }
+.go-top .btn-begin { min-height: 46px; padding: 0 26px; font-size: 17px; }
+.go-top .btn:disabled { min-height: 46px; padding: 0 16px; font-size: 15px; font-weight: 500; color: var(--color-text-2); }
 
 /* ---------- You ---------- */
 .you { padding: 0; }
@@ -427,6 +434,57 @@ div.belt-row { cursor: default; }
 .beast.is-boss .b-art { width: 42%; aspect-ratio: auto; flex: none; }
 .beast.is-locked { align-items: center; justify-content: center; gap: 6px; min-height: 150px; padding: 14px; background: rgb(0 0 0 / 0.14); color: #b3ab9d; text-align: center; font-size: 14px; }
 
+/* ---------- Calmer pieces (after the first playtest of the Cellar) ---------- */
+.hero.is-cellar.is-quiet { min-height: 0; padding-bottom: 18px; }
+.warding { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; box-shadow: inset 3px 0 0 var(--skill); }
+.warding-head { display: flex; align-items: center; gap: 10px; }
+.warding-head svg { color: var(--skill); }
+.warding-head h2 { font: 500 21px / 1.1 var(--font-display); letter-spacing: 0.02em; }
+.warding-level { margin-left: auto; font-size: 15px; color: var(--color-text-2); }
+.warding-level b { font: 500 21px / 1 var(--font-ui); color: var(--skill); }
+.warding .bar-fill { background: var(--skill); }
+.warding-xp { font-size: 14px; color: var(--color-text-2); }
+.warding-what { font-size: 15px; line-height: 1.45; color: var(--color-text-2); }
+.warding-next { display: flex; flex-wrap: wrap; gap: 6px; }
+.warding-next span { padding: 3px 8px; border-radius: 3px; background: var(--color-sunken); font-size: 13px; color: var(--color-text-2); }
+.you-head { display: block; padding-bottom: 0 !important; background: none; }
+.you-tabs { margin-top: 0; }
+.me-stat b { font-size: 24px; }
+.me-warn { margin-top: 8px; font-size: 14px; color: var(--color-danger); }
+.belt-row { grid-template-columns: minmax(0, 1fr) auto; }
+.pick-empty { padding: 8px 14px 10px; font-size: 15px; line-height: 1.4; color: var(--color-text-2); }
+.pick-row .pv-line { grid-column: 2 / -1; font-size: 13px; color: var(--color-text-2); }
+.delta { font: 500 13px / 1.2 var(--font-ui); white-space: nowrap; }
+.delta.up { color: var(--color-success); }
+.delta.down { color: var(--color-danger); }
+.fc-fears { font-size: 14px; color: var(--color-text-2); }
+.fc-fears b { color: var(--color-text); font-weight: 500; }
+.fc-line { font-size: 14px; }
+.spoils { padding: 14px 18px; border-top: 1px solid var(--color-border-soft); }
+.spoils ul { list-style: none; margin: 8px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+.spoil { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 4px; background: var(--color-sunken); box-shadow: inset 0 0 0 1px var(--color-border-soft); }
+.spoil-ic { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 4px; color: var(--color-text-3); background: rgb(0 0 0 / 0.2); }
+.spoil.has .spoil-ic { color: var(--folk-flax); }
+.spoil-name { display: flex; flex-direction: column; gap: 2px; font-weight: 500; font-size: 15px; min-width: 0; }
+.spoil-name .t-2 { font-weight: 400; font-size: 13px; }
+.spoil-n { font: 500 26px / 1 var(--font-ui); color: var(--color-text-3); }
+.spoil.has .spoil-n { color: var(--color-text); }
+.spoil.is-new { animation: spoil-new 1.2s var(--ease-out); }
+@keyframes spoil-new { 0% { box-shadow: inset 0 0 0 2px var(--color-success), 0 0 24px -6px var(--color-success); } 100% { box-shadow: inset 0 0 0 1px var(--color-border-soft); } }
+.fight-numbers { padding: 14px 18px; border-top: 1px solid var(--color-border-soft); }
+.fn-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+.fn { display: flex; flex-direction: column; gap: 3px; padding: 8px 10px; border-radius: 4px; background: var(--color-sunken); }
+.fn b { font: 500 20px / 1.1 var(--font-ui); }
+.fn .t-2 { font-size: 13px; }
+.fn-records { margin-top: 8px; font-size: 13px; }
+.result-card { display: flex; flex-direction: column; gap: 4px; border-radius: var(--radius-md); background: var(--color-raised); box-shadow: inset 3px 0 0 var(--color-text-3); }
+.result-card > header { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px 0; font-size: 16px; }
+.result-card > p, .result-card > .result-loot { padding: 0 16px; }
+.result-loot { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 6px !important; }
+.result-card .fight-numbers, .driven .fight-numbers { border-top: 0; padding-top: 6px; }
+.driven .fight-numbers { padding: 0; }
+:root[data-motion="reduced"] .spoil.is-new { animation: none; }
+
 /* ---------- Top bar during a fight ---------- */
 .working .hp-now { font: 500 15px / 1 var(--font-ui); color: var(--color-text); white-space: nowrap; }
 .working .portrait { --place: var(--folk-hoarfrost); }
@@ -460,10 +518,13 @@ div.belt-row { cursor: default; }
   .gtiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .gt { min-height: 150px; }
   .belt { grid-template-columns: minmax(0, 1fr); }
-  .go-bar { grid-template-columns: 44px minmax(0, 1fr); }
-  .go-bar .portrait { --s: 44px; }
-  .go-bar > .tip-trigger, .go-bar > .ready { grid-column: 1 / -1; justify-self: start; }
-  .go-bar .btn { grid-column: 1 / -1; width: 100%; justify-content: center; }
+  .go-top { grid-template-columns: 44px minmax(0, 1fr); }
+  .go-top .portrait { --s: 44px; }
+  .go-top > .tip-trigger, .go-top > .ready, .go-top > .gift { grid-column: 1 / -1; justify-self: start; }
+  .go-top .btn { grid-column: 1 / -1; width: 100%; justify-content: center; }
+  .go-facts { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .go-facts dd { margin-bottom: 8px; }
+  .fn-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .stage-head { grid-template-columns: minmax(0, 1fr) auto; }
   .stage-head .stage-count { grid-column: 1; grid-row: 3; }
   .stage-head .btn { grid-column: 2; }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { BASE, FOES, GIFTS, PIECES, type Affix, type PieceId } from "../content/combat";
-import { beginFight, dismissFightSummary, chooseAffix, craftPiece, deleteLoadout, reforge, saveLoadout, setCharm, setHealAt, setRemedy, start, stopFight, useRemedy, wear, wearLastFor, wearLoadout, upgradePiece, type Result } from "./commands";
-import { canFight, combatStats, matchup, readiness, weaknessKnown } from "./combat";
+import { beginFight, setStopRule, dismissFightSummary, chooseAffix, craftPiece, deleteLoadout, reforge, saveLoadout, setCharm, setHealAt, setRemedy, start, stopFight, useRemedy, wear, wearLastFor, wearLoadout, upgradePiece, type Result } from "./commands";
+import { canFight, combatStats, mastery, matchup, readiness, weaknessKnown } from "./combat";
 import { openProjects, revealedRecipes } from "./estimates";
 import { loadoutSlots, speedMultiplier } from "./modifiers";
 import { catchUp } from "./offline";
@@ -428,5 +428,77 @@ describe("nothing of combat before the cellar opens (docs/COMBAT.md §10)", () =
       for (const id of revealedRecipes(s, k)) expect(ACTION_DEFS[id].requires, id).toBeUndefined();
     }
     expect(openProjects(s).filter((u) => UPGRADE_DEFS[u].requiresFeature === "cellar")).toEqual([]);
+  });
+});
+
+describe("a fight's numbers and records", () => {
+  it("counts time, XP and the biggest blows, and keeps them in the summary and the foe's records", () => {
+    let s = must(beginFight(geared(), "kikimora"));
+    s = advance(s, 2 * MIN).state;
+    const f = s.fight!;
+    expect(f.ms).toBe(2 * MIN);
+    expect(f.xp).toBeGreaterThan(0);
+    expect(f.bestDealt).toBeGreaterThan(0);
+    expect(f.worstTaken).toBeGreaterThan(0);
+    s = must(stopFight(s));
+    expect(s.cellar.lastFight).toMatchObject({ ms: f.ms, xp: f.xp, bestDealt: f.bestDealt, worstTaken: f.worstTaken });
+    expect(s.cellar.records.kikimora).toEqual({ bestDealt: f.bestDealt, worstTaken: f.worstTaken, longestRun: f.beaten });
+    // A shorter fight never lowers a record.
+    s = must(stopFight(advance(must(beginFight(s, "kikimora")), 5_000).state));
+    expect(s.cellar.records.kikimora!.longestRun).toBe(f.beaten);
+  });
+});
+
+describe("stop rules", () => {
+  it("stop after N foes, at N of an item, or when the Belt is empty; work goes back to what ran before", () => {
+    let s = geared();
+    s.kept.skills.push("herbalism");
+    s = must(start(s, "pick_nettle"));
+    s = must(setStopRule(s, { kind: "foes", n: 5 }));
+    let r = advance(must(beginFight(s, "skrzat")), 10 * MIN);
+    expect(r.state.fight).toBeNull();
+    expect(r.state.cellar.lastFight).toMatchObject({ end: "rule", beaten: 5 });
+    expect(r.state.active?.id).toBe("pick_nettle");
+
+    s = must(setStopRule(geared(), { kind: "item", item: "lost_button", n: 3 }));
+    r = advance(must(beginFight(s, "skrzat")), 30 * MIN);
+    expect(r.state.cellar.lastFight?.end).toBe("rule");
+    expect(r.state.inventory.lost_button).toBe(3);
+
+    s = geared();
+    s.inventory.chamomile = 3;
+    s = must(setRemedy(s, "chamomile"));
+    s = must(setHealAt(s, 80));
+    s = must(setStopRule(s, { kind: "remedies" }));
+    r = advance(must(beginFight(s, "zmora")), 30 * MIN);
+    expect(r.state.cellar.lastFight?.end).toBe("rule");
+    expect(r.state.inventory.chamomile).toBe(0);
+  });
+
+  it("refuses silly numbers", () => {
+    expect(setStopRule(geared(), { kind: "foes", n: 0 }).ok).toBe(false);
+    expect(setStopRule(afterRite(), { kind: "never" }).ok).toBe(true);
+  });
+});
+
+describe("foe mastery", () => {
+  it("25, 100 and 250 beaten: more loot, more XP, harder blows against that foe; never for a boss", () => {
+    const s = geared();
+    expect(mastery(s, "skrzat")).toMatchObject({ tier: 0, next: 25 });
+    const blow = matchup(s, "skrzat").yourBlow;
+    s.cellar.beaten.skrzat = 250;
+    expect(mastery(s, "skrzat")).toMatchObject({ tier: 3, loot: 1.25, xp: 0.25, strike: 0.1, next: null });
+    expect(matchup(s, "skrzat").yourBlow).toBeCloseTo(blow * 1.1);
+    s.cellar.beaten.domovoi = 300;
+    expect(mastery(s, "domovoi").tier).toBe(0);
+  });
+
+  it("the XP bonus shows up in a fight", () => {
+    const base = geared(5);
+    const mastered = geared(5);
+    mastered.cellar.beaten.skrzat = 100;
+    const a = advance(must(beginFight(base, "skrzat")), 5 * MIN).report.xpGained.warding!;
+    const b = advance(must(beginFight(mastered, "skrzat")), 5 * MIN).report.xpGained.warding!;
+    expect(b).toBeGreaterThan(a * 1.15);
   });
 });

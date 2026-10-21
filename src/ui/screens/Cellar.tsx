@@ -1,12 +1,11 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { CHARM_IDS, type CharmId } from "../../content/charms";
-import { BASE, FOE_DEFS, FOE_IDS, GIFTS, PIECE_DEFS, PIECE_IDS, REMEDIES, REMEDY_IDS, SETS, SLOT_DEFS, SLOTS, type FoeId, type PieceId, type Slot } from "../../content/combat";
+import { BASE, FOE_DEFS, FOE_IDS, GIFTS, MASTERY, PIECE_DEFS, PIECE_IDS, REMEDIES, REMEDY_IDS, SETS, SLOT_DEFS, SLOTS, type FoeId, type PieceId, type Slot, type StopRule } from "../../content/combat";
 import { ITEMS, type ItemId } from "../../content/items";
-import { beginFight, deleteLoadout, dismissFightSummary, saveLoadout, setCharm, setHealAt, setRemedy, stopFight, useRemedy, wear, wearLastFor, wearLoadout, type Result } from "../../engine/commands";
-import { canFight, combatStats, matchup, pieceAffixes, pieceOf, readiness, roughChance, strikesWith, timeToFullMs, wardingLevel, weaknessAfter, weaknessKnown, type Readiness } from "../../engine/combat";
+import { beginFight, setStopRule, deleteLoadout, dismissFightSummary, saveLoadout, setCharm, setHealAt, setRemedy, stopFight, useRemedy, wear, wearLastFor, wearLoadout, type Result } from "../../engine/commands";
+import { READINESS, canFight, combatStats, mastery, matchup, pieceAffixes, pieceOf, readiness, roughChance, strikesWith, timeToFullMs, wardingLevel, weaknessAfter, weaknessKnown, type Readiness } from "../../engine/combat";
 import { loadoutSlots } from "../../engine/modifiers";
-import { skillLevel } from "../../engine/simulate";
-import type { GameState } from "../../engine/state";
+import type { FightTally, GameState } from "../../engine/state";
 import { CandleIcon, SkillIcon, SigilIcon } from "../art/icons";
 import { CellarIcon } from "../art/cellarIcons";
 import { ItemIcon } from "../art/items";
@@ -17,7 +16,9 @@ import { Term } from "../components/Term";
 import { Tip } from "../components/Tip";
 import { affixText, baseText, FOE_ART, fixedText, foeName, hp, PIECE_GLYPH, READY, SLOT_GLYPH } from "../cellar";
 import { charmEffects } from "../effects";
-import { formatDuration } from "../format";
+import { formatDuration, formatRate } from "../format";
+import { TALENT_LEVELS } from "../../content/talents";
+import { levelProgress, xpForLevel } from "../../engine/xp";
 
 // The Cellar tab (docs/COMBAT.md §11; the handoff's docs/design_handoff/CELLAR.md): You on the left
 // (your stats and gear), the foes or the fight on the right. Text that explains a mechanic is
@@ -34,9 +35,10 @@ export function Cellar({ state, act, onIntro, onCraft }: { state: GameState; act
   const choose = (id: FoeId) => setChosen(id);
   return (
     <>
-      <CellarHero state={state} onIntro={onIntro} />
+      <CellarHero onIntro={onIntro} />
       <div className="cellar">
         <div className="col col-you">
+          <WardingPanel state={state} />
           <YouPanel state={state} foe={foe} act={act} onCraft={onCraft} />
           <TalentPanel state={state} skill="warding" act={act} />
         </div>
@@ -68,11 +70,9 @@ export function Cellar({ state, act, onIntro, onCraft }: { state: GameState; act
 
 // ---------- Hero ----------
 
-function CellarHero({ state, onIntro }: { state: GameState; onIntro: () => void }) {
-  const beaten = Object.values(state.cellar.beaten).reduce((n, v) => n + (v ?? 0), 0) - (state.cellar.beaten.domovoi ?? 0);
-  const calmed = state.cellar.gifts.includes("domovoi");
+function CellarHero({ onIntro }: { onIntro: () => void }) {
   return (
-    <header className="hero is-cellar">
+    <header className="hero is-cellar is-quiet">
       <span className="hero-mark" aria-hidden="true">
         <CellarIcon glyph="cellar" size={34} />
       </span>
@@ -88,24 +88,46 @@ function CellarHero({ state, onIntro }: { state: GameState; onIntro: () => void 
           </button>
         </div>
       </div>
-      <div className="hero-stats">
-        <span className="hero-stat">
-          <span className="label">Warding</span>
-          <b className="num">
-            {wardingLevel(state)}
-            <span className="unit">/{state.levelCap}</span>
-          </b>
-        </span>
-        <span className="hero-stat">
-          <span className="label">Foes warded off</span>
-          <b className="num">{beaten}</b>
-        </span>
-        <span className="hero-stat">
-          <span className="label">Domovoi</span>
-          <b>{calmed ? <span className="calmed boss-state">✓ calmed</span> : <span className="boss-state">not yet calmed</span>}</b>
-        </span>
-      </div>
     </header>
+  );
+}
+
+// ---------- Warding: what the skill is and where it's going ----------
+
+function WardingPanel({ state }: { state: GameState }) {
+  const level = wardingLevel(state);
+  const xp = state.skills.warding.xp;
+  const atCap = level >= state.levelCap;
+  const from = xpForLevel(level);
+  const to = xpForLevel(level + 1);
+  const xpLine = FOE_IDS.filter((f) => !FOE_DEFS[f].boss).map((f) => `the ${foeName(f)} ${FOE_DEFS[f].xp}`).join(", ");
+  const nextTalent = TALENT_LEVELS.find((l) => l > level);
+  const nextFoe = FOE_IDS.find((f) => FOE_DEFS[f].level > level);
+  const fight = state.fight;
+  const perHour = fight && fight.ms > 30_000 ? (fight.xp / fight.ms) * 3_600_000 : null;
+  return (
+    <section className="panel warding" data-skill="warding" aria-labelledby="warding-h">
+      <header className="warding-head">
+        <SkillIcon skill="warding" size={22} />
+        <h2 id="warding-h">
+          <Term id="warding">Warding</Term>
+        </h2>
+        <span className="num warding-level">
+          Level <b>{level}</b> of {state.levelCap}
+        </span>
+      </header>
+      <Bar value={atCap ? 1 : levelProgress(xp, state.levelCap)} label="Warding XP to the next level" />
+      <p className="warding-xp num">{atCap ? "At the cap for now" : `${Math.floor(xp - from)} / ${to - from} XP to level ${level + 1}`}{perHour ? ` · ${formatRate(perHour)} XP/h now` : ""}</p>
+      <p className="warding-what">
+        Warding is how you fight. Every foe you ward off gives Warding XP: {xpLine}. Each level gives you 2 more Health and makes your blows 1% quicker, but most of your strength comes from your gear.
+      </p>
+      {(nextTalent || nextFoe) && (
+        <p className="warding-next">
+          {nextFoe && <span>The {foeName(nextFoe)} at level {FOE_DEFS[nextFoe].level}</span>}
+          {nextTalent && <span>A talent at level {nextTalent}</span>}
+        </p>
+      )}
+    </section>
   );
 }
 
@@ -114,27 +136,11 @@ function CellarHero({ state, onIntro }: { state: GameState; onIntro: () => void 
 function YouPanel({ state, foe, act, onCraft }: { state: GameState; foe: FoeId; act: Act; onCraft: () => void }) {
   const [tab, setTab] = useState<"gear" | "stats">("gear");
   const stats = combatStats(state);
-  const note = (parts: { source: string }[], empty: string) => (parts.length ? [...new Set(parts.map((p) => p.source.replace(/^Warding \d+$/, "Level")))].join(" · ") : empty);
   const noStrike = !state.cellar.gear.worn.hand && !state.cellar.gear.worn.lantern;
   const full = state.cellar.health >= stats.maxHealth;
   return (
-    <article className="panel you" aria-labelledby="you-h">
+    <article className="panel you" aria-label="You">
       <section className="you-head">
-        <span className="you-mark" aria-hidden="true">
-          <CandleIcon size={26} />
-        </span>
-        <div className="you-id">
-          <h2 id="you-h">You</h2>
-          <span className="lvls">
-            {(["warding", "crafting"] as const).map((k) => (
-              <span key={k} className="lvl-chip" data-skill={k}>
-                <SkillIcon skill={k} size={18} />
-                <span>{k === "warding" ? <Term id="warding">Warding</Term> : <Term id="crafting">Crafting</Term>}</span>
-                <b className="num">{skillLevel(state, k)}</b>
-              </span>
-            ))}
-          </span>
-        </div>
         <div className="seg you-tabs" role="tablist" aria-label="You">
           <button role="tab" aria-selected={tab === "gear"} onClick={() => setTab("gear")}>
             Gear
@@ -146,18 +152,19 @@ function YouPanel({ state, foe, act, onCraft }: { state: GameState; foe: FoeId; 
       </section>
       <section className="me">
         <div className="me-stats">
-          <MeStat glyph="health" label="Health" value={stats.maxHealth} note={note(stats.parts.health, "Level")} />
-          <MeStat glyph="ward" label="Ward" value={Math.round(stats.ward)} note={note(stats.parts.ward, "No Amulet")} />
-          <MeStat glyph="strike" label="Strike" value={Math.round(stats.strike * 10) / 10} note={noStrike ? "Bare hands · no Hand or Lantern" : note(stats.parts.strike.slice(1), "Bare hands")} zero={noStrike} />
-          <MeStat glyph="speed" label="Speed" value={<>{(stats.blowMs / 1000).toFixed(1)}<span className="unit">s</span></>} note="A blow every" />
+          <MeStat label="Health" value={stats.maxHealth} />
+          <MeStat label="Ward" value={Math.round(stats.ward)} />
+          <MeStat label="Strike" value={Math.round(stats.strike * 10) / 10} zero={noStrike} />
+          <MeStat label="Blow every" value={<>{(stats.blowMs / 1000).toFixed(1)}<span className="unit">s</span></>} />
         </div>
-        {!state.fight && (
+        {noStrike && <p className="me-warn">No Hand or Lantern piece: you strike with your bare hands.</p>}
+        {!state.fight && !full && (
           <div className="health-now">
             <span className="num">
               Health {Math.floor(state.cellar.health)}/{stats.maxHealth}
             </span>
             <Bar value={state.cellar.health / stats.maxHealth} label="Health now" />
-            <span className="num">{full ? "full" : `full in ${formatDuration(timeToFullMs(state))}`}</span>
+            <span className="num">full in {formatDuration(timeToFullMs(state))}</span>
           </div>
         )}
       </section>
@@ -166,15 +173,11 @@ function YouPanel({ state, foe, act, onCraft }: { state: GameState; foe: FoeId; 
   );
 }
 
-function MeStat({ glyph, label, value, note, zero }: { glyph: "health" | "ward" | "strike" | "speed"; label: string; value: ReactNode; note: string; zero?: boolean }) {
+function MeStat({ label, value, zero }: { label: string; value: ReactNode; zero?: boolean }) {
   return (
     <div className={`me-stat ${zero ? "is-zero" : ""}`}>
-      <span className="label">
-        <CellarIcon glyph={glyph} size={14} />
-        {label}
-      </span>
+      <span className="label">{label}</span>
       <b className="num">{value}</b>
-      <span className="note">{note}</span>
     </div>
   );
 }
@@ -271,7 +274,6 @@ function GearTile({ state, slot, foe, selected, onSelect }: { state: GameState; 
   return (
     <button className="gt" aria-pressed={selected} onClick={onSelect}>
       {def.tag && <span className={`gt-tag ${match ? "is-match" : ""}`}>{match ? `✓ ${def.tag}` : def.tag}</span>}
-      <span className="gt-tier">T{piece.tier}</span>
       <span className="gt-ic">
         <CellarIcon glyph={PIECE_GLYPH[piece.id]} size={28} />
       </span>
@@ -303,7 +305,7 @@ function GearDetail({ state, slot, foe, fighting, open, onToggle, onPick, onCraf
             </span>
             <div className="gd-main">
               <h4>
-                {PIECE_DEFS[piece.id].name} <span className="tier">T{piece.tier}</span>
+                {PIECE_DEFS[piece.id].name}
               </h4>
               <ul>
                 <li>
@@ -349,11 +351,12 @@ function GearDetail({ state, slot, foe, fighting, open, onToggle, onPick, onCraf
       </div>
       {open && (
         <PickerSheet title={SLOT_DEFS[slot].name} foe={foe} onClose={onToggle} onCraft={onCraft}>
-          {held.length === 0 && <p className="pick-row is-make">No {SLOT_DEFS[slot].name.toLowerCase()} pieces yet.</p>}
+          {held.length === 0 && <p className="pick-empty">You have no {SLOT_DEFS[slot].name.toLowerCase()} pieces yet. Make one in the crafting window.</p>}
           {held.map((p) => {
             const def = PIECE_DEFS[p.id];
             const inUse = id === p.id;
             const match = def.tag !== undefined && weaknessKnown(state, foe) && def.tag === f.weakness;
+            const pv = inUse ? null : preview(state, foe, slot, p.id);
             return (
               <button key={p.id} className="pick-row" role="option" aria-selected={inUse} aria-current={inUse} onClick={() => onPick(p.id)}>
                 <span className="ic" data-skill="crafting">
@@ -361,10 +364,9 @@ function GearDetail({ state, slot, foe, fighting, open, onToggle, onPick, onCraf
                 </span>
                 <span className="nm">
                   {def.name}
-                  <span className="tier">T{p.tier}</span>
                   {match && <span className="match">Its weakness</span>}
                 </span>
-                <span className="n">{inUse && <span className="delta same">in use</span>}</span>
+                <span className="n">{inUse ? <span className="delta same">in use</span> : pv && <PreviewTag pv={pv} />}</span>
                 <span className="gv">
                   <span className="num">{baseText(def)}</span>
                   {def.tag ? <span className="tag">{def.tag}</span> : <span>{fixedText(p.id)}</span>}
@@ -372,6 +374,7 @@ function GearDetail({ state, slot, foe, fighting, open, onToggle, onPick, onCraf
                     <span key={i} className="num">{affixText(a)}</span>
                   ))}
                 </span>
+                {pv && <span className="pv-line num">{pv.lines.join(" · ")}</span>}
               </button>
             );
           })}
@@ -384,6 +387,38 @@ function GearDetail({ state, slot, foe, fighting, open, onToggle, onPick, onCraf
         </PickerSheet>
       )}
     </div>
+  );
+}
+
+/** What putting a piece on would change against this foe: the readiness tag, and your blows and its blows. */
+interface Preview {
+  from: Readiness;
+  to: Readiness;
+  lines: string[];
+}
+
+function preview(state: GameState, foe: FoeId, slot: Slot, piece: PieceId | null): Preview {
+  const now = state.cellar.gear;
+  const next = { ...now, worn: { ...now.worn } };
+  if (piece) next.worn[slot] = piece;
+  else delete next.worn[slot];
+  const a = matchup(state, foe, now);
+  const b = matchup(state, foe, next);
+  const lines: string[] = [];
+  const say = (what: string, x: number, y: number) => Math.abs(x - y) >= 0.05 && lines.push(`${what} ${hp(x)} → ${hp(y)}`);
+  say("Your blows", a.yourBlow, b.yourBlow);
+  say("Its blows", a.itsBlow, b.itsBlow);
+  if (a.stats.maxHealth !== b.stats.maxHealth) lines.push(`Health ${a.stats.maxHealth} → ${b.stats.maxHealth}`);
+  return { from: readiness(state, foe, now).tag, to: readiness(state, foe, next).tag, lines };
+}
+
+function PreviewTag({ pv }: { pv: Preview }) {
+  if (pv.from === pv.to) return <span className="delta same">{pv.to}</span>;
+  const up = READINESS.indexOf(pv.to) > READINESS.indexOf(pv.from);
+  return (
+    <span className={`delta ${up ? "up" : "down"}`}>
+      {pv.from} → {pv.to}
+    </span>
   );
 }
 
@@ -430,9 +465,6 @@ function RemedyRow({ state, fighting, open, onToggle, onPick, act }: { state: Ga
   const held = r ? state.inventory[r] ?? 0 : 0;
   const inner = (
     <>
-      <span className="gs-ic sm" data-skill="herbalism">
-        {r ? <ItemIcon item={r} size={18} /> : <CellarIcon glyph="poultice" size={18} />}
-      </span>
       <span className="bl-name">
         <span className="label">Remedy</span>
         <span>{r ? ITEMS[r].name : "None"}</span>
@@ -501,9 +533,6 @@ function CharmRow({ state, fighting, open, onToggle, onPick }: { state: GameStat
   const on = c ? state.charms[c] ?? 0 : 0;
   const inner = (
     <>
-      <span className="gs-ic sm" data-skill="ritualism">
-        {c ? <ItemIcon item={c} size={18} /> : <CellarIcon glyph="threadKnot" size={18} />}
-      </span>
       <span className="bl-name">
         <span className="label">Charm</span>
         <span>{c ? ITEMS[c].name : "None"}</span>
@@ -527,7 +556,7 @@ function CharmRow({ state, fighting, open, onToggle, onPick }: { state: GameStat
       </button>
       {open && (
         <PickerSheet title="Charm" foe={state.fight?.foe ?? "skrzat"} onClose={onToggle}>
-          {list.length === 0 && <p className="pick-row is-make">No charms. Bind them at Experiments; Crafting makes the red thread knot.</p>}
+          {list.length === 0 && <p className="pick-empty">You have no charms. Bind them at Experiments, or make a red thread knot with Crafting.</p>}
           {list.map((id) => (
             <button key={id} className="pick-row" role="option" aria-selected={c === id} aria-current={c === id} onClick={() => onPick(id)}>
               <span className="ic" data-skill="ritualism">
@@ -730,64 +759,23 @@ export function ReadyTag({ tag, wins, large, boss, remediesLast, still }: { tag:
   );
 }
 
-function FoeStats({ state, id }: { state: GameState; id: FoeId }) {
-  const f = FOE_DEFS[id];
-  const known = weaknessKnown(state, id);
-  return (
-    <span className="foe-stats">
-      <span className="fs" aria-label={`${f.boss ? "Temper" : "Health"} ${f.health}`}>
-        <CellarIcon glyph="health" size={14} />
-        <b className="num">{f.health}</b>
-      </span>
-      <span className="fs" aria-label={`Strike ${f.strike}`}>
-        <CellarIcon glyph="strike" size={14} />
-        <b className="num">{f.strike}</b>
-      </span>
-      <span className="fs" aria-label={`Ward ${f.ward}`}>
-        <CellarIcon glyph="ward" size={14} />
-        <b className="num">{f.ward}</b>
-      </span>
-      <span className="fs">
-        Fears {known ? <span className="tag">{f.weakness}</span> : <span className="tag is-unknown" aria-label="unknown">?</span>}
-      </span>
-    </span>
-  );
-}
-
 function FoeCard({ state, id, current, onChoose }: { state: GameState; id: FoeId; current: boolean; onChoose: () => void }) {
   const f = FOE_DEFS[id];
   const calmed = f.boss && state.cellar.gifts.includes(id as keyof typeof GIFTS);
   const r = readiness(state, id);
-  const art = (
-    <span className="art fc-art">
-      <img src={FOE_ART[id].art} alt="" />
-    </span>
-  );
-  const tag = calmed ? <span className="calmed">✓ Calmed</span> : <ReadyTag tag={r.tag} wins={r.wins} boss={f.boss} still />;
   const locked = canFight(state, id)?.startsWith("Needs Warding");
+  const known = weaknessKnown(state, id);
   return (
     <button type="button" className={`fcard ${f.boss ? "is-boss" : ""}`} aria-current={current} onClick={onChoose}>
-      {art}
+      <span className="art fc-art">
+        <img src={FOE_ART[id].art} alt="" />
+      </span>
       <span className="fc-body">
         {f.boss && <span className="label">Boss</span>}
         <span className="fc-name">{foeName(id)}</span>
-        {tag}
-        <FoeStats state={state} id={id} />
-        {f.boss && (
-          <span className="foe-extra">
-            {calmed ? (
-              <span className="gift is-kept">Gift kept</span>
-            ) : (
-              <span className="t-2">Calm him to open the crypt. His gift: +5% speed in every skill.</span>
-            )}
-          </span>
-        )}
-        {locked && (
-          <span className="lock">
-            <CellarIcon glyph="lock" size={14} />
-            Warding {f.level}
-          </span>
-        )}
+        {locked ? <span className="lock">Opens at Warding {f.level}</span> : calmed ? <span className="calmed">✓ Calmed</span> : <ReadyTag tag={r.tag} wins={r.wins} boss={f.boss} still />}
+        <span className="fc-fears">Fears {known ? <b>{f.weakness}</b> : "?"}</span>
+        {f.boss && !calmed && <span className="t-2 fc-line">Calm him to open the way down. His gift: +5% speed in every skill.</span>}
       </span>
     </button>
   );
@@ -798,37 +786,129 @@ function GoBar({ state, foe, act }: { state: GameState; foe: FoeId; act: Act }) 
   const r = readiness(state, foe);
   const why = canFight(state, foe);
   const calmed = f.boss === true && state.cellar.gifts.includes(foe as keyof typeof GIFTS);
-  const specials = [...(f.special ? [`every ${ordinal(f.special.every)} blow: ${f.special.name} ×${f.special.mult}`] : []), ...(f.telling ? [`telling blows ${Math.round(f.telling * 100)}%`] : [])];
+  const specials = [...(f.special ? [`every ${ordinal(f.special.every)} blow is ${f.special.name}, ×${f.special.mult}`] : []), ...(f.telling ? [`${Math.round(f.telling * 100)}% of its blows are telling blows`] : [])];
+  const m = mastery(state, foe);
+  const beaten = state.cellar.beaten[foe] ?? 0;
+  const nextTier = MASTERY[m.tier];
   return (
     <article className="panel go-bar" aria-labelledby="chosen-h">
-      <span className="portrait" style={{ ["--s" as string]: "48px" }}>
-        <img src={FOE_ART[foe].icon} alt="" />
-      </span>
-      <div className="go-what">
-        <h2 id="chosen-h">{foeName(foe)}</h2>
-        {specials.length ? (
-          <span className="warn-line">◆ {specials.join(" · ")}</span>
+      <div className="go-top">
+        <span className="portrait" style={{ ["--s" as string]: "48px" }}>
+          <img src={FOE_ART[foe].icon} alt="" />
+        </span>
+        <div className="go-what">
+          <h2 id="chosen-h">{foeName(foe)}</h2>
+          <span className="t-2 num">
+            {f.boss ? "Temper" : "Health"} {f.health} · Strike {f.strike} · Ward {f.ward} · a blow every {(f.blowMs / 1000).toFixed(1)} s
+          </span>
+        </div>
+        {calmed ? (
+          <span className="gift is-kept">Calmed · his gift is kept</span>
+        ) : why === null || !why.startsWith("Needs Warding") ? (
+          <ReadyTag tag={r.tag} wins={r.wins} large boss={f.boss} remediesLast={r.remediesLast} />
         ) : (
-          <span className="t-2">Leaves {f.loot.map((l) => `${l.item === "curio" ? "curio" : ITEMS[l.item as ItemId].name.toLowerCase()} ${Math.round(l.chance * 100)}%`).join(" · ")}</span>
+          <span />
+        )}
+        {calmed ? null : why ? (
+          <button className="btn" disabled>
+            {why.replace(/\.$/, "")}
+          </button>
+        ) : (
+          <button className="btn btn-primary btn-begin" onClick={() => act((s) => beginFight(s, foe))}>
+            Begin
+          </button>
         )}
       </div>
-      {calmed ? (
-        <span className="gift is-kept">Calmed · his gift is kept</span>
-      ) : why === null || !why.startsWith("Needs Warding") ? (
-        <ReadyTag tag={r.tag} wins={r.wins} large boss={f.boss} remediesLast={r.remediesLast} />
-      ) : (
-        <span />
-      )}
-      {calmed ? null : why ? (
-        <button className="btn" disabled>
-          {why.replace(/\.$/, "")}
-        </button>
-      ) : (
-        <button className="btn btn-primary btn-begin" onClick={() => act((s) => beginFight(s, foe))}>
-          Begin
-        </button>
-      )}
+      <dl className="go-facts">
+        {specials.length > 0 && (
+          <>
+            <dt>Watch for</dt>
+            <dd className="warn-line">{specials.join(" · ")}</dd>
+          </>
+        )}
+        {f.loot.length > 0 && (
+          <>
+            <dt>Leaves</dt>
+            <dd>{f.loot.map((l) => `${l.item === "curio" ? "a curio" : ITEMS[l.item as ItemId].name.toLowerCase()} ${Math.round(l.chance * 100) || 1}%`).join(" · ")}</dd>
+          </>
+        )}
+        {!f.boss && (
+          <>
+            <dt>
+              <Term id="mastery">Mastery</Term>
+            </dt>
+            <dd className="num">
+              {beaten} beaten{m.tier > 0 ? ` · ${MASTERY.slice(0, m.tier).map((t) => t.text.toLowerCase()).join(", ")}` : ""}
+              {nextTier && <span className="t-2"> · at {nextTier.beaten}: {nextTier.text.toLowerCase()}</span>}
+            </dd>
+          </>
+        )}
+        {!calmed && !f.boss && (
+          <>
+            <dt>Stops</dt>
+            <dd>
+              <StopRuleControl state={state} foe={foe} act={act} />
+            </dd>
+          </>
+        )}
+      </dl>
     </article>
+  );
+}
+
+/** When the fight stops by itself (docs/COMBAT.md §5). */
+function StopRuleControl({ state, foe, act }: { state: GameState; foe: FoeId; act: Act }) {
+  const rule = state.cellar.stopRule;
+  const leavings = FOE_DEFS[foe].loot.filter((l) => l.item !== "curio").map((l) => l.item as ItemId);
+  const set = (r: StopRule) => act((s) => setStopRule(s, r));
+  const num = (n: number) => (
+    <input
+      className="field stop-n num"
+      type="number"
+      min={1}
+      max={9999}
+      aria-label="How many"
+      value={n}
+      onChange={(e) => {
+        const v = Math.max(1, Math.min(9999, Math.round(Number(e.target.value) || 1)));
+        if (rule.kind === "foes") set({ kind: "foes", n: v });
+        if (rule.kind === "item") set({ kind: "item", item: rule.item, n: v });
+      }}
+    />
+  );
+  return (
+    <span className="stop-rule">
+      <select
+        className="field"
+        aria-label="When the fight stops"
+        value={rule.kind}
+        onChange={(e) => {
+          const k = e.target.value;
+          if (k === "never") set({ kind: "never" });
+          if (k === "foes") set({ kind: "foes", n: 50 });
+          if (k === "item") set({ kind: "item", item: leavings[0] ?? "lost_button", n: 10 });
+          if (k === "remedies") set({ kind: "remedies" });
+        }}
+      >
+        <option value="never">Never: keep going until I stop it</option>
+        <option value="foes">After a number of foes</option>
+        <option value="item">When I hold enough of a leaving</option>
+        <option value="remedies">When the Belt is empty</option>
+      </select>
+      {rule.kind === "foes" && <>{num(rule.n)} foes</>}
+      {rule.kind === "item" && (
+        <>
+          {num(rule.n)}
+          <select className="field" aria-label="Which leaving" value={rule.item} onChange={(e) => set({ kind: "item", item: e.target.value as ItemId, n: rule.n })}>
+            {[...new Set([...leavings, rule.item])].map((i) => (
+              <option key={i} value={i}>
+                {ITEMS[i].name.toLowerCase()} (you hold {state.inventory[i] ?? 0})
+              </option>
+            ))}
+          </select>
+        </>
+      )}
+    </span>
   );
 }
 
@@ -881,8 +961,6 @@ function Stage({ state, act }: { state: GameState; act: Act }) {
   }, [fight.seq]); // eslint-disable-line react-hooks/exhaustive-deps
   const nextMs = Math.min(fight.youMs, fight.foeMs);
   const nextWho = fight.youMs <= fight.foeMs ? "You" : name;
-  const loot = Object.entries(fight.loot) as [ItemId, number][];
-  const charm = state.cellar.gear.charm;
   return (
     <article className="panel stage" data-skill="warding" aria-labelledby="fight-h">
       <header className="stage-head">
@@ -891,7 +969,7 @@ function Stage({ state, act }: { state: GameState; act: Act }) {
         {!f.boss && (
           <span className="stage-count num">
             <b>{fight.beaten}</b>
-            warded off
+            warded off{ruleLeft(state, fight.beaten)}
           </span>
         )}
         <button className="btn btn-ghost" onClick={() => act(stopFight)}>
@@ -935,56 +1013,93 @@ function Stage({ state, act }: { state: GameState; act: Act }) {
           </span>
         </div>
       </div>
-      <section className="tally">
-        <span className="stat">
-          <span className="label">Loot</span>
-          <span className="loot">{loot.length ? loot.map(([item, n]) => <ItemChip key={item} item={item} qty={n} />) : <span className="t-2">None yet</span>}</span>
-        </span>
-        {state.cellar.gear.remedy && (
-          <span className="stat">
-            <span className="label">Remedies left</span>
-            <b className="num">{fight.belt}</b>
-          </span>
-        )}
-        {charm && (state.charms[charm] ?? 0) > 0 && (
-          <span className="stat">
-            <span className="label">{ITEMS[charm].name}</span>
-            <b className="num">{state.charms[charm]}</b>
-          </span>
-        )}
-      </section>
-      <section className="log-sec">
-        <ol className="log" aria-label="The last blows">
-          {[...fight.log].reverse().slice(0, 4).map((l) => {
-            const cls = [l.who === "you" ? "is-you" : "", l.telling ? "is-telling" : "", l.special ? "is-special" : "", l.heal ? "is-heal" : ""].join(" ");
-            const g = l.telling ? "✶" : l.special ? "◆" : l.heal ? "+" : "·";
-            const what = l.telling ? "Telling blow ×2" : l.special ? (l.missed ? `${l.special}: misses` : `${l.special} ×${f.special?.mult}`) : l.down ? (f.boss ? "Calmed" : "Warded off") : "";
-            return (
-              <li key={l.n} className={cls}>
-                <span className="g" aria-hidden="true">{g}</span>
-                <span className="who">
-                  {l.who === "you" ? (
-                    <span className="you-dot">
-                      <CandleIcon size={14} />
-                    </span>
-                  ) : (
-                    <span className="portrait">
-                      <img src={FOE_ART[fight.foe].icon} alt="" />
-                    </span>
-                  )}
-                  {l.who === "you" ? "You" : name}
-                </span>
-                <span className="what">
-                  {what}
-                  {l.heal ? `${what ? " · " : ""}${ITEMS[state.cellar.gear.remedy ?? "chamomile"].name} +${hp(l.heal)}` : ""}
-                </span>
-                <span className="dmg num">{l.missed ? "0" : hp(l.amount)}</span>
-              </li>
-            );
-          })}
-        </ol>
-      </section>
+      <Spoils state={state} foe={fight.foe} loot={fight.loot} />
+      <FightNumbers state={state} foe={fight.foe} t={fight} beaten={fight.beaten} remediesUsed={fight.remediesUsed} beltLeft={state.cellar.gear.remedy ? fight.belt : null} live />
     </article>
+  );
+}
+
+/** The stop rule's progress, for the fight's head: " · stops at 50". */
+function ruleLeft(state: GameState, beaten: number): string {
+  const r = state.cellar.stopRule;
+  if (r.kind === "foes") return ` · stops at ${r.n} (${Math.max(0, r.n - beaten)} to go)`;
+  if (r.kind === "item") return ` · stops at ${r.n} ${ITEMS[r.item].name.toLowerCase()} (you hold ${state.inventory[r.item] ?? 0})`;
+  if (r.kind === "remedies") return " · stops when the Belt is empty";
+  return "";
+}
+
+/** What the foe can leave, and what this fight has given: big, so a find is seen. */
+function Spoils({ state, foe, loot }: { state: GameState; foe: FoeId; loot: Partial<Record<ItemId, number>> }) {
+  const table = FOE_DEFS[foe].loot;
+  const prev = useRef<Partial<Record<string, number>>>({ ...loot });
+  const [fresh, setFresh] = useState<string[]>([]);
+  const sig = JSON.stringify(loot);
+  useEffect(() => {
+    const got = (Object.keys(loot) as ItemId[]).filter((i) => (loot[i] ?? 0) > (prev.current[i] ?? 0));
+    prev.current = { ...loot };
+    if (got.length === 0) return;
+    setFresh(got);
+    const t = setTimeout(() => setFresh([]), 1200);
+    return () => clearTimeout(t);
+  }, [sig]); // eslint-disable-line react-hooks/exhaustive-deps
+  const m = mastery(state, foe);
+  if (table.length === 0) return null;
+  return (
+    <section className="spoils" aria-label="Spoils">
+      <span className="label">Spoils this fight</span>
+      <ul>
+        {table.map((l) => {
+          const id = l.item;
+          const n = id === "curio" ? 0 : loot[id as ItemId] ?? 0;
+          const chance = Math.min(100, l.chance * m.loot * combatStats(state).loot * 100);
+          return (
+            <li key={id} className={`spoil ${n > 0 ? "has" : ""} ${fresh.includes(id) ? "is-new" : ""}`}>
+              <span className="spoil-ic" aria-hidden="true">
+                {id === "curio" ? <CellarIcon glyph="button" size={26} /> : <ItemIcon item={id as ItemId} size={26} />}
+              </span>
+              <span className="spoil-name">
+                {id === "curio" ? "Curio" : ITEMS[id as ItemId].name}
+                <span className="t-2 num">
+                  {chance < 1 ? chance.toFixed(1) : Math.round(chance)}% a foe{id !== "curio" ? ` · you hold ${state.inventory[id as ItemId] ?? 0}` : ""}
+                </span>
+              </span>
+              {id !== "curio" && <b className="spoil-n num">+{n}</b>}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
+/** The fight's own numbers, live and kept after it ends; and your records against this foe. */
+function FightNumbers({ state, foe, t, beaten, remediesUsed, beltLeft, live }: { state: GameState; foe: FoeId; t: FightTally; beaten: number; remediesUsed: number; beltLeft: number | null; live?: boolean }) {
+  const perHour = t.ms > 30_000 ? (t.xp / t.ms) * 3_600_000 : null;
+  const rec = state.cellar.records[foe];
+  const cell = (label: string, value: ReactNode, note?: ReactNode) => (
+    <div className="fn">
+      <span className="label">{label}</span>
+      <b className="num">{value}</b>
+      {note && <span className="t-2 num">{note}</span>}
+    </div>
+  );
+  return (
+    <section className="fight-numbers" aria-label={live ? "This fight" : "That fight"}>
+      <span className="label">{live ? "This fight" : "That fight"}</span>
+      <div className="fn-grid">
+        {cell("Time", formatDuration(t.ms))}
+        {!FOE_DEFS[foe].boss && cell("Warded off", beaten)}
+        {cell("Warding XP", `+${Math.round(t.xp)}`, perHour ? `${formatRate(perHour)}/h` : undefined)}
+        {cell("Your best blow", hp(t.bestDealt))}
+        {cell("Worst blow taken", hp(t.worstTaken))}
+        {cell("Remedies", remediesUsed, beltLeft !== null ? `${beltLeft} left` : undefined)}
+      </div>
+      {rec && (
+        <p className="t-2 num fn-records">
+          Your records against the {foeName(foe)}: best blow {hp(rec.bestDealt)} · worst taken {hp(rec.worstTaken)} · {rec.longestRun} in one fight
+        </p>
+      )}
+    </section>
   );
 }
 
@@ -1009,18 +1124,24 @@ function FightSummary({ state, act }: { state: GameState; act: Act }) {
   const remedy = state.cellar.gear.remedy;
   const used = last.remediesUsed > 0 ? `${remedy ? ITEMS[remedy].name.toLowerCase() : "remedies"} ×${last.remediesUsed} used` : null;
   if (last.end === "calmed") return null;
+  const numbers = <FightNumbers state={state} foe={last.foe} t={last} beaten={last.beaten} remediesUsed={last.remediesUsed} beltLeft={null} />;
+  const lootChips = (Object.entries(last.loot) as [ItemId, number][]).map(([i, n]) => <ItemChip key={i} item={i} qty={n} />);
   if (last.end !== "driven") {
+    const title = last.end === "away" ? "Stopped when you left" : last.end === "rule" ? "Stopped by your rule" : "Stopped";
     return (
-      <div className="result" role="status">
-        <span className="g" aria-hidden="true">■</span>
-        <span className="what">
-          <b>{last.end === "away" ? "Stopped when you left" : "Stopped"}</b> · <span className="num">{[`${name} ×${last.beaten}`, ...loot, ...(used ? [used] : [])].join(" · ")}</span>
-          {last.end === "away" && <span className="meta"> Only Safe fights keep going while you're away.</span>}
-        </span>
-        <button className="btn btn-text btn-sm" onClick={() => act(dismissFightSummary)}>
-          Dismiss
-        </button>
-      </div>
+      <section className="result-card" role="status">
+        <header>
+          <b>
+            {title} · {name}
+          </b>
+          <button className="btn btn-text btn-sm" onClick={() => act(dismissFightSummary)}>
+            Dismiss
+          </button>
+        </header>
+        {last.end === "away" && <p className="t-2">Only Safe fights keep going while you're away.</p>}
+        {lootChips.length > 0 && <div className="result-loot">{lootChips}</div>}
+        {numbers}
+      </section>
     );
   }
   const advice = adviceFor(state, last.foe, act);
@@ -1046,6 +1167,7 @@ function FightSummary({ state, act }: { state: GameState; act: Act }) {
           <dd>Health comes back while you do other work.</dd>
         </dl>
         {advice && <div className="advice">{advice}</div>}
+        {numbers}
         <div className="row">
           <button className="btn btn-ghost btn-sm" onClick={() => act(dismissFightSummary)}>
             Dismiss

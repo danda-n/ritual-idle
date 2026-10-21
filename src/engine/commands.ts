@@ -24,7 +24,7 @@ import { enterNextStage, grantXp, isFeatureOpen, middleParts, MIDDLE_AT, revealN
 import type { GameState, Settings } from "./state";
 import { xpForLevel } from "./xp";
 import { deliverable, emptySlot, offerOf, stillNeeded } from "./village";
-import { BASE, PIECE_DEFS, REMEDIES, SLOT_DEFS, type FoeId, type PieceId, type RemedyId, type Slot } from "../content/combat";
+import { BASE, PIECE_DEFS, REMEDIES, SLOT_DEFS, type FoeId, type PieceId, type RemedyId, type Slot, type StopRule } from "../content/combat";
 import { canCraftPiece, canFight, cancelPiece, endFight, combatStats, pieceOf, rollAffixOptions, startFight, startPiece } from "./combat";
 import { loadoutSlots, rollOptionCount, talents } from "./modifiers";
 import { nextRandom } from "./rng";
@@ -442,6 +442,15 @@ export function stopFight(input: GameState): Result {
   if (!input.fight) return no("No fight to stop.");
   const state = structuredClone(input);
   endFight(state, "stopped");
+  return ok(state);
+}
+
+/** When fights stop by themselves: never, after N foes, at N of an item, or when the Belt is empty. */
+export function setStopRule(input: GameState, rule: StopRule): Result {
+  if (!isFeatureOpen(input, "cellar")) return no("The cellar isn't open yet.");
+  if ((rule.kind === "foes" || rule.kind === "item") && !(Number.isInteger(rule.n) && rule.n >= 1 && rule.n <= 9999)) return no("Choose a number from 1 to 9999.");
+  const state = structuredClone(input);
+  state.cellar.stopRule = rule;
   return ok(state);
 }
 

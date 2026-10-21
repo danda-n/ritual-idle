@@ -1,6 +1,6 @@
 import type { ActionId } from "../content/actions";
 import { CHARM_DEFS, type CharmId } from "../content/charms";
-import { AFFIX_POOLS, BASE, BREAD_AND_SALT, FOE_DEFS, FOE_IDS, GIFTS, PIECE_DEFS, REMEDIES, SETS, SLOTS, WEAKNESS_SHOWS_AFTER, type Affix, type AffixKind, type FoeDef, type FoeId, type PieceId, type SetId, type Slot, type Tag } from "../content/combat";
+import { AFFIX_POOLS, BASE, BREAD_AND_SALT, FOE_DEFS, FOE_IDS, GIFTS, MASTERY, PIECE_DEFS, REMEDIES, SETS, SLOTS, WEAKNESS_SHOWS_AFTER, type Affix, type AffixKind, type FoeDef, type FoeId, type PieceId, type SetId, type Slot, type Tag } from "../content/combat";
 import { OMENS, type OmenId } from "../content/omens";
 import { ITEM_DEFS, type ItemId } from "../content/items";
 import { activeCharms, chanceMultiplier, omenCapacity, omenChanceMultiplier, rollOptionCount, skillSpeed, skillXpBonus, spendCharms, talents } from "./modifiers";
@@ -201,6 +201,7 @@ export function matchup(state: GameState, foeId: FoeId, gear: Gear = state.cella
   if (foe.resists && strikesWith(stats, foe.resists)) strike *= BASE.resisted;
   // Bread and salt, the old welcome: bread as your remedy against the house spirit.
   if (foeId === BREAD_AND_SALT.foe && gear.remedy === BREAD_AND_SALT.remedy) strike *= 1 + BREAD_AND_SALT.strike;
+  strike *= 1 + mastery(state, foeId).strike;
   const yourBlow = (strike * 100) / (100 + foe.ward);
   let itsBlow = (foe.strike * 100) / (100 + stats.ward);
   if (stats.tags.amulet === foe.weakness) itsBlow *= BASE.weaknessWard;
@@ -436,6 +437,10 @@ export function startFight(state: GameState, foeId: FoeId): void {
     beaten: 0,
     loot: {},
     remediesUsed: 0,
+    ms: 0,
+    xp: 0,
+    bestDealt: 0,
+    worstTaken: 0,
     safe: r.tag === "Safe",
     returnTo,
     log: [],
@@ -480,17 +485,20 @@ export function stepFight(state: GameState, ms: number, h: FightHooks): number {
   let m = matchup(state, f.foe, state.cellar.gear);
   const b: Bout = { health: Math.min(state.cellar.health, m.stats.maxHealth), foeHealth: f.foeHealth, youMs: f.youMs, foeMs: f.foeMs, foeBlows: f.foeBlows, specialSpent: f.specialSpent, belt: f.belt };
   let used = 0;
-  let ended: "driven" | "calmed" | null = null;
+  let ended: "driven" | "calmed" | "rule" | null = null;
   let drivenBy: string | null = null;
   while (used < ms) {
     const r = nextBlow(m, b, h.roll, ms - used);
     if (!r) {
+      f.ms += ms - used;
       used = ms;
       break;
     }
     used += r.ms;
+    f.ms += r.ms;
     const e = r.event;
     if (e.kind === "foe") {
+      f.worstTaken = Math.max(f.worstTaken, e.amount);
       log(f, { who: "foe", amount: e.amount, telling: e.telling || undefined, special: e.special, missed: e.missed, heal: e.heal });
       if (e.heal !== undefined && state.cellar.gear.remedy) {
         state.inventory[state.cellar.gear.remedy] = Math.max(0, (state.inventory[state.cellar.gear.remedy] ?? 0) - 1);
@@ -508,11 +516,19 @@ export function stepFight(state: GameState, ms: number, h: FightHooks): number {
       continue;
     }
     log(f, { who: "you", amount: e.amount, telling: e.telling || undefined, down: e.down || undefined });
+    f.bestDealt = Math.max(f.bestDealt, e.amount);
     if (!e.down) continue;
     // A foe warded off: its loot, Warding XP, and the next one steps up.
     foeBeaten(state, f, m, h);
     if (m.foe.boss) {
       ended = "calmed";
+      break;
+    }
+    // Your stop rule, checked after each foe.
+    f.belt = b.belt;
+    if (stopRuleMet(state, f)) {
+      ended = "rule";
+      nextFoe(m, b);
       break;
     }
     nextFoe(m, b);
@@ -536,8 +552,44 @@ export function stepFight(state: GameState, ms: number, h: FightHooks): number {
 export function endFight(state: GameState, end: FightSummary["end"], by: string | null = null): void {
   const f = state.fight;
   if (!f) return;
-  state.cellar.lastFight = { foe: f.foe, end, beaten: f.beaten, loot: f.loot, remediesUsed: f.remediesUsed, by, returnTo: f.returnTo };
+  state.cellar.lastFight = { foe: f.foe, end, beaten: f.beaten, loot: f.loot, remediesUsed: f.remediesUsed, by, returnTo: f.returnTo, ms: f.ms, xp: f.xp, bestDealt: f.bestDealt, worstTaken: f.worstTaken };
+  // Records, kept for good.
+  const rec = state.cellar.records[f.foe] ?? { bestDealt: 0, worstTaken: 0, longestRun: 0 };
+  state.cellar.records[f.foe] = { bestDealt: Math.max(rec.bestDealt, f.bestDealt), worstTaken: Math.max(rec.worstTaken, f.worstTaken), longestRun: Math.max(rec.longestRun, f.beaten) };
   state.fight = null;
+}
+
+/** Whether the stop rule says to stop now (after a foe is beaten). */
+export function stopRuleMet(state: GameState, f: FightState): boolean {
+  const r = state.cellar.stopRule;
+  switch (r.kind) {
+    case "never":
+      return false;
+    case "foes":
+      return f.beaten >= r.n;
+    case "item":
+      return (state.inventory[r.item] ?? 0) >= r.n;
+    case "remedies":
+      return state.cellar.gear.remedy !== null && f.belt <= 0;
+  }
+}
+
+/** What you've earned against a foe by beating it again and again (docs/COMBAT.md §8). */
+export function mastery(state: GameState, foe: FoeId): { tier: number; loot: number; xp: number; strike: number; next: number | null } {
+  const out = { tier: 0, loot: 1, xp: 0, strike: 0, next: null as number | null };
+  if (FOE_DEFS[foe].boss) return out;
+  const beaten = state.cellar.beaten[foe] ?? 0;
+  for (const t of MASTERY) {
+    if (beaten < t.beaten) {
+      out.next = t.beaten;
+      break;
+    }
+    out.tier++;
+    if ("loot" in t) out.loot *= t.loot;
+    if ("xp" in t) out.xp += t.xp;
+    if ("strike" in t) out.strike += t.strike;
+  }
+  return out;
 }
 
 function foeBeaten(state: GameState, f: FightState, m: Matchup, h: FightHooks): void {
@@ -545,8 +597,9 @@ function foeBeaten(state: GameState, f: FightState, m: Matchup, h: FightHooks): 
   f.beaten++;
   state.cellar.beaten[f.foe] = (state.cellar.beaten[f.foe] ?? 0) + 1;
   h.report.beaten[f.foe] = (h.report.beaten[f.foe] ?? 0) + 1;
+  const mast = mastery(state, f.foe);
   for (const l of m.foe.loot) {
-    const c = l.chance * m.stats.loot * (l.item === "curio" ? 1 : chanceMultiplier(state, l.item, now, "warding"));
+    const c = l.chance * m.stats.loot * mast.loot * (l.item === "curio" ? 1 : chanceMultiplier(state, l.item, now, "warding"));
     const times = Math.floor(c) + (h.roll() < c - Math.floor(c) ? 1 : 0);
     for (let i = 0; i < times; i++) {
       if (l.item === "curio") {
@@ -561,9 +614,10 @@ function foeBeaten(state: GameState, f: FightState, m: Matchup, h: FightHooks): 
   }
   const skill = state.skills.warding;
   const before = levelForXp(skill.xp, state.levelCap);
-  const xp = Math.round(m.foe.xp * m.stats.xp * (1 + skillXpBonus(state, "warding", now)));
+  const xp = Math.round(m.foe.xp * m.stats.xp * (1 + skillXpBonus(state, "warding", now) + mast.xp));
   const after = Math.min(skill.xp + xp, xpForLevel(state.levelCap));
   h.xp(after - skill.xp, before, levelForXp(after, state.levelCap));
+  f.xp += after - skill.xp;
   skill.xp = after;
   // A foe beaten counts as one action for charms, and omens turn up from it like any work.
   spendCharms(state, "action");

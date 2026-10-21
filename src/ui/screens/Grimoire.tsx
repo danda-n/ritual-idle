@@ -20,7 +20,7 @@ import { Term } from "../components/Term";
 import { noteTitle } from "../tasks";
 import { itemName } from "../format";
 import { INSIGHT_SOURCES, recipeGuide, recipeKnowledge } from "../guidance";
-import { FOE_DEFS, FOE_IDS, type FoeId, type GiftId } from "../../content/combat";
+import { FOE_DEFS, FOE_IDS, MASTERY, type FoeId, type GiftId } from "../../content/combat";
 import { ITEMS, type ItemId } from "../../content/items";
 import { weaknessKnown } from "../../engine/combat";
 import { CellarIcon } from "../art/cellarIcons";
@@ -563,6 +563,17 @@ function BestiaryPage({ state }: { state: GameState }) {
               <>
                 <dt>Leaves</dt>
                 <dd>{f.loot.map((l) => `${l.item === "curio" ? "Curio" : ITEMS[l.item as ItemId].name} ${Math.round(l.chance * 100)}%`).join(" · ")}</dd>
+
+                <dt>Mastery</dt>
+                <dd>{MASTERY.filter((t) => beaten >= t.beaten).map((t) => t.text).join(" · ") || `None yet · at ${MASTERY[0].beaten}: ${MASTERY[0].text.toLowerCase()}`}</dd>
+                {state.cellar.records[id] && (
+                  <>
+                    <dt>Records</dt>
+                    <dd className="num">
+                      Best blow {Math.round(state.cellar.records[id]!.bestDealt * 10) / 10} · worst taken {Math.round(state.cellar.records[id]!.worstTaken * 10) / 10} · {state.cellar.records[id]!.longestRun} in one fight
+                    </dd>
+                  </>
+                )}
               </>
             )}
           </dl>
