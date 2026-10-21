@@ -12,6 +12,7 @@ The designer is not a programmer. Explain technical choices plainly, and keep ga
 - `docs/DESIGN.md`: design system (tokens, type, components, art rules, feedback, layout rules, screens, words). Follow it for every UI change
 - `docs/PLAYTEST.md`: what to try and what to note in a Chapter 1 playtest
 - `docs/design_briefs/`: briefs for Claude Design mockups (e.g. `COMBAT_UI.md`), dated
+- `docs/design_handoff/`: what Claude Design delivered: `README.md` (the design system) and `CELLAR.md` (the combat screens), with HTML/CSS mocks and the foe art in `reference/`
 - `docs/research/`: dated research notes (e.g. `RITE_QUALITY.md`: sacrifices and rewards for rite quality, decided 2026-09-26; `COMBAT_RESEARCH.md`: combat in idle games, 2026-09-29, with its source reports in `combat_research/`)
 - `src/engine/playthrough.test.ts`: a headless bot plays all of Chapter 1 on the real engine (it's the pacing check; `npm run pacing` prints the timings)
 

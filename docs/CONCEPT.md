@@ -1,4 +1,4 @@
-# Ritual Idle — Core Concept (v0.3)
+# Ritual Idle — Core Concept (v0.4)
 
 > Working title. This document fixes the **core idea**: fantasy, pillars, loops, skill shape and constraints.
 > v0.2: all 10 open questions from v0.1 are decided. v0.3: the main sections describe the game as it is now (after four patches and three playtest rounds), and are kept current after every patch. v0.4: an active-first playthrough, and auto-combat (warding off spirits) as a major activity; the combat design comes in its own doc.
@@ -25,7 +25,7 @@ Every skill feeds the ritual circle. Followers take over the work you have maste
 | Parallel work | You do one action at a time (combat included), plus 4 (up to ~6) low-management followers. More personal action slots later in the game *(draft)* |
 | Structure | A finite main story with a real ending, then Patron Cycles as the prestige endgame |
 | Discovery | Forgiving and permanent: the Grimoire fills itself and hints are generous. Major Rite recipes are listed; discovery lives in side rites, hidden recipes, forbidden variants and lore |
-| Challenge | Two kinds. **Rites** never fail: they run by themselves (tending can hurry them, never required), and optional offerings set the outcome quality. **Combat** is auto-combat you prepare for: pick a foe and a loadout (wards, lights, herbs, charms), and it fights until you stop. You can be driven off, which costs only the supplies spent and that fight's loot, never anything permanent. Bosses are prep puzzles that open something |
+| Challenge | Two kinds. **Rites** never fail: they run by themselves (tending can hurry them, never required), and optional offerings set the outcome quality. **Combat** is auto-combat you prepare for: pick a foe and your gear (durable pieces you craft, plus a few remedies and a charm), and it fights until you stop. You can be driven off, which costs only the remedies used and that fight's loot, never gear or anything permanent. Bosses are prep puzzles that open something |
 | Visuals | A readable UI plus one illustrated "living sanctum" scene |
 | Business | Premium one-time purchase, with paid expansions later |
 | Core systems | Omens and invoked moons (never a time-lock), Taint |
@@ -143,8 +143,8 @@ Every skill feeds the ritual circle. Followers take over the work you have maste
 - **Prepare:** choose a foe or place, and your gear: five durable pieces made with the **Crafting** skill (tiers, fixed and random affixes, sets), plus a few remedies and a charm. A **readiness tag** (Safe, Likely, Risky, Deadly, Hopeless) sums up your chances, worked out from the fight's real rules, special attacks included; the exact outcome isn't shown, so a lucky win (or an unlucky loss) can still surprise you. Only Safe fights run offline.
 - **Fight:** it runs by itself in the action slot and repeats until you stop, like any action. Healing follows a simple rule you set from the start ("use a poultice below 40% HP").
 - **Loot:** spirit-only reagents and curios (no coin), ingredients rather than finished gear, so combat feeds Crafting and the rites.
-- **Driven off:** if your HP runs out, the fight ends. It costs only the supplies spent and that fight's unbanked loot. HP comes back while you do anything else, or at once with food and herbs. Never a timed wait, never lost gear.
-- **Offline:** fights tagged Safe keep going while you're away, until a Ward or Light runs out (or, rarely, you're driven off), and the away summary says why it stopped.
+- **Driven off:** if your HP runs out, the fight ends. It costs only the remedies used on that foe and its unbanked loot. HP comes back while you do anything else, or at once with food and herbs. Never a timed wait, never lost gear.
+- **Offline:** fights tagged Safe keep going while you're away, until you stop them (or, rarely, you're driven off), and the away summary says how it went. Gear isn't used up, so nothing runs out.
 - **Bosses:** few, named, opt-in, each shown with what beating it opens and the lasting gift it leaves (a fixed passive bonus). A good loadout beats a boss on auto; switching mid-fight only makes it faster or pays better.
 - **Foes come from the folklore**, and each has its traditional counter: poppy seeds keep the upiór counting, iron and salt water turn the zmora, the południca is answered, not fought. Matching the counter is the depth; the wrong ward only slows you down.
 
@@ -292,7 +292,7 @@ KNOWLEDGE    candles ────► Divination ───────┤        
 | **Omen stock** | Stored omens and invoked moons are limited boosts; *when* to spend them is the choice | Any real-time lockout; content is never gated behind waiting |
 | **Taint thresholds** | Power now vs. affliction later | Game-over and run loss |
 | **Circle slots per rite** | Choosing which components to bring is a build choice | — |
-| **Loadout slots per fight** | A few slots, each matched to a foe's weakness; every fight spends some supplies | A best-in-slot that solves everything |
+| **Gear slots per fight** | Five slots whose tags match a foe's weakness, so the best gear changes by foe | A best-in-slot that solves everything |
 
 We deliberately **do not** use:
 - bank-space taxes
@@ -353,7 +353,7 @@ We deliberately **do not** use:
   - **Never lost, except by choice:** no death and no desertion. At Ascension you may *sacrifice* a follower for Offerings.
 - **Combat** *(v0.4; the full model is in [COMBAT.md](COMBAT.md))*
   - Auto-combat you prepare for, in the action slot: a foe or place, gear made with the Crafting skill (tiered pieces, affixes, sets), a few remedies, a readiness tag before you start, a healing rule from the start, and named loadout presets with "same as last time".
-  - Losing costs only the supplies spent and that fight's loot. Fights tagged Safe run offline, until a supply runs out.
+  - Losing costs only the remedies used and that fight's loot. Fights tagged Safe run offline until you stop them.
   - Bosses are few and opt-in; each opens something (a recipe, a place, a rite option), leaves a **lasting gift** (a fixed passive bonus), and can be beaten on auto with good prep.
   - **Where it starts:** after the Kindling, the **cellar** opens with a few foes and a small boss, a first taste in Chapter 1 that never touches the chapter's path to the rite. Combat opens in full in Chapter II (the Grave tier, the restless dead).
   - The main story can ask for combat (a boss, or an offering only spirits leave), but always announced, never a surprise wall.
@@ -405,7 +405,7 @@ We deliberately **do not** use:
 | Always-online / server dependency | Idle Clans, Milky Way Idle | Single-player, local and cloud save, save export |
 | Needing a wiki | Melvor, Book of Hours | In-game ETAs, tooltips, Grimoire as the manual |
 | Endless slowdown with no end | NGU late game | A finite arc with an ending; the endgame is optional |
-| Losing gear on death | Melvor | Losing costs only supplies spent and the fight's loot |
+| Losing gear on death | Melvor | Losing costs only the remedies used and the fight's loot |
 | Deaths the numbers didn't predict | Melvor (stuns, multi-hits) | A readiness tag worked out from the real rules, special attacks included, and special attacks named on the foe's card |
 | Auto-heal behind a big purchase | Melvor, Idle Clans | A simple healing rule from the first fight |
 | Timed respawns | Milky Way Idle | HP recovers while you do anything else, or by eating |
@@ -441,13 +441,13 @@ We deliberately **do not** use:
 11. **Deferred ideas:** Notoriety and investigators (outside pressure on the cult), a desktop-corner mode, a cosmetic real-moon sync option.
 
 **Next layer: detail passes, now that the core is set**
-- ~~**Chapter 1 content pass**~~ → done and built, see [CHAPTER1.md](CHAPTER1.md). It's now in playtest rounds (four patches and two playtest rounds so far; see its changelog).
+- ~~**Chapter 1 content pass**~~ → done and built, see [CHAPTER1.md](CHAPTER1.md). It's now in playtest rounds (four patches and three playtest rounds so far; see its changelog).
 - ~~**The Grimoire hint model**~~ → done, see [GRIMOIRE.md](GRIMOIRE.md).
 - **Economy math:** tithe rates and Offerings → Boons. (Chapter 1's XP curve and action times are set; see [CHAPTER1.md](CHAPTER1.md) §3 and §10.)
 - **Afflictions and follower traits:** first lists.
 - **Story bible:** grandmother, the village, the Patrons, and chapter beats.
 - **Sanctum layout:** what's in the scene, and how it grows by Chapter.
-- **Combat design doc** *([COMBAT.md](COMBAT.md), v0.1 draft)*: stats, loadout slots, damage rules, losing and recovering, offline fights, bosses, loot, the cellar taste, and the first slice to build. Research: [research/COMBAT_RESEARCH.md](research/COMBAT_RESEARCH.md).
+- **Combat design doc** *([COMBAT.md](COMBAT.md), v0.3)*: Warding and Crafting, gear, damage rules, the readiness tag, losing and recovering, offline fights, bosses, loot and the cellar. The screens are designed ([design_handoff/CELLAR.md](design_handoff/CELLAR.md)); it's the next thing to build, before Chapter II. Research: [research/COMBAT_RESEARCH.md](research/COMBAT_RESEARCH.md).
 
 ---
 
@@ -753,3 +753,7 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
 - **More action slots later** is a direction, not a decision: the research found players ask for them and developers resist, and warns about two loops competing for one resource.
 - **Research:** [research/COMBAT_RESEARCH.md](research/COMBAT_RESEARCH.md) (eight areas: Melvor, idle MMO-likes, prep-then-watch games, incremental RPGs, what draws and drives players, losing and offline, bosses and gear, Slavic folklore). Its strongest lessons: a forecast before every fight, a healing rule from the start, loss that costs supplies only, few loadout slots with matching counters, named presets, and bosses that each open something. Reddit couldn't be read (it blocks these tools), so the evidence is mostly Steam and wikis.
 - **Logged decisions this adjusts:** Q8 (pacing in weeks of check-ins); the locked "No auto-combat"; §5.2's check-in loop (now a session loop); §5.3's "the boss equivalent"; the "Cycle 2 takes about 1 week" target.
+
+### Combat comes before Chapter II (2026-10-21)
+- **The order of work:** the cellar (Warding, Crafting, gear, the three foes and the Domovoi) is built and tuned before any Chapter II design. It adds the active-first pillar's "always something to do" to the chapter end, and the combat screens and simulation get proven in a small space before Chapter II leans on them.
+- **The screens are designed:** Claude Design's handoff ([design_handoff/CELLAR.md](design_handoff/CELLAR.md)) answers the combat brief, with mocks for the Cellar and the crafting window and the four foes' woodcut art. COMBAT.md §11 follows it (You on the left, the foes on the right).

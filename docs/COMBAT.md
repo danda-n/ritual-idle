@@ -1,6 +1,6 @@
 # Combat: warding off what comes to the house (v0.3 draft)
 
-> **Status:** a proposal under review, nothing built yet. It follows [CONCEPT.md](CONCEPT.md) §5.1b and the decision log's "Combat and an active-first playthrough". The research behind it: [research/COMBAT_RESEARCH.md](research/COMBAT_RESEARCH.md). The screens are briefed for Claude Design in [design_briefs/COMBAT_UI.md](design_briefs/COMBAT_UI.md).
+> **Status:** designed, not built yet. It's the next thing to build, before Chapter II. It follows [CONCEPT.md](CONCEPT.md) §5.1b and the decision log's "Combat and an active-first playthrough". The research behind it: [research/COMBAT_RESEARCH.md](research/COMBAT_RESEARCH.md). The screens were briefed for Claude Design in [design_briefs/COMBAT_UI.md](design_briefs/COMBAT_UI.md), and its answer is the handoff in [design_handoff/CELLAR.md](design_handoff/CELLAR.md) (mocks: `cellar.html`, `crafting.html`; foe art in `reference/assets/foes/`).
 > All numbers are starting points, to be tuned once it runs and the bot can fight.
 > Words in **bold** on first use would go into the glossary and be wrapped in `<Term>` in the game.
 
@@ -284,22 +284,22 @@ One button: "Go down to the cellar". It can be read again from the Cellar tab ("
 
 ## 11. On screen (for DESIGN.md when it's built)
 
-- **The Cellar tab**, a place of its own with its colour, hero and material (candlelight, stone and cold).
-  - **Left:** the foes as cards (name, a line, the readiness tag, the weakness or "?", a lock level).
-  - **Right:** the chosen foe: its card (§6), your gear (the five slots, remedies and charm, with the set bonus if any), and one red **Begin** button.
-- **While it runs:**
-  - two bars (your Health, its Health or Temper) and the blow beat
-  - remedies left
-  - a short log of the last few blows (telling blows, specials and triggers stand out)
-  - the top-bar band, as with any action
-- **Crafting** is a skill in the House's list, like the others:
-  - **Components** are its recipe rows.
-  - **The crafting window** opens from its page: pick a slot and a piece, see its base, fixed affix, random pool with ranges, and materials. Craft, then choose between the rolled options.
-  - The same window reforges and upgrades a piece you hold.
-- **The foe's weakness** shows as "?" until you've beaten it 10 times (3 with Grave-sense). Its **Bestiary** page in the Grimoire keeps what you've learned.
-- **New words** for the glossary: Warding, Crafting, the Cellar, gear, piece, tier, affix, set, reforge, loadout, Health, Ward, Strike, Speed, weakness, telling blow, readiness, driven off, remedy, healing rule, Temper, gift, Bestiary.
+The screens are designed in [design_handoff/CELLAR.md](design_handoff/CELLAR.md), which has the full detail; this is the outline.
 
----
+- **The Cellar tab**, a place of its own: flint `#8c9cf2` on deep `#232a4d`, cold plain stone with one still candle glow (the place's only glow). The hero holds the title, one lore line, "How it works", and three numbers: Warding level, foes warded off, the Domovoi's state.
+- **Two columns** (one column under 1100px, foes first):
+  - **Left, You:** Warding and Crafting level chips; a stat strip (Health, Ward, Strike, Speed, each with where it comes from); two tabs:
+    - **Gear:** the five slots as tiles (icon, slot, piece, its base stat, tier; the tag badge turns verdigris with a ✓ when the chosen foe fears it; Grandmother's set pieces have a red stitched line), the set line, one detail card for the tile picked (with Change: a picker of the pieces you hold, ending "Make more: Crafting ›"), the remedy and charm, and the healing rule with a − / + stepper. Gear is locked while a fight runs.
+    - **Your stats:** each stat broken into its parts, and one plain line about the chosen foe ("Your blows land for about 6.5 · 3 to win").
+  - **Right, the foes:** a card per foe with its big woodcut art, readiness tag, Health, Strike, Ward and "Fears ?" (or the weakness); the Domovoi's card set apart, wider and warmer. Under them a **go bar**: portrait, name, a line on its specials or loot, the large readiness tag (a Tip with the rough chance), and the red **Begin** (when it can't be pressed it says why: "Needs Warding 10").
+- **Readiness** is always the word plus 0–4 diamond pips, never colour alone: Safe `#5ebaaf`, Likely `#92b3cb`, Risky `#f2a97c`, Deadly `#f28a74`, Hopeless `#a8a49b`.
+- **While it runs** the right column becomes the arena: the foe's bar on top, its big art on the candle glow, your Health below, a thin "Next blow" timer. Your blow shakes the art with a damage pop (a telling blow pops bigger, "✶ Telling blow ×2"); its blow lunges and your Health row flashes red; a foe warded off fades and returns, with a float for the loot. Below: loot, remedies left, charm uses, the last 4 blows. The top bar's now-working band shows Warding, the foe's portrait and Health, and Stop. The screen is animated from the simulation's events (`blow`, `tellingBlow`, `special`, `heal`, `foeDown`, `loot`); reduced motion stops everything but the bars.
+- **End states:** stopped is one line with Dismiss; **driven off** is a calm panel in place (what hit you, Cost, Kept, Now, and one line of advice that links to the fix: "An iron Amulet halves its blows · Wear it ›").
+- **Dialogs:** the introduction (§10; also "How it works"), the Domovoi calmed (his art, the gift in a gold-edged box, since a gift is a keepsake), and the away summary with the cellar line first.
+- **Crafting** is a skill in the House's list. Its page has the component rows and opens the **crafting window**: a slot rail → a piece list (locked ones show their level) → the piece card (tiers, base, fixed affix, the random pool with ranges, set, a Tier 2 preview, materials with have/need, time, XP, Craft). After Craft the 2 options (3 with the Workbench) flip over one by one and you Choose; a high roll says "▲ High roll" in verdigris, never gold. The same window reforges (the current affix above the new rolls, "Keep the old one") and upgrades (what Tier 2 adds; locked until Chapter II's materials).
+- **New skill colours:** Warding hoarfrost `#b6dde8`, Crafting flax `#d6b98a`.
+- **The foe's weakness** shows as "?" until you've beaten it 10 times (3 with Grave-sense). Its **Bestiary** page in the Grimoire (an art tile per foe: fears, specials, loot or the boss's gift; foes not met are locked tiles) keeps what you've learned.
+- **New words** for the glossary: Warding, Crafting, the Cellar, gear, piece, tier, affix, set, reforge, loadout, Health, Ward, Strike, Speed, weakness, telling blow, readiness, driven off, remedy, healing rule, Temper, gift, Bestiary.
 
 ## 12. Notes for the build
 
@@ -325,3 +325,4 @@ One button: "Go down to the cellar". It can be read again from the Cellar tab ("
   - Reforging, upgrading in place, and sets.
   - Consumables cut to remedies and charms; you catch your breath between foes, so remedies are a help, not a need.
   - The red thread knot moves to Crafting.
+- **Screens designed (2026-10-21):** Claude Design's handoff ([design_handoff/CELLAR.md](design_handoff/CELLAR.md)) is in: the Cellar with You on the left and the foes on the right (the brief had them the other way), gear tiles with a detail card and a You / Your stats switch, readiness pips, the arena, driven off in place, the Bestiary, and the crafting window. §11 follows it. Combat is the next build, before Chapter II.
