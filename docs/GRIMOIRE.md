@@ -72,9 +72,10 @@ Experiments happen at the ritual circle, on their own **Experiments** tab (the C
 
 ### 4.4 Charms (the active side)
 - **Each discovered hidden recipe can be bound again** on the Experiments tab (the Charms view), at once and as often as you like, from its own **bind cost** (`src/content/charms.ts`; e.g. the Window charm: 3 tallow candles, 2 glass, 4 salt). A charm is an item you hold.
-- **Using a charm** turns it on for a **number of uses**, never a clock: the next 100 actions (Window charm, Dream pillow), the next 40 crafts (Hearth mark) or the next 3 contracts (Threshold nail). There's nothing to time, and time away counts the same. Using another while one is on adds its uses. Charms in use show in the sidebar's Omens & blessings panel with the uses left and a bar.
+- **Using a charm** turns it on for a **number of uses**, never a clock: the next 100 actions (Window charm, Dream pillow), the next 40 actions that use inputs (Hearth mark) or the next 3 contracts (Threshold nail). There's nothing to time, and time away counts the same. Using another while one is on adds its uses. Charms in use show in the sidebar's Omens & blessings panel with the uses left and a bar.
 - The Charms view lists all four: effect and length ("next 100 actions"), the bind cost as have/need chips, **Bind** and **Use (n)**; one in use says "on, 63 actions left". A charm whose recipe isn't found yet says "Discover <recipe> to bind it", so there's a reason to look. The view's tab shows how many charms you hold ("Charms (2)").
 - Charms are for players who want to come back to the Circle. Nothing needs them. Their numbers are in [CHAPTER1.md](CHAPTER1.md) §6.
+- **In the cellar** a charm can be worn into a fight ([COMBAT.md](COMBAT.md) §3): a foe beaten counts as one action. The red thread knot is a charm too, but it's made with Crafting, not bound here, so the Charms view doesn't list it.
 
 ---
 
@@ -135,7 +136,7 @@ The Grimoire keeps the notes, so the player doesn't have to.
 
 ### Hidden recipes
 
-Each gives its reward for good when discovered, and can then be bound as a charm that lasts a number of actions, crafts or contracts (§4.4).
+Each gives its reward for good when discovered, and can then be bound as a charm that lasts a number of actions, actions that use inputs, or contracts (§4.4).
 
 **Window charm** (Tallow candle + Glass shard + Salt) → +10% speed, all skills. Charm (3 tallow candles + 2 glass + 4 salt): chance finds ×1.5, all skills, for the next 100 actions.
 - I: "…a light for the window, glass to hold it, salt along the sill."
@@ -173,6 +174,7 @@ Every screen answers "what is this for, and what do I do next?". Gameplay, not l
 - **A three-step strip** at the top until the first discovery, labels only: *1 · Earn insight ✦ → 2 · Buy a hint (4–6 ✦) → 3 · Test at the Circle (1 glow per right item)*.
 - **The pool:** "✦ N insight" in candle gold.
 - **The index:** *Hidden recipes* (each with what it **gives** and "n/3 known"), *Discovered*, *Secrets* (n/2), then the **Journal**: grandmother's notes, deciphered pages (n/100), curios (n/5), discoveries, the Kindling (once the rite begins), and the black page once every page is read. Every journal entry is a one-line title, collapsed; the story opens under it.
+- **The Bestiary** (in the Journal, once the cellar is open; "n/4 met"): one tile per foe with its woodcut art, "Beaten n", its line, what it fears (or "?" until learned), its specials and what it leaves; the Domovoi's tile is wide, with what calming him opens and his gift. Foes not met yet are locked tiles ([COMBAT.md](COMBAT.md) §11).
 - **Deciphered pages as a book:** a grid of **100 page slots**, chapter by chapter (`BOOK_PAGES` in `src/content/pages.ts`): Chapter I's 6 story pages, then Chapter II (14), III (20), IV (25) and V (35) as locked bands marked "later". A read page is a sealed tile with its number (click to read it: title, "Teaches: …", its text); an unread Chapter I page shows "?". The index reads "6/100" once Chapter I is read, so the book looks mostly still to find. Deciphers past the story pages are **loose leaves**, shown as one line with the insight they gave ("Loose leaves read: 4 · +8 insight").
 - **Curios** use the same tiles (found ones sealed, the rest "?"), with where they turn up and the live chances, bonuses applied ("Search the attic 0.5% · Open grandmother's chest 1% · +3 insight each"), and each found curio's story folded under its name.
 - **A hidden recipe's page:**
@@ -295,3 +297,4 @@ One short entry per round, oldest first. The reasons are in [CONCEPT.md's decisi
 - **Text trimmed to a spreadsheet style:** "The rest of the book" is now the **Journal**, one collapsed entry per story line (notes, pages, curios by name, discoveries, the Kindling, the black page). The discovery dialog shows the reward only, with the reveal under "Story". Short rewards ("+10% offline speed"), a label-only how-strip, shorter result lines (keeping "not which" and "swap one at a time"). Riddles, clues, category hints, asides and item bridges are unchanged in meaning; the Threshold nail's page says it opens grandmother's hidden note.
 - **Playtest round 2:** experiments get their own tab (charms, the Circle, and the attuned recipe's hints together). A fourth hidden recipe, the Window charm, comes first and can be made on every path. New rewards: Window charm +10% speed, Dream pillow +10% XP (was offline speed), Hearth mark also +10% Sigilcraft speed, Threshold nail trust ×2 (was ×1.5). Charms: each discovered hidden recipe can be bound again for a 10-minute boost. A buyable nudge (6 insight) toward the ingredient that's never named.
 - **Playtest round 3:** charms last a number of actions, crafts or contracts (no clock), with their own bind costs; using one while it's on adds its uses. The Experiments tab has two views, The Circle (Working on beside At the Circle, one Tries list) and Charms; the step strip, the second attempts list, the Next step box and the insight-sources list are gone from it. Deciphered pages show as a grid of 100 page slots by chapter, with loose leaves and their insight; curios as tiles with live chances.
+- **The cellar (2026-10-21):** a **Bestiary** entry in the Journal once the cellar is open (an art tile per foe: what it fears, its specials, what it leaves; foes not met are locked). The Hearth mark lasts "the next 40 actions that use inputs". The red thread knot is a charm made with Crafting, not bound at Experiments.

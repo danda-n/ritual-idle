@@ -1,8 +1,8 @@
-# Combat: warding off what comes to the house (v0.3 draft)
+# Combat: warding off what comes to the house (v0.4)
 
-> **Status:** designed, not built yet. It's the next thing to build, before Chapter II. It follows [CONCEPT.md](CONCEPT.md) §5.1b and the decision log's "Combat and an active-first playthrough". The research behind it: [research/COMBAT_RESEARCH.md](research/COMBAT_RESEARCH.md). The screens were briefed for Claude Design in [design_briefs/COMBAT_UI.md](design_briefs/COMBAT_UI.md), and its answer is the handoff in [design_handoff/CELLAR.md](design_handoff/CELLAR.md) (mocks: `cellar.html`, `crafting.html`; foe art in `reference/assets/foes/`).
-> All numbers are starting points, to be tuned once it runs and the bot can fight.
-> Words in **bold** on first use would go into the glossary and be wrapped in `<Term>` in the game.
+> **Status:** built (the cellar, after the Kindling), and tuned by the cellar playthrough. Chapter II comes next. It follows [CONCEPT.md](CONCEPT.md) §5.1b and the decision log's "Combat and an active-first playthrough". The research behind it: [research/COMBAT_RESEARCH.md](research/COMBAT_RESEARCH.md). The screens were briefed for Claude Design in [design_briefs/COMBAT_UI.md](design_briefs/COMBAT_UI.md), and its answer is the handoff in [design_handoff/CELLAR.md](design_handoff/CELLAR.md) (mocks: `cellar.html`, `crafting.html`; foe art in `reference/assets/foes/`).
+> The numbers are the game's (`src/content/combat.ts`). The cellar playthrough (`src/engine/playthrough.test.ts`, "the cellar after the Kindling") keeps them honest: it fails if the cellar leaves its 45–75 minute band or the Domovoi stops reading Likely around Warding and Crafting 10–12.
+> Words in **bold** on first use are in the glossary (`src/content/glossary.ts`) and wrapped in `<Term>` in the game.
 
 ---
 
@@ -31,6 +31,8 @@ Both open with the cellar, after the Kindling (§9), as the chapter's seventh an
 - **+2 Health per level** (Health 40 at level 1)
 - **1% faster per level**
 - its talents (§7)
+
+Warding lives in the Cellar tab, not the House's skill list. Everything that speeds up a skill speeds up your blows too: Janko's help, the Window charm, a blessing, the Domovoi's gift. With no Hand or Lantern piece you strike with your bare hands (Strike 2).
 
 **Crafting** (making gear). It has two kinds of recipes:
 - **Components** are repeatable recipe rows, like any skill's, and are Crafting's idle training: an iron blank, stitched linen, a lantern frame, red thread (§4).
@@ -69,12 +71,14 @@ Both open with the cellar, after the Kindling (§9), as the chapter's seventh an
 - The wrong tags simply get no bonus, never a penalty. So the best gear changes by foe, and saved loadouts earn their keep.
 
 **Remedies: a small layer.**
-- **Remedies:** bread (heals 8), chamomile (heals 4) and a yarrow poultice (heals 15). They're used by your **healing rule** ("use a remedy below 40% Health"), which you have from the first fight, no purchase.
+- **Remedies:** bread (heals 8), chamomile (heals 4) and a yarrow poultice (heals 15). They're used by your **healing rule** ("use a remedy below 40% Health", 10–80% in steps of 5), which you have from the first fight, no purchase. Out of a fight you can use one at once.
 - **They're a help, not a need.** Between foes you catch your breath (+10% Health), and gear can keep you going ("+1 Health per foe beaten"). A Safe fight can run with no remedies at all. Remedies are for harder foes and bosses.
-- **The Belt holds** 10 of one remedy at tier 1.
-- **The only other consumable** is a charm: a bound charm, or a red thread knot (the next 25 foes' special attacks are halved).
+- **The Belt holds** 10 of one remedy at tier 1. At Begin it takes as many as you hold, up to that; they're used from your stores as the rule needs them. With no Belt you carry none.
+- **The only other consumable** is a charm: a bound charm, or a red thread knot (the next 25 foes' special attacks are halved). The charm you wear is used at Begin, and again between foes, whenever none of it is on.
 
-**Loadouts are saved.** Each foe remembers the gear last used against it ("Same as last time"), and you can save named loadouts ("Cellar iron", "Boss").
+**Loadouts are saved.** Each foe remembers the gear last used against it: "Same as last time" puts it back (choosing a foe never changes your gear by itself). You can also save **named loadouts** ("Cellar iron", "Boss"): 2 places, 3 with the Warded cellar door. A loadout keeps the pieces, the remedy, the charm and the healing rule.
+
+**Gear is locked while a fight runs.** To change it, stop, change, and begin again (a boss attempt starts over).
 
 ---
 
@@ -91,12 +95,14 @@ Both open with the cellar, after the Kindling (§9), as the chapter's seventh an
 | 2 | 2 | 1 | Chapter II |
 | 3+ | 2 | 2 | later |
 
-**Rolling a random affix: you choose.**
-- When you craft a piece, each random slot rolls **2 options** from the piece's pool, each with its value inside a range shown in advance ("Strike +1–2"). You pick one.
-- **The Workbench** (a Cellar project) raises it to **3 options**, and the Crafting talent **Keen eye** adds one more.
-- The rolls come from the piece's own seed, so reloading a save doesn't change them.
+**Making a piece takes time.** It runs in the action slot like a recipe (12–24 s at its base speed, faster with Crafting's speed), gives Crafting XP, and its materials go when it starts (stopping gives them back). When it's done, work goes back to what ran before, and its options wait for you, even if it finished while you were away. You make one of each piece.
 
-**Reforging** re-rolls one random affix for components: new options, and you may keep the old one.
+**Rolling a random affix: you choose.**
+- When a piece is done, each random slot rolls **2 options** from the piece's pool, distinct kinds first, each with its value inside a range shown in advance ("Strike +1–2"). You pick one. A value in the top quarter of its range is marked "▲ High roll".
+- **The Workbench** (a Cellar project) raises it to **3 options**, and the Crafting talent **Keen eye** adds one more.
+- The options are saved as soon as they're rolled, so reloading a save doesn't change them.
+
+**Reforging** re-rolls one random affix, at once, for a few components (each piece has its own reforge cost, e.g. the Iron knife: 1 iron blank): new options, and you may keep the old one. The Frugal talent makes some reforges free.
 
 **Upgrading in place.** A piece goes up a tier with new materials. It keeps its affixes and gains the next tier's slots, so nothing you built goes to waste. Tier 2 waits for Chapter II's materials.
 
@@ -119,26 +125,28 @@ Both open with the cellar, after the Kindling (§9), as the chapter's seventh an
 
 **Draft tier 1 pieces**
 
-| Piece | Crafting Lvl | Base | Fixed affix | Made from |
-|---|---|---|---|---|
-| Salt pouch | 1 | Ward 10 | salt | 1 stitched linen + 4 salt |
-| Iron knife | 2 | Strike 5 | iron | 2 iron blanks |
-| Tallow lantern | 3 | Strike 3 | fire | 1 lantern frame + 3 tallow candles |
-| Herb belt | 4 | holds 10 remedies | remedies heal +10% | 2 stitched linen + 4 nettle |
-| Censer | 6 | Strike 4 | smoke | 1 lantern frame + 2 mugwort incense |
-| Embroidered shirt | 8 | Health +15 | special attacks −20% | 3 stitched linen + 2 red thread |
-| Iron amulet | 10 | Ward 22 | iron | 2 iron blanks + 1 tangled lock |
-| Hearth poker | 12 | Strike 8 | hearth | 2 iron blanks + 1 hearth ward |
+| Piece | Crafting Lvl | Base | Fixed affix | Made from | Time · XP | Reforge |
+|---|---|---|---|---|---|---|
+| Salt pouch | 1 | Ward 10 | salt | 1 stitched linen + 4 salt | 12 s · 15 | 4 salt |
+| Iron knife | 2 | Strike 5 | iron | 2 iron blanks | 12 s · 20 | 1 iron blank |
+| Tallow lantern | 3 | Strike 3 | fire | 1 lantern frame + 3 tallow candles | 15 s · 28 | 3 tallow candles |
+| Herb belt | 4 | holds 10 remedies | remedies heal +10% | 2 stitched linen + 4 nettle | 15 s · 35 | 1 stitched linen + 2 nettle |
+| Censer | 6 | Strike 4 | smoke | 1 lantern frame + 2 mugwort incense | 18 s · 50 | 1 mugwort incense |
+| Embroidered shirt | 8 | Health +15 | special attacks −20% | 3 stitched linen + 2 red thread | 20 s · 70 | 1 red thread |
+| Iron amulet | 10 | Ward 22 | iron | 2 iron blanks + 1 tangled lock | 20 s · 90 | 1 iron blank |
+| Hearth poker | 12 | Strike 8 | hearth | 2 iron blanks + 1 hearth ward | 24 s · 120 | 1 iron blank |
 
 **Components** (repeatable)
 
-| Component | Lvl | Time | Inputs |
-|---|---|---|---|
-| Stitched linen | 1 | 4 s | 2 rags |
-| Iron blank | 2 | 4 s | 2 iron nails |
-| Lantern frame | 3 | 5 s | 1 iron blank + 1 glass |
-| Red thread | 6 | 5 s | 1 spun thread + 1 St John's wort (its red oil) |
-| Red thread knot (a charm) | 7 | 5 s | 2 red thread + 1 salt |
+| Component | Lvl | Time | XP | Inputs |
+|---|---|---|---|---|
+| Stitched linen | 1 | 4 s | 4 | 2 rags |
+| Iron blank | 2 | 4 s | 6 | 2 iron nails |
+| Lantern frame | 3 | 5 s | 9 | 1 iron blank + 1 glass |
+| Red thread | 6 | 5 s | 12 | 1 spun thread + 1 St John's wort (its red oil) |
+| Red thread knot (a charm) | 7 | 5 s | 13 | 2 red thread + 1 salt |
+
+Crafting's XP is half of what Chapter 1's recipes give for the time, on purpose: the cellar is meant to last 45–75 minutes, and at Chapter 1's rates Crafting reached 12 in under half an hour.
 
 **Crafting talents** (draft)
 
@@ -146,7 +154,8 @@ Both open with the cellar, after the Kindling (§9), as the chapter's seventh an
 |---|---|---|
 | 3 | **Steady hands:** components ×2 on 20% of crafts | **Quick hands:** components 20% faster |
 | 6 | **Keen eye:** +1 option when rolling | **Good grain:** random affixes roll in the top half of their range |
-| 9 | **Frugal:** upgrades and reforges cost 20% less | **Second look:** reforging shows +1 option |
+| 9 | **Frugal:** 25% of reforges use no components | **Second look:** reforging shows +1 option |
+| 12–30 | drafts in `src/content/talents.ts` (bulk linen, Warding speed, thrift on blanks and glass, more options, top-half rolls, free reforges) | |
 
 ---
 
@@ -162,11 +171,15 @@ Both open with the cellar, after the Kindling (§9), as the chapter's seventh an
 - **A telling blow:** 5% of your blows land ×2 (affixes and talents raise it). Some foes have telling blows of their own, named on their card.
 - **Special attacks** come on a fixed beat, for example "every 4th blow is the Press, a heavy blow". The foe's card names them.
 - **The dice** come from the save's seed, like every other chance in the game.
+- **Who strikes first:** each side strikes on its own timer, you on a tie. When a foe goes down, the next steps up at once (its timer starts fresh; yours carries on).
+- **Grandmother's set (3 pieces):** the first special attack of each foe misses.
 
 **Driven off.** At 0 Health the fight ends:
 - You lose the remedies used on that foe and its loot.
 - Everything already won is kept, and you go back to your previous action (the fallback rule).
-- The feed says what happened ("Driven off by the Zmora: the Press").
+- A toast says what happened ("Driven off by the Zmora", "the Press"), and the Cellar keeps a summary of the fight until you dismiss it: what hit you, the cost, what you kept, and one piece of advice that points at the fix (with "Wear it ›" when you hold the right piece).
+
+**Stopping** (Stop, or starting other work) ends the fight with everything kept; the Cellar shows a one-line summary.
 
 **Health comes back** whenever you're not fighting (full in about 2 minutes of any other work, online or off), and at once with a remedy out of combat.
 
@@ -174,18 +187,20 @@ Both open with the cellar, after the Kindling (§9), as the chapter's seventh an
 
 ## 6. The readiness tag
 
-Before you begin, the game plays the fight out 1,000 times in the background with your gear. It uses a fixed seed, so the tag doesn't flicker as you look. It shows one tag on the foe's card, updated as you change gear:
+Before you begin, the game plays the fight out 1,000 times in the background with your gear, from full Health, with the remedies you'd carry. It uses a fixed seed, so the tag doesn't flicker as you look. It shows one tag on the foe's card, updated as you change gear:
 
 | Tag | You win one fight | Means |
 |---|---|---|
-| **Safe** | 999 in 1,000 or better | Leave it running, offline too |
+| **Safe** | 999 in 1,000 or better, **and** long runs hold (below) | Leave it running, offline too |
 | **Likely** | 9 in 10 or better | An odd loss now and then |
 | **Risky** | 1 in 2 or better | Worth it if you're watching |
 | **Deadly** | 1 in 20 or better | A gamble |
 | **Hopeless** | less than 1 in 20 | A long shot, but not impossible |
 
+**Safe means safe to leave.** Winning one foe 999 times in 1,000 isn't enough: a Safe fight left running overnight meets thousands of foes in a row. So Safe also needs five runs of 1,000 foes in a row (Health carried over, catching your breath between, no remedies, since they'd run out) to never bring you below a fifth of your Health. A boss is one attempt, so for a boss Safe is just 999 in 1,000. The tag is fixed when you begin: it decides whether the fight goes on while you're away.
+
 - **The tooltip** gives the rough chance in words ("about 3 in 4"), never the full result.
-- **What the tag counts:** everything in the fight: the rolls, telling blows, special attacks, triggers and your healing rule. For a boss, it counts one attempt.
+- **What the tag counts:** everything in the fight: the rolls, telling blows, special attacks, the set's missed special and your healing rule. For a boss, it counts one attempt. It reads your gear from full Health; your Health now shows on its own bar ("Health 30/73 · full in 1m").
 - **With remedies**, one more line: "Remedies last about N foes".
 - **What the foe's card shows:**
   - its Health, Strike, Ward and speed
@@ -206,8 +221,9 @@ Pairs every 3 levels, the same kinds as the other skills, in one vocabulary. Dra
 | 9 | **Herb-wise:** remedies heal +40% | **Hardy:** +20 Health |
 | 12 | **Grave-sense:** a foe's weakness shows after 3 beaten (not 10) | **Counter-craft:** the right tag gives ×1.75, not ×1.5 |
 | 15 | **Keen strike:** telling blows 5% → 12% | **Deep pockets:** loot chances ×1.5 |
+| 18–30 | drafts in `src/content/talents.ts` (more Ward, Strike, Health, breath, remedies, telling blows, ×2 for the right tag) | |
 
-**Charms in combat:** the ones there are work as they are (the Window charm: loot chances ×1.5; the Dream pillow: +25% XP), and a foe beaten counts as one action.
+**Charms in combat:** the ones there are work as they are (the Window charm: loot chances ×1.5; the Dream pillow: +25% XP), and a foe beaten counts as one action (omens can turn up from it too).
 
 ---
 
@@ -229,18 +245,20 @@ Chapter 1's path to the rite doesn't change. The bot still ends the chapter at t
 
 **The foes** (the house's own spirits, from the folklore; details in [research/combat_research/folklore.md](research/combat_research/folklore.md))
 
-| Foe | What it is | Health | Strike | Ward | Every | Weakness | Special | Leaves behind | Warding XP |
-|---|---|---|---|---|---|---|---|---|---|
-| **Skrzat** | a small house imp, mischief more than harm | 20 | 3 | 0 | 3.5 s | salt | — | Lost button (30%), rags (20%) | 10 |
-| **Kikimora** | the one who spins behind the stove, and breaks what's untidy | 45 | 5 | 10 | 3 s | smoke | every 5th: the Clatter ×2 | Spun thread (35%), curio (1%) | 25 |
-| **Zmora** | the nightmare that sits on sleepers' chests | 70 | 7 | 20 | 3.5 s | iron | every 4th: the Press ×2.5; telling blows 10% | Tangled lock (40%) | 45 |
+| Foe | What it is | Health | Strike | Ward | Every | Weakness | Special | Leaves behind | Warding XP | Opens at |
+|---|---|---|---|---|---|---|---|---|---|---|
+| **Skrzat** | a small house imp, mischief more than harm | 20 | 3 | 0 | 3.5 s | salt | — | Lost button (30%), rags (20%) | 5 | Warding 1 |
+| **Kikimora** | the one who spins behind the stove, and breaks what's untidy | 45 | 5 | 10 | 3 s | smoke | every 5th: the Clatter ×2 | Spun thread (35%), curio (1%) | 12 | Warding 3 |
+| **Zmora** | the nightmare that sits on sleepers' chests | 70 | 7 | 20 | 3.5 s | iron | every 4th: the Press ×2.5; telling blows 10% | Tangled lock (40%) | 22 | Warding 6 |
+
+The XP is half of the first draft's, for the same reason as Crafting's (§4).
 
 **The boss: the sour Domovoi.** The house spirit, sulking since grandmother's death. You don't banish him: you **calm** him (his bar reads "Temper").
-- Temper 300, Strike 9, Ward 30, every 3 s *(draft)*.
+- Temper 800, Strike 12, Ward 40, every 3 s. 150 Warding XP. (The first draft, Temper 300 and Strike 9, fell in 13 minutes at Warding 6 without the poker: remedies outhealed him.)
 - Weakness: **hearth**, so the Hearth poker and the chapter's own best work.
 - Special: every 3rd blow, *Pots off the shelf* ×2.
 - He's shown from the start, with his weakness, what calming him opens and his gift, and you choose when to try.
-- He's meant to be Hopeless at first and Likely around Warding and Crafting 10–12 with the right gear.
+- He's Hopeless at first and turns Likely as the Hearth poker is made: in the cellar playthrough, at Warding 12 and Crafting 12, with poultices and the talents taken. A level-40 player with no remedies and no talents is still Hopeless: he's a puzzle of gear, remedies and talents, not of levels.
 - **Calming him** (once):
   - **His gift** (fixed, lasting): **+5% speed in all skills, and Health comes back twice as fast** *(numbers draft)*.
   - He shows you the loose flagstone: the way down to the old crypt, the door to Chapter II.
@@ -254,7 +272,9 @@ Chapter 1's path to the rite doesn't change. The bot still ends the chapter at t
 
 **What the leavings are for:** lost buttons and tangled locks go into projects and pieces, and spun thread into red thread. Later come contracts at higher trust levels, and their main use in Chapter II.
 
-**Size:** about 45–75 minutes of optional play after the rite, to Warding and Crafting ~12 and the Domovoi.
+**Size:** about 45–75 minutes of optional play after the rite, to Warding and Crafting ~12 and the Domovoi. The cellar playthrough calms him at 50–54 minutes (three seeds), with every piece made on the way.
+
+**Leavings in the item lookup** say which foe leaves them and which pieces use them.
 
 ---
 
@@ -266,7 +286,7 @@ Until the Cellar, Warding and Crafting open, the game shows nothing that belongs
 - no combat recipes (the yarrow poultice opens with the cellar, not at its level)
 - no loot, projects, contracts or talents that mention it
 
-A test checks this, as `text.test.ts` does for the skill descriptions.
+`combat.test.ts` checks it: no Chapter 1 text (skills, items, notes, projects, keepsakes, glossary) uses a combat word, and no cellar recipe or project shows before the rite at any level.
 
 **The introduction.** When the cellar opens, a large dialog introduces it, like the chapter end. It has a few short sections with a small drawing each:
 1. **The cellar:** what's down there, and why now (grandmother's note, two lines).
@@ -301,14 +321,12 @@ The screens are designed in [design_handoff/CELLAR.md](design_handoff/CELLAR.md)
 - **The foe's weakness** shows as "?" until you've beaten it 10 times (3 with Grave-sense). Its **Bestiary** page in the Grimoire (an art tile per foe: fears, specials, loot or the boss's gift; foes not met are locked tiles) keeps what you've learned.
 - **New words** for the glossary: Warding, Crafting, the Cellar, gear, piece, tier, affix, set, reforge, loadout, Health, Ward, Strike, Speed, weakness, telling blow, readiness, driven off, remedy, healing rule, Temper, gift, Bestiary.
 
-## 12. Notes for the build
+## 12. In the code
 
-- **Engine:** combat runs inside `advance()` like any action. Its save fields (gear, pieces with their seeds and affixes, loadouts, the bestiary, gifts) need a `SAVE_VERSION` bump.
-- **The playthrough bot** gets a second test that crafts gear and clears the cellar, so its pacing is checked too.
-- **"Craft" as a word:** once Crafting is a skill, the game's other uses of "craft" need new words, so "crafts" doesn't read as "Crafting's recipes". The Hearth mark charm lasts "40 crafts", and talents say "15% of Chandlery crafts use no inputs". Something like "recipes with inputs" would do.
-- **CONCEPT's skill map** calls Alchemy, Chandlery, Sigilcraft and Binding-craft the "Making" skills. Binding-craft (Chapter II: vessels and fetters for Summoning) may fold into Crafting later; that's decided with Chapter II.
-
----
+- **Engine:** `src/engine/combat.ts` (stats, the fight rules, readiness, fights and pieces inside `advance()`), commands in `commands.ts`, content in `src/content/combat.ts`. Save version 12 adds `cellar` (Health, pieces, gear, loadouts, per-foe memory, foes beaten, gifts, the pending roll, the last fight's summary), `fight` and `job`. Fights and pieces keep their timers relative to themselves, so the dev time skip needs nothing new.
+- **Two playthroughs:** the Chapter 1 bot, then a cellar bot that carries on from the Kindling: it makes each piece as Crafting reaches it, trains whichever of Warding and Crafting is behind, chooses its affixes, and tries the Domovoi once he reads Likely. `npm run pacing` prints both.
+- **"Craft" as a word:** the game's other uses of "craft" became "actions that use inputs" (the Hearth mark lasts "the next 40 actions that use inputs"; talents say "15% of Chandlery actions use no inputs"), so "craft" never reads as the Crafting skill.
+- **Binding-craft** (Chapter II: vessels and fetters for Summoning) may fold into Crafting; that's decided with Chapter II.
 
 ## Changelog
 
@@ -326,3 +344,4 @@ The screens are designed in [design_handoff/CELLAR.md](design_handoff/CELLAR.md)
   - Consumables cut to remedies and charms; you catch your breath between foes, so remedies are a help, not a need.
   - The red thread knot moves to Crafting.
 - **Screens designed (2026-10-21):** Claude Design's handoff ([design_handoff/CELLAR.md](design_handoff/CELLAR.md)) is in: the Cellar with You on the left and the foes on the right (the brief had them the other way), gear tiles with a detail card and a You / Your stats switch, readiness pips, the arena, driven off in place, the Bestiary, and the crafting window. §11 follows it. Combat is the next build, before Chapter II.
+- **v0.4 (2026-10-21): built.** The cellar, Warding and Crafting are in the game, to the handoff's screens. Decided while building: Safe means safe for long runs (five runs of 1,000 foes, never below a fifth of your Health), gear is locked while a fight runs, named loadouts (2, 3 with the Warded cellar door) besides per-foe "Same as last time", pieces take time in the action slot. Tuned with the cellar playthrough: Crafting and foe XP halved, the Domovoi raised to Temper 800, Strike 12, Ward 40 (he fell in 13 minutes before). New: bare hands strike 2; foes open at Warding 1/3/6; the Grandmother's-set miss is per foe; Frugal is a 25% free reforge; talents 12–30 drafted for both skills.

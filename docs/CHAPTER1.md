@@ -1,6 +1,6 @@
-# Chapter 1: Hearth. Content Pass (v0.7)
+# Chapter 1: Hearth. Content Pass (v0.8)
 
-> This is the detail layer beneath [CONCEPT.md](CONCEPT.md). It covers the first session: from arriving at the cold house to the **Kindling of the Hearth-Circle**.
+> This is the detail layer beneath [CONCEPT.md](CONCEPT.md). It covers the first session: from arriving at the cold house to the **Kindling of the Hearth-Circle**, and the **cellar** that opens after it (its own doc: [COMBAT.md](COMBAT.md)).
 > It describes the chapter **as it is now**. What changed in each round is in the [Changelog](#changelog) at the end, and the reasons are in [CONCEPT.md's decision log](CONCEPT.md#decision-log).
 > The numbers are checked by the headless playthrough test ([src/engine/playthrough.test.ts](../src/engine/playthrough.test.ts), see §10) and are tuned in playtests. Item and action names are draft flavour.
 
@@ -24,10 +24,10 @@
 
 | Chapter | New skills | Total |
 |---|---|---|
-| 1 Hearth | Herbalism, Scavenging, Chandlery, Sigilcraft, Scholarship, Ritualism | 6 |
-| 2 Grave | Gravetending, Alchemy, Binding-craft, Summoning | 10 |
-| 3 Fern | Astrology, Divination, Purification (Taint arrives) | 13 |
-| 4–5 | New depth and forbidden recipes, no new skills | 13 |
+| 1 Hearth | Herbalism, Scavenging, Chandlery, Sigilcraft, Scholarship, Ritualism; then Warding and Crafting with the cellar, after the Kindling | 8 |
+| 2 Grave | Gravetending, Alchemy, Binding-craft (may fold into Crafting), Summoning | 12 |
+| 3 Fern | Astrology, Divination, Purification (Taint arrives) | 15 |
+| 4–5 | New depth and forbidden recipes, no new skills | 15 |
 
 ---
 
@@ -131,6 +131,9 @@ On screen, a recipe row shows what you really get: talents, House projects, buff
 | Pick yarrow | 9 | 3s | 9 | Yarrow |
 | Pick St John's wort (the Kupala herb) | 9 | 4s | 12 | St John's wort |
 | Cut juniper | 12 | 4s | 15 | Juniper |
+| Yarrow poultice (opens with the cellar, not at its level) | 9 | 5s | 26 | 2 yarrow + 1 rags → Yarrow poultice (a remedy, heals 15) |
+
+Crafting, the cellar's making skill, has its own recipes (stitched linen, iron blanks, lantern frames, red thread, the red thread knot): see [COMBAT.md](COMBAT.md) §4.
 
 ### Scholarship (grandmother's pages)
 | Action | Lvl | Time | XP | Inputs → Output |
@@ -232,6 +235,8 @@ The table shows each template as written (medium slot, trust level 0); the board
 | **Herb stall** (Village open) | 8 rags + 6 iron nails | The shop sells nettle ×10, chamomile ×5, mugwort ×5 |
 | **Wax trader** (Village open) | 8 tallow candles + 4 salt lines | The shop sells beeswax ×5 |
 | **Carved omen shelf** (after the omen shelf) | 6 chalk + 2 iron wards | Omen storage 2 → 3 |
+| **The Workbench** (the cellar open) | 4 iron blanks + 6 lost buttons | 3 options to choose from when a piece's bonus rolls, not 2 |
+| **Warded cellar door** (the cellar open) | 2 iron blanks + 4 tangled locks | +1 saved loadout |
 
 - **The offline cap** is 24 hours in Chapter 1; no project raises it (72 hours comes in Chapter 2).
 - **The omen shelf is highlighted** until it's built, since it's the way into omens:
@@ -279,16 +284,16 @@ There are four hidden recipes in Chapter 1. None unlock by level. You find them 
 | **Hearth mark** | "…where the fire lived, draw its name in what it left behind, and salt to keep it." | Ash + charcoal + salt | +1 rite quality (an offering, §8) · +10% Sigilcraft speed |
 | **Threshold nail** | "…cold iron under the door, and the Kupala herb to make it sing." | Iron nail + St John's wort + salt | Trust gains ×2, and grandmother's hidden note opens (the first thread toward the hidden 5th follower) |
 
-**Charms** (`src/content/charms.ts`): once a hidden recipe is discovered, its charm can be bound again on the Experiments tab (the Charms view), at once, as often as you like, from its own **bind cost**. Using a charm turns it on for a **number of actions, crafts or contracts**, never a clock: there's nothing to time, and time away counts the same. Using another while one is on adds its uses. Charms in use show in the sidebar's Omens & blessings panel with the uses left and a bar.
+**Charms** (`src/content/charms.ts`): once a hidden recipe is discovered, its charm can be bound again on the Experiments tab (the Charms view), at once, as often as you like, from its own **bind cost**. Using a charm turns it on for a **number of actions, actions that use inputs, or contracts**, never a clock: there's nothing to time, and time away counts the same. Using another while one is on adds its uses. Charms in use show in the sidebar's Omens & blessings panel with the uses left and a bar.
 
 | Charm | Bind cost | Lasts | Effect |
 |---|---|---|---|
 | Window charm | 3 tallow candles + 2 glass + 4 salt | next 100 actions | Chance finds ×1.5, all skills (every chance find, §3) |
 | Dream pillow | 4 mugwort + 3 chamomile + 2 rags | next 100 actions | +25% XP, all skills |
-| Hearth mark | 6 ash + 2 charcoal + 3 salt | next 40 crafts | 25% of crafts use no inputs |
+| Hearth mark | 6 ash + 2 charcoal + 3 salt | next 40 actions that use inputs | 25% of actions use no inputs |
 | Threshold nail | 3 iron nails + 2 St John's wort + 3 salt | next 3 contracts | Contracts pay +50% coin and trust |
 
-- **What counts:** every finished action counts for an action charm (a craft is an action too); a craft is an action with inputs; a contract counts when it's finished.
+- **What counts:** every finished action counts for an action charm; the Hearth mark counts only actions that use inputs (the game never calls these "crafts", since Crafting is a skill); a contract counts when it's finished. In the cellar, a foe beaten counts as one action, and the red thread knot (made with Crafting, not bound) counts foes ([COMBAT.md](COMBAT.md) §3).
 - **Old saves** (save version 11): charms held are kept; the old timed charm boosts are dropped.
 
 ---
@@ -336,11 +341,11 @@ There are four hidden recipes in Chapter 1. None unlock by level. You find them 
 
 ---
 
-## 9. After the Rite: the bridge to Chapter 2
+## 9. After the Rite: the cellar, and the bridge to Chapter 2
 
-- The first follower starts in **"assist me"** mode. A brief note explains assigning them to a mastered action.
-- The offline cap and the away summary are introduced properly: *"Rest. The house will keep working."*
-- **The first Chapter 2 goal** appears (the Grave tier). This is the natural stopping point, so the player leaves on a hook.
+- **Janko joins** in "assist me" mode (+30% speed on whatever you're doing), and every skill's cap rises to 40.
+- **The cellar opens** once the chapter end is closed: a large introduction ("Going down"), then the **Cellar** tab, with two new skills, **Warding** and **Crafting**. You make gear, ward off the house's spirits (the Skrzat, the Kikimora, the Zmora) and calm the sour **Domovoi**. It's about 45–75 minutes of optional play. Everything about it is in [COMBAT.md](COMBAT.md).
+- **The tracker's "Chapter I complete" card** points to the cellar ("Cellar ›") until the Domovoi is calmed; then it says the way to the crypt is open, and that Chapter II comes in a later build. That's the hook to leave on.
 
 ---
 
@@ -358,6 +363,7 @@ There are four hidden recipes in Chapter 1. None unlock by level. You find them 
   - two skills open **less than 3 minutes apart** (after the tutorial pair)
   - a skill's stage takes **less than 3 or more than 12 minutes**
 - `npm run pacing` prints each part's time.
+- **The cellar playthrough** carries on from the Kindling (three seeds): it makes every piece as Crafting reaches it, trains whichever of Warding and Crafting is behind, and calms the Domovoi. It fails if that takes outside **45–75 minutes**, or if he turns Likely outside Warding and Crafting **9–14**. Result: Likely at Warding 12 and Crafting 12, calmed at **50–54 minutes** ([COMBAT.md](COMBAT.md) §9).
 - **XP curve:** XP to the next level = **110 × 1.1^(level − 1)**, with no easing: 110 XP for level 2, 121 for 3, 133 for 4. The flatter curve keeps new recipes coming every few levels.
 - **Length:** the chapter's length follows from the "no grinding" rule; the designer chose about 30–35 minutes.
 - **Level speed:** each level makes its own skill 1% faster, compounding.
@@ -493,3 +499,4 @@ One short entry per round, oldest first. The reasons behind each change are in [
 - **Playtest round 3:** one rule for chance finds: every bonus (find talents, projects, item buffs, the Window charm, Still Night) applies to every chance find, byproducts included, and a tooltip breaks each chance down. Custom tooltips replace the browser's everywhere. The omen shelf shows one card per kind of omen. Charms last a number of actions, crafts or contracts instead of 10 minutes, with their own bind costs (Hearth mark 25% of crafts, Threshold nail +50% coin and trust). Trust levels never end (3, 7, 12, 18, 25… trust), and contracts are scaled to the level and to each slot's quiet difficulty. New projects: Notice board and Covered board (+1 contract each), Herb stall and Wax trader (shop stock); Mended shutters removed (the offline cap stays 24h). Talents every 3 levels to 30 (36 new pairs), in a compact panel. Skill descriptions at the stage choice talk only about what the player knows. The rite's tend field has no text in its middle, and a Resplendent rite gives the Embroidered circle cloth as a kept item. The Experiments tab has two views; the Grimoire shows pages as a grid. Save version 11. The rite begins at 28–33 minutes.
 - **Playtest reset 3:** every save from before this build starts fresh (with a notice): contracts, charms, talents and projects all changed shape.
 - **The Guide:** explained words turn plain once read, and the Guide (a "?" in the top bar) lists every word read.
+- **The cellar:** after the Kindling, the Cellar opens with Warding and Crafting, gear made in a crafting window, three foes and the sour Domovoi ([COMBAT.md](COMBAT.md)). New for the chapter: the yarrow poultice (Herbalism 9, with the cellar), the Workbench and Warded cellar door projects, and the tracker's end card pointing to the cellar. The Hearth mark lasts "the next 40 actions that use inputs" (no more "crafts"). Save version 12. The cellar playthrough calms the Domovoi at 50–54 minutes.

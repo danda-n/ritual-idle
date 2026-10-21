@@ -7,14 +7,14 @@ The designer is not a programmer. Explain technical choices plainly, and keep ga
 - `docs/CONCEPT.md`: core concept, pillars, loops, and the decision log (read that first)
 - `docs/CHAPTER1.md`: Chapter 1 content: actions, items, notes, village, omen, Rite
 - `docs/GRIMOIRE.md`: discovery and hint model
-- `docs/COMBAT.md`: combat (Warding, the loadout, the forecast, the cellar); a draft until it's built
+- `docs/COMBAT.md`: combat (Warding, Crafting and gear, the readiness tag, the cellar and the Domovoi), as built
 - `docs/RESEARCH.md`: market and community research behind the decisions
 - `docs/DESIGN.md`: design system (tokens, type, components, art rules, feedback, layout rules, screens, words). Follow it for every UI change
 - `docs/PLAYTEST.md`: what to try and what to note in a Chapter 1 playtest
 - `docs/design_briefs/`: briefs for Claude Design mockups (e.g. `COMBAT_UI.md`), dated
 - `docs/design_handoff/`: what Claude Design delivered: `README.md` (the design system) and `CELLAR.md` (the combat screens), with HTML/CSS mocks and the foe art in `reference/`
 - `docs/research/`: dated research notes (e.g. `RITE_QUALITY.md`: sacrifices and rewards for rite quality, decided 2026-09-26; `COMBAT_RESEARCH.md`: combat in idle games, 2026-09-29, with its source reports in `combat_research/`)
-- `src/engine/playthrough.test.ts`: a headless bot plays all of Chapter 1 on the real engine (it's the pacing check; `npm run pacing` prints the timings)
+- `src/engine/playthrough.test.ts`: a headless bot plays all of Chapter 1 on the real engine, then the cellar after it (they're the pacing checks; `npm run pacing` prints the timings)
 
 If code and docs disagree, ask which should change. Never silently diverge from a logged decision.
 
@@ -45,5 +45,5 @@ Vite + React + TypeScript, Vitest. Electron (Steam) and PixiJS (sanctum scene) c
 - **Choices talk only about what the player knows.** Text at a choice (a skill's description, a stage card) never names a place or system that isn't open yet; if a choice opens one, name it in the card's "Opens" row with a `<Term>`. A test in `text.test.ts` checks the skill descriptions.
 - **The sidebar informs; choices happen on tabs.** Big decisions (which part next, keepsakes, talents) get their own space on a tab or in a dialog; the chapter tracker only points there.
 - Design guardrails (from the decision log): no real-time gating, no failure on rites, low follower management, generous offline progress, no pay-to-win.
-- Dev builds show a Dev tools panel at the bottom of the page: time skip (through the real offline path), give items, +100 coin, +omen, next note, items for the next part, +5 levels, +5 insight. When you add a new timestamp to the state, add it to `rewind` in `devtools.ts` as well.
+- Dev builds show a Dev tools panel at the bottom of the page: time skip (through the real offline path), give items, +100 coin, +omen, next note, items for the next part, +5 levels, +5 insight, open the cellar, items for the next piece. When you add a new timestamp to the state, add it to `rewind` in `devtools.ts` as well.
 - Test in the browser on a separate origin (e.g. `http://test.localhost:5391`), which has its own save. Never use the designer's `localhost` save for testing.

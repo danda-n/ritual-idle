@@ -34,7 +34,7 @@ From the cold house to the Kindling of the Hearth-Circle:
 - **The Still Night omen** every few minutes once the omen shelf is built: bless a skill you choose with ×2 for 2 minutes, from one card per kind of omen in the sidebar. Timed buffs.
 - **The Grimoire and the Experiments tab:**
   - four hidden recipes, with hints you buy using insight (the Window charm first)
-  - charms: a discovered hidden recipe can be bound again for a boost that lasts a number of actions, crafts or contracts
+  - charms: a discovered hidden recipe can be bound again for a boost that lasts a number of actions, actions that use inputs, or contracts
   - the Experiments tab in two views (The Circle, Charms), and deciphered pages as a grid of the whole book
   - two secrets, with clues you buy
   - automatic deduction
@@ -46,9 +46,11 @@ From the cold house to the Kindling of the Hearth-Circle:
 - **The look (design system v0.4, "Hearth + Folk"):** warm soot grounds with one job per colour (red acts, verdigris selects, gold is rare), a colour, hero band and material per tab, a now-working band in the top bar, recipes as a table whose running row fills as it works, and per-skill stock lists. See [DESIGN](docs/DESIGN.md).
 - **Settings:** fallback, Grimoire assist, reduced motion, row density, message duration.
 
-**Next: combat.** After the Kindling the cellar opens, with two new skills (Warding and Crafting), gear you craft, auto-combat against the house's spirits and a first boss, the sour Domovoi. It's designed ([COMBAT](docs/COMBAT.md), and the screens in [the design handoff](docs/design_handoff/CELLAR.md)) and is the next build, before Chapter II.
+**After the Kindling: the cellar.** The house's spirits have moved into the cellar. Two new skills, **Warding** and **Crafting**: make gear in a crafting window (five slots, each piece with a tag and a bonus you choose from rolled options), then ward off the Skrzat, the Kikimora and the Zmora, each with the thing it fears. Fights run by themselves until you stop; a readiness tag (Safe to Hopeless) says your chances, and only Safe fights go on while you're away. Being driven off costs only the remedies used. The sour **Domovoi** waits at the end: calm him for a lasting gift. About 45–75 minutes. See [COMBAT](docs/COMBAT.md).
 
-Dev builds have a **Dev tools** panel at the bottom of the page (time skip, give items, +omen, next note, items for the next part, +5 levels, +5 insight) for playtesting.
+**Next: Chapter II.**
+
+Dev builds have a **Dev tools** panel at the bottom of the page (time skip, give items, +omen, next note, items for the next part, +5 levels, +5 insight, open the cellar, items for the next piece) for playtesting.
 
 Design docs: [CONCEPT](docs/CONCEPT.md), [CHAPTER1](docs/CHAPTER1.md), [GRIMOIRE](docs/GRIMOIRE.md), [DESIGN](docs/DESIGN.md), [COMBAT](docs/COMBAT.md), [PLAYTEST](docs/PLAYTEST.md), [RESEARCH](docs/RESEARCH.md).
 

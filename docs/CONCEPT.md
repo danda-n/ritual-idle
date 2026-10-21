@@ -144,7 +144,7 @@ Every skill feeds the ritual circle. Followers take over the work you have maste
 - **Fight:** it runs by itself in the action slot and repeats until you stop, like any action. Healing follows a simple rule you set from the start ("use a poultice below 40% HP").
 - **Loot:** spirit-only reagents and curios (no coin), ingredients rather than finished gear, so combat feeds Crafting and the rites.
 - **Driven off:** if your HP runs out, the fight ends. It costs only the remedies used on that foe and its unbanked loot. HP comes back while you do anything else, or at once with food and herbs. Never a timed wait, never lost gear.
-- **Offline:** fights tagged Safe keep going while you're away, until you stop them (or, rarely, you're driven off), and the away summary says how it went. Gear isn't used up, so nothing runs out.
+- **Offline:** fights tagged Safe keep going while you're away, until you stop them (or, rarely, you're driven off), and the away summary says how it went. Gear isn't used up, so nothing runs out. Safe means safe for long runs, not just one foe: thousands of foes in a row never bring you low. Any other fight stops when you leave.
 - **Bosses:** few, named, opt-in, each shown with what beating it opens and the lasting gift it leaves (a fixed passive bonus). A good loadout beats a boss on auto; switching mid-fight only makes it faster or pays better.
 - **Foes come from the folklore**, and each has its traditional counter: poppy seeds keep the upiór counting, iron and salt water turn the zmora, the południca is answered, not fought. Matching the counter is the depth; the wrong ward only slows you down.
 
@@ -447,7 +447,8 @@ We deliberately **do not** use:
 - **Afflictions and follower traits:** first lists.
 - **Story bible:** grandmother, the village, the Patrons, and chapter beats.
 - **Sanctum layout:** what's in the scene, and how it grows by Chapter.
-- **Combat design doc** *([COMBAT.md](COMBAT.md), v0.3)*: Warding and Crafting, gear, damage rules, the readiness tag, losing and recovering, offline fights, bosses, loot and the cellar. The screens are designed ([design_handoff/CELLAR.md](design_handoff/CELLAR.md)); it's the next thing to build, before Chapter II. Research: [research/COMBAT_RESEARCH.md](research/COMBAT_RESEARCH.md).
+- ~~**Combat**~~ → designed and built ([COMBAT.md](COMBAT.md), v0.4; the screens from [design_handoff/CELLAR.md](design_handoff/CELLAR.md)): the cellar after the Kindling, with Warding, Crafting, gear, three foes and the Domovoi. Research: [research/COMBAT_RESEARCH.md](research/COMBAT_RESEARCH.md).
+- **Chapter II content pass:** the Grave tier, Forefathers' Eve, The Circle Asks, combat in full. Next.
 
 ---
 
@@ -758,3 +759,12 @@ TypeScript is the best-supported language for AI-assisted coding, which helps th
 - **The order of work:** the cellar (Warding, Crafting, gear, the three foes and the Domovoi) is built and tuned before any Chapter II design. It adds the active-first pillar's "always something to do" to the chapter end, and the combat screens and simulation get proven in a small space before Chapter II leans on them.
 - **The screens are designed:** Claude Design's handoff ([design_handoff/CELLAR.md](design_handoff/CELLAR.md)) answers the combat brief, with mocks for the Cellar and the crafting window and the four foes' woodcut art. COMBAT.md §11 follows it (You on the left, the foes on the right).
 - **Two registers for text** (adjusts "Text trimmed to a spreadsheet style"): the handoff asked for plain-English sentences wherever a mechanic is explained. The designer split it by job: labels (rows, chips, stats, buttons) stay terse with "·"; explanations (introductions, Term and Tip text, advice after a loss, stat breakdowns) are short, whole sentences. DESIGN.md's Writing section says how.
+
+### The cellar is built (2026-10-21)
+- **Built to the handoff:** the Cellar tab (You on the left, the foes or the fight on the right), the crafting window, the introduction, the Domovoi calmed, the Bestiary in the Grimoire, the fight in the top bar and the away summary. The cellar's numbers were tuned with a second playthrough bot that carries on from the Kindling.
+- **Safe means safe for long runs** (the designer's call). The draft's "999 in 1,000 against one foe" would usually end an overnight run in "driven off": a Safe fight meets thousands of foes in a row. Safe now also needs long runs of foes, no remedies, never to bring you below a fifth of your Health. Only Safe fights go on while you're away.
+- **Gear is locked while a fight runs** (the designer's call, as the handoff draws it; changes COMBAT v0.3's "switching mid-fight for bosses and min-maxing"). Stop, change, begin again. The readiness tag can't go stale mid-fight.
+- **Named loadouts are built** besides per-foe "Same as last time" (the designer's call): 2 places, 3 with the Warded cellar door. Choosing a foe never changes your gear by itself; that silently undid changes in testing.
+- **Making a piece takes time** in the action slot, like a recipe, and gives Crafting XP; its options wait for your choice even if it finished while you were away (the designer's call).
+- **"Craft" means the Crafting skill only** (the designer chose "actions"): the Hearth mark lasts "the next 40 actions that use inputs", and talents say "15% of Chandlery actions use no inputs".
+- **Tuning from the bot:** the Domovoi as drafted (Temper 300, Strike 9) was calmed in 13 minutes at Warding 6 without the poker, outhealed by remedies. Now Temper 800, Strike 12, Ward 40, and he turns Likely as the Hearth poker is made (Warding and Crafting 12). Crafting and foe XP are halved: at Chapter 1's rates the cellar took under 30 minutes. It now takes 50–54.

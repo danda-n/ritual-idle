@@ -5,7 +5,7 @@ What to try and what to note in a Chapter 1 playtest, for the game as it is now 
 ## Setup
 - **Starting fresh:** use Settings (the gear) → Save, export and import → Reset.
 - **Keep dev tools out of the playtest.** They appear only in `npm run dev`. For a clean run use `npm run build` and then `npm run preview`.
-- **Target times:** about 30–35 minutes for the chapter, the rite included (about 3 minutes idle, about 1.5 if you tend it). A new skill every 4–7 minutes. Side projects and experiments add time on top.
+- **Target times:** about 30–35 minutes for the chapter, the rite included (about 3 minutes idle, about 1.5 if you tend it). A new skill every 4–7 minutes. Side projects and experiments add time on top. Then the cellar: about 45–75 minutes to calm the Domovoi. To start a playtest at the cellar, use the dev build's "Open the cellar".
 - **Saves may reset between builds.** After big changes the game starts fresh on its next load, with a notice ("New playtest build: fresh start"). That's on purpose, so each playtest starts clean.
 
 ## Try each of these once
@@ -68,7 +68,7 @@ What to try and what to note in a Chapter 1 playtest, for the game as it is now 
 - **Did you find the Experiments tab,** and could you make the Window charm with what you had?
 - **Hidden recipe:** did you know what to do at each point? Did you notice what a villager said about it (the "Heard" toast, then "Heard in the village" on its page)?
 - **What did you buy with insight first?** Did the nudge toward the last ingredient help without giving it away? Did the clues make secrets findable?
-- **Did charms pull you back to Experiments?** Which did you bind, and when did you use them? Did lasting a number of actions, crafts or contracts feel better than a timer? Were the bind costs worth it? Did you use one while it was on, to add uses?
+- **Did charms pull you back to Experiments?** Which did you bind, and when did you use them? Did lasting a number of actions, actions that use inputs or contracts feel better than a timer? Were the bind costs worth it? Did you use one while it was on, to add uses?
 - **The two views:** did The Circle view (Working on beside At the Circle) give you everything you needed in one place? Did you find the Charms view?
 - **Were free experiments fun, or frustrating?**
 
@@ -78,7 +78,19 @@ What to try and what to note in a Chapter 1 playtest, for the game as it is now 
 - **The quality ladder:** was it clear what each offering does and what Fine and Resplendent add?
 - **Did you bring any offerings,** and did you try for Resplendent? Did the keepsakes and the Embroidered circle cloth (in the Inventory, "It will matter in Chapter II") make it feel worth the effort?
 - **Which keepsake(s) did you choose,** and why? Did any feel like the only right answer, or like no reward at all? Was it clear the choice is kept when you leave the screen?
-- **After the rite:** did the chapter feel finished? Did the "Chapter I complete" card leave you wanting Chapter II, or looking for something left to do?
+- **After the rite:** did the chapter feel finished? Did the "Chapter I complete" card and the cellar opening feel like the right next step?
+
+## The cellar (after the rite)
+- **The introduction:** did "Going down" tell you enough to start? Did you open "How it works" again later?
+- **The first fight:** with bare hands, then your first pieces. Was it clear what to make first, and what the readiness tag meant? Did you hover it for the rough chance?
+- **Crafting a piece:** did choosing between the rolled options feel good? Did a "▲ High roll" feel like a small win? Did you reforge anything, and was the cost worth it?
+- **Weakness:** did you notice the "?" turn into the foe's fear after 10 wins, and the ✓ on a tile that matches? Did you change gear because of it?
+- **Losing:** were you driven off? Did the panel make clear what it cost and what you kept? Did its advice ("Wear it ›") help?
+- **Safe and away:** did you leave a Safe fight running? Did the away summary show what happened? Did a fight that wasn't Safe stopping when you left feel fair?
+- **Loadouts and "Same as last time":** did you save any? Did you miss being able to change gear mid-fight?
+- **The Domovoi:** when did he turn from Hopeless to Likely, and what made the difference (the poker, remedies, talents, bread and salt)? How many tries? Was the calmed moment and his gift worth it?
+- **Pacing:** the target is 45–75 minutes from the cellar opening to calming him. Where did you wait? Did Warding or Crafting lag behind?
+- **Did anything of combat show before the cellar opened?** It shouldn't.
 
 ## Feedback and screens
 - **Was the activity feed enough,** or did you miss toasts for anything? Did any toast feel like noise?
@@ -113,3 +125,4 @@ One short entry per round, oldest first.
 - **Playtest round 2:** questions on salt, the part checklist, place-named buttons, the explained words, the stage choice card, talent text, project blurbs, the Experiments tab and charms, the nudge hint, the rite as an event (banner, tending, the quality ladder), keepsakes kept on leaving, and the chapter end; the choice at the Circle, chances past 100%. "Still to find" and step questions dropped.
 - **Playtest round 3:** questions on tooltips and the chance breakdown, the omen card, charms by count and their two views, trust levels and scaled contracts, village projects, talents past 12 and the compact panel, the stage choice's descriptions, the quieter tend field, the cloth, and the page grid. The offline-cap example is gone.
 - **The Guide:** questions on read words turning plain and on using the Guide.
+- **The cellar:** a section on the cellar: the introduction, the first fight, crafting and the rolled options, weakness, being driven off, Safe fights while away, loadouts, the Domovoi and the cellar's pacing.
