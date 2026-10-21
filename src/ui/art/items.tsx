@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { ItemId } from "../../content/items";
 import { Icon, type IconProps } from "./icons";
+import { CELLAR_PATHS, type CellarGlyph } from "./cellarIcons";
 
 // One small woodcut glyph per item (docs/DESIGN.md, icons): the same 24px grid, 1.75 stroke and
 // currentColor as the rest of the set, so a chip colours it with the skill that makes it.
@@ -21,7 +22,20 @@ const sprig = (leaf: ReactNode) => (
   </>
 );
 
+/** A glyph from the handoff's cellar and gear sets. */
+const cellar = (g: CellarGlyph) => <g dangerouslySetInnerHTML={{ __html: CELLAR_PATHS[g] }} />;
+
 const GLYPHS: Record<ItemId, ReactNode> = {
+  // The cellar: remedies, leavings, Crafting's components
+  yarrow_poultice: cellar("poultice"),
+  red_thread_knot: cellar("threadKnot"),
+  lost_button: cellar("button"),
+  spun_thread: cellar("spunThread"),
+  tangled_lock: cellar("tangledLock"),
+  stitched_linen: cellar("linen"),
+  iron_blank: cellar("ironBlank"),
+  lantern_frame: cellar("lanternFrame"),
+  red_thread: cellar("redThread"),
   // Garden & forest
   nettle: sprig(<path d="M12 9 7.5 6.5 8.5 11 12 12M12 9l4.5-2.5-1 4.5L12 12M12 14l-4 -1 1 4 3 1M12 14l4-1-1 4-3 1" />),
   chamomile: (

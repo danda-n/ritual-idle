@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { ACTION_DEFS, type ActionId } from "../content/actions";
 import { NOTES } from "../content/notes";
 import { PAGES } from "../content/pages";
-import { SKILL_IDS } from "../content/skills";
+import { SKILL_DEFS, SKILL_IDS, type SkillId } from "../content/skills";
 import { deserialize, serialize } from "./save";
 import { advance, blockReason, startAction } from "./simulate";
 import { currentNote, isFeatureOpen, isRecipeKnown, isSkillUnlocked, pageFor, pagesRead, revealNotes } from "./progress";
@@ -21,8 +21,8 @@ function run(state: GameState, id: ActionId, times: number) {
 
 describe("content", () => {
   it("unlocks every Chapter 1 skill through the notes", () => {
-    const unlocked = new Set(NOTES.flatMap((n) => [...n.unlocks]));
-    for (const id of SKILL_IDS) expect(unlocked.has(id), id).toBe(true);
+    const unlocked = new Set<SkillId>(NOTES.flatMap((n) => [...n.unlocks]));
+    for (const id of SKILL_IDS.filter((k) => !SKILL_DEFS[k].opensWith)) expect(unlocked.has(id), id).toBe(true);
   });
 
   it("teaches each gated recipe on exactly one page", () => {
@@ -64,7 +64,7 @@ describe("the chapter's shape", () => {
     for (let i = 0; i < NOTES.length; i++) {
       const note = NOTES[i]!;
       if (!("goal" in note) || note.goal.kind !== "place") continue;
-      const open = new Set(NOTES.slice(0, i + 1).flatMap((n) => [...n.unlocks]));
+      const open = new Set<SkillId>(NOTES.slice(0, i + 1).flatMap((n) => [...n.unlocks]));
       for (const item of Object.keys(PART_DEFS[note.goal.part as PartId].items)) {
         if (item === "bread") continue;
         const makers = Object.values(ACTION_DEFS).filter((a) => a.outputs.some((o) => o.item === item));
@@ -142,7 +142,7 @@ describe("save migration", () => {
     delete v1.notesRevealed;
     delete v1.stats;
     const loaded = deserialize(JSON.stringify(v1));
-    for (const id of SKILL_IDS) expect(isSkillUnlocked(loaded, id)).toBe(true);
+    for (const id of SKILL_IDS.filter((k) => !SKILL_DEFS[k].opensWith)) expect(isSkillUnlocked(loaded, id)).toBe(true);
     expect(isRecipeKnown(loaded, "hearth_ward")).toBe(true);
   });
 

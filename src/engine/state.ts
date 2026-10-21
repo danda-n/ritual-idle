@@ -12,9 +12,10 @@ import type { UpgradeId } from "../content/upgrades";
 import type { KeepsakeId } from "../content/keepsakes";
 import type { CharmId } from "../content/charms";
 import { SKILL_IDS, type SkillId } from "../content/skills";
+import { BASE, type Affix, type FoeId, type GiftId, type PieceId, type RemedyId, type Slot } from "../content/combat";
 import { randomSeed } from "./rng";
 
-export const SAVE_VERSION = 11;
+export const SAVE_VERSION = 12;
 /**
  * The playtest reset number. Raise it by one to wipe every player's save on their next load
  * (after big changes, when old saves would give a misleading playtest). Saves from an older
@@ -112,6 +113,114 @@ export interface GameState {
   };
   /** Keepsakes chosen after a Fine or Resplendent rite (docs/CHAPTER1.md §8). */
   keepsakes: KeepsakeId[];
+  /** The cellar (docs/COMBAT.md): gear, Health, what you've learned of the foes. Opens after the Kindling. */
+  cellar: CellarState;
+  /** A fight under way: it takes the action slot, like the rite. */
+  fight: FightState | null;
+  /** A piece being made in the crafting window: it takes the action slot until it's done. */
+  job: JobState | null;
+}
+
+/** A piece you hold: one of each kind, with the random affixes you chose for it. */
+export interface Piece {
+  id: PieceId;
+  tier: number;
+  affixes: Affix[];
+}
+
+/** What you wear into a fight: a piece per slot, a remedy, a charm, and the healing rule. */
+export interface Gear {
+  worn: Partial<Record<Slot, PieceId>>;
+  remedy: RemedyId | null;
+  charm: CharmId | null;
+  /** The healing rule: use a remedy below this % of your Health. */
+  healAt: number;
+}
+
+export interface Loadout extends Gear {
+  name: string;
+}
+
+export interface CellarState {
+  /** Your Health now (it comes back while you do anything but fight). */
+  health: number;
+  pieces: Piece[];
+  gear: Gear;
+  /** Named loadouts you've saved. */
+  loadouts: Loadout[];
+  /** The gear last used against each foe ("Same as last time"). */
+  lastFor: Partial<Record<FoeId, Gear>>;
+  /** Foes beaten, for good (weakness shows after 10; the Bestiary). */
+  beaten: Partial<Record<FoeId, number>>;
+  /** Bosses calmed: their gifts are kept. */
+  gifts: GiftId[];
+  /** Options rolled for a piece's random affix, waiting for you to choose one. */
+  pending: PendingRoll | null;
+}
+
+export interface PendingRoll {
+  piece: PieceId;
+  /** "craft": choose one to finish the piece. "reforge": choose one, or keep the old affix. */
+  kind: "craft" | "reforge";
+  options: Affix[];
+}
+
+/** One line of the fight's log: the last few blows, numbered so the screen can animate new ones. */
+export interface BlowLine {
+  n: number;
+  who: "you" | "foe";
+  amount: number;
+  telling?: boolean;
+  /** The foe's special attack, by name ("the Press"). */
+  special?: string;
+  /** The set made this special miss. */
+  missed?: boolean;
+  /** A remedy used (by the healing rule), and how much it healed. */
+  heal?: number;
+  /** This blow put the foe down. */
+  down?: boolean;
+}
+
+export interface FightState {
+  foe: FoeId;
+  foeHealth: number;
+  /** Time until your next blow, and its next blow. */
+  youMs: number;
+  foeMs: number;
+  /** Its blows against the current foe so far (special attacks come on a beat). */
+  foeBlows: number;
+  /** The set's "first special attack misses" is used up for this foe. */
+  specialSpent: boolean;
+  /** Remedies left in the Belt this fight. */
+  belt: number;
+  /** Foes beaten in this fight. */
+  beaten: number;
+  /** Ready when you began: Safe fights keep going while you're away; others stop when you leave. */
+  safe: boolean;
+  /** What was running before the fight, to go back to when it ends. */
+  returnTo: ActionId | null;
+  log: BlowLine[];
+  seq: number;
+}
+
+export interface JobState {
+  piece: PieceId;
+  /** How far through (0–1). */
+  progress: number;
+  returnTo: ActionId | null;
+}
+
+export function newCellar(): CellarState {
+  return {
+    health: BASE.health,
+    pieces: [],
+    gear: { worn: {}, remedy: null, charm: null, healAt: BASE.healAt },
+    loadouts: [],
+    lastFor: {},
+    beaten: {},
+    gifts: [],
+    pending: null,
+  };
 }
 
 export interface Attempt {
@@ -209,6 +318,9 @@ export function newGame(now: number = Date.now(), seed: number = randomSeed()): 
     kept: { skills: [], features: [] },
     rite: { performing: null, completed: null },
     keepsakes: [],
+    cellar: newCellar(),
+    fight: null,
+    job: null,
     followers: [],
     stats: { completed: {}, requestsFilled: 0, omensSeen: 0, curiosRead: 0 },
   };

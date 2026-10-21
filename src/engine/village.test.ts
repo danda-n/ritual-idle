@@ -1,3 +1,4 @@
+import type { SkillId } from "../content/skills";
 import { describe, expect, it } from "vitest";
 import { NOTES } from "../content/notes";
 import { ACTION_DEFS } from "../content/actions";
@@ -114,7 +115,7 @@ describe("village board", () => {
     expect("goal" in note && note.goal).toEqual({ kind: "place", part: "offering" });
     expect(PART_DEFS.offering.items.bread).toBeGreaterThan(0);
     // Every request the board opens with can be made from skills open by then.
-    const open = new Set(NOTES.slice(0, VILLAGE_NOTE + 1).flatMap((n) => [...n.unlocks]));
+    const open = new Set<SkillId>(NOTES.slice(0, VILLAGE_NOTE + 1).flatMap((n) => [...n.unlocks]));
     for (const r of Object.values(REQUESTS).filter((r) => r.minLevel === 0)) {
       for (const item of Object.keys(r.needs)) expect(Object.values(ACTION_DEFS).some((a) => open.has(a.skill) && a.outputs.some((o) => o.item === item)), item).toBe(true);
     }

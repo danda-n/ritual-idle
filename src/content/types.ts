@@ -1,7 +1,7 @@
 // Shapes of game content. Content itself lives in the sibling data files,
 // so design changes (numbers, names, recipes) never need engine changes.
 
-export type SkillCategory = "gathering" | "crafting" | "knowledge" | "ritual" | "support";
+export type SkillCategory = "gathering" | "making" | "knowledge" | "ritual" | "support" | "combat";
 
 export interface SkillDef {
   name: string;
@@ -12,6 +12,8 @@ export interface SkillDef {
   blurb: string;
   /** A little more, for the choice at the Circle: what you do in it, what it makes, what it's for later. */
   about: string;
+  /** A place whose opening brings the skill (Warding and Crafting come with the cellar), instead of a note. */
+  opensWith?: Feature;
 }
 
 export interface ItemDef {
@@ -40,6 +42,8 @@ export interface ActionDef<S extends string, I extends string> {
   outputs: OutputDef<I>[];
   /** A buff applied each time the action completes (refreshes, never stacks). */
   buff?: string;
+  /** A place that has to be open before the recipe exists for the player (the yarrow poultice waits for the cellar). */
+  requires?: Feature;
 }
 
 export type GoalDef<A extends string> =
@@ -50,7 +54,7 @@ export type GoalDef<A extends string> =
   | { kind: "rite" };
 
 /** Places (tabs) that open during the chapter, plus experiments at the Circle. The House is always open. */
-export type Feature = "grimoire" | "village" | "circle" | "experiments";
+export type Feature = "grimoire" | "village" | "circle" | "experiments" | "cellar";
 
 /** A small step inside a stage. Checked against lifetime counts and levels, so it never un-completes. */
 export type StepGoal<S extends string, A extends string> =
@@ -125,7 +129,11 @@ export type UpgradeEffect =
   /** More contracts on the village board at once. */
   | { kind: "board_slots"; extra: number }
   /** New provisions in the village shop. */
-  | { kind: "shop"; entries: string[] };
+  | { kind: "shop"; entries: string[] }
+  /** One more option to choose from when a random affix rolls (the Workbench). */
+  | { kind: "roll_options"; extra: number }
+  /** More named loadouts (the Warded cellar door). */
+  | { kind: "loadout_slots"; extra: number };
 
 export interface ShopEntry<I extends string> {
   name: string;

@@ -46,7 +46,33 @@ export type TalentEffect =
   /** Buffs from this skill's actions last longer. */
   | { kind: "buffLength"; multiplier: number }
   /** Omens turn up more often, from any work. */
-  | { kind: "omenChance"; multiplier: number };
+  | { kind: "omenChance"; multiplier: number }
+  // Warding (docs/COMBAT.md §7): fight stats. Loot chances use "find".
+  /** Your Strike, ×(1 + bonus). */
+  | { kind: "strike"; bonus: number }
+  /** Your Ward, ×(1 + bonus). */
+  | { kind: "ward"; bonus: number }
+  /** More Health. */
+  | { kind: "health"; amount: number }
+  /** More of your Health comes back between foes (0.1 more = 10% of your Health). */
+  | { kind: "breath"; bonus: number }
+  /** Remedies heal more (0.4 = +40%). */
+  | { kind: "remedyHeal"; bonus: number }
+  /** A foe's weakness shows after this many are beaten (instead of 10). */
+  | { kind: "weaknessAfter"; n: number }
+  /** The right tag multiplies your blows by this (instead of ×1.5). */
+  | { kind: "counter"; mult: number }
+  /** More of your blows are telling blows (percentage points: 0.07 = 5% → 12%). */
+  | { kind: "telling"; chance: number }
+  // Crafting (docs/COMBAT.md §4)
+  /** One more option to choose from when a random affix rolls. */
+  | { kind: "rollOptions"; extra: number }
+  /** Random affixes roll in the top half of their range. */
+  | { kind: "rollTop" }
+  /** A chance that a reforge uses no components. */
+  | { kind: "reforgeFree"; chance: number }
+  /** Reforging shows more options. */
+  | { kind: "reforgeOptions"; extra: number };
 
 export interface TalentDef {
   name: string;
@@ -217,7 +243,7 @@ export const TALENTS: Record<SkillId, Record<TalentLevel, TalentPair>> = {
       b: { name: "Herb lore", effects: [{ kind: "xp", bonus: 0.35 }] },
     },
     24: {
-      a: { name: "Gentle binding", effects: [{ kind: "save", actions: ["smudge_bundle", "mugwort_incense"], chance: 0.2 }] },
+      a: { name: "Gentle binding", effects: [{ kind: "save", actions: ["smudge_bundle", "mugwort_incense", "yarrow_poultice"], chance: 0.2 }] },
       b: { name: "Herbs for the attic", effects: [{ kind: "speed", bonus: 0.2, skill: "scholarship" }] },
     },
     27: {
@@ -311,6 +337,92 @@ export const TALENTS: Record<SkillId, Record<TalentLevel, TalentPair>> = {
     30: {
       a: { name: "Master of rites", effects: [{ kind: "speed", bonus: 0.35 }] },
       b: { name: "High devotion", effects: [{ kind: "xp", bonus: 0.5 }] },
+    },
+  },
+  // Warding: pairs for the cellar's levels (3–15) from docs/COMBAT.md §7; 18–30 are drafts for later.
+  warding: {
+    3: {
+      a: { name: "Steady hand", effects: [{ kind: "strike", bonus: 0.15 }] },
+      b: { name: "Sure line", effects: [{ kind: "ward", bonus: 0.15 }] },
+    },
+    6: {
+      a: { name: "Second wind", effects: [{ kind: "breath", bonus: 0.1 }] },
+      b: { name: "Hot blood", effects: [{ kind: "strike", bonus: 0.25 }, { kind: "ward", bonus: -0.1 }] },
+    },
+    9: {
+      a: { name: "Herb-wise", effects: [{ kind: "remedyHeal", bonus: 0.4 }] },
+      b: { name: "Hardy", effects: [{ kind: "health", amount: 20 }] },
+    },
+    12: {
+      a: { name: "Grave-sense", effects: [{ kind: "weaknessAfter", n: 3 }] },
+      b: { name: "Counter-craft", effects: [{ kind: "counter", mult: 1.75 }] },
+    },
+    15: {
+      a: { name: "Keen strike", effects: [{ kind: "telling", chance: 0.07 }] },
+      b: { name: "Deep pockets", effects: [{ kind: "find", multiplier: 1.5 }] },
+    },
+    18: {
+      a: { name: "Iron nerve", effects: [{ kind: "ward", bonus: 0.25 }] },
+      b: { name: "Quick blows", effects: [{ kind: "speed", bonus: 0.15 }] },
+    },
+    21: {
+      a: { name: "Old wounds", effects: [{ kind: "health", amount: 35 }] },
+      b: { name: "Spirit-lore", effects: [{ kind: "xp", bonus: 0.3 }] },
+    },
+    24: {
+      a: { name: "Long breath", effects: [{ kind: "breath", bonus: 0.15 }] },
+      b: { name: "Heavy hand", effects: [{ kind: "strike", bonus: 0.3 }] },
+    },
+    27: {
+      a: { name: "Poultice-wise", effects: [{ kind: "remedyHeal", bonus: 0.6 }] },
+      b: { name: "Sharp eye", effects: [{ kind: "telling", chance: 0.08 }] },
+    },
+    30: {
+      a: { name: "Warden", effects: [{ kind: "ward", bonus: 0.35 }, { kind: "health", amount: 25 }] },
+      b: { name: "Scourge", effects: [{ kind: "counter", mult: 2 }] },
+    },
+  },
+  // Crafting: 3–9 from docs/COMBAT.md §4; the rest are drafts.
+  crafting: {
+    3: {
+      a: { name: "Steady hands", effects: [{ kind: "double", chance: 0.2 }] },
+      b: { name: "Quick hands", effects: [{ kind: "speed", bonus: 0.2 }] },
+    },
+    6: {
+      a: { name: "Keen eye", effects: [{ kind: "rollOptions", extra: 1 }] },
+      b: { name: "Good grain", effects: [{ kind: "rollTop" }] },
+    },
+    9: {
+      a: { name: "Frugal", effects: [{ kind: "reforgeFree", chance: 0.25 }] },
+      b: { name: "Second look", effects: [{ kind: "reforgeOptions", extra: 1 }] },
+    },
+    12: {
+      a: { name: "Linen-wise", effects: [{ kind: "bulk", actions: ["stitched_linen"], slower: 0.5 }] },
+      b: { name: "Smith's fire", effects: [{ kind: "speed", bonus: 0.25, skill: "warding" }] },
+    },
+    15: {
+      a: { name: "Thrifty blanks", effects: [{ kind: "thrift", action: "iron_blank", item: "iron_nail", less: 1 }] },
+      b: { name: "Craft-learned", effects: [{ kind: "xp", bonus: 0.35 }] },
+    },
+    18: {
+      a: { name: "Sure hands", effects: [{ kind: "double", chance: 0.3 }] },
+      b: { name: "Fast hands", effects: [{ kind: "speed", bonus: 0.3 }] },
+    },
+    21: {
+      a: { name: "Spare thread", effects: [{ kind: "save", actions: ["red_thread", "red_thread_knot"], chance: 0.3 }] },
+      b: { name: "Eye for it", effects: [{ kind: "rollOptions", extra: 1 }] },
+    },
+    24: {
+      a: { name: "Clean glass", effects: [{ kind: "thrift", action: "lantern_frame", item: "glass", less: 1 }] },
+      b: { name: "Fine grain", effects: [{ kind: "rollTop" }] },
+    },
+    27: {
+      a: { name: "Mender", effects: [{ kind: "reforgeFree", chance: 0.4 }] },
+      b: { name: "Many looks", effects: [{ kind: "reforgeOptions", extra: 2 }] },
+    },
+    30: {
+      a: { name: "Master's bench", effects: [{ kind: "speed", bonus: 0.4 }, { kind: "xp", bonus: 0.2 }] },
+      b: { name: "Every stitch", effects: [{ kind: "extra", chance: 0.3 }] },
     },
   },
 };

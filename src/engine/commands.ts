@@ -6,7 +6,7 @@ import { blockReason, startAction } from "./simulate";
 import { SHOP, type ShopId } from "../content/shop";
 import { UPGRADE_DEFS, type UpgradeId } from "../content/upgrades";
 import { ITEM_DEFS, type ItemId } from "../content/items";
-import { CHARM_DEFS, CHARMS, type CharmId } from "../content/charms";
+import { CHARM_DEFS, type CharmId } from "../content/charms";
 import { OMENS, type OmenId } from "../content/omens";
 import { addInsight, buyHintInto, deduce, GRIMOIRE_IDS, glowCount, hintCost, isDiscovered, isSilhouetteVisible, markDiscovered, matches, progressOf, type Fragment, type HintKind } from "./grimoire";
 import { requestCoin, spendCharms, trustMultiplier } from "./modifiers";
@@ -24,6 +24,10 @@ import { enterNextStage, grantXp, isFeatureOpen, middleParts, MIDDLE_AT, revealN
 import type { GameState, Settings } from "./state";
 import { xpForLevel } from "./xp";
 import { deliverable, emptySlot, offerOf, stillNeeded } from "./village";
+import { BASE, PIECE_DEFS, REMEDIES, SLOT_DEFS, type FoeId, type PieceId, type RemedyId, type Slot } from "../content/combat";
+import { canCraftPiece, canFight, cancelPiece, combatStats, pieceOf, rollAffixOptions, startFight, startPiece } from "./combat";
+import { loadoutSlots, rollOptionCount, talents } from "./modifiers";
+import { nextRandom } from "./rng";
 
 // Player commands. Each is pure: it returns a new state, or says why it can't be done.
 // The sim clock for timers is `state.lastTickAt` (the UI ticks it to real time).
@@ -242,7 +246,9 @@ function consolation(state: GameState): void {
 /** Spend insight on a hint: a hidden recipe's categories, one more ingredient named, or a secret's next clue. */
 /** Why a charm can't be bound now, or null if it can: its recipe must be discovered, its bind cost held. */
 export function canBindCharm(state: GameState, charm: CharmId): string | null {
-  if (!isDiscovered(state, CHARMS[charm].from)) return "Discover its recipe first.";
+  const from = CHARM_DEFS[charm].from;
+  if (!from) return "It isn't bound: it's made.";
+  if (!isDiscovered(state, from)) return "Discover its recipe first.";
   const short = (Object.entries(CHARM_DEFS[charm].cost) as [ItemId, number][]).find(([i, n]) => (state.inventory[i] ?? 0) < n);
   return short ? `Needs ${short[1]} ${ITEM_DEFS[short[0]].name.toLowerCase()}.` : null;
 }
@@ -411,4 +417,191 @@ export function tendRite(input: GameState): Result {
 export function dismissEnding(input: GameState): Result {
   if (!input.rite.completed) return no("Not yet.");
   return ok({ ...input, rite: { ...input.rite, completed: { ...input.rite.completed, endingSeen: true } } });
+}
+
+// ---------- The cellar (docs/COMBAT.md) ----------
+
+/** Gear can't change while a fight runs: stop, change it, and begin again. */
+function gearLocked(state: GameState): string | null {
+  if (!isFeatureOpen(state, "cellar")) return "The cellar isn't open yet.";
+  return state.fight ? "Stop the fight to change your gear." : null;
+}
+
+/** Begin fighting a foe with the gear you're wearing. It runs in the action slot until you stop or you're driven off. */
+export function beginFight(input: GameState, foe: FoeId): Result {
+  const reason = canFight(input, foe);
+  if (reason) return no(reason);
+  const state = structuredClone(input);
+  if (state.job) cancelPiece(state);
+  startFight(state, foe);
+  return ok(state);
+}
+
+/** Stop fighting. Everything won so far is kept. */
+export function stopFight(input: GameState): Result {
+  if (!input.fight) return no("No fight to stop.");
+  return ok({ ...input, fight: null });
+}
+
+/** Put a piece you hold on (or take a slot's piece off, with null). */
+export function wear(input: GameState, slot: Slot, piece: PieceId | null): Result {
+  const locked = gearLocked(input);
+  if (locked) return no(locked);
+  if (piece && !pieceOf(input, piece)) return no("You don't have that piece.");
+  if (piece && PIECE_DEFS[piece].slot !== slot) return no(`That isn't for the ${SLOT_DEFS[slot].name}.`);
+  const state = structuredClone(input);
+  if (piece) state.cellar.gear.worn[slot] = piece;
+  else delete state.cellar.gear.worn[slot];
+  return ok(state);
+}
+
+/** Choose the remedy the Belt carries (or none). */
+export function setRemedy(input: GameState, remedy: RemedyId | null): Result {
+  const locked = gearLocked(input);
+  if (locked) return no(locked);
+  const state = structuredClone(input);
+  state.cellar.gear.remedy = remedy;
+  return ok(state);
+}
+
+/** Choose the charm you take into a fight (or none). One is used when none of it is on. */
+export function setCharm(input: GameState, charm: CharmId | null): Result {
+  const locked = gearLocked(input);
+  if (locked) return no(locked);
+  const state = structuredClone(input);
+  state.cellar.gear.charm = charm;
+  return ok(state);
+}
+
+/** The healing rule's line: use a remedy below this % of your Health (10–80, in steps of 5). */
+export function setHealAt(input: GameState, percent: number): Result {
+  const locked = gearLocked(input);
+  if (locked) return no(locked);
+  const state = structuredClone(input);
+  state.cellar.gear.healAt = Math.min(BASE.healAtMax, Math.max(BASE.healAtMin, Math.round(percent / 5) * 5));
+  return ok(state);
+}
+
+/** Put on the gear last used against this foe ("Same as last time"). */
+export function wearLastFor(input: GameState, foe: FoeId): Result {
+  const locked = gearLocked(input);
+  if (locked) return no(locked);
+  const last = input.cellar.lastFor[foe];
+  if (!last) return no("You haven't fought it yet.");
+  const state = structuredClone(input);
+  state.cellar.gear = structuredClone(last);
+  return ok(state);
+}
+
+/** Save the gear you're wearing as a named loadout, in a free place or over one (by index). */
+export function saveLoadout(input: GameState, index: number, name: string): Result {
+  if (!isFeatureOpen(input, "cellar")) return no("The cellar isn't open yet.");
+  if (index < 0 || index >= loadoutSlots(input)) return no("No room for another loadout.");
+  if (index > input.cellar.loadouts.length) return no("Save into the next free place.");
+  const state = structuredClone(input);
+  state.cellar.loadouts[index] = { name: name.trim() || `Loadout ${index + 1}`, ...structuredClone(state.cellar.gear) };
+  return ok(state);
+}
+
+/** Put on a saved loadout. Pieces you no longer hold are left off. */
+export function wearLoadout(input: GameState, index: number): Result {
+  const locked = gearLocked(input);
+  if (locked) return no(locked);
+  const l = input.cellar.loadouts[index];
+  if (!l) return no("No loadout there.");
+  const state = structuredClone(input);
+  const { name: _name, ...gear } = structuredClone(l);
+  state.cellar.gear = gear;
+  return ok(state);
+}
+
+export function deleteLoadout(input: GameState, index: number): Result {
+  if (!input.cellar.loadouts[index]) return no("No loadout there.");
+  const state = structuredClone(input);
+  state.cellar.loadouts.splice(index, 1);
+  return ok(state);
+}
+
+/** Eat a remedy out of a fight: its Health comes back at once. */
+export function useRemedy(input: GameState, remedy: RemedyId): Result {
+  if (!isFeatureOpen(input, "cellar")) return no("The cellar isn't open yet.");
+  if (input.fight) return no("In a fight, the healing rule uses remedies.");
+  if ((input.inventory[remedy] ?? 0) < 1) return no(`No ${ITEM_DEFS[remedy].name.toLowerCase()} to use.`);
+  const max = combatStats(input).maxHealth;
+  if (input.cellar.health >= max) return no("Your Health is full.");
+  const state = structuredClone(input);
+  state.inventory[remedy] = state.inventory[remedy]! - 1;
+  state.cellar.health = Math.min(max, state.cellar.health + REMEDIES[remedy].heals * combatStats(state).remedyHeal);
+  return ok(state);
+}
+
+/** Make a piece in the crafting window: it takes the action slot, then its bonus rolls for you to choose. */
+export function craftPiece(input: GameState, piece: PieceId): Result {
+  const reason = canCraftPiece(input, piece);
+  if (reason) return no(reason);
+  const state = structuredClone(input);
+  startPiece(state, piece);
+  return ok(state);
+}
+
+/** Stop making a piece: its materials come back. */
+export function cancelCraft(input: GameState): Result {
+  if (!input.job) return no("Nothing is being made.");
+  const state = structuredClone(input);
+  cancelPiece(state);
+  return ok(state);
+}
+
+/** Why a piece can't be reforged now, or null if it can. */
+export function canReforge(state: GameState, piece: PieceId): string | null {
+  if (!pieceOf(state, piece)) return "You don't have that piece.";
+  if (state.cellar.pending) return "Choose the last roll first.";
+  const short = (Object.entries(PIECE_DEFS[piece].reforge) as [ItemId, number][]).find(([i, n]) => (state.inventory[i] ?? 0) < n);
+  return short ? `Needs ${short[1]} ${ITEM_DEFS[short[0]].name.toLowerCase()}.` : null;
+}
+
+/** Re-roll a piece's random affix: new options to choose from, and you may keep the old one. At once. */
+export function reforge(input: GameState, piece: PieceId): Result {
+  const reason = canReforge(input, piece);
+  if (reason) return no(reason);
+  const state = structuredClone(input);
+  const roll = () => {
+    const [v, seed] = nextRandom(state.rngSeed);
+    state.rngSeed = seed;
+    return v;
+  };
+  // Frugal: a chance it uses no components.
+  const free = talents(state, "reforgeFree", "crafting").reduce((n, t) => n + t.chance, 0);
+  if (!(free > 0 && roll() < free)) {
+    for (const [i, n] of Object.entries(PIECE_DEFS[piece].reforge) as [ItemId, number][]) state.inventory[i] = (state.inventory[i] ?? 0) - n;
+  }
+  state.cellar.pending = { piece, kind: "reforge", options: rollAffixOptions(state, piece, rollOptionCount(state, true), roll) };
+  return ok(state);
+}
+
+/** Choose one of the rolled options (index), or keep the old affix on a reforge (null). */
+export function chooseAffix(input: GameState, index: number | null): Result {
+  const p = input.cellar.pending;
+  if (!p) return no("Nothing to choose.");
+  if (index === null && p.kind === "craft") return no("Choose one to finish the piece.");
+  if (index !== null && !p.options[index]) return no("No such option.");
+  const state = structuredClone(input);
+  const pick = index === null ? null : p.options[index]!;
+  if (p.kind === "craft") {
+    state.cellar.pieces.push({ id: p.piece, tier: 1, affixes: [pick!] });
+    // A new piece goes on at once if its slot is empty.
+    const slot = PIECE_DEFS[p.piece].slot;
+    if (!state.cellar.gear.worn[slot] && !state.fight) state.cellar.gear.worn[slot] = p.piece;
+  } else if (pick) {
+    const held = state.cellar.pieces.find((x) => x.id === p.piece)!;
+    held.affixes = [pick];
+  }
+  state.cellar.pending = null;
+  return ok(state);
+}
+
+/** Upgrading a piece to the next tier waits for Chapter II's materials. */
+export function upgradePiece(input: GameState, piece: PieceId): Result {
+  if (!pieceOf(input, piece)) return no("You don't have that piece.");
+  return no("Tier 2 needs Chapter II's materials.");
 }

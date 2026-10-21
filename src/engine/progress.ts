@@ -2,7 +2,7 @@ import { ACTION_DEFS, type ActionId } from "../content/actions";
 import { EXPERIMENTS_NOTE, NOTES } from "../content/notes";
 import type { PartId } from "../content/rite";
 import { PAGES } from "../content/pages";
-import type { SkillId } from "../content/skills";
+import { SKILL_DEFS, type SkillId } from "../content/skills";
 import type { Feature, GoalDef, StepDef } from "../content/types";
 import { levelForXp, xpForLevel } from "./xp";
 import type { GameState } from "./state";
@@ -80,12 +80,16 @@ export function goalProgress(state: GameState, note: Note): { done: number; targ
 
 export function isFeatureOpen(state: GameState, feature: Feature): boolean {
   if (feature === "experiments") return state.experimentsOpen;
+  // The cellar opens when the Kindling is done (docs/COMBAT.md §9).
+  if (feature === "cellar") return state.rite.completed !== null;
   if (state.kept.features.includes(feature)) return true;
   return revealedNotes(state).some((n) => "opens" in n && (n.opens as readonly Feature[]).includes(feature));
 }
 
 export function isSkillUnlocked(state: GameState, skill: SkillId): boolean {
   if (state.kept.skills.includes(skill)) return true;
+  const opensWith = SKILL_DEFS[skill].opensWith;
+  if (opensWith) return isFeatureOpen(state, opensWith);
   return revealedNotes(state).some((n) => (n.unlocks as readonly SkillId[]).includes(skill));
 }
 
@@ -99,6 +103,8 @@ export function pageFor(id: ActionId): Page | null {
 }
 
 export function isRecipeKnown(state: GameState, id: ActionId): boolean {
+  const requires = ACTION_DEFS[id].requires;
+  if (requires && !isFeatureOpen(state, requires)) return false;
   const page = pageFor(id);
   return page === null || pagesRead(state).includes(page);
 }

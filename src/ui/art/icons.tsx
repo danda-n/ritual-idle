@@ -1,6 +1,7 @@
 import type { ReactNode, SVGProps } from "react";
 import type { ItemCategory } from "../../content/items";
 import type { SkillId } from "../../content/skills";
+import { CellarIcon } from "./cellarIcons";
 
 // Hand-drawn icon set: 24px grid, 1.75 stroke, round joins, currentColor.
 // Woodcut feel comes from chunky shapes and a few solid "ink" fills.
@@ -147,6 +148,8 @@ export const SKILL_ICONS: Record<SkillId, (p: IconProps) => ReactNode> = {
   sigilcraft: SigilIcon,
   scholarship: BookIcon,
   ritualism: CircleRiteIcon,
+  warding: (p) => <CellarIcon glyph="ward" {...p} />,
+  crafting: (p) => <CellarIcon glyph="anvil" {...p} />,
 };
 
 export function SkillIcon({ skill, ...p }: IconProps & { skill: SkillId }) {
@@ -163,4 +166,6 @@ export const CATEGORY_ICONS: Record<ItemCategory, (p: IconProps) => ReactNode> =
   rites: CircleRiteIcon,
   charms: MoonIcon,
   heirlooms: CircleRiteIcon,
+  leavings: (p) => <CellarIcon glyph="button" {...p} />,
+  components: (p) => <CellarIcon glyph="linen" {...p} />,
 };

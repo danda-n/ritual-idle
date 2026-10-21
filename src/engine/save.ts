@@ -16,6 +16,7 @@ import { UPGRADE_IDS, UPGRADES, type UpgradeId } from "../content/upgrades";
 import type { Feature } from "../content/types";
 import { SAVE_EPOCH, SAVE_VERSION, newGame, type GameState, type RecipeProgress } from "./state";
 import { stepById } from "./progress";
+import { FOES, PIECES } from "../content/combat";
 
 const STORAGE_KEY = "ritual-idle.save";
 
@@ -62,6 +63,15 @@ export function deserialize(json: string): GameState {
     buffs: (data.buffs ?? []).filter((b) => b.id in BUFFS),
     // Contracts: two slots now, each remembering what's been delivered.
     board: (data.board ?? []).map((b) => ({ ...b, delivered: { ...b.delivered } })),
+    // v12: the cellar (docs/COMBAT.md). Older saves start it empty; a finished rite opens it on load.
+    cellar: {
+      ...base.cellar,
+      ...data.cellar,
+      gear: { ...base.cellar.gear, ...data.cellar?.gear },
+      pieces: (data.cellar?.pieces ?? []).filter((p) => p.id in PIECES),
+    },
+    fight: data.fight && data.fight.foe in FOES ? data.fight : null,
+    job: data.job && data.job.piece in PIECES ? data.job : null,
     version: SAVE_VERSION,
   };
   // Fields that no longer exist (the offline cap is now derived from upgrades).

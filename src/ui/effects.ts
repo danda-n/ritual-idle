@@ -15,7 +15,7 @@ import { SHOP, type ShopId } from "../content/shop";
 // drift from the real numbers. Lead with these; flavour lives in names, art, hover titles and the
 // Grimoire journal.
 
-const pct = (n: number) => `+${Math.round(n * 100)}%`;
+const pct = (n: number) => `${n < 0 ? "−" : "+"}${Math.round(Math.abs(n) * 100)}%`;
 const skillName = (s: string) => SKILLS[s as SkillId]?.name ?? s;
 
 /** What a buff does, in plain words. For a skill blessing, `skill` names the blessed skill. */
@@ -34,7 +34,7 @@ export function buffEffects(id: BuffId, skill?: SkillId): string[] {
   for (const [item, mult] of Object.entries(def.chanceMultiplier ?? {}) as [ItemId, number][]) out.push(`${ITEMS[item].name}s ×${mult} as likely`);
   if (def.findMultiplier) out.push(`Chance finds ×${def.findMultiplier}, all skills`);
   if (def.xpBonus) out.push(`${pct(def.xpBonus)} XP, all skills`);
-  if (def.saveChance) out.push(`${Math.round(def.saveChance * 100)}% of crafts use no inputs`);
+  if (def.saveChance) out.push(`${Math.round(def.saveChance * 100)}% of actions use no inputs`);
   if (def.coinBonus) out.push(`Contracts pay ${pct(def.coinBonus)} coin`);
   return out;
 }
@@ -59,6 +59,10 @@ export function upgradeEffect(effect: UpgradeEffect): string {
       return `+${effect.extra} contract on the village board`;
     case "shop":
       return `The shop sells ${effect.entries.map((e) => SHOP[e as ShopId].item).map((i) => ITEMS[i as ItemId].name.toLowerCase()).join(", ")}`;
+    case "roll_options":
+      return `+${effect.extra} option to choose from when a piece's bonus rolls`;
+    case "loadout_slots":
+      return `+${effect.extra} saved loadout`;
   }
 }
 
@@ -111,6 +115,7 @@ export function talentEffect(effect: TalentEffect, skill: SkillId): string {
       return `${pct(effect.bonus)} ${skillName(effect.skill ?? skill)} XP`;
     case "find":
       // Just the multiplier: the recipe rows show what it does to each chance.
+      if (skill === "warding") return `Loot chances ×${effect.multiplier}`;
       return effect.item ? `${ITEMS[effect.item].name} ×${effect.multiplier} as likely` : `${own} chance finds ×${effect.multiplier}`;
     case "bulk": {
       // Only the main output doubles; chance finds still roll once.
@@ -134,7 +139,7 @@ export function talentEffect(effect: TalentEffect, skill: SkillId): string {
     case "save": {
       const crafts = Object.entries(ACTION_DEFS).filter(([, a]) => a.skill === skill && Object.keys(a.inputs).length > 0).map(([id]) => id);
       const all = crafts.every((id) => effect.actions.includes(id as ActionId));
-      return all ? `${round(effect.chance)} of ${own} crafts use no inputs` : `${list(effect.actions.map(actionName))}: ${round(effect.chance)} chance to use no inputs`;
+      return all ? `${round(effect.chance)} of ${own} actions use no inputs` : `${list(effect.actions.map(actionName))}: ${round(effect.chance)} chance to use no inputs`;
     }
     case "byproduct":
       return `${list(effect.actions.map(actionName))}: ${round(effect.chance)} chance of +1 ${ITEMS[effect.item].name.toLowerCase()}`;
@@ -147,6 +152,30 @@ export function talentEffect(effect: TalentEffect, skill: SkillId): string {
     }
     case "omenChance":
       return `Omens ×${effect.multiplier} as likely, from any work`;
+    case "strike":
+      return `Strike ${pct(effect.bonus)}`;
+    case "ward":
+      return `Ward ${pct(effect.bonus)}`;
+    case "health":
+      return `+${effect.amount} Health`;
+    case "breath":
+      return `Catch your breath: +${Math.round((0.1 + effect.bonus) * 100)}% Health between foes (not +10%)`;
+    case "remedyHeal":
+      return `Remedies heal ${pct(effect.bonus)}`;
+    case "weaknessAfter":
+      return `A foe's weakness shows after ${effect.n} beaten (not 10)`;
+    case "counter":
+      return `The right tag: your blows ×${effect.mult} (not ×1.5)`;
+    case "telling":
+      return `Telling blows +${round(effect.chance)}`;
+    case "rollOptions":
+      return `+${effect.extra} option to choose from when a bonus rolls`;
+    case "rollTop":
+      return "Bonuses roll in the top half of their range";
+    case "reforgeFree":
+      return `${round(effect.chance)} of reforges use no components`;
+    case "reforgeOptions":
+      return `Reforging shows +${effect.extra} option${effect.extra === 1 ? "" : "s"}`;
   }
 }
 
@@ -164,7 +193,8 @@ export function charmEffects(id: CharmId): string[] {
   const out: string[] = [];
   if (e.findMultiplier) out.push(`Chance finds ×${e.findMultiplier}, all skills`);
   if (e.xpBonus) out.push(`${pct(e.xpBonus)} XP, all skills`);
-  if (e.saveChance) out.push(`${Math.round(e.saveChance * 100)}% of crafts use no inputs`);
+  if (e.saveChance) out.push(`${Math.round(e.saveChance * 100)}% of actions use no inputs`);
+  if (e.specialMult) out.push(`Special attacks hit ${e.specialMult === 0.5 ? "half as hard" : `×${e.specialMult}`}`);
   if (e.coinBonus && e.trustBonus && e.coinBonus === e.trustBonus) out.push(`Contracts pay ${pct(e.coinBonus)} coin and trust`);
   else {
     if (e.coinBonus) out.push(`Contracts pay ${pct(e.coinBonus)} coin`);
@@ -175,6 +205,9 @@ export function charmEffects(id: CharmId): string[] {
 
 /** How long a charm lasts: "next 100 actions", "next 3 contracts". */
 export function charmLasts(id: CharmId, left: number = CHARM_DEFS[id].uses): string {
-  const unit = { action: "action", craft: "craft", contract: "contract" }[CHARM_DEFS[id].per];
+  // A "craft" is an action that uses inputs (Crafting is a skill, so the word isn't used for it).
+  const per = CHARM_DEFS[id].per;
+  if (per === "craft") return `${left} action${left === 1 ? "" : "s"} that use${left === 1 ? "s" : ""} inputs`;
+  const unit = { action: "action", contract: "contract", foe: "foe" }[per];
   return `${left} ${unit}${left === 1 ? "" : "s"}`;
 }

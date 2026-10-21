@@ -67,7 +67,7 @@ describe("saves", () => {
       }
       const loaded = deserialize(JSON.stringify(old));
       expect(loaded.version).toBe(SAVE_VERSION);
-      expect(SAVE_VERSION).toBe(11);
+      expect(SAVE_VERSION).toBe(12);
       expect(() => catchUp(loaded, T0 + HOUR)).not.toThrow();
     }
   });

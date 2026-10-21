@@ -9,6 +9,7 @@ import { CandleIcon, HouseIcon, LanternIcon, LeafIcon, MoonIcon } from "../art/i
 import { upgradeEffect } from "../effects";
 import { ItemChip } from "./ItemLookup";
 import { ItemIcon } from "../art/items";
+import { CellarIcon } from "../art/cellarIcons";
 import { Term } from "./Term";
 
 type Act = (c: (s: GameState) => Result) => unknown;
@@ -23,6 +24,8 @@ const ICONS: Record<UpgradeId, (p: { size?: number }) => ReactNode> = {
   herb_stall: LeafIcon,
   wax_trader: CandleIcon,
   carved_shelf: MoonIcon,
+  workbench: (p) => <CellarIcon glyph="anvil" {...p} />,
+  cellar_door: (p) => <CellarIcon glyph="lock" {...p} />,
 };
 
 /**

@@ -1,3 +1,4 @@
+import type { SkillId } from "../content/skills";
 import { describe, expect, it } from "vitest";
 import { ACTION_DEFS } from "../content/actions";
 import { NOTES } from "../content/notes";
@@ -80,7 +81,7 @@ describe("stage steps", () => {
       if (!("goal" in note) || note.goal.kind !== "place" || !("steps" in note)) continue;
       const steps = note.steps as readonly Step[];
       expect(steps[steps.length - 1]!.goal).toEqual({ kind: "place", part: note.goal.part });
-      const open = new Set(NOTES.slice(0, i + 1).flatMap((n) => [...n.unlocks]));
+      const open = new Set<SkillId>(NOTES.slice(0, i + 1).flatMap((n) => [...n.unlocks]));
       for (const st of steps) if (st.goal.kind === "complete") expect(open.has(ACTION_DEFS[st.goal.action].skill), st.id).toBe(true);
     }
   });
@@ -88,7 +89,7 @@ describe("stage steps", () => {
   it("an XP choice only ever suggests a skill that's open by then", () => {
     for (let i = 0; i < NOTES.length; i++) {
       const note = NOTES[i]!;
-      const open = new Set(NOTES.slice(0, i + 1).flatMap((n) => [...n.unlocks]));
+      const open = new Set<SkillId>(NOTES.slice(0, i + 1).flatMap((n) => [...n.unlocks]));
       for (const st of ("steps" in note ? note.steps : []) as readonly Step[]) {
         if (st.reward && "xpChoice" in st.reward) expect(open.has(st.reward.xpChoice.suggest), st.id).toBe(true);
       }

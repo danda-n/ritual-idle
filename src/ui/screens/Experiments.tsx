@@ -1,7 +1,7 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { GRIMOIRE_DEFS, type GrimoireId } from "../../content/grimoire";
 import type { ItemId } from "../../content/items";
-import { CHARM_DEFS, CHARM_IDS, CHARMS, type CharmId } from "../../content/charms";
+import { BOUND_CHARM_IDS, CHARM_DEFS, type CharmId } from "../../content/charms";
 import { attune, bindCharm, canBindCharm, circleSlots, experiment, useCharm, type ExperimentOutcome, type Result, type Success } from "../../engine/commands";
 import { GRIMOIRE_IDS, isDiscovered, isSilhouetteVisible, progressOf } from "../../engine/grimoire";
 import type { GameState } from "../../engine/state";
@@ -48,7 +48,7 @@ export function Experiments({ state, act }: { state: GameState; act: Act }) {
       /* private window: the view just isn't remembered */
     }
   };
-  const charmsHeld = CHARM_IDS.reduce((n, c) => n + (state.inventory[c] ?? 0), 0);
+  const charmsHeld = BOUND_CHARM_IDS.reduce((n, c) => n + (state.inventory[c] ?? 0), 0);
   const progress = attuned ? progressOf(state, attuned) : null;
 
   // Empty the slots when the attunement changes (the number of slots may change). The last result
@@ -307,8 +307,8 @@ function Charms({ state, act }: { state: GameState; act: Act }) {
         <span className="panel-aside muted">Bind as many as you like · use one for a boost</span>
       </div>
       <ul className="charm-list">
-        {CHARM_IDS.map((c: CharmId) => {
-          const recipe = CHARMS[c].from;
+        {BOUND_CHARM_IDS.map((c: CharmId) => {
+          const recipe = CHARM_DEFS[c].from!;
           const found = isDiscovered(state, recipe);
           const held = state.inventory[c] ?? 0;
           const left = state.charms[c] ?? 0;

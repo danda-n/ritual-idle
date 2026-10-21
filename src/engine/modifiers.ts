@@ -13,6 +13,7 @@ import { TALENT_LEVELS, TALENTS, type TalentEffect } from "../content/talents";
 import { talentEffects } from "./talents";
 import { keepsakeEffects } from "./keepsakes";
 import { levelForXp } from "./xp";
+import { GIFTS } from "../content/combat";
 
 // Every bonus in the game is computed here, so balance lives in one place.
 // Sources: skill levels, talents, sanctum upgrades, timed buffs (released omens, minor rites),
@@ -28,7 +29,7 @@ function effects(state: GameState): UpgradeEffect[] {
 }
 
 /** Taken talent effects of one kind that reach this skill (its own, or aimed at it from another). */
-function talents<K extends TalentEffect["kind"]>(state: GameState, kind: K, skill: SkillId): Extract<TalentEffect, { kind: K }>[] {
+export function talents<K extends TalentEffect["kind"]>(state: GameState, kind: K, skill: SkillId): Extract<TalentEffect, { kind: K }>[] {
   return talentEffects(state)
     .filter(({ from, effect }) => effect.kind === kind && ("skill" in effect && effect.skill ? effect.skill === skill : from === skill))
     .map(({ effect }) => effect as Extract<TalentEffect, { kind: K }>);
@@ -49,11 +50,10 @@ export function levelSpeed(state: GameState, skill: SkillId): number {
 }
 
 /**
- * Speed multiplier for an action (1 = normal, 1.15 = 15% faster). Bonuses add up, then the
- * skill's level speed multiplies the total.
+ * Speed multiplier for a skill's work (1 = normal, 1.15 = 15% faster). Bonuses add up, then the
+ * skill's level speed multiplies the total. Fights use it too (Warding: how often you strike).
  */
-export function speedMultiplier(state: GameState, id: ActionId, now: number = state.lastTickAt): number {
-  const skill = ACTION_DEFS[id].skill;
+export function skillSpeed(state: GameState, skill: SkillId, now: number = state.lastTickAt): number {
   let bonus = 0;
   for (const t of talents(state, "speed", skill)) bonus += t.bonus;
   for (const e of effects(state)) if (e.kind === "speed" && e.skill === skill) bonus += e.bonus;
@@ -68,7 +68,14 @@ export function speedMultiplier(state: GameState, id: ActionId, now: number = st
     const def = FOLLOWERS[f];
     bonus += def.assist + (def.trait.skill === skill ? def.trait.bonus : 0);
   }
+  // A calmed boss's gift (the Domovoi: every skill a little faster).
+  for (const g of state.cellar.gifts) bonus += GIFTS[g].speedAll;
   return (1 + bonus) * levelSpeed(state, skill);
+}
+
+/** Speed multiplier for an action: its skill's speed. */
+export function speedMultiplier(state: GameState, id: ActionId, now: number = state.lastTickAt): number {
+  return skillSpeed(state, ACTION_DEFS[id].skill, now);
 }
 
 /** Time one repetition takes, after speed bonuses (and the slower pace of a bulk talent). */
@@ -172,7 +179,7 @@ export function activeCharms(state: GameState): CharmId[] {
 }
 
 /** One of a charm's effects, summed over the charms in use (0 if none). */
-function charmBonus(state: GameState, key: "xpBonus" | "saveChance" | "coinBonus" | "trustBonus"): number {
+export function charmBonus(state: GameState, key: "xpBonus" | "saveChance" | "coinBonus" | "trustBonus"): number {
   return activeCharms(state).reduce((n, c) => n + (CHARM_DEFS[c].effect[key] ?? 0), 0);
 }
 
@@ -180,7 +187,7 @@ function charmBonus(state: GameState, key: "xpBonus" | "saveChance" | "coinBonus
  * Spend a use of each charm that counts this: every completed action, a craft (an action with
  * inputs), or a finished contract. Mutates `state`.
  */
-export function spendCharms(state: GameState, what: "action" | "craft" | "contract"): void {
+export function spendCharms(state: GameState, what: "action" | "craft" | "contract" | "foe"): void {
   for (const c of activeCharms(state)) {
     const per = CHARM_DEFS[c].per;
     if (per === what || (per === "action" && what === "craft")) state.charms[c] = state.charms[c]! - 1;
@@ -203,10 +210,31 @@ export function extraYieldChance(state: GameState, id: ActionId): number {
 
 /** Extra XP as a fraction (Devout, Busy hands…; the Dream pillow, found or bound). */
 export function xpBonus(state: GameState, id: ActionId, now: number = state.lastTickAt): number {
-  let bonus = talents(state, "xp", ACTION_DEFS[id].skill).reduce((n, t) => n + t.bonus, 0);
+  return skillXpBonus(state, ACTION_DEFS[id].skill, now);
+}
+
+/** Extra XP in a skill as a fraction (fights use it for Warding XP). */
+export function skillXpBonus(state: GameState, skill: SkillId, now: number = state.lastTickAt): number {
+  let bonus = talents(state, "xp", skill).reduce((n, t) => n + t.bonus, 0);
   for (const r of discoveredRewards(state)) if (r.kind === "xp_all") bonus += r.bonus;
   for (const b of activeBuffs(state, now)) bonus += BUFF_DEFS[b.id].xpBonus ?? 0;
   return bonus + charmBonus(state, "xpBonus");
+}
+
+/** Options to choose from when a random affix rolls: 2, +1 with the Workbench, + Keen eye. */
+export function rollOptionCount(state: GameState, reforge: boolean): number {
+  let n = 2;
+  for (const e of effects(state)) if (e.kind === "roll_options") n += e.extra;
+  for (const t of talents(state, "rollOptions", "crafting")) n += t.extra;
+  if (reforge) for (const t of talents(state, "reforgeOptions", "crafting")) n += t.extra;
+  return n;
+}
+
+/** Named loadouts you can keep: 2, +1 with the Warded cellar door. */
+export function loadoutSlots(state: GameState): number {
+  let n = 2;
+  for (const e of effects(state)) if (e.kind === "loadout_slots") n += e.extra;
+  return n;
 }
 
 export function offlineCapMs(state: GameState): number {

@@ -14,12 +14,12 @@ export const BUFFS = {
   surge: {
     name: "Surge",
     durationMs: 20_000,
-    speed: { herbalism: 1, scavenging: 1, chandlery: 1, sigilcraft: 1, scholarship: 1, ritualism: 1 },
+    speed: { herbalism: 1, scavenging: 1, chandlery: 1, sigilcraft: 1, scholarship: 1, ritualism: 1, warding: 1, crafting: 1 },
   },
   blessing: {
     name: "Blessing",
     durationMs: 15 * MIN,
-    speed: { herbalism: 0.1, scavenging: 0.1, chandlery: 0.1, sigilcraft: 0.1, scholarship: 0.1, ritualism: 0.1 },
+    speed: { herbalism: 0.1, scavenging: 0.1, chandlery: 0.1, sigilcraft: 0.1, scholarship: 0.1, ritualism: 0.1, warding: 0.1, crafting: 0.1 },
   },
 } as const satisfies Record<string, BuffDef<SkillId, ItemId>>;
 

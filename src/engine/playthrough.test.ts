@@ -17,6 +17,9 @@ import { newGame, type GameState } from "./state";
 import { xpForLevel } from "./xp";
 import { choicesWaiting } from "./talents";
 import { SKILL_IDS } from "../content/skills";
+import { FOE_DEFS, FOE_IDS, PIECE_DEFS, PIECE_IDS, SLOTS, type FoeId, type PieceId, type Slot } from "../content/combat";
+import { beginFight, chooseAffix, craftPiece, setHealAt, setRemedy, wear } from "./commands";
+import { canFight, combatStats, readiness, wardingLevel, type Readiness } from "./combat";
 
 // A scripted player that finishes Chapter 1 using only the real engine and commands. It follows
 // each stage's steps literally (make exactly what the step says), places each part, takes a side
@@ -143,6 +146,8 @@ class Bot {
       }
       return;
     }
+    // Spirits' leavings come from fights in the cellar, not recipes.
+    if (!ACTION_IDS.some((x) => ACTION_DEFS[x].outputs.some((o) => o.item === item))) return this.ensureCellar(item, qty);
     const id = this.producer(item);
     while ((this.state.inventory[item] ?? 0) < qty) this.run(id);
   }
@@ -262,6 +267,124 @@ class Bot {
     this.performRite();
     return this;
   }
+
+  // ---------- The cellar (docs/COMBAT.md §9) ----------
+
+  cellarStart = 0;
+  /** When the Domovoi first read Likely, with the levels then; and when he was calmed. */
+  domovoiLikely: { at: number; warding: number; crafting: number } | null = null;
+  calmedAt: number | null = null;
+  piecesAt: { piece: PieceId; minutes: number }[] = [];
+
+  /** Which foe leaves an item behind. */
+  dropper(item: ItemId): FoeId {
+    return FOE_IDS.find((f) => FOE_DEFS[f].loot.some((l) => l.item === item))!;
+  }
+
+  /** Fight a foe for `ms` (or until the fight ends), with the best gear for it. */
+  fight(foe: FoeId, ms: number) {
+    this.dress(foe);
+    this.state = this.must(beginFight(this.state, foe));
+    let left = ms;
+    while (this.state.fight && left > 0) {
+      const step = Math.min(left, 30_000);
+      this.wait(step);
+      left -= step;
+    }
+    // Driven off (or done): catch your breath doing something useful.
+    if (this.state.fight) this.state = { ...this.state, fight: null };
+  }
+
+  /** Put on the pieces that suit this foe: its feared tag where you have it, else the strongest. */
+  dress(foe: FoeId) {
+    const weak = FOE_DEFS[foe].weakness;
+    for (const slot of SLOTS) {
+      const held = this.state.cellar.pieces.filter((p) => PIECE_DEFS[p.id].slot === slot);
+      const score = (id: PieceId) => (PIECE_DEFS[id].tag === weak ? 100 : 0) + (PIECE_DEFS[id].base.strike ?? 0) + (PIECE_DEFS[id].base.ward ?? 0) / 3 + (PIECE_DEFS[id].base.health ?? 0);
+      const best = held.map((p) => p.id).sort((a, b) => score(b) - score(a))[0];
+      if (best) this.state = this.must(wear(this.state, slot as Slot, best));
+    }
+  }
+
+  ensureCellar(item: ItemId, qty: number) {
+    const foe = FOE_IDS.find((f) => FOE_DEFS[f].loot.some((l) => l.item === item));
+    if (foe && !ACTION_IDS.some((a) => ACTION_DEFS[a].outputs.some((o) => o.item === item))) {
+      while ((this.state.inventory[item] ?? 0) < qty) {
+        if (canFight(this.state, foe) !== null) this.trainWarding();
+        else this.fight(foe, 60_000);
+        this.guard();
+      }
+      return;
+    }
+    this.ensure(item, qty);
+  }
+
+  /** The next piece to make: the lowest level not held, once Crafting reaches it. */
+  nextPiece(): PieceId | null {
+    return PIECE_IDS.filter((p) => !this.state.cellar.pieces.some((x) => x.id === p)).sort((a, b) => PIECE_DEFS[a].level - PIECE_DEFS[b].level)[0] ?? null;
+  }
+
+  makePiece(id: PieceId) {
+    while (skillLevel(this.state, "crafting") < PIECE_DEFS[id].level) this.train("crafting", PIECE_DEFS[id].level);
+    for (const [item, qty] of Object.entries(PIECE_DEFS[id].items) as [ItemId, number][]) {
+      if (FOE_IDS.some((f) => FOE_DEFS[f].loot.some((l) => l.item === item))) this.ensureCellar(item, qty);
+    }
+    for (const [item, qty] of Object.entries(PIECE_DEFS[id].items) as [ItemId, number][]) this.ensure(item, qty);
+    this.state = this.must(craftPiece(this.state, id));
+    while (this.state.job) this.wait(5_000);
+    // Choose the option that helps most: Strike, then Health, then the rest.
+    const order = ["strike", "health", "ward", "speed", "telling", "perFoe", "specials", "beltCap", "remedyHeal", "loot", "xp"];
+    const opts = this.state.cellar.pending!.options;
+    const pick = opts.map((o, i) => ({ i, rank: order.indexOf(o.kind) * 100 - o.value })).sort((a, b) => a.rank - b.rank)[0]!.i;
+    this.state = this.must(chooseAffix(this.state, pick));
+    this.piecesAt.push({ piece: id, minutes: (this.activeMs - this.cellarStart) / MIN });
+  }
+
+  /** The best foe for Warding XP that's Safe or Likely now. */
+  trainWarding() {
+    const ok = (t: Readiness) => t === "Safe" || t === "Likely";
+    const foes = FOE_IDS.filter((f) => !FOE_DEFS[f].boss && canFight(this.state, f) === null).filter((f) => {
+      this.dress(f);
+      return ok(readiness(this.state, f).tag);
+    });
+    const foe = foes.sort((a, b) => FOE_DEFS[b].xp - FOE_DEFS[a].xp)[0] ?? "skrzat";
+    this.fight(foe, 2 * MIN);
+  }
+
+  remedyFor(): void {
+    const poultice = skillLevel(this.state, "herbalism") >= 9;
+    const remedy = poultice ? "yarrow_poultice" : "chamomile";
+    this.ensure(remedy, combatStats(this.state).beltCap);
+    this.state = this.must(setRemedy(this.state, remedy));
+    this.state = this.must(setHealAt(this.state, 50));
+  }
+
+  /** After the Kindling: make gear, ward off the cellar's foes, and calm the Domovoi. */
+  playCellar(limitMinutes = 240) {
+    this.cellarStart = this.activeMs;
+    this.state = this.must(setSetting(this.state, "fallback", "stop"));
+    while (!this.state.cellar.gifts.includes("domovoi")) {
+      if ((this.activeMs - this.cellarStart) / MIN > limitMinutes) throw new Error(`Cellar not done in ${limitMinutes} min: Warding ${wardingLevel(this.state)}, Crafting ${skillLevel(this.state, "crafting")}, pieces ${this.state.cellar.pieces.map((p) => p.id).join(", ")}`);
+      this.dress("domovoi");
+      if (this.state.cellar.pieces.some((p) => PIECE_DEFS[p.id].slot === "belt")) this.remedyFor();
+      const tag = readiness(this.state, "domovoi").tag;
+      if (tag === "Likely" || tag === "Safe") {
+        this.domovoiLikely ??= { at: (this.activeMs - this.cellarStart) / MIN, warding: wardingLevel(this.state), crafting: skillLevel(this.state, "crafting") };
+        this.fight("domovoi", 10 * MIN);
+        if (this.state.cellar.gifts.includes("domovoi")) break;
+        continue;
+      }
+      // Like a player: make the next piece once Crafting reaches it; otherwise train whichever of
+      // the two skills is behind (Crafting through its components, Warding on the best safe foe).
+      const next = this.nextPiece();
+      const crafting = skillLevel(this.state, "crafting");
+      if (next && PIECE_DEFS[next].level <= crafting) this.makePiece(next);
+      else if (next && crafting <= wardingLevel(this.state)) this.train("crafting", crafting + 1);
+      else this.trainWarding();
+    }
+    this.calmedAt = (this.activeMs - this.cellarStart) / MIN;
+    return this;
+  }
 }
 
 const MIN = 60_000;
@@ -345,6 +468,28 @@ describe("Chapter 1 playthrough", () => {
         expect(m, `stage ${i + 1} (${bot.order.join(" → ")})`).toBeGreaterThanOrEqual(3);
         expect(m, `stage ${i + 1} (${bot.order.join(" → ")})`).toBeLessThanOrEqual(12);
       }
+    }
+  });
+});
+
+describe("the cellar after the Kindling", () => {
+  const bots = [1, 2, 3].map((seed) => new Bot(seed).play().playCellar());
+
+  it("makes gear, wards off the cellar's foes and calms the Domovoi in 45–75 min of active play", () => {
+    for (const b of bots) {
+      console.log(`Cellar (seed ${b.state.rngSeed}): Domovoi Likely at ${b.domovoiLikely?.at.toFixed(1)} min (Warding ${b.domovoiLikely?.warding}, Crafting ${b.domovoiLikely?.crafting}) · calmed at ${b.calmedAt?.toFixed(1)} min · pieces: ${b.piecesAt.map((p) => `${p.piece} ${p.minutes.toFixed(1)}`).join(", ")} · beaten ${JSON.stringify(b.state.cellar.beaten)}`);
+      expect(b.state.cellar.gifts).toContain("domovoi");
+      expect(b.calmedAt!).toBeGreaterThanOrEqual(45);
+      expect(b.calmedAt!).toBeLessThanOrEqual(75);
+    }
+  });
+
+  it("the Domovoi reads Likely around Warding and Crafting 10–12", () => {
+    for (const b of bots) {
+      expect(b.domovoiLikely!.warding).toBeGreaterThanOrEqual(9);
+      expect(b.domovoiLikely!.warding).toBeLessThanOrEqual(14);
+      expect(b.domovoiLikely!.crafting).toBeGreaterThanOrEqual(9);
+      expect(b.domovoiLikely!.crafting).toBeLessThanOrEqual(14);
     }
   });
 });

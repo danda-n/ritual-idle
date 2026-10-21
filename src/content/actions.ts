@@ -62,6 +62,8 @@ export const ACTIONS = {
   pick_yarrow: { name: "Pick yarrow", skill: "herbalism", level: 9, seconds: 3, xp: 9, inputs: {}, outputs: [{ item: "yarrow", qty: 1 }] },
   pick_stjohns: { name: "Pick St John's wort", skill: "herbalism", level: 9, seconds: 4, xp: 12, inputs: {}, outputs: [{ item: "stjohns", qty: 1 }] },
   cut_juniper: { name: "Cut juniper", skill: "herbalism", level: 12, seconds: 4, xp: 15, inputs: {}, outputs: [{ item: "juniper", qty: 1 }] },
+  // The strongest remedy: a wound herb. It opens with the cellar, not at its level (docs/COMBAT.md §10).
+  yarrow_poultice: { name: "Yarrow poultice", skill: "herbalism", level: 9, seconds: 5, xp: 26, inputs: { yarrow: 2, rags: 1 }, outputs: [{ item: "yarrow_poultice", qty: 1 }], requires: "cellar" },
 
   // Scholarship: grandmother's pages
   search_attic: {
@@ -91,6 +93,14 @@ export const ACTIONS = {
     name: "Smoke the rooms", skill: "ritualism", level: 3, seconds: 8, xp: 25,
     inputs: { smudge: 1, tallow_candle: 1 }, outputs: [], buff: "blessing",
   },
+
+  // Crafting's components (docs/COMBAT.md §4): its repeatable recipes, and its idle training. The
+  // pieces themselves are made in the crafting window (content/combat.ts).
+  stitched_linen: { name: "Stitched linen", skill: "crafting", level: 1, seconds: 4, xp: 4, inputs: { rags: 2 }, outputs: [{ item: "stitched_linen", qty: 1 }] },
+  iron_blank: { name: "Iron blank", skill: "crafting", level: 2, seconds: 4, xp: 6, inputs: { iron_nail: 2 }, outputs: [{ item: "iron_blank", qty: 1 }] },
+  lantern_frame: { name: "Lantern frame", skill: "crafting", level: 3, seconds: 5, xp: 9, inputs: { iron_blank: 1, glass: 1 }, outputs: [{ item: "lantern_frame", qty: 1 }] },
+  red_thread: { name: "Red thread", skill: "crafting", level: 6, seconds: 5, xp: 12, inputs: { spun_thread: 1, stjohns: 1 }, outputs: [{ item: "red_thread", qty: 1 }] },
+  red_thread_knot: { name: "Red thread knot", skill: "crafting", level: 7, seconds: 5, xp: 13, inputs: { red_thread: 2, salt: 1 }, outputs: [{ item: "red_thread_knot", qty: 1 }] },
 } as const satisfies Record<string, Action>;
 
 export type ActionId = keyof typeof ACTIONS;

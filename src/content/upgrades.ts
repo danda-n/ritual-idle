@@ -68,6 +68,21 @@ export const UPGRADES = {
     effect: { kind: "omen_capacity", capacity: 3 },
     requires: "omen_shelf",
   },
+  // Cellar projects (docs/COMBAT.md §9): shown once the cellar is open.
+  workbench: {
+    blurb: "A proper bench in the cellar: one more option to choose from when a piece's bonus rolls.",
+    name: "The Workbench",
+    items: { iron_blank: 4, lost_button: 6 },
+    effect: { kind: "roll_options", extra: 1 },
+    requiresFeature: "cellar",
+  },
+  cellar_door: {
+    blurb: "A warded door at the top of the cellar stairs: room to keep one more named loadout.",
+    name: "Warded cellar door",
+    items: { iron_blank: 2, tangled_lock: 4 },
+    effect: { kind: "loadout_slots", extra: 1 },
+    requiresFeature: "cellar",
+  },
 } as const satisfies Record<string, UpgradeDef<ItemId>>;
 
 export type UpgradeId = keyof typeof UPGRADES;

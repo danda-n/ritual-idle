@@ -10,6 +10,8 @@ export const ITEM_CATEGORIES = {
   rites: { name: "Rites" },
   charms: { name: "Charms" },
   heirlooms: { name: "Heirlooms" },
+  leavings: { name: "Spirits' leavings" },
+  components: { name: "Components" },
 } as const;
 
 export type ItemCategory = keyof typeof ITEM_CATEGORIES;
@@ -22,6 +24,7 @@ export const ITEMS = {
   mugwort: { name: "Mugwort", category: "garden", description: "The dream-herb." },
   stjohns: { name: "St John's wort", category: "garden", description: "The Kupala herb." },
   juniper: { name: "Juniper", category: "garden" },
+  yarrow_poultice: { name: "Yarrow poultice", category: "garden" },
   // Scavenging
   ash: { name: "Ash", category: "house" },
   charcoal: { name: "Charcoal", category: "house" },
@@ -61,6 +64,16 @@ export const ITEMS = {
   charm_pillow: { name: "Dream pillow", category: "charms" },
   charm_mark: { name: "Hearth mark", category: "charms" },
   charm_nail: { name: "Threshold nail", category: "charms" },
+  red_thread_knot: { name: "Red thread knot", category: "charms" },
+  // What the cellar's spirits leave behind (docs/COMBAT.md §8)
+  lost_button: { name: "Lost button", category: "leavings" },
+  spun_thread: { name: "Spun thread", category: "leavings" },
+  tangled_lock: { name: "Tangled lock", category: "leavings" },
+  // Crafting's components
+  stitched_linen: { name: "Stitched linen", category: "components" },
+  iron_blank: { name: "Iron blank", category: "components" },
+  lantern_frame: { name: "Lantern frame", category: "components" },
+  red_thread: { name: "Red thread", category: "components" },
 } as const satisfies Record<string, ItemDef>;
 
 export type ItemId = keyof typeof ITEMS;

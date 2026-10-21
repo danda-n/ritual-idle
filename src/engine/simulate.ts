@@ -1,20 +1,21 @@
 import { ACTION_DEFS, type ActionId } from "../content/actions";
 import type { ItemId } from "../content/items";
 import type { SkillId } from "../content/skills";
-import { OMENS, type OmenId } from "../content/omens";
 import type { BuffId } from "../content/buffs";
 import { INSIGHT_GAIN } from "../content/grimoire";
 import { PAGES } from "../content/pages";
 import { addInsight, readCurio, type Fragment } from "./grimoire";
-import { omenCapacity } from "./modifiers";
-import { spendCharms, actionDurationMs, actionInputs, buffLength, bulkExtra, byproducts, chanceMultiplier, doubleChance, everyNth, extraYieldChance, insightPerRep, omenChanceMultiplier, saveChance, xpBonus } from "./modifiers";
-import { applyBuff, grantOmen, pruneBuffs } from "./omens";
+import { spendCharms, actionDurationMs, actionInputs, buffLength, bulkExtra, byproducts, chanceMultiplier, doubleChance, everyNth, extraYieldChance, insightPerRep, saveChance, xpBonus } from "./modifiers";
+import { applyBuff, pruneBuffs } from "./omens";
 import { isRecipeKnown, isSkillUnlocked, pagesRead, revealNotes, type Note, type Page, type Step } from "./progress";
 import { nextRandom } from "./rng";
 import type { GameState } from "./state";
 import { stepRite } from "./rite";
 import { refillBoard } from "./village";
 import { levelForXp, xpForLevel } from "./xp";
+import { cancelPiece, emptyFightReport, regenHealth, rollOmens, stepFight, stepJob, type FightHooks, type FightReport } from "./combat";
+import type { PieceId } from "../content/combat";
+import type { OmenId } from "../content/omens";
 
 export type StopReason =
   | { kind: "rite_in_progress" }
@@ -50,10 +51,14 @@ export interface Report {
   /** Stage steps claimed (rewards given). */
   stepsDone: Step[];
   stopped?: { action: ActionId; reason: StopReason };
+  /** The cellar: foes beaten, remedies used, and how a fight ended. */
+  fight: FightReport;
+  /** A piece finished in the crafting window: its options wait for you to choose. */
+  pieceReady: PieceId | null;
 }
 
 export function emptyReport(): Report {
-  return { elapsedMs: 0, actionsCompleted: 0, xpGained: {}, itemsGained: {}, itemsUsed: {}, levelUps: [], notesRevealed: [], pagesRead: [], omensFound: [], omensLost: 0, fragments: [], curioStories: [], doubled: 0, riteMs: 0, riteCompleted: null, fellBackTo: [], stepsDone: [] };
+  return { elapsedMs: 0, actionsCompleted: 0, xpGained: {}, itemsGained: {}, itemsUsed: {}, levelUps: [], notesRevealed: [], pagesRead: [], omensFound: [], omensLost: 0, fragments: [], curioStories: [], doubled: 0, riteMs: 0, riteCompleted: null, fellBackTo: [], stepsDone: [], fight: emptyFightReport(), pieceReady: null };
 }
 
 export function skillLevel(state: GameState, skill: SkillId): number {
@@ -85,12 +90,20 @@ export function fallbackFor(state: GameState, stopped: ActionId | null): ActionI
   return target;
 }
 
+/** Start an action: it takes the slot from a fight, or from a piece being made (whose materials come back). */
 export function startAction(state: GameState, id: ActionId): GameState {
-  return { ...state, active: { id, progress: 0 } };
+  return { ...freeSlot(state), active: { id, progress: 0 } };
 }
 
 export function stopAction(state: GameState): GameState {
-  return { ...state, active: null };
+  return { ...freeSlot(state), active: null };
+}
+
+function freeSlot(input: GameState): GameState {
+  if (!input.job) return { ...input, fight: null };
+  const state = structuredClone(input);
+  cancelPiece(state);
+  return { ...state, fight: null };
 }
 
 function add<K extends string>(bag: Partial<Record<K, number>>, key: K, n: number) {
@@ -153,6 +166,8 @@ export function rollOutputs(state: GameState, id: ActionId, now: number, roll: (
 export interface AdvanceOptions {
   /** Extra speed while the player is away (the Dream pillow). 0.1 = 10% faster. */
   offlineSpeedBonus?: number;
+  /** The time is time away (offline catch-up): only Safe fights carry on. */
+  away?: boolean;
 }
 
 export function advance(input: GameState, ms: number, opts: AdvanceOptions = {}): { state: GameState; report: Report } {
@@ -170,8 +185,67 @@ export function advance(input: GameState, ms: number, opts: AdvanceOptions = {})
   };
 
 
+  /** The cellar's hooks into this report. */
+  const hooks: FightHooks = {
+    roll,
+    now: clock,
+    report: report.fight,
+    gained: (item, qty) => add(report.itemsGained, item, qty),
+    curio: (story, fragment) => {
+      report.curioStories.push(story);
+      report.fragments.push(fragment);
+    },
+    omen: (omen, kept) => {
+      if (kept) report.omensFound.push(omen);
+      else report.omensLost++;
+    },
+    xp: (amount, from, to) => {
+      const skill = state.fight ? "warding" : "crafting";
+      add(report.xpGained, skill, amount);
+      if (to > from) {
+        const last = report.levelUps.find((l) => l.skill === skill);
+        if (last) last.to = to;
+        else report.levelUps.push({ skill, from, to });
+      }
+    },
+  };
+  /** After a fight or a piece, go back to what was running before, or the fallback. */
+  const resume = (returnTo: ActionId | null) => {
+    const next = returnTo && blockReason(state, returnTo) === null ? returnTo : fallbackFor(state, null);
+    state.active = next ? { id: next, progress: 0 } : null;
+    if (next) report.fellBackTo.push(next);
+  };
+  // Only fights the readiness tag called Safe go on while you're away.
+  if (opts.away && state.fight && !state.fight.safe) {
+    report.fight.stoppedAway = state.fight.foe;
+    const back = state.fight.returnTo;
+    state.fight = null;
+    resume(back);
+  }
+  let fightMs = 0;
+
   refillBoard(state, clock());
-  while ((state.active || state.rite.performing) && remaining > 0) {
+  while ((state.active || state.rite.performing || state.fight || state.job) && remaining > 0) {
+    if (state.fight) {
+      const back = state.fight.returnTo;
+      const used = stepFight(state, remaining, hooks);
+      remaining -= used;
+      fightMs += used;
+      if (!state.fight) resume(back);
+      continue;
+    }
+    if (state.job) {
+      const back = state.job.returnTo;
+      const piece = state.job.piece;
+      const { used, done } = stepJob(state, remaining, hooks);
+      remaining -= used;
+      if (done) {
+        report.pieceReady = piece;
+        report.actionsCompleted++;
+        resume(back);
+      }
+      continue;
+    }
     // The rite takes the whole action slot while it runs.
     if (state.rite.performing) {
       const { used, completedQuality } = stepRite(state, remaining, clock());
@@ -270,11 +344,7 @@ export function advance(input: GameState, ms: number, opts: AdvanceOptions = {})
     spendCharms(state, Object.keys(def.inputs).length > 0 ? "craft" : "action");
     if (def.buff) applyBuff(state, def.buff as BuffId, now, false, undefined, buffLength(state, def.skill));
     // Omens turn up only once the omen shelf is built.
-    if (omenCapacity(state) > 0) for (const omen of Object.keys(OMENS) as OmenId[]) {
-      if (roll() >= OMENS[omen].dropChance * omenChanceMultiplier(state)) continue;
-      if (grantOmen(state, omen)) report.omensFound.push(omen);
-      else report.omensLost++;
-    }
+    rollOmens(state, hooks);
 
     const pagesBefore = pagesRead(state).length;
     add(state.stats.completed, id, 1);
@@ -291,6 +361,8 @@ export function advance(input: GameState, ms: number, opts: AdvanceOptions = {})
     refillBoard(state, clock());
     }
 
+  // Health comes back whenever you're not fighting.
+  regenHealth(state, ms - fightMs);
   state.lastTickAt = input.lastTickAt + ms;
   refillBoard(state, state.lastTickAt);
   pruneBuffs(state, state.lastTickAt);
