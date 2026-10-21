@@ -64,6 +64,7 @@ export function deserialize(json: string): GameState {
     // Contracts: two slots now, each remembering what's been delivered.
     board: (data.board ?? []).map((b) => ({ ...b, delivered: { ...b.delivered } })),
     // v12: the cellar (docs/COMBAT.md). Older saves start it empty; a finished rite opens it on load.
+    // v13: records, the stop rule and a fight's own numbers (filled in from the defaults).
     cellar: {
       ...base.cellar,
       ...data.cellar,

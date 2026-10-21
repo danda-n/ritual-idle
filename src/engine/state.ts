@@ -15,7 +15,7 @@ import { SKILL_IDS, type SkillId } from "../content/skills";
 import { BASE, type Affix, type FoeId, type GiftId, type PieceId, type RemedyId, type Slot, type StopRule } from "../content/combat";
 import { randomSeed } from "./rng";
 
-export const SAVE_VERSION = 12;
+export const SAVE_VERSION = 13;
 /**
  * The playtest reset number. Raise it by one to wipe every player's save on their next load
  * (after big changes, when old saves would give a misleading playtest). Saves from an older

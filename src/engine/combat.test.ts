@@ -397,6 +397,8 @@ describe("saves", () => {
     delete old.job;
     old.version = 11;
     const loaded = deserialize(JSON.stringify(old));
+    expect(loaded.cellar.stopRule).toEqual({ kind: "never" });
+    expect(loaded.cellar.records).toEqual({});
     expect(loaded.cellar.pieces).toEqual([]);
     expect(loaded.cellar.health).toBe(40);
     expect(isSkillUnlocked(loaded, "warding")).toBe(true);
