@@ -328,7 +328,7 @@ The screens are designed in [design_handoff/CELLAR.md](design_handoff/CELLAR.md)
 
 ## 12. In the code
 
-- **Engine:** `src/engine/combat.ts` (stats, the fight rules, readiness, fights and pieces inside `advance()`), commands in `commands.ts`, content in `src/content/combat.ts`. Save version 12 adds `cellar` (Health, pieces, gear, loadouts, per-foe memory, foes beaten, gifts, the pending roll, the last fight's summary), `fight` and `job`. Fights and pieces keep their timers relative to themselves, so the dev time skip needs nothing new.
+- **Engine:** `src/engine/combat.ts` (stats, the fight rules, readiness, fights and pieces inside `advance()`), commands in `commands.ts`, content in `src/content/combat.ts`. Save version 12 adds `cellar` (Health, pieces, gear, loadouts, per-foe memory, foes beaten, gifts, the pending roll, the last fight's summary), `fight` and `job`; version 13 adds the records, the stop rule and a fight's own numbers. Fights and pieces keep their timers relative to themselves, so the dev time skip needs nothing new.
 - **Two playthroughs:** the Chapter 1 bot, then a cellar bot that carries on from the Kindling: it makes each piece as Crafting reaches it, trains whichever of Warding and Crafting is behind, chooses its affixes, and tries the Domovoi once he reads Likely. `npm run pacing` prints both.
 - **"Craft" as a word:** the game's other uses of "craft" became "actions that use inputs" (the Hearth mark lasts "the next 40 actions that use inputs"; talents say "15% of Chandlery actions use no inputs"), so "craft" never reads as the Crafting skill.
 - **Binding-craft** (Chapter II: vessels and fetters for Summoning) may fold into Crafting; that's decided with Chapter II.
