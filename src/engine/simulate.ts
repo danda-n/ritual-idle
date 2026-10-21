@@ -13,7 +13,7 @@ import type { GameState } from "./state";
 import { stepRite } from "./rite";
 import { refillBoard } from "./village";
 import { levelForXp, xpForLevel } from "./xp";
-import { cancelPiece, emptyFightReport, regenHealth, rollOmens, stepFight, stepJob, type FightHooks, type FightReport } from "./combat";
+import { cancelPiece, emptyFightReport, endFight, regenHealth, rollOmens, stepFight, stepJob, type FightHooks, type FightReport } from "./combat";
 import type { PieceId } from "../content/combat";
 import type { OmenId } from "../content/omens";
 
@@ -100,10 +100,11 @@ export function stopAction(state: GameState): GameState {
 }
 
 function freeSlot(input: GameState): GameState {
-  if (!input.job) return { ...input, fight: null };
+  if (!input.job && !input.fight) return input;
   const state = structuredClone(input);
   cancelPiece(state);
-  return { ...state, fight: null };
+  endFight(state, "stopped");
+  return state;
 }
 
 function add<K extends string>(bag: Partial<Record<K, number>>, key: K, n: number) {
@@ -219,7 +220,7 @@ export function advance(input: GameState, ms: number, opts: AdvanceOptions = {})
   if (opts.away && state.fight && !state.fight.safe) {
     report.fight.stoppedAway = state.fight.foe;
     const back = state.fight.returnTo;
-    state.fight = null;
+    endFight(state, "away");
     resume(back);
   }
   let fightMs = 0;

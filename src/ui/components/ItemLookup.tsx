@@ -12,6 +12,7 @@ import { ItemIcon } from "../art/items";
 import { Tip, type TipContent } from "./Tip";
 import { formatStop, itemName } from "../format";
 import { Modal } from "./Modal";
+import { FOE_DEFS, PIECE_DEFS } from "../../content/combat";
 
 /** A chip's tooltip: "Look up Mugwort · The dream-herb." (item descriptions are puzzle bridges). */
 const pctText = (c: number) => `${Math.round(c * 1000) / 10}%`;
@@ -190,7 +191,10 @@ export function ItemLookupModal({ state, item, onClose }: { state: GameState; it
       <dl className="lookup">
         <dt>Comes from</dt>
         <dd>
-          {l.madeBy.length === 0 && !l.sold ? <span className="muted">Unknown</span> : null}
+          {l.madeBy.length === 0 && !l.sold && l.leftBy.length === 0 ? <span className="muted">Unknown</span> : null}
+          {l.leftBy.map((f) => (
+            <span key={f}>The {FOE_DEFS[f].name.replace(/^The sour /, "")}, in the cellar</span>
+          ))}
           {l.madeBy.map((id) => (
             <span key={id}>{actionLabel(id)}</span>
           ))}
@@ -198,7 +202,10 @@ export function ItemLookupModal({ state, item, onClose }: { state: GameState; it
         </dd>
         <dt>Used for</dt>
         <dd>
-          {l.usedBy.length === 0 && l.inKindling === 0 && l.wantedBy.length === 0 && l.inRecipes.length === 0 && !l.inUnfound && <span className="muted">Nothing known</span>}
+          {l.usedBy.length === 0 && l.inKindling === 0 && l.wantedBy.length === 0 && l.inRecipes.length === 0 && !l.inUnfound && l.inPieces.length === 0 && <span className="muted">Nothing known</span>}
+          {l.inPieces.map((p) => (
+            <span key={p}>{PIECE_DEFS[p].name} (crafting window)</span>
+          ))}
           {l.usedBy.map((id) => (
             <span key={id}>{actionLabel(id)}</span>
           ))}

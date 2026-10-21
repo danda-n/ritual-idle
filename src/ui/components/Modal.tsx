@@ -9,7 +9,7 @@ const open: object[] = [];
  * pass a fresh function on every render (the game re-renders 10 times a second), and
  * re-running the setup would steal focus back, closing any open dropdown.
  */
-export function Modal({ title, onClose, children, dismissOnBackdrop = true }: { title: string; onClose: () => void; children: ReactNode; dismissOnBackdrop?: boolean }) {
+export function Modal({ title, onClose, children, dismissOnBackdrop = true, className = "", backdropClassName = "", headless = false }: { title: string; onClose: () => void; children: ReactNode; dismissOnBackdrop?: boolean; className?: string; backdropClassName?: string; /** The children bring their own heading (its id is `modalHeadingId(title)`), for dialogs laid out differently. */ headless?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const close = useRef(onClose);
   close.current = onClose;
@@ -28,13 +28,19 @@ export function Modal({ title, onClose, children, dismissOnBackdrop = true }: { 
     };
   }, []);
 
-  const id = useId();
+  const own = useId();
+  const id = headless ? modalHeadingId(title) : own;
   return (
-    <div className="modal-backdrop" onClick={(e) => dismissOnBackdrop && e.target === e.currentTarget && close.current()}>
-      <div className="modal" role="dialog" aria-modal="true" aria-labelledby={id} ref={ref}>
-        <h2 id={id}>{title}</h2>
+    <div className={`modal-backdrop ${backdropClassName}`} onClick={(e) => dismissOnBackdrop && e.target === e.currentTarget && close.current()}>
+      <div className={`modal ${className}`} role="dialog" aria-modal="true" aria-labelledby={id} ref={ref}>
+        {!headless && <h2 id={id}>{title}</h2>}
         {children}
       </div>
     </div>
   );
+}
+
+/** The heading id a headless dialog's own heading uses. */
+export function modalHeadingId(title: string): string {
+  return `dlg-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
 }

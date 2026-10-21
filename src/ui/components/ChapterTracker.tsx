@@ -199,7 +199,16 @@ export function ChapterTracker({ state, onGo, act }: { state: GameState; onGo: (
           <p className="step-hint">
             Janko joined ({followerEffects("janko")[0]}) · skill caps rise to {HEARTH_RITE.rewards.levelCap}
           </p>
-          <p className="step-hint">Chapter II · Grave comes in a later build.</p>
+          {state.cellar.gifts.includes("domovoi") ? (
+            <p className="step-hint">The Domovoi is calmed · the way to the crypt is open. Chapter II · Grave comes in a later build.</p>
+          ) : (
+            <>
+              <p className="step-hint">The cellar is open · calm the Domovoi.</p>
+              <button className="btn btn-ghost btn-sm" onClick={() => onGo({ tab: "cellar" })}>
+                Cellar ›
+              </button>
+            </>
+          )}
         </div>
       )}
     </section>

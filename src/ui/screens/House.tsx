@@ -24,6 +24,7 @@ import { Tip, type TipContent } from "../components/Tip";
 import type { FxEvent } from "../fx";
 import { useRecentFx } from "../useFx";
 import { formatDuration, formatRate, formatStop } from "../format";
+import { PIECE_DEFS } from "../../content/combat";
 
 
 /** The House hero: the Sanctum scene behind a dark gradient, the place name and three numbers. */
@@ -67,7 +68,7 @@ export function SkillNav({ state, skill, onSelect }: { state: GameState; skill: 
   const levelled = useLevelFlash(state);
   return (
     <nav className="panel flush skill-list" aria-label="Skills">
-      {SKILL_IDS.filter((id) => isSkillUnlocked(state, id)).map((id) => {
+      {SKILL_IDS.filter((id) => isSkillUnlocked(state, id) && SKILLS[id].category !== "combat").map((id) => {
         const running = state.active && ACTION_DEFS[state.active.id].skill === id ? state.active : null;
         const waiting = choicesWaiting(state, id).length;
         return (
@@ -152,7 +153,7 @@ function NextSkill({ state }: { state: GameState }) {
 
 const pickUnlocked = (e: FxEvent) => (e.kind === "unlocked" ? e.ids : []);
 
-export function SkillActions({ state, skill, onStart, onStop, act }: { state: GameState; skill: SkillId; onStart: (id: ActionId) => void; onStop: () => void; act: (c: (s: GameState) => Result) => unknown }) {
+export function SkillActions({ state, skill, onStart, onStop, act, onCraft }: { state: GameState; skill: SkillId; onStart: (id: ActionId) => void; onStop: () => void; act: (c: (s: GameState) => Result) => unknown; onCraft?: () => void }) {
   const fresh = useRecentFx(pickUnlocked, 5000);
   const level = skillLevel(state, skill);
   const toCap = timeToCapMs(state, skill);
@@ -174,6 +175,11 @@ export function SkillActions({ state, skill, onStart, onStop, act }: { state: Ga
             </p>
           </div>
           <div className="stats">
+            {skill === "crafting" && onCraft && (
+              <button className={`btn ${state.cellar.pending ? "btn-primary" : "btn-ghost"}`} onClick={onCraft}>
+                {state.cellar.pending ? "Choose the piece's bonus" : state.job ? `Making: ${PIECE_DEFS[state.job.piece].name}` : "Open the crafting window"}
+              </button>
+            )}
             <span className="stat">
               <span className="label">XP/h now</span>
               <b className="num">{running ? formatRate(xpPerHour(state, running)) : "—"}</b>

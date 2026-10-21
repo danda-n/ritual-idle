@@ -28,6 +28,18 @@
       ],
       "port": 5392,
       "url": "http://test.localhost:5392"
+    },
+    {
+      "name": "handoff",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "docs/design_handoff/reference",
+        "--port",
+        "5393",
+        "--strictPort"
+      ],
+      "port": 5393
     }
   ]
 }

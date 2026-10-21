@@ -14,6 +14,7 @@ import "./ui/styles/tokens/space.css";
 import "./ui/styles/base.css";
 import "./ui/styles/components.css";
 import "./ui/styles/places.css";
+import "./ui/styles/cellar.css";
 import { App } from "./ui/App";
 
 createRoot(document.getElementById("root")!).render(

@@ -8,7 +8,7 @@ import { grantOmen } from "./omens";
 import { readCurio } from "./grimoire";
 import { isFeatureOpen, isSkillUnlocked } from "./progress";
 import { nextRandom } from "./rng";
-import type { BlowLine, FightState, Gear, GameState, Piece } from "./state";
+import type { BlowLine, FightState, FightSummary, Gear, GameState, Piece } from "./state";
 import { levelForXp, xpForLevel } from "./xp";
 
 // Combat in the cellar (docs/COMBAT.md). Pure and seeded like the rest of the engine: a fight runs
@@ -46,6 +46,8 @@ export interface CombatStats {
   sets: Partial<Record<SetId, number>>;
   /** Where each stat comes from, for the "Your stats" tab. */
   parts: Record<"health" | "ward" | "strike" | "speed", { source: string; value: number }[]>;
+  /** What multiplies them (the set, talents, your level and help), for the same tab. */
+  mults: Record<"ward" | "strike" | "speed", { source: string; mult: number }[]>;
 }
 
 export function wardingLevel(state: GameState): number {
@@ -126,13 +128,20 @@ export function combatStats(state: GameState, gear: Gear = state.cellar.gear): C
   for (const t of talents(state, "telling", "warding")) telling += t.chance;
   for (const t of talents(state, "counter", "warding")) counter = Math.max(counter, t.mult);
   if (health > 0) parts.health.push({ source: "Talents", value: health });
-  if ((sets.grandmother ?? 0) >= 2) wardMult += SETS.grandmother.ward2;
+  const mults: CombatStats["mults"] = { ward: [], strike: [], speed: [] };
+  if (wardMult !== 1) mults.ward.push({ source: "Talents", mult: wardMult });
+  if (strikeMult !== 1) mults.strike.push({ source: "Talents", mult: strikeMult });
+  if ((sets.grandmother ?? 0) >= 2) {
+    wardMult += SETS.grandmother.ward2;
+    mults.ward.push({ source: "Set", mult: 1 + SETS.grandmother.ward2 });
+  }
   const ward = Math.max(0, sum(parts.ward) * wardMult);
   // Charms that soften special attacks (a red thread knot): those on, and the one worn if you hold one.
   const charms = new Set<CharmId>(activeCharms(state));
   if (gear.charm && (state.inventory[gear.charm] ?? 0) > 0) charms.add(gear.charm);
   const knotMult = Math.min(1, ...[...charms].map((c) => CHARM_DEFS[c].effect.specialMult ?? 1));
   const speed = skillSpeed(state, "warding") * (1 + speedBonus);
+  if (skillSpeed(state, "warding") !== 1) mults.speed.push({ source: "Level and help", mult: skillSpeed(state, "warding") });
   return {
     maxHealth: Math.round(sum(parts.health)),
     ward,
@@ -151,6 +160,7 @@ export function combatStats(state: GameState, gear: Gear = state.cellar.gear): C
     xp: 1 + xp,
     sets,
     parts,
+    mults,
   };
 }
 
@@ -414,6 +424,7 @@ export function startFight(state: GameState, foeId: FoeId): void {
   state.active = null;
   state.job = null;
   state.cellar.lastFor[foeId] = structuredClone(gear);
+  state.cellar.lastFight = null;
   state.fight = {
     foe: foeId,
     foeHealth: m.foe.health,
@@ -423,6 +434,8 @@ export function startFight(state: GameState, foeId: FoeId): void {
     specialSpent: false,
     belt: Math.min(m.stats.beltCap, held),
     beaten: 0,
+    loot: {},
+    remediesUsed: 0,
     safe: r.tag === "Safe",
     returnTo,
     log: [],
@@ -467,7 +480,8 @@ export function stepFight(state: GameState, ms: number, h: FightHooks): number {
   let m = matchup(state, f.foe, state.cellar.gear);
   const b: Bout = { health: Math.min(state.cellar.health, m.stats.maxHealth), foeHealth: f.foeHealth, youMs: f.youMs, foeMs: f.foeMs, foeBlows: f.foeBlows, specialSpent: f.specialSpent, belt: f.belt };
   let used = 0;
-  let ended = false;
+  let ended: "driven" | "calmed" | null = null;
+  let drivenBy: string | null = null;
   while (used < ms) {
     const r = nextBlow(m, b, h.roll, ms - used);
     if (!r) {
@@ -481,12 +495,14 @@ export function stepFight(state: GameState, ms: number, h: FightHooks): number {
       if (e.heal !== undefined && state.cellar.gear.remedy) {
         state.inventory[state.cellar.gear.remedy] = Math.max(0, (state.inventory[state.cellar.gear.remedy] ?? 0) - 1);
         h.report.remediesUsed++;
+        f.remediesUsed++;
       }
       if (e.driven) {
         // Driven off: the fight ends. Only the remedies used and this foe's loot are lost.
         b.health = 0;
         h.report.drivenOff = { foe: f.foe, by: e.special ?? null };
-        ended = true;
+        ended = "driven";
+        drivenBy = e.special ?? null;
         break;
       }
       continue;
@@ -496,7 +512,7 @@ export function stepFight(state: GameState, ms: number, h: FightHooks): number {
     // A foe warded off: its loot, Warding XP, and the next one steps up.
     foeBeaten(state, f, m, h);
     if (m.foe.boss) {
-      ended = true;
+      ended = "calmed";
       break;
     }
     nextFoe(m, b);
@@ -512,8 +528,16 @@ export function stepFight(state: GameState, ms: number, h: FightHooks): number {
   f.foeBlows = b.foeBlows;
   f.specialSpent = b.specialSpent;
   f.belt = b.belt;
-  if (ended) state.fight = null;
+  if (ended) endFight(state, ended, drivenBy);
   return used;
+}
+
+/** End the fight under way, keeping a summary for the Cellar. Mutates `state`. */
+export function endFight(state: GameState, end: FightSummary["end"], by: string | null = null): void {
+  const f = state.fight;
+  if (!f) return;
+  state.cellar.lastFight = { foe: f.foe, end, beaten: f.beaten, loot: f.loot, remediesUsed: f.remediesUsed, by, returnTo: f.returnTo };
+  state.fight = null;
 }
 
 function foeBeaten(state: GameState, f: FightState, m: Matchup, h: FightHooks): void {
@@ -530,6 +554,7 @@ function foeBeaten(state: GameState, f: FightState, m: Matchup, h: FightHooks): 
         h.curio(story, fragment);
       } else {
         state.inventory[l.item] = (state.inventory[l.item] ?? 0) + l.qty;
+        f.loot[l.item] = (f.loot[l.item] ?? 0) + l.qty;
         h.gained(l.item, l.qty);
       }
     }
@@ -604,7 +629,7 @@ export function startPiece(state: GameState, id: PieceId): void {
   for (const [i, n] of Object.entries(PIECE_DEFS[id].items) as [ItemId, number][]) state.inventory[i] = (state.inventory[i] ?? 0) - n;
   const returnTo = state.active?.id ?? state.fight?.returnTo ?? null;
   state.active = null;
-  state.fight = null;
+  endFight(state, "stopped");
   state.job = { piece: id, progress: 0, returnTo };
 }
 

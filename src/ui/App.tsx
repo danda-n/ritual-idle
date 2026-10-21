@@ -35,8 +35,12 @@ import type { Place } from "./tasks";
 import { useGame } from "./useGame";
 import { RiteReady, RiteScene } from "./components/Rite";
 import { PART_IDS } from "../content/rite";
+import { Cellar } from "./screens/Cellar";
+import { CraftingWindow } from "./components/CraftingWindow";
+import { CellarIntro, DomovoiCalmed } from "./components/CellarDialogs";
+import { CellarIcon } from "./art/cellarIcons";
 
-type TabId = "house" | "inventory" | "grimoire" | "village" | "circle" | "experiments";
+type TabId = "house" | "inventory" | "grimoire" | "village" | "circle" | "experiments" | "cellar";
 
 export function App() {
   const game = useGame();
@@ -45,6 +49,8 @@ export function App() {
   const [lookup, setLookup] = useState<ItemId | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
+  const [craftOpen, setCraftOpen] = useState(false);
+  const [introOpen, setIntroOpen] = useState(false);
   // Tabs show a dot until first visited; visits are saved.
   const seen = (t: TabId) => state.settings.seenTabs.includes(t);
   const setTab = (t: TabId) => {
@@ -102,6 +108,19 @@ export function App() {
   if (isFeatureOpen(state, "village")) place("village", "Village", <LanternIcon size={18} />);
   if (isFeatureOpen(state, "circle")) place("circle", "Circle", <CircleRiteIcon size={18} />);
   if (isFeatureOpen(state, "experiments")) place("experiments", "Experiments", <MoonIcon size={18} />);
+  if (isFeatureOpen(state, "cellar")) place("cellar", "Cellar", <CellarIcon glyph="cellar" size={18} />);
+
+  // The cellar's introduction: once, when it opens (after the chapter end), and from "How it works".
+  const seenIntro = (id: string) => state.settings.introsSeen.includes(id);
+  const firstIntro = isFeatureOpen(state, "cellar") && !!state.rite.completed?.endingSeen && !seenIntro("cellar_intro");
+  const closeIntro = () => {
+    setIntroOpen(false);
+    if (!seenIntro("cellar_intro")) {
+      game.act((s) => setSetting(s, "introsSeen", [...s.settings.introsSeen, "cellar_intro"]));
+      setTab("cellar");
+    }
+  };
+  const calmedNow = state.cellar.lastFight?.end === "calmed" && !seenIntro("domovoi_calmed");
 
   return (
     <ChipContext.Provider value={{ state, lookup: setLookup, start: game.start, markTerm: (id) => game.act((s) => markTermSeen(s, id)) }}>
@@ -125,6 +144,7 @@ export function App() {
           {tab === "grimoire" && <Grimoire state={state} act={game.act} onAttuned={() => setTab("experiments")} />}
           {tab === "circle" && <Circle state={state} act={game.act} />}
           {tab === "experiments" && <Experiments state={state} act={game.act} />}
+          {tab === "cellar" && <Cellar state={state} act={game.act} onIntro={() => setIntroOpen(true)} onCraft={() => setCraftOpen(true)} />}
           {tab === "house" && state.rite.performing && <RiteScene state={state} act={game.act} />}
           {tab === "house" && !state.rite.performing && (
             <>
@@ -132,7 +152,7 @@ export function App() {
               {riteReady ? <RiteReady state={state} act={game.act} /> : <HouseHero state={state} />}
               <div className="house">
                 <SkillNav state={state} skill={skill} onSelect={setSkill} />
-                <SkillActions state={state} skill={skill} onStart={game.start} onStop={game.stop} act={game.act} />
+                <SkillActions state={state} skill={skill} onStart={game.start} onStop={game.stop} act={game.act} onCraft={() => setCraftOpen(true)} />
               </div>
               {isSkillUnlocked(state, "chandlery") && <Projects state={state} act={game.act} />}
             </>
@@ -161,6 +181,9 @@ export function App() {
       {game.story && !game.away && !game.discovery && (!state.rite.completed || state.rite.completed.endingSeen) && (
         <TaskCard note={game.story} state={state} onClose={game.dismissStory} onGo={goTo} />
       )}
+      {(introOpen || (firstIntro && !game.story)) && !game.away && <CellarIntro onClose={closeIntro} />}
+      {calmedNow && !game.away && <DomovoiCalmed onClose={() => game.act((s) => setSetting(s, "introsSeen", [...s.settings.introsSeen, "domovoi_calmed"]))} />}
+      {craftOpen && <CraftingWindow state={state} act={game.act} onClose={() => setCraftOpen(false)} />}
       {lookup && <ItemLookupModal state={state} item={lookup} onClose={() => setLookup(null)} />}
       {guideOpen && <GuideModal state={state} onClose={() => setGuideOpen(false)} />}
       {settingsOpen && (

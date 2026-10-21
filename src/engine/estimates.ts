@@ -1,6 +1,7 @@
 import { ACTION_DEFS, type ActionId } from "../content/actions";
 import { PART_DEFS, PART_IDS, type PartId } from "../content/rite";
 import { REQUESTS } from "../content/requests";
+import { FOE_DEFS, FOE_IDS, PIECE_DEFS, PIECE_IDS, type FoeId, type PieceId } from "../content/combat";
 import { SHOP } from "../content/shop";
 import { GRIMOIRE_DEFS } from "../content/grimoire";
 import { UPGRADE_DEFS, UPGRADE_IDS, type UpgradeId } from "../content/upgrades";
@@ -215,10 +216,15 @@ export interface ItemLookup {
   inRecipes: string[];
   /** True if a hidden recipe or secret not yet found uses it (a tease, not a spoiler). */
   inUnfound: boolean;
+  /** The cellar's foes that leave it behind (once the cellar is open). */
+  leftBy: FoeId[];
+  /** Pieces of gear made from it, and reforged with it (once the cellar is open). */
+  inPieces: PieceId[];
 }
 
 export function lookupItem(state: GameState, item: ItemId): ItemLookup {
   const visible = (id: ActionId) => isRecipeRevealed(state, id);
+  const cellar = isFeatureOpen(state, "cellar");
   return {
     madeBy: ACTION_IDS.filter((id) => visible(id) && ACTION_DEFS[id].outputs.some((o) => o.item === item)),
     usedBy: ACTION_IDS.filter((id) => visible(id) && item in ACTION_DEFS[id].inputs),
@@ -231,6 +237,8 @@ export function lookupItem(state: GameState, item: ItemId): ItemLookup {
     inUnfound: (Object.keys(GRIMOIRE_DEFS) as (keyof typeof GRIMOIRE_DEFS)[]).some(
       (id) => !isDiscovered(state, id) && (GRIMOIRE_DEFS[id].ingredients as string[]).includes(item),
     ),
+    leftBy: cellar ? FOE_IDS.filter((f) => FOE_DEFS[f].loot.some((l) => l.item === item)) : [],
+    inPieces: cellar ? PIECE_IDS.filter((p) => item in PIECE_DEFS[p].items || item in PIECE_DEFS[p].reforge) : [],
   };
 }
 

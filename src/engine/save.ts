@@ -70,7 +70,7 @@ export function deserialize(json: string): GameState {
       gear: { ...base.cellar.gear, ...data.cellar?.gear },
       pieces: (data.cellar?.pieces ?? []).filter((p) => p.id in PIECES),
     },
-    fight: data.fight && data.fight.foe in FOES ? data.fight : null,
+    fight: data.fight && data.fight.foe in FOES ? { ...data.fight, loot: data.fight.loot ?? {}, remediesUsed: data.fight.remediesUsed ?? 0 } : null,
     job: data.job && data.job.piece in PIECES ? data.job : null,
     version: SAVE_VERSION,
   };

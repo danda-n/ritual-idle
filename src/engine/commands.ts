@@ -25,7 +25,7 @@ import type { GameState, Settings } from "./state";
 import { xpForLevel } from "./xp";
 import { deliverable, emptySlot, offerOf, stillNeeded } from "./village";
 import { BASE, PIECE_DEFS, REMEDIES, SLOT_DEFS, type FoeId, type PieceId, type RemedyId, type Slot } from "../content/combat";
-import { canCraftPiece, canFight, cancelPiece, combatStats, pieceOf, rollAffixOptions, startFight, startPiece } from "./combat";
+import { canCraftPiece, canFight, cancelPiece, endFight, combatStats, pieceOf, rollAffixOptions, startFight, startPiece } from "./combat";
 import { loadoutSlots, rollOptionCount, talents } from "./modifiers";
 import { nextRandom } from "./rng";
 
@@ -440,7 +440,17 @@ export function beginFight(input: GameState, foe: FoeId): Result {
 /** Stop fighting. Everything won so far is kept. */
 export function stopFight(input: GameState): Result {
   if (!input.fight) return no("No fight to stop.");
-  return ok({ ...input, fight: null });
+  const state = structuredClone(input);
+  endFight(state, "stopped");
+  return ok(state);
+}
+
+/** Put away the last fight's summary. */
+export function dismissFightSummary(input: GameState): Result {
+  if (!input.cellar.lastFight) return no("Nothing to dismiss.");
+  const state = structuredClone(input);
+  state.cellar.lastFight = null;
+  return ok(state);
 }
 
 /** Put a piece you hold on (or take a slot's piece off, with null). */

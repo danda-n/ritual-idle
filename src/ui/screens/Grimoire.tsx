@@ -20,6 +20,11 @@ import { Term } from "../components/Term";
 import { noteTitle } from "../tasks";
 import { itemName } from "../format";
 import { INSIGHT_SOURCES, recipeGuide, recipeKnowledge } from "../guidance";
+import { FOE_DEFS, FOE_IDS, type FoeId, type GiftId } from "../../content/combat";
+import { ITEMS, type ItemId } from "../../content/items";
+import { weaknessKnown } from "../../engine/combat";
+import { CellarIcon } from "../art/cellarIcons";
+import { FOE_ART } from "../cellar";
 
 type Act = (command: (s: GameState) => Result) => unknown;
 type Selection =
@@ -30,7 +35,8 @@ type Selection =
   | { kind: "discoveries" }
   | { kind: "kindling" }
   | { kind: "secrets" }
-  | { kind: "forbidden" };
+  | { kind: "forbidden" }
+  | { kind: "bestiary" };
 
 const HINT_COSTS = Object.values(INSIGHT_COST);
 /** Where curios turn up, with the live chances (bonuses applied): "Search the attic 0.5% · Open grandmother's chest 1%". */
@@ -131,6 +137,7 @@ export function Grimoire({ state, act, onAttuned }: { state: GameState; act: Act
           {discovered.length > 0 && item({ kind: "discoveries" }, "Discoveries", discovered.length)}
           {riteStarted && item({ kind: "kindling" }, "The Kindling")}
           {blackPageRead && item({ kind: "forbidden" }, "The black page")}
+          {isFeatureOpen(state, "cellar") && item({ kind: "bestiary" }, "The Bestiary", `${FOE_IDS.filter((f) => (state.cellar.beaten[f] ?? 0) > 0).length}/${FOE_IDS.length} met`)}
         </ul>
       </nav>
 
@@ -231,6 +238,7 @@ export function Grimoire({ state, act, onAttuned }: { state: GameState; act: Act
             ))}
           </>
         )}
+        {sel.kind === "bestiary" && <BestiaryPage state={state} />}
         {sel.kind === "forbidden" && (
           <>
             <div className="panel-title">
@@ -508,6 +516,69 @@ function PagesPage({ state }: { state: GameState }) {
           <p className="note-quote">{shown.text}</p>
         </article>
       )}
+    </>
+  );
+}
+
+/** The Bestiary (docs/COMBAT.md §11): what you've learned of the cellar's spirits. Foes not met yet are locked tiles. */
+function BestiaryPage({ state }: { state: GameState }) {
+  const tile = (id: FoeId) => {
+    const f = FOE_DEFS[id];
+    const beaten = state.cellar.beaten[id] ?? 0;
+    const met = beaten > 0 || f.boss;
+    if (!met) {
+      return (
+        <div key={id} className="beast is-locked">
+          <CellarIcon glyph="lock" size={22} />
+          <span>Not met yet</span>
+        </div>
+      );
+    }
+    const calmed = f.boss && state.cellar.gifts.includes(id as GiftId);
+    const specials = [...(f.special ? [`every ${f.special.every === 3 ? "3rd" : `${f.special.every}th`} blow: ${f.special.name} ×${f.special.mult}`] : []), ...(f.telling ? [`telling blows ${Math.round(f.telling * 100)}%`] : [])];
+    return (
+      <article key={id} className={`beast ${f.boss ? "is-boss" : ""}`}>
+        <span className="art b-art">
+          <img src={FOE_ART[id].art} alt={f.name} />
+        </span>
+        <div className="b-body">
+          <div>
+            <h3>{f.name.replace(/^The sour /, "")}</h3>
+            <span className="meta num">{f.boss ? (calmed ? "Calmed" : "Not yet calmed") : `Beaten ${beaten}`}</span>
+          </div>
+          <p className="b-line">{f.line}</p>
+          <dl>
+            <dt>Fears</dt>
+            <dd>{weaknessKnown(state, id) ? <span className="tag">{f.weakness}</span> : <span className="tag is-unknown">?</span>}</dd>
+            <dt>Specials</dt>
+            <dd>{specials.length ? specials.join(" · ") : "None"}</dd>
+            {f.boss ? (
+              <>
+                <dt>Opens</dt>
+                <dd>The way down to the crypt</dd>
+                <dt>Gift</dt>
+                <dd>+5% speed in all skills · Health comes back twice as fast</dd>
+              </>
+            ) : (
+              <>
+                <dt>Leaves</dt>
+                <dd>{f.loot.map((l) => `${l.item === "curio" ? "Curio" : ITEMS[l.item as ItemId].name} ${Math.round(l.chance * 100)}%`).join(" · ")}</dd>
+              </>
+            )}
+          </dl>
+        </div>
+      </article>
+    );
+  };
+  return (
+    <>
+      <div>
+        <span className="label">The Bestiary · the cellar</span>
+        <h2>
+          <Term id="bestiary">What waits below</Term>
+        </h2>
+      </div>
+      <div className="beasts">{FOE_IDS.map(tile)}</div>
     </>
   );
 }

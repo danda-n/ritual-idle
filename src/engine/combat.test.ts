@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { BASE, FOES, GIFTS, PIECES, type Affix, type PieceId } from "../content/combat";
-import { beginFight, chooseAffix, craftPiece, deleteLoadout, reforge, saveLoadout, setCharm, setHealAt, setRemedy, start, stopFight, useRemedy, wear, wearLastFor, wearLoadout, upgradePiece, type Result } from "./commands";
+import { beginFight, dismissFightSummary, chooseAffix, craftPiece, deleteLoadout, reforge, saveLoadout, setCharm, setHealAt, setRemedy, start, stopFight, useRemedy, wear, wearLastFor, wearLoadout, upgradePiece, type Result } from "./commands";
 import { canFight, combatStats, matchup, readiness, weaknessKnown } from "./combat";
 import { openProjects, revealedRecipes } from "./estimates";
 import { loadoutSlots, speedMultiplier } from "./modifiers";
@@ -10,6 +10,13 @@ import { deserialize, serialize } from "./save";
 import { advance } from "./simulate";
 import { newGame, type GameState } from "./state";
 import { xpForLevel } from "./xp";
+import { ACTION_DEFS } from "../content/actions";
+import { CELLAR_TERMS, GLOSSARY } from "../content/glossary";
+import { ITEM_DEFS } from "../content/items";
+import { KEEPSAKES } from "../content/keepsakes";
+import { EXPERIMENTS_NOTE, NOTES } from "../content/notes";
+import { SKILL_DEFS, SKILLS } from "../content/skills";
+import { UPGRADE_DEFS } from "../content/upgrades";
 
 const MIN = 60_000;
 
@@ -140,6 +147,18 @@ describe("a fight", () => {
     expect(report.fight.drivenOff?.foe).toBe("skrzat");
     expect(state.fight).toBeNull();
     expect(state.active?.id).toBe("pick_nettle");
+  });
+
+  it("keeps a summary of how it ended: driven off by what, the loot, the remedies; stopping too", () => {
+    let s = must(beginFight(geared(), "kikimora"));
+    s = advance(s, 3 * MIN).state;
+    const stopped = must(stopFight(s));
+    expect(stopped.cellar.lastFight).toMatchObject({ foe: "kikimora", end: "stopped", beaten: s.fight!.beaten, loot: s.fight!.loot });
+    expect(must(dismissFightSummary(stopped)).cellar.lastFight).toBeNull();
+    let weak = must(beginFight(level(afterRite(), "warding", 6), "zmora"));
+    weak = advance(weak, 10 * MIN).state;
+    expect(weak.cellar.lastFight).toMatchObject({ foe: "zmora", end: "driven" });
+    expect(must(beginFight({ ...weak, cellar: { ...weak.cellar, health: 40 } }, "skrzat")).cellar.lastFight).toBeNull();
   });
 
   it("Health comes back out of a fight, in full in about 2 minutes", () => {
@@ -381,5 +400,33 @@ describe("saves", () => {
     expect(loaded.cellar.pieces).toEqual([]);
     expect(loaded.cellar.health).toBe(40);
     expect(isSkillUnlocked(loaded, "warding")).toBe(true);
+  });
+});
+
+describe("nothing of combat before the cellar opens (docs/COMBAT.md §10)", () => {
+  const COMBAT_WORDS = /\b(warding|crafting|fight|fights|foe|foes|gear|remedy|remedies|heals?|health|cellar|affix|loadout|readiness|domovoi|skrzat|kikimora|zmora)\b/i;
+
+  it("Chapter 1's own words never name it: skills, items, notes, projects, keepsakes, glossary", () => {
+    const texts: [string, string][] = [];
+    for (const [id, sk] of Object.entries(SKILLS)) if (!SKILL_DEFS[id as keyof typeof SKILLS].opensWith) texts.push([`skill ${id}`, `${sk.about} ${sk.blurb}`]);
+    for (const [id, it] of Object.entries(ITEM_DEFS)) if (!["leavings", "components"].includes(it.category) && !["yarrow_poultice", "red_thread_knot"].includes(id)) texts.push([`item ${id}`, `${it.name} ${it.description ?? ""}`]);
+    for (const n of [...NOTES, EXPERIMENTS_NOTE]) texts.push(["note", n.text]);
+    for (const [id, u] of Object.entries(UPGRADE_DEFS)) if (u.requiresFeature !== "cellar") texts.push([`project ${id}`, `${u.name} ${u.blurb} ${u.extra ?? ""}`]);
+    for (const [id, k] of Object.entries(KEEPSAKES)) texts.push([`keepsake ${id}`, `${k.name} ${k.text} ${k.flavour}`]);
+    for (const [id, g] of Object.entries(GLOSSARY)) if (!(CELLAR_TERMS as readonly string[]).includes(id)) texts.push([`term ${id}`, `${g.name} ${g.text}`]);
+    for (const [where, text] of texts) expect(text, where).not.toMatch(COMBAT_WORDS);
+  });
+
+  it("no recipe, project or skill of the cellar shows before the rite, at any level", () => {
+    const s = newGame(0, 1);
+    s.notesRevealed = 99;
+    s.experimentsOpen = true;
+    for (const k of Object.keys(s.skills) as (keyof typeof s.skills)[]) s.skills[k].xp = xpForLevel(20);
+    s.inventory = { iron_nail: 50, glass: 50, rags: 50, spun_thread: 5, stjohns: 5, yarrow: 9 };
+    for (const k of ["warding", "crafting"] as const) expect(isSkillUnlocked(s, k)).toBe(false);
+    for (const k of ["herbalism", "scavenging", "chandlery", "sigilcraft", "scholarship", "ritualism"] as const) {
+      for (const id of revealedRecipes(s, k)) expect(ACTION_DEFS[id].requires, id).toBeUndefined();
+    }
+    expect(openProjects(s).filter((u) => UPGRADE_DEFS[u].requiresFeature === "cellar")).toEqual([]);
   });
 });

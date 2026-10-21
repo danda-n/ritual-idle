@@ -44,7 +44,7 @@ export const GLOSSARY = {
   },
   talent: {
     name: "Talent",
-    text: "At skill levels 3, 6, 9 and 12, choose one of two. A pick is fixed until the next talent level, then you can change it.",
+    text: "Every 3 levels, up to 30, a skill offers two talents and you choose one. A pick is fixed until the next talent level, then you can change it.",
   },
   surge: {
     name: "Surge",
@@ -94,6 +94,78 @@ export const GLOSSARY = {
     name: "House project",
     text: "Side work built once from things you make. Each helps for good. Nothing on the main path needs them.",
   },
+  // The cellar (docs/COMBAT.md). These words appear only once the cellar is open.
+  cellar: {
+    name: "The Cellar",
+    text: "The room under the kitchen. When the Circle woke, the house's spirits moved down there. You drive them off with Warding, in gear you make with Crafting.",
+  },
+  warding: {
+    name: "Warding",
+    text: "Fighting the spirits. A fight runs by itself, one foe after another, until you stop it. Each level gives you more Health and quicker blows.",
+  },
+  crafting: {
+    name: "Crafting",
+    text: "Making gear. Its recipes make components; the pieces themselves are made in the crafting window.",
+  },
+  gear: {
+    name: "Gear",
+    text: "What you wear into a fight: an Amulet, something in your Hand, a Lantern, a Garment and a Belt. Gear is never used up, and you never lose it.",
+  },
+  piece: {
+    name: "Piece",
+    text: "One item of gear, made once in the crafting window. You can make one of each.",
+  },
+  affix: {
+    name: "Affix",
+    text: "A bonus on a piece. Its fixed affix is always the same (its tag, or a trait). Its random affix is rolled when you make it, and you choose one of the options.",
+  },
+  set: {
+    name: "Set",
+    text: "Pieces that belong together. Wearing two or three of a set gives an extra bonus.",
+  },
+  reforge: {
+    name: "Reforge",
+    text: "Roll a piece's random affix again, for a few components. You see the new options next to the old one and can keep the old one.",
+  },
+  loadout: {
+    name: "Loadout",
+    text: "A set of gear you've saved with a name, to put on in one click. Each foe also remembers the gear you last wore against it.",
+  },
+  readiness: {
+    name: "Readiness",
+    text: "How likely you are to win, worked out by playing the fight out a thousand times: Safe, Likely, Risky, Deadly or Hopeless. Only Safe fights keep going while you're away.",
+  },
+  weakness: {
+    name: "Weakness",
+    text: "The one thing a foe fears, like salt or iron. If your Hand or Lantern carries it, your blows hit half again as hard; if your Amulet does, its blows are halved. You learn it after 10 wins.",
+  },
+  telling: {
+    name: "Telling blow",
+    text: "A blow that lands twice as hard. A few of yours do, and some foes have their own.",
+  },
+  driven: {
+    name: "Driven off",
+    text: "What happens when your Health runs out: the fight ends. You lose the remedies you used on that foe and what it would have dropped. Never gear, never anything else.",
+  },
+  remedy: {
+    name: "Remedy",
+    text: "Food or herbs that give Health back. In a fight your healing rule uses them; out of one you can use them yourself.",
+  },
+  healing: {
+    name: "Healing rule",
+    text: "When to use a remedy in a fight: below a share of your Health that you set.",
+  },
+  gift: {
+    name: "Gift",
+    text: "What a boss leaves when you beat it: a lasting bonus, kept for good.",
+  },
+  bestiary: {
+    name: "The Bestiary",
+    text: "The Grimoire's pages on the spirits you've met: what each fears, its special attacks and what it leaves behind.",
+  },
 } as const satisfies Record<string, { name: string; text: string }>;
+
+/** Words of the cellar: never shown before it opens (combat.test.ts checks it). */
+export const CELLAR_TERMS = ["cellar", "warding", "crafting", "gear", "piece", "affix", "set", "reforge", "loadout", "readiness", "weakness", "telling", "driven", "remedy", "healing", "gift", "bestiary"] as const;
 
 export type TermId = keyof typeof GLOSSARY;

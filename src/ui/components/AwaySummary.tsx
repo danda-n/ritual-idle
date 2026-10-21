@@ -9,6 +9,7 @@ import { formatDuration, formatStop, itemName } from "../format";
 import { Modal } from "./Modal";
 import { Tip } from "./Tip";
 import { buffEffects } from "../effects";
+import { FOE_DEFS, type FoeId } from "../../content/combat";
 
 export function AwaySummary({ away, onClose }: { away: CatchUp; onClose: () => void }) {
   const { report } = away;
@@ -19,7 +20,7 @@ export function AwaySummary({ away, onClose }: { away: CatchUp; onClose: () => v
         Away {formatDuration(away.awayMs)}
         {away.capped && ` · simulated ${formatDuration(report.elapsedMs)} (cap)`}
       </p>
-      {report.actionsCompleted === 0 && report.riteMs === 0 ? (
+      {report.actionsCompleted === 0 && report.riteMs === 0 && !report.fight.stoppedAway ? (
         <p className="muted">Nothing was running.</p>
       ) : report.actionsCompleted === 0 ? null : (
         <>
@@ -56,6 +57,7 @@ export function AwaySummary({ away, onClose }: { away: CatchUp; onClose: () => v
           Page deciphered: <strong>{p.title}</strong>
         </p>
       ))}
+      <CellarLine report={report} />
       <ul className="ledger">
         {report.riteMs > 0 && report.riteCompleted === null && (
           <li>
@@ -114,5 +116,25 @@ export function AwaySummary({ away, onClose }: { away: CatchUp; onClose: () => v
         Back to the house
       </button>
     </Modal>
+  );
+}
+
+/** The cellar first (docs/design_handoff/CELLAR.md): foes warded off, remedies used, and how the fight ended. */
+function CellarLine({ report }: { report: CatchUp["report"] }) {
+  const f = report.fight;
+  const beaten = Object.entries(f.beaten) as [FoeId, number][];
+  if (beaten.length === 0 && !f.stoppedAway && !f.drivenOff && !f.calmed) return null;
+  const name = (id: FoeId) => FOE_DEFS[id].name.replace(/^The sour /, "");
+  const parts = [...beaten.filter(([id]) => !FOE_DEFS[id].boss).map(([id, n]) => `${n} ${name(id)}${n === 1 ? "" : "s"} warded off`), ...(f.remediesUsed ? [`${f.remediesUsed} remedies used`] : [])];
+  return (
+    <p className="away-cellar">
+      <span>
+        <strong>The cellar:</strong>
+        {parts.length > 0 && ` ${parts.join(" · ")}.`}
+        {f.calmed && " The Domovoi is calmed."}
+        {f.drivenOff && ` Driven off by the ${name(f.drivenOff.foe)}${f.drivenOff.by ? `: ${f.drivenOff.by}` : ""}.`}
+        {f.stoppedAway && ` The fight with the ${name(f.stoppedAway)} stopped when you left: only Safe fights go on while you're away.`}
+      </span>
+    </p>
   );
 }

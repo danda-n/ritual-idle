@@ -156,6 +156,21 @@ export interface CellarState {
   gifts: GiftId[];
   /** Options rolled for a piece's random affix, waiting for you to choose one. */
   pending: PendingRoll | null;
+  /** How the last fight ended, for the Cellar's summary (cleared when dismissed or a new fight begins). */
+  lastFight: FightSummary | null;
+}
+
+export interface FightSummary {
+  foe: FoeId;
+  /** stopped: by you (or other work) · driven: driven off · calmed: a boss calmed · away: not Safe, so it stopped when you left. */
+  end: "stopped" | "driven" | "calmed" | "away";
+  beaten: number;
+  loot: Partial<Record<ItemId, number>>;
+  remediesUsed: number;
+  /** What drove you off: a special attack's name, or null for a plain blow. */
+  by?: string | null;
+  /** What was running before, which work went back to. */
+  returnTo: ActionId | null;
 }
 
 export interface PendingRoll {
@@ -193,8 +208,10 @@ export interface FightState {
   specialSpent: boolean;
   /** Remedies left in the Belt this fight. */
   belt: number;
-  /** Foes beaten in this fight. */
+  /** Foes beaten in this fight, the loot they left, and the remedies used. */
   beaten: number;
+  loot: Partial<Record<ItemId, number>>;
+  remediesUsed: number;
   /** Ready when you began: Safe fights keep going while you're away; others stop when you leave. */
   safe: boolean;
   /** What was running before the fight, to go back to when it ends. */
@@ -220,6 +237,7 @@ export function newCellar(): CellarState {
     beaten: {},
     gifts: [],
     pending: null,
+    lastFight: null,
   };
 }
 

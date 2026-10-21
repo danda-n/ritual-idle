@@ -7,8 +7,10 @@ import { addInsight } from "../../engine/grimoire";
 import type { GameState } from "../../engine/state";
 import { SKILL_IDS } from "../../content/skills";
 import { levelForXp, xpForLevel } from "../../engine/xp";
+import { PIECE_DEFS, PIECE_IDS } from "../../content/combat";
 
-// Dev builds only (see App). Time skips go through the real offline catch-up.
+// Dev builds only (see App). Time skips go through the real offline catch-up. Fights and the piece
+// being made keep their timers relative to the fight (no timestamps), so rewind needs nothing for them.
 const MIN = 60_000;
 
 export function DevPanel({ dev }: { dev: { skip: (ms: number) => void; mutate: (fn: (s: GameState) => GameState) => void } }) {
@@ -83,6 +85,37 @@ export function DevPanel({ dev }: { dev: { skip: (ms: number) => void; mutate: (
           }
         >
           +5 insight
+        </button>
+        <button
+          className="btn btn-ghost"
+          onClick={() =>
+            dev.mutate((s) => {
+              // Skip to the cellar: the whole chapter done (Sound), every part placed, Janko joined.
+              s.kindling = [...PART_IDS];
+              s.notesRevealed = NOTES.length;
+              s.experimentsOpen = true;
+              s.rite = { performing: null, completed: s.rite.completed ?? { quality: 0, endingSeen: true, offered: [] } };
+              s.levelCap = Math.max(s.levelCap, 40);
+              if (!s.followers.includes("janko")) s.followers.push("janko");
+              return s;
+            })
+          }
+        >
+          Open the cellar
+        </button>
+        <button
+          className="btn btn-ghost"
+          onClick={() =>
+            dev.mutate((s) => {
+              // What the next piece of gear needs, and a few remedies.
+              const next = PIECE_IDS.find((p) => !s.cellar.pieces.some((x) => x.id === p));
+              if (next) for (const [item, qty] of Object.entries(PIECE_DEFS[next].items)) s.inventory[item as ItemId] = (s.inventory[item as ItemId] ?? 0) + (qty ?? 0);
+              s.inventory.chamomile = (s.inventory.chamomile ?? 0) + 10;
+              return s;
+            })
+          }
+        >
+          Items for next piece
         </button>
       </div>
     </details>

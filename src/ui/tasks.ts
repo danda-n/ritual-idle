@@ -2,6 +2,7 @@ import { ACTION_DEFS, type ActionId } from "../content/actions";
 import { NOTES } from "../content/notes";
 import { GLOSSARY, type TermId } from "../content/glossary";
 import { PART_DEFS, type PartId } from "../content/rite";
+import { FOE_DEFS, FOE_IDS } from "../content/combat";
 import { SKILLS } from "../content/skills";
 import type { GoalDef } from "../content/types";
 import { revealedNotes, sinceStageStart, stageOrder, type Note, type Step } from "../engine/progress";
@@ -55,19 +56,21 @@ export function noteUnlocks(note: Note): { text: string; term?: TermId }[] {
 }
 
 /** Where a button leads. On the House tab: a skill's recipes, or the House projects panel. */
-export type Place = { tab: "house"; skill: keyof typeof SKILLS } | { tab: "house"; anchor: "projects" } | { tab: "village" } | { tab: "circle" } | { tab: "grimoire" } | { tab: "experiments" };
+export type Place = { tab: "house"; skill: keyof typeof SKILLS } | { tab: "house"; anchor: "projects" } | { tab: "village" } | { tab: "circle" } | { tab: "grimoire" } | { tab: "experiments" } | { tab: "cellar" };
 
 /** A button label that says where it takes you: "Sigilcraft ›", "Circle ›", "Projects ›". */
 export function placeLabel(place: Place): string {
   if (place.tab === "house") return "skill" in place ? `${SKILLS[place.skill].name} ›` : "Projects ›";
-  const names: Record<Exclude<Place["tab"], "house">, string> = { village: "Village", circle: "Circle", grimoire: "Grimoire", experiments: "Experiments" };
+  const names: Record<Exclude<Place["tab"], "house">, string> = { village: "Village", circle: "Circle", grimoire: "Grimoire", experiments: "Experiments", cellar: "Cellar" };
   return `${names[place.tab]} ›`;
 }
 
 /** Where to make an item: the skill of the recipe that makes it, or the Village for bought things. */
 export function itemPlace(state: GameState, item: ItemId): Place {
   const maker = makerOf(state, item);
-  return maker ? { tab: "house", skill: ACTION_DEFS[maker].skill } : { tab: "village" };
+  if (maker) return { tab: "house", skill: ACTION_DEFS[maker].skill };
+  // Spirits' leavings come from the cellar's foes; bought things from the Village.
+  return FOE_IDS.some((f) => FOE_DEFS[f].loot.some((l) => l.item === item)) ? { tab: "cellar" } : { tab: "village" };
 }
 
 /** Where a task is done, so a button can take the player there. */

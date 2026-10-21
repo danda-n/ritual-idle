@@ -20,6 +20,7 @@ import { TALENT_LEVELS, TALENTS, type TalentLevel } from "../content/talents";
 import { catchUp, type CatchUp } from "../engine/offline";
 import { clearLocal, loadLocal, saveLocal } from "../engine/save";
 import { advance, stopAction, type Report } from "../engine/simulate";
+import { FOE_DEFS, PIECE_DEFS } from "../content/combat";
 import { newGame, type GameState } from "../engine/state";
 
 const TICK_MS = 100;
@@ -150,7 +151,7 @@ export function useGame() {
 
   // New notes and pages pop up while playing; after an absence they appear in the summary instead.
   const announce = useCallback(
-    (report: Partial<Pick<Report, "notesRevealed" | "pagesRead" | "omensFound" | "omensLost" | "fragments" | "curioStories" | "fellBackTo" | "itemsGained" | "levelUps" | "doubled" | "stepsDone">>) => {
+    (report: Partial<Pick<Report, "notesRevealed" | "pagesRead" | "omensFound" | "omensLost" | "fragments" | "curioStories" | "fellBackTo" | "itemsGained" | "levelUps" | "doubled" | "stepsDone" | "fight" | "pieceReady">>) => {
       const notes = report.notesRevealed ?? [];
       if (notes.length > 0) setStory((q) => [...q, ...notes.map((note) => ({ note, at: Date.now() }))]);
 
@@ -183,12 +184,22 @@ export function useGame() {
       const rareToasts = (Object.keys(report.itemsGained ?? {}) as ItemId[])
         .filter((item) => isRareDrop(item, 0.01))
         .map((item) => ({ title: `Rare find: ${ITEMS[item].name}`, text: "" }));
-      for (const id of (report.fellBackTo ?? []).slice(0, 1)) lines.push(`Out of an ingredient: back to ${ACTION_DEFS[id].name.toLowerCase()}`);
+      // After a fight or a piece, work goes back to what ran before; otherwise an ingredient ran out.
+      const fromCellar = !!(report.fight?.drivenOff || report.fight?.calmed || report.fight?.stoppedAway || report.pieceReady);
+      for (const id of (report.fellBackTo ?? []).slice(0, 1)) lines.push(fromCellar ? `Back to ${ACTION_DEFS[id].name.toLowerCase()}` : `Out of an ingredient: back to ${ACTION_DEFS[id].name.toLowerCase()}`);
+      const cellarToasts: Omit<Toast, "id">[] = [];
+      const driven = report.fight?.drivenOff;
+      if (driven) {
+        const foe = FOE_DEFS[driven.foe].name.replace(/^The sour /, "");
+        cellarToasts.push({ title: `Driven off by the ${foe}`, text: `${driven.by ? `${driven.by} · ` : ""}Health comes back as you work` });
+      }
+      if (report.pieceReady) cellarToasts.push({ title: `${PIECE_DEFS[report.pieceReady].name} is made`, text: "Choose its bonus in the crafting window" });
       for (const p of report.pagesRead ?? []) if (p.unlocks.length === 0) lines.push(`Page deciphered: ${p.title}`);
       for (const o of report.omensFound ?? []) lines.push(`Omen: ${OMENS[o].name} (on shelf) · bless a skill: ${buffEffects(OMENS[o].buff).join(", ")}, ${buffDuration(OMENS[o].buff)}`);
       if (report.omensLost) lines.push("Omen lost (shelf full)");
       log(lines);
       pushToasts([
+        ...cellarToasts,
         ...levelToasts,
         ...rareToasts,
         ...(report.curioStories ?? []).map(() => ({ title: `Curio found (${ref.current.stats.curiosRead}/${CURIO_STORIES.length})`, text: `+${INSIGHT_GAIN.curio} insight` })),

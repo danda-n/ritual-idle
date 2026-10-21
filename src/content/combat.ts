@@ -49,11 +49,11 @@ export const SLOTS = ["amulet", "hand", "lantern", "garment", "belt"] as const;
 export type Slot = (typeof SLOTS)[number];
 
 export const SLOT_DEFS: Record<Slot, { name: string; gives: string }> = {
-  amulet: { name: "Amulet", gives: "Ward, and a tag" },
-  hand: { name: "Hand", gives: "Strike, and a tag" },
-  lantern: { name: "Lantern", gives: "Strike, and a tag" },
-  garment: { name: "Garment", gives: "Health, and softer special attacks" },
-  belt: { name: "Belt", gives: "Holds remedies" },
+  amulet: { name: "Amulet", gives: "gives Ward and a tag" },
+  hand: { name: "Hand", gives: "gives Strike and a tag" },
+  lantern: { name: "Lantern", gives: "gives Strike and a tag" },
+  garment: { name: "Garment", gives: "gives Health and softens special attacks" },
+  belt: { name: "Belt", gives: "holds your remedies" },
 };
 
 // ---------- Affixes ----------

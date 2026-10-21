@@ -9,7 +9,10 @@ import { CircleRiteIcon, CoinIcon, CogIcon, MoonIcon, SkillIcon } from "../art/i
 import { Rosette } from "../art/ornaments";
 import { formatClock } from "../format";
 import { buffEffects } from "../effects";
-import { TimedBar } from "./Bar";
+import { Bar, TimedBar } from "./Bar";
+import { FOE_DEFS, PIECE_DEFS } from "../../content/combat";
+import { pieceDurationMs } from "../../engine/combat";
+import { FOE_ART } from "../cellar";
 import { useCountUp } from "../useFx";
 import { SKILLS } from "../../content/skills";
 
@@ -62,6 +65,46 @@ function Working({ state, onStop, stopNote, onGo }: { state: GameState; onStop: 
         {/* Keyed on tending too: a tend jumps the bar forward, the same clock as the rite scene's. */}
         <TimedBar key={`phase${rite.phase}:${Math.round(rite.tendedMs)}`} progress={Math.min(1, (rite.phaseMs + rite.bankMs) / HEARTH_RITE.phaseMs)} durationMs={HEARTH_RITE.phaseMs} label="Phase progress" />
         <span className="muted num">{formatClock(RITE_MS - (rite.phase * HEARTH_RITE.phaseMs + rite.phaseMs + rite.bankMs))}</span>
+      </div>
+    );
+  }
+  if (state.fight) {
+    // A fight: Warding, the foe's portrait and its Health, and Stop.
+    const f = FOE_DEFS[state.fight.foe];
+    return (
+      <div className="working is-on" role="status" data-skill="warding">
+        <span className="portrait" style={{ ["--s" as string]: "28px" }}>
+          <img src={FOE_ART[state.fight.foe].icon} alt="" />
+        </span>
+        <span className="working-what">
+          <span className="working-skill">Warding</span>
+          <span className="working-name">{f.name.replace(/^The sour /, "")}</span>
+        </span>
+        <Bar value={state.fight.foeHealth / f.health} label={`${f.name} ${f.boss ? "Temper" : "Health"}`} />
+        <span className="hp-now num">
+          {Math.ceil(state.fight.foeHealth)}/{f.health}
+        </span>
+        <button className="btn btn-ghost btn-sm" onClick={onStop}>
+          Stop
+        </button>
+      </div>
+    );
+  }
+  if (state.job) {
+    const def = PIECE_DEFS[state.job.piece];
+    const duration = pieceDurationMs(state, state.job.piece);
+    return (
+      <div className="working is-on" role="status" data-skill="crafting">
+        <SkillIcon skill="crafting" size={22} />
+        <span className="working-what">
+          <span className="working-skill">Crafting</span>
+          <span className="working-name">{def.name}</span>
+        </span>
+        <TimedBar key={`job:${state.job.piece}`} progress={state.job.progress} durationMs={duration} label={`${def.name} progress`} />
+        <span className="muted num working-time">{(((1 - state.job.progress) * duration) / 1000).toFixed(1)}s</span>
+        <button className="btn btn-ghost btn-sm" onClick={onStop}>
+          Stop
+        </button>
       </div>
     );
   }
