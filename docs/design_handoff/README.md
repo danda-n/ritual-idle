@@ -113,6 +113,11 @@ Open `reference/ui_kits/ritual-idle/places.html` and click through the tabs.
 5. Places: add `data-place`, hero bands, then the Grimoire book, Village notices and shop, and the Circle stage.
 6. Run the audit on all four tabs, then update `docs/DESIGN.md`.
 
+## Combat (the Cellar), gear and Crafting
+See **`CELLAR.md`**. It covers new screens built on this system, and it overrides two older rules:
+- disabled buttons, short chips and short tiles are solid now, not dashed
+- text that explains a mechanic is written as plain-English sentences
+
 ## Files
 - `reference/ui_kits/ritual-idle/places.html`: **the main reference**, all four tabs.
 - `reference/ui_kits/ritual-idle/house-folk.html`: House only, with the stock lists.

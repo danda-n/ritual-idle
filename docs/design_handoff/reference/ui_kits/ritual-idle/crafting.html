@@ -1,0 +1,122 @@
+<!-- @dsCard group="Ritual Idle" viewport="1280x900" name="Crafting window" subtitle="Crafting skill: choose slot → piece → Craft → choose one rolled affix · reforge · upgrade" -->
+<!doctype html>
+<html lang="en" data-look="hearth" data-flair="folk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ritual Idle: Crafting</title>
+<link rel="stylesheet" href="../../styles.css">
+<link rel="stylesheet" href="looks.css">
+<link rel="stylesheet" href="folk.css">
+<link rel="stylesheet" href="places.css">
+<link rel="stylesheet" href="cellar.css">
+<link rel="stylesheet" href="gear.css">
+<link rel="stylesheet" href="crafting.css">
+<script src="../../assets/icons.js"></script>
+<script src="../../assets/cellar-icons.js"></script>
+<script src="../../assets/gear-icons.js"></script>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const I = (n, s) => RI.icon(RI.skillIcon[n] || n, s || 20);
+const STATES = [["none","Nothing crafted yet"],["short","Not enough materials"],["roll2","Choosing · 2 options"],["roll3","Choosing · 3 options"],["reforge","Reforging"],["upgrade","Upgrade locked"]];
+const SLOTS = [["amulet","Amulet"],["hand","Hand"],["lantern","Lantern"],["garment","Garment"],["belt","Belt"]];
+/* pieces per slot: [id, name, lvl, base, fixed, pool, held?] */
+const PIECES = {
+  amulet:[["saltPouch","Salt pouch",1],["ironAmulet","Iron amulet",4],["hearthCharm","Hearth amulet",12]],
+  hand:[["knife","Iron knife",2],["poker","Hearth poker",5],["sickle","Rowan sickle",14]],
+  lantern:[["tallowLantern","Tallow lantern",1],["censer","Censer",6],["hornLantern","Horn lantern",14]],
+  garment:[["shirt","Embroidered shirt",3],["apron","Linen apron",10]],
+  belt:[["herbBelt","Herb belt",2],["saltBelt","Salt belt",11]]
+};
+const S = { state:"none", slot:"lantern", piece:"censer", pick:0, workbench:false };
+const HELD = { saltPouch:1, knife:1, tallowLantern:1, shirt:1, herbBelt:1 };
+function setState(st) {
+  S.state = st; S.pick = 0;
+  S.piece = (st === "reforge" || st === "upgrade") ? "tallowLantern" : "censer"; S.slot = "lantern";
+  history.replaceState(null, "", "#" + st); render();
+}
+const heldIn = slot => PIECES[slot].filter(p => HELD[p[0]] && S.state !== "none").length;
+function slotRail() {
+  return `<nav class="cw-slots" aria-label="Slots">${SLOTS.map(([k, l]) => `<button class="cw-slot" data-slot="${k}" aria-current="${S.slot === k}">${RI.icon(RI.slotIcon[k],22)}<span>${l}</span><span class="meta num">${heldIn(k) ? heldIn(k) + " held" : ""}</span></button>`).join("")}</nav>`;
+}
+function pieceList() {
+  return `<div class="cw-list"><span class="label">${SLOTS.find(s => s[0] === S.slot)[1]} pieces</span>${PIECES[S.slot].map(([id, n, lvl]) => {
+    const locked = lvl > 8, held = HELD[id] && S.state !== "none";
+    return `<button class="cw-piece ${locked ? "is-locked" : ""}" data-piece="${id}" aria-current="${S.piece === id}" ${locked ? "disabled" : ""}><span class="gs-ic sm" data-skill="crafting">${RI.icon(RI.paths[id] ? id : RI.slotIcon[S.slot],18)}</span>
+      <span class="cw-pn">${n}<span class="meta num">${locked ? "" : held ? "Held · T1" : "Crafting " + lvl}</span></span>${locked ? `<span class="lock">${I("lock",14)}Crafting ${lvl}</span>` : ""}</button>`; }).join("")}</div>`;
+}
+const mat = (ic, name, have, need) => { const short = have < need;
+  return `<span class="chip ${short ? "short" : "enough"}" data-skill="crafting">${RI.icon(ic,14)}${name}<span class="count num">${have}/${need}</span></span>`; };
+function option(o, i, cur) {
+  return `<button class="roll ${S.pick === i ? "is-picked" : ""} ${o.high ? "is-high" : ""}" data-pick="${i}" style="--i:${i}" role="radio" aria-checked="${S.pick === i}">
+    <span class="roll-k label">${cur ? "Current" : "Option " + (i + 1)}</span><span class="roll-v num">${o.v}</span><span class="roll-note">${o.high ? "▲ High roll · top of its range" : o.note}</span>
+    <span class="roll-check" aria-hidden="true">${S.pick === i ? "✓ Chosen" : "Choose"}</span></button>`;
+}
+function card() {
+  const st = S.state, isCenser = S.piece === "censer";
+  const head = `<header class="pc-head"><span class="pc-ic" data-skill="crafting">${RI.icon(isCenser ? "censer" : "tallowLantern",40)}</span>
+    <div><span class="label">Lantern · ${isCenser ? "Crafting 6" : "Held"}</span><h2>${isCenser ? "Censer" : "Tallow lantern"}</h2></div>
+    <div class="tiers" role="group" aria-label="Tier"><span class="tier-pill is-on">Tier 1</span><span class="tier-pill is-locked">${I("lock",12)}Tier 2</span></div></header>`;
+  const base = `<div class="pc-row"><span class="pc-k">Base</span><span class="pc-v"><span class="affix is-base num">Strike ${isCenser ? 4 : 3}</span></span></div>
+    <div class="pc-row"><span class="pc-k">Fixed affix</span><span class="pc-v"><span class="affix is-fixed"><span class="tag">${isCenser ? "smoke" : "fire"}</span>${isCenser ? "The Kikimora fears smoke" : ""}</span></span></div>`;
+  const pool = `<div class="pool"><span class="pool-k">Rolls one of</span><span class="num">Strike +1–2</span><span class="num">Speed +3–5%</span><span class="num">Warding XP +5–8%</span><span class="num">Telling blows +2–3%</span></div>`;
+  const set = `<div class="pc-row"><span class="pc-k">Set</span><span class="pc-v t-2">None</span></div>`;
+  const later = `<div class="pc-row is-later"><span class="pc-k">Tier 2</span><span class="pc-v t-3">+1 fixed · +1 random affix</span></div>`;
+  let random, foot;
+  if (st === "roll2" || st === "roll3") {
+    const opts = [{ v:"Strike +2", high:true }, { v:"Warding XP +7%", note:"Range 5–8%" }].concat(st === "roll3" ? [{ v:"Speed +4%", note:"Range 3–5% · Workbench" }] : []);
+    random = `<div class="pc-row is-rolling"><span class="pc-k">Random affix</span><div class="pc-v"><div class="rolls n${opts.length}" role="radiogroup" aria-label="Choose one">${opts.map((o, i) => option(o, i)).join("")}</div>${pool}</div></div>`;
+    foot = `<div class="pc-foot"><span class="t-2">${st === "roll3" ? "The Workbench adds a third option" : "Choose one · the piece is done"}</span><button class="btn btn-primary btn-craft" data-choose>Choose</button></div>`;
+  } else if (st === "reforge") {
+    const opts = [{ v:"Loot chances +12%", note:"Range 8–14%" }, { v:"Speed +5%", high:true }, { v:"Strike +1", note:"Range 1–2" }];
+    random = `<div class="pc-row is-rolling"><span class="pc-k">Random affix</span><div class="pc-v"><div class="rolls n3 is-reforge" role="radiogroup" aria-label="Keep or choose">${option(opts[0], 0, true)}<span class="vs-mark" aria-hidden="true">or one of the new rolls</span>${option(opts[1], 1)}${option(opts[2], 2)}</div></div></div>`;
+    foot = `<div class="pc-foot"><span class="t-2">Reforged for 1 lantern frame</span><div class="row"><button class="btn btn-ghost" data-keep>Keep the old one</button><button class="btn btn-primary btn-craft" data-choose ${S.pick === 0 ? "disabled" : ""}>${S.pick === 0 ? "Pick a new one" : "Choose"}</button></div></div>`;
+  } else if (st === "upgrade") {
+    random = `<div class="pc-row"><span class="pc-k">Random affix</span><span class="pc-v"><span class="affix is-random num">Loot chances +12%</span></span></div>`;
+    foot = `<div class="upgrade"><span class="label">Upgrade to Tier 2</span><ul><li><span class="num">Strike 3 → 5</span></li><li>+1 fixed affix · <span class="tag">fire</span> stays</li><li>+1 random affix · you choose again</li></ul>
+      <div class="pc-foot"><span class="t-2">Costs Chapter II materials</span><div class="row"><button class="btn btn-ghost" data-state="reforge">Reforge</button><button class="btn" disabled>${I("lock",14)} Chapter II materials</button></div></div></div>`;
+  } else {
+    const short = st === "short";
+    random = `<div class="pc-row"><span class="pc-k">Random affix</span><div class="pc-v"><span class="affix is-random t-2">Rolled when you craft · you choose one of 2</span>${pool}</div></div>`;
+    foot = `<div class="pc-row"><span class="pc-k">Materials</span><span class="pc-v mats">${mat("lanternFrame","Lantern frame",2,1)}${mat("candle","Mugwort incense",short ? 1 : 2,2)}</span></div>
+      <div class="pc-foot">${short ? `<span class="warn">Needs 1 more mugwort incense</span><button class="btn" disabled>Needs 1 mugwort incense</button>` : `<span class="t-2 num">3.5 s · +24 Crafting XP</span><button class="btn btn-primary btn-craft" data-craft>Craft</button>`}</div>`;
+  }
+  return `<article class="piece-card">${head}<div class="pc-body">${base}${random}${set}${later}</div>${foot}</article>`;
+}
+function held() {
+  if (S.state === "none") return `<p class="cw-empty">Nothing crafted yet · your first piece goes straight to the Cellar's gear panel.</p>`;
+  return "";
+}
+function render() {
+  const tabs = [["house","House","house"],["grimoire","Grimoire","book"],["village","Village","lantern"],["circle","Circle","circleRite"],["cellar","Cellar","cellar"]];
+  const recipes = [["Stitched linen",1,"linen"],["Iron blank",3,"ironBlank"],["Lantern frame",5,"lanternFrame"],["Red thread",6,"redThread"],["Red thread knot",8,"threadKnot"]];
+  document.getElementById("app").innerHTML = `<nav class="review" aria-label="Mock states"><b>Mock state</b>${STATES.map(([id, l]) => `<button data-state="${id}" aria-pressed="${S.state === id}">${l}</button>`).join("")}<a href="cellar.html" style="color:#c4c8d6;margin-left:8px">‹ Cellar</a></nav>
+  <header class="topbar"><div class="brand">${RI.rosette(24)}<h1 class="brand-title">Ritual Idle</h1></div><div class="working" role="status"><span class="t-3">Next:</span><span class="working-name">Craft a Censer</span></div><div class="purse">${I("coin",18)}<span class="num">42</span></div></header><span class="embroidery" aria-hidden="true"></span>
+  <div class="shell" data-place="house"><div class="shell-main">
+    <div class="tabs" role="tablist">${tabs.map(([id, l, ic]) => `<button class="tab" role="tab" aria-selected="${id === "house"}">${RI.icon(ic,18)}${l}</button>`).join("")}</div>
+    <section class="panel flush">
+      <header class="skill-head" data-skill="crafting">${I("crafting",24)}<div><h2>Crafting</h2><p class="meta num">Level 8 of 15 · makes the gear</p></div><div class="stats"><button class="btn btn-ghost">Open the crafting window</button></div></header>
+      <div class="recipes"><div class="recipes-head"><span></span><span class="label">Component</span><span class="label r">Lvl</span><span></span></div>
+        ${recipes.map(([n, l, ic]) => `<div class="recipe" data-skill="crafting" style="grid-template-columns:24px minmax(0,1fr) 40px 132px">${RI.icon(ic,18)}<span class="name">${n}</span><span class="r num">${l}</span><span class="ctl"><button class="btn btn-start btn-sm">Start</button></span></div>`).join("")}</div>
+    </section></div><aside class="shell-side"></aside></div>
+  <div class="scrim cw-scrim"><div class="dialog cw" role="dialog" aria-modal="true" aria-labelledby="cw-h" data-skill="crafting">
+    <header class="cw-head">${I("crafting",26)}<div><span class="label">Crafting 8 · Workbench ${S.state === "roll3" ? "built" : "not built"}</span><h2 id="cw-h">The crafting window</h2></div><button class="btn btn-ghost icon-btn" aria-label="Close">✕</button></header>
+    <div class="cw-body">${slotRail()}${pieceList()}<div class="cw-main">${held()}${card()}</div></div></div></div>`;
+}
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-state],[data-slot],[data-piece],[data-pick],[data-craft],[data-choose],[data-keep]"); if (!t) return;
+  const d = t.dataset;
+  if (d.state) return setState(d.state);
+  if (d.slot) { S.slot = d.slot; S.piece = PIECES[d.slot][0][0]; }
+  else if (d.piece) S.piece = d.piece;
+  else if (d.pick) S.pick = +d.pick;
+  else if ("craft" in d) return setState("roll2");
+  else if ("choose" in d || "keep" in d) return setState("upgrade");
+  render();
+});
+const start = location.hash.slice(1); setState(STATES.some(s => s[0] === start) ? start : "none");
+</script>
+</body>
+</html>

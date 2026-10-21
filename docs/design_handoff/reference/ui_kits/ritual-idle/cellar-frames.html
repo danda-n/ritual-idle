@@ -1,0 +1,25 @@
+<!-- @dsCard group="Ritual Idle" viewport="1400x1000" name="Cellar: 1280 and 375" subtitle="The Cellar at desktop and phone width, key states side by side" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Cellar · widths</title>
+<style>
+  body { margin: 0; background: #05060a; color: #c4c8d6; font: 14px/1.4 system-ui, sans-serif; padding: 24px; }
+  h2 { font: 500 15px/1 system-ui, sans-serif; margin: 0 0 10px; color: #e6e8f2; }
+  .row { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; margin-bottom: 32px; }
+  .f { display: flex; flex-direction: column; gap: 8px; }
+  .desk { width: 896px; height: 630px; overflow: hidden; border-radius: 6px; box-shadow: 0 0 0 1px #2b2f42; }
+  .desk iframe { width: 1280px; height: 900px; border: 0; transform: scale(0.7); transform-origin: 0 0; }
+  .phone { width: 375px; height: 812px; border: 0; border-radius: 12px; box-shadow: 0 0 0 1px #2b2f42; background: #0e0c0a; }
+</style></head><body>
+<h2>1280px</h2>
+<div class="row">
+  <div class="f"><span>Choose a foe</span><div class="desk"><iframe src="cellar.html#choose" title="Cellar 1280, choose"></iframe></div></div>
+  <div class="f"><span>A fight running</span><div class="desk"><iframe src="cellar.html#fight" title="Cellar 1280, fight"></iframe></div></div>
+</div>
+<h2>375px</h2>
+<div class="row">
+  <div class="f"><span>Choose a foe</span><iframe class="phone" src="cellar.html#choose" title="Cellar 375, choose"></iframe></div>
+  <div class="f"><span>Pick an item (sheet)</span><iframe class="phone" src="cellar.html#picker" title="Cellar 375, picker"></iframe></div>
+  <div class="f"><span>A fight running</span><iframe class="phone" src="cellar.html#fight" title="Cellar 375, fight"></iframe></div>
+  <div class="f"><span>Driven off</span><iframe class="phone" src="cellar.html#driven" title="Cellar 375, driven off"></iframe></div>
+</div>
+</body></html>

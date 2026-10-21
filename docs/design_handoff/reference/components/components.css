@@ -54,7 +54,7 @@ a:hover { color: var(--color-text); }
 .btn-text:hover { color: var(--color-text); text-decoration: underline; text-underline-offset: 3px; }
 .btn-sm { min-height: 26px; padding: 0 10px; font-size: var(--text-xs); }
 .btn-block { width: 100%; justify-content: flex-start; }
-.btn:disabled, .btn[aria-disabled="true"] { background: transparent; color: var(--color-text-3); border: var(--border-w) dashed var(--color-border-soft); cursor: not-allowed; opacity: 1; }
+.btn:disabled, .btn[aria-disabled="true"] { background: transparent; color: var(--color-text-3); border: var(--border-w) solid transparent; background: var(--color-sunken); cursor: not-allowed; opacity: 1; }
 .icon-btn { padding: 0; width: 32px; }
 /* Invite: a stitch-red outline pulses three times, then stays. */
 .btn-invite { box-shadow: 0 0 0 1px var(--color-stitch); animation: invite 1.6s ease-in-out 3; }
@@ -97,7 +97,7 @@ a:hover { color: var(--color-text); }
 button.chip { cursor: pointer; }
 button.chip:hover { background: var(--color-raised); }
 .chip.enough, .chip.out { border-color: transparent; }
-.chip.short { border-style: dashed; border-color: var(--color-danger); }
+.chip.short { border-color: transparent; background: rgb(182 51 37 / 0.14); }
 .chip.short .count { color: var(--color-danger); }
 .chip.rare { color: var(--color-rare); border-color: color-mix(in oklch, var(--color-rare) 50%, transparent); }
 .chip.rare::before { content: "✦"; }
@@ -292,7 +292,7 @@ input[type="checkbox"] { accent-color: var(--color-selected); width: 16px; heigh
 .tile .icon { color: var(--skill); }
 .tile b { font: 500 var(--text-lg) / 1 var(--font-ui); }
 .tile-name { grid-column: 1 / -1; margin-top: 3px; font-size: var(--text-2xs); color: var(--color-text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tile.is-short { border: 1px dashed var(--color-danger); background: transparent; }
+.tile.is-short { border: 0; background: rgb(182 51 37 / 0.14); }
 .tile.is-short b { color: var(--color-danger); }
 .tile-more { cursor: pointer; background: transparent; border: 1px solid var(--color-border-soft); color: var(--color-text-2); font-weight: 500; font-size: var(--text-lg); grid-template-columns: 1fr; }
 .tile-more:hover { background: var(--color-raised); }

@@ -1,0 +1,388 @@
+<!-- @dsCard group="Ritual Idle" viewport="1280x900" name="Cellar: combat" subtitle="Gear, foe portraits, a fight you can watch, end states, boss, intro, Bestiary" -->
+<!doctype html>
+<html lang="en" data-look="hearth" data-flair="folk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ritual Idle: The Cellar</title>
+<link rel="stylesheet" href="../../styles.css">
+<link rel="stylesheet" href="looks.css">
+<link rel="stylesheet" href="folk.css">
+<link rel="stylesheet" href="places.css">
+<link rel="stylesheet" href="cellar.css">
+<link rel="stylesheet" href="gear.css">
+<script src="../../assets/icons.js"></script>
+<script src="../../assets/cellar-icons.js"></script>
+<script src="../../assets/gear-icons.js"></script>
+<style>
+  .floats { position: fixed; inset: 0; pointer-events: none; z-index: 90; }
+  .floats .float { position: fixed; transform: translate(-50%, -100%); animation: float-up 1.1s var(--ease-out) forwards; }
+  @keyframes float-up { 0% { opacity: 0; transform: translate(-50%, -60%); } 15% { opacity: 1; transform: translate(-50%, -110%); } 100% { opacity: 0; transform: translate(-50%, -240%); } }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="floats" id="floats"></div>
+<script>
+const I = (n, s) => RI.icon(RI.skillIcon[n] || n, s || 20);
+const POR = (id, s, cls) => `<span class="portrait ${cls || ""}" style="--s:${s}px"><img src="../../assets/foes/${id}_icon.jpg" alt=""></span>`;
+const ART = (id, cls, alt) => `<span class="art ${cls || ""}"><img src="../../assets/foes/${id}_art.jpg" alt="${alt || ""}"></span>`;
+const R = { safe:[4,"Safe","999 in 1,000 or better","Leave it running, away too."], likely:[3,"Likely","about 9 in 10"], risky:[2,"Risky","about 3 in 5"], deadly:[1,"Deadly","about 1 in 20"], hopeless:[0,"Hopeless","less than 1 in 20"] };
+const FOES = {
+  skrzat:{ name:"Skrzat", line:"A small house imp, mischief more than harm.", hp:20, strike:3, ward:0, every:3.5, weak:"salt", beaten:34, specials:[], leaves:[["button","Lost button",.30]], r:"safe" },
+  kikimora:{ name:"Kikimora", line:"Spins behind the stove, breaks what's untidy.", hp:45, strike:5, ward:10, every:3, weak:"smoke", beaten:6, specials:[["Every 5th blow","the Clatter","×2"]], leaves:[["spunThread","Spun thread",.35],["curio","Curio",.01]], r:"likely" },
+  zmora:{ name:"Zmora", line:"The nightmare on the sleeper's chest.", hp:70, strike:7, ward:20, every:3.5, weak:"iron", beaten:12, specials:[["Every 4th blow","the Press","×2.5"]], telling:"10%", leaves:[["tangledLock","Tangled lock",.40]], r:"risky" },
+  domovoi:{ name:"Domovoi", boss:true, line:"The house spirit, sour since grandmother died.", temper:300, strike:9, ward:30, every:3, weak:"hearth", beaten:0, specials:[["Every 3rd blow","Pots off the shelf","×2"]], lock:10, r:"hopeless" }
+};
+/* piece: [id, name, tier, base, fixed, random, tag, set] */
+const GEAR = {
+  amulet:[["saltPouch","Salt pouch",1,"Ward 10","salt","Health +6","salt",1],["ironAmulet","Iron amulet",1,"Ward 8","iron","Strike +1","iron"]],
+  hand:[["knife","Iron knife",1,"Strike 5","iron","Speed +4%","iron"],["poker","Hearth poker",1,"Strike 4","hearth","Telling blows +2%","hearth"]],
+  lantern:[["tallowLantern","Tallow lantern",1,"Strike 3","fire","Loot chances +12%","fire"]],
+  garment:[["shirt","Embroidered shirt",1,"Health +15","Special attacks −20%","+1 Health per foe beaten","",1]],
+  belt:[["herbBelt","Herb belt",1,"Holds 10","Remedies heal +10%","Holds +3","",1]]
+};
+const REMEDY = [["chamomile","Chamomile","herbalism",13,"Heals 4"],["poultice","Yarrow poultice","herbalism",3,"Heals 15"],["nettle","Nettle","herbalism",5,"Heals 2"]];
+const CHARM = [["windowCharm","Window charm","ritualism",63,"63 uses left"],["threadKnot","Red thread knot","ritualism",1,"1 held · wards one telling blow"]];
+const SLOTS = [["amulet","Amulet"],["hand","Hand"],["lantern","Lantern"],["garment","Garment"],["belt","Belt"]];
+const STATES = [["choose","Choose a foe"],["picker","Pick a piece"],["empty","An empty slot"],["stats","Your stats"],["fight","A fight running"],["stopped","Stopped"],["driven","Driven off"],["boss","The Domovoi"],["calmed","Calmed"],["intro","Introduction"],["away","Away summary"],["bestiary","Bestiary"]];
+const S = { state:"choose", foe:"skrzat", tab:"cellar", picker:null, presets:false, heal:40, calmed:false, youTab:"gear", gsel:"hand",
+  G:{ amulet:"saltPouch", hand:"knife", lantern:"tallowLantern", garment:"shirt", belt:"herbBelt", remedy:"chamomile", charm:"windowCharm" } };
+const F0 = () => ({ you:68, max:73, foe:11, beaten:23, loot:7, rem:13, charm:63, turn:"foe", log:[["you","You","6.9"],["foe","Skrzat","1.3"],["you","You","12.4","tell"],["foe","Skrzat","1.5"]] });
+let F = F0();
+const BEAT = 1.75;
+
+function setState(st) {
+  S.state = st; S.picker = st === "picker" ? "hand" : null; S.presets = false;
+  S.youTab = st === "stats" ? "stats" : "gear";
+  S.tab = st === "bestiary" ? "grimoire" : "cellar";
+  S.foe = st === "driven" ? "zmora" : (st === "boss" || st === "calmed") ? "domovoi" : st === "picker" ? "domovoi" : "skrzat";
+  S.calmed = st === "calmed";
+  S.G.lantern = st === "empty" ? null : "tallowLantern"; S.gsel = st === "empty" ? "lantern" : "hand";
+  if (st === "fight") F = F0();
+  if (location.hash !== "#" + st) history.replaceState(null, "", "#" + st);
+  render();
+}
+const piece = (slot, id) => GEAR[slot] && GEAR[slot].find(p => p[0] === id);
+const pips = n => `<span class="pips" aria-hidden="true">${[0,1,2,3].map(i => `<i class="${i < n ? "on" : ""}"></i>`).join("")}</span>`;
+function ready(r, lg) {
+  const [n, word, chance, note] = R[r];
+  const tag = `<span class="ready ${lg ? "lg" : ""}" data-r="${r}">${pips(n)}${word}</span>`;
+  const tip = `<span class="tip" role="tooltip"><span><b>${word}</b> · ${chance}</span><span>${note ? note + " " : ""}Counts its specials and your healing rule.</span></span>`;
+  return lg ? `<span class="has-tip"><button class="tip-trigger" aria-label="Readiness: ${word}, ${chance}">${tag}</button>${tip}</span>` : `<span class="has-tip">${tag}${tip}</span>`;
+}
+const known = f => f.boss || f.beaten >= 10;
+const weakOf = f => known(f) ? `<span class="tag">${f.weak}</span>` : `<span class="tag is-unknown" aria-label="unknown">?</span>`;
+const pct = c => c < .01 ? (c*100).toFixed(1) : c < .05 ? (c*100).toFixed(0) : Math.round(c*100);
+const matchOf = (p, f) => p && p[6] && known(f) && p[6] === f.weak;
+
+function topbar() {
+  let w;
+  if (S.state === "fight") {
+    const f = FOES.skrzat;
+    w = `<div class="working is-on" data-skill="warding" role="status">${POR("skrzat",28)}<span class="working-what"><span class="working-skill">Warding</span><span class="working-name">Skrzat</span></span>
+      <span class="bar"><span class="bar-fill" id="tb-hp" style="--v:${F.foe / f.hp}"></span></span><span class="hp-now num" id="tb-hp-n">${F.foe}/${f.hp}</span><button class="btn btn-ghost btn-sm" data-stop>Stop</button></div>`;
+  } else {
+    w = `<div class="working is-on" data-skill="chandlery" role="status">${I("chandlery",22)}<span class="working-what"><span class="working-skill">Chandlery</span><span class="working-name">Tallow candle</span></span>
+      <span class="bar timed"><span class="bar-fill" style="animation-duration:3.8s"></span></span><span class="working-time num">3.8s</span><button class="btn btn-ghost btn-sm">Stop</button></div>`;
+  }
+  return `<header class="topbar"><div class="brand">${RI.rosette(24)}<h1 class="brand-title">Ritual Idle</h1></div>${w}
+    <div class="purse" aria-label="42 coin">${I("coin",18)}<span class="num">42</span></div>
+    <button class="btn btn-ghost icon-btn" aria-label="Settings">${I("cog",18)}</button></header><span class="embroidery" aria-hidden="true"></span>`;
+}
+function hero() {
+  const boss = S.calmed ? `<span class="calmed boss-state">✓ calmed</span>` : `<span class="boss-state">not yet calmed</span>`;
+  return `<header class="hero is-cellar"><span class="hero-mark">${I("cellar",34)}</span>
+    <div><h1>The Cellar</h1><p class="lore">Cold stone under the kitchen. The house's spirits wait below.</p>
+      <div class="hero-links"><button class="btn btn-text btn-sm" data-state="intro">How it works</button></div></div>
+    <div class="hero-stats"><span class="hero-stat"><span class="label">Warding</span><b class="num">7<span class="unit">/15</span></b></span>
+      <span class="hero-stat"><span class="label">Foes warded off</span><b class="num">52</b></span>
+      <span class="hero-stat"><span class="label">Domovoi</span><b>${boss}</b></span></div></header>`;
+}
+
+/* ---------- Left: you ---------- */
+function youStats() {
+  return { health:73, ward:11, strike:S.G.lantern ? 8 : 5, speed:"3.0" };
+}
+function statStrip(st) {
+  const cell = (ic, label, val, note, zero) => `<div class="me-stat ${zero ? "is-zero" : ""}"><span class="label">${RI.icon(ic,14)}${label}</span><b class="num">${val}</b><span class="note">${note}</span></div>`;
+  return `<div class="me-stats">${cell("health","Health",st.health,"Level · shirt · pouch")}${cell("ward","Ward",st.ward,"Pouch · set")}${cell("strike","Strike",st.strike,S.G.lantern ? "Knife · lantern" : "Knife · ! no Lantern", !S.G.lantern)}${cell("speed","Speed",st.speed + '<span class="unit">s</span>',"Knife +4%")}</div>`;
+}
+function gtile([key, label]) {
+  const f = FOES[S.foe], p = piece(key, S.G[key]), sel = S.gsel === key;
+  if (!p) return `<button class="gt is-empty" data-gsel="${key}" aria-pressed="${sel}"><span class="gt-ic">${RI.icon(RI.slotIcon[key],28)}</span><span class="gt-slot">${label}</span><span class="gt-nm">Empty</span></button>`;
+  const m = matchOf(p, f);
+  return `<button class="gt" data-gsel="${key}" aria-pressed="${sel}">${p[6] ? `<span class="gt-tag ${m ? "is-match" : ""}">${m ? "✓ " : ""}${p[6]}</span>` : ""}<span class="gt-tier">T${p[2]}</span>
+    <span class="gt-ic">${RI.icon(p[0],28)}</span><span class="gt-slot">${label}</span><span class="gt-nm">${p[1]}</span><span class="gt-big num">${p[3]}</span>${p[7] ? `<span class="gt-set" aria-label="Grandmother's set"></span>` : ""}</button>`;
+}
+function gdetail() {
+  const key = S.gsel, label = SLOTS.find(s => s[0] === key)[1], f = FOES[S.foe], p = piece(key, S.G[key]), fighting = S.state === "fight";
+  const change = fighting ? "" : `<button class="btn btn-ghost btn-sm" data-slot="${key}" aria-expanded="${S.picker === key}">Change</button>`;
+  const body = p
+    ? `<span class="gd-ic">${RI.icon(p[0],26)}</span><div class="gd-main"><h4>${p[1]} <span class="tier">T${p[2]}</span></h4>
+       <ul><li><b class="num">${p[3]}</b></li>${p[6] ? `<li>Tag: <b>${p[6]}</b>${matchOf(p, f) ? ` <span class="match">The ${f.name} fears it</span>` : ""}</li>` : `<li>${p[4]}</li>`}<li class="num">Rolled: <b>${p[5]}</b></li>${p[7] ? `<li>Part of Grandmother's set</li>` : ""}</ul></div>${change}`
+    : `<span class="gd-ic is-empty">${RI.icon(RI.slotIcon[key],26)}</span><div class="gd-main"><h4 class="warn">No ${label.toLowerCase()} piece</h4><ul><li>Wear one, or make one with Crafting.</li></ul></div>${change}`;
+  return `<div class="slot-wrap gd-wrap"><div class="gdetail">${body}</div>${S.picker === key ? picker(key, label) : ""}</div>`;
+}
+function beltRow(kind) {
+  const fighting = S.state === "fight";
+  const list = kind === "remedy" ? REMEDY : CHARM, it = list.find(x => x[0] === S.G[kind]);
+  const count = kind === "remedy" ? `<b class="num">${fighting ? F.rem : it[3]}</b><span class="t-2">${fighting ? "left" : "· Belt holds 13"}</span>` : `<b class="num">${fighting ? F.charm : it[3]}</b><span class="t-2">uses left</span>`;
+  const inner = `<span class="gs-ic sm" data-skill="${it[2]}">${RI.icon(kind === "remedy" ? "sprig" : it[0],18)}</span><span class="bl-name"><span class="label">${kind === "remedy" ? "Remedy" : "Charm"}</span><span>${it[1]}${kind === "remedy" ? ` · <span class="t-2">${it[4]}</span>` : ""}</span></span><span class="bl-n">${count}</span>`;
+  if (fighting) return `<div class="belt-row">${inner}</div>`;
+  return `<div class="slot-wrap"><button class="belt-row" data-slot="${kind}" aria-expanded="${S.picker === kind}">${inner}</button>${S.picker === kind ? picker(kind, kind === "remedy" ? "Remedy" : "Charm") : ""}</div>`;
+}
+function picker(key, label) {
+  const f = FOES[S.foe];
+  let rows;
+  if (key === "remedy" || key === "charm") {
+    rows = (key === "remedy" ? REMEDY : CHARM).map(h => `<button class="pick-row" role="option" data-pick="${key}:${h[0]}" aria-current="${S.G[key] === h[0]}"><span class="ic" data-skill="${h[2]}">${RI.icon(key === "remedy" ? "sprig" : h[0],20)}</span>
+      <span class="nm">${h[1]}</span><span class="n num">${key === "remedy" ? "×" + h[3] : ""}</span><span class="gv"><span>${h[4]}</span></span></button>`).join("");
+  } else {
+    const cur = piece(key, S.G[key]);
+    rows = GEAR[key].map(p => { const inUse = cur && cur[0] === p[0];
+      return `<button class="pick-row" role="option" data-pick="${key}:${p[0]}" aria-current="${inUse}"><span class="ic" data-skill="crafting">${RI.icon(p[0],20)}</span>
+      <span class="nm">${p[1]}<span class="tier">T${p[2]}</span>${matchOf(p, f) ? `<span class="match">Its weakness</span>` : ""}</span><span class="n">${inUse ? `<span class="delta same">in use</span>` : ""}</span>
+      <span class="gv"><span class="num">${p[3]}</span>${p[6] ? `<span class="tag">${p[6]}</span>` : `<span>${p[4]}</span>`}<span class="num">${p[5]}</span></span></button>`; }).join("");
+  }
+  return `<div class="sheet-scrim" data-close-picker></div><div class="picker" role="listbox" aria-label="${label} for the ${f.name}"><div class="picker-head"><h4>${label}</h4><span class="meta">for the ${f.name}</span></div>${rows}
+    <div class="pick-foot"><a class="btn btn-text btn-sm" href="crafting.html">Make more: Crafting ›</a></div></div>`;
+}
+function presetsMenu() {
+  return `<div style="position:relative"><button class="btn btn-ghost btn-sm" data-presets aria-expanded="${S.presets}">Presets ▾</button>${S.presets ? `<div class="menu" role="menu"><button role="menuitem"><span>Grandmother's salt</span><span class="meta">Skrzat</span></button><button role="menuitem"><span>Iron for the Zmora</span><span class="meta">Zmora</span></button><button role="menuitem"><span>Poker and hearth</span><span class="meta">Domovoi</span></button><hr><button role="menuitem"><span>Save this gear…</span></button></div>` : ""}</div>`;
+}
+function gearTab() {
+  const fighting = S.state === "fight";
+  return `<div class="sec-head"><h3>Gear</h3>${fighting ? `<span class="meta" style="margin-left:auto">Locked while fighting</span>` : `<div class="right"><button class="btn btn-ghost btn-sm">Same as last time</button>${presetsMenu()}</div>`}</div>
+    <div class="gtiles">${SLOTS.map(gtile).join("")}</div>
+    <div class="setline"><span class="sw" aria-hidden="true"></span><b>Grandmother's set · 3</b><span>+10% Ward · the first special each fight misses</span></div>
+    ${gdetail()}
+    <div class="belt">${beltRow("remedy")}${beltRow("charm")}</div>
+    <div class="healing">${I("health",18)}<span>Use a remedy below</span>${fighting ? `<b class="num">${S.heal}%</b>` : `<span class="stepper"><button aria-label="Lower" data-heal="-5">−</button><output class="num">${S.heal}%</output><button aria-label="Higher" data-heal="5">+</button></span>`}<span>Health</span></div>`;
+}
+function statsTab(st) {
+  const f = FOES[S.foe], k = known(f);
+  const chip = ([l, val]) => `<span class="part-chip"><span>${l}</span><b class="num">${val}</b></span>`;
+  const row = (ic, name, total, parts, vs) => `<div class="srow"><span class="srow-ic">${RI.icon(ic,20)}</span><div class="srow-main"><div class="srow-top"><strong>${name}</strong><b class="num">${total}</b></div>
+    <div class="sparts">${parts.map(chip).join("")}</div><p class="vs">${vs}</p></div></div>`;
+  const hitsTag = ["amulet","hand","lantern"].map(s => [s, piece(s, S.G[s])]).filter(([, p]) => matchOf(p, f));
+  const weak = !k ? `<span class="tag is-unknown">?</span> Unknown · beat the ${f.name} <b class="num">${10 - f.beaten}</b> more times`
+    : hitsTag.length ? hitsTag.map(([s, p]) => `<span class="match">${p[1]} carries ${f.weak}</span> ${s === "amulet" ? "· its blows are halved" : "· your blows ×1.5"}`).join("<br>") : `Nothing matches · it fears <span class="tag">${f.weak}</span>`;
+  return `<div class="sec-head"><h3>How your stats are made</h3><span class="meta" style="margin-left:auto">against the ${f.name}</span></div>
+    <div class="srows">
+      ${row("health","Health",st.health,[["Warding 7","52"],["Shirt","+15"],["Pouch","+6"]],`The ${f.name} needs about <b class="num">50</b> blows to drive you off`)}
+      ${row("ward","Ward",st.ward,[["Salt pouch","10"],["Set","+10%"]],`Its blows land for about <b class="num">1.4</b>`)}
+      ${row("strike","Strike",st.strike,[["Iron knife","5"],["Tallow lantern",S.G.lantern ? "+3" : "0"]],`Your blows land for about <b class="num">6.5</b> · <b class="num">3</b> to win`)}
+      ${row("speed","Speed",st.speed + " s",[["Base","3.1 s"],["Knife","+4%"]],`You every <b class="num">3.0 s</b> · it every <b class="num">${f.every} s</b>`)}
+      <div class="srow is-weak"><span class="srow-ic">${RI.icon("sigil",20)}</span><div class="srow-main"><div class="srow-top"><strong>Weakness</strong></div><p class="vs">${weak}</p></div></div>
+    </div>`;
+}
+function youPanel() {
+  const st = youStats(), tab = S.youTab;
+  return `<article class="panel you" aria-labelledby="you-h">
+    <section class="you-head"><span class="you-mark">${I("candle",26)}</span><div class="you-id"><h2 id="you-h">You</h2><span class="lvls"><span class="lvl-chip" data-skill="warding">${I("warding",18)}<span>Warding</span><b class="num">7</b></span><span class="lvl-chip" data-skill="crafting">${I("crafting",18)}<span>Crafting</span><b class="num">8</b></span></span></div>
+      <div class="seg you-tabs" role="tablist" aria-label="You"><button role="tab" data-you="gear" aria-selected="${tab === "gear"}">Gear</button><button role="tab" data-you="stats" aria-selected="${tab === "stats"}">Your stats</button></div></section>
+    <section class="me">${statStrip(st)}</section>
+    <section>${tab === "stats" ? statsTab(st) : gearTab()}</section></article>`;
+}
+
+/* ---------- Right: foes ---------- */
+function foeStats(f) {
+  const s = (ic, v, l) => `<span class="fs" aria-label="${l} ${v}">${RI.icon(ic,14)}<b class="num">${v}</b></span>`;
+  return `<span class="foe-stats">${s("health", f.boss ? f.temper : f.hp, f.boss ? "Temper" : "Health")}${s("strike", f.strike, "Strike")}${s("ward", f.ward, "Ward")}<span class="fs">Fears ${weakOf(f)}</span></span>`;
+}
+function fcard(id) {
+  const f = FOES[id], cur = S.foe === id;
+  const tag = f.boss && S.calmed ? `<span class="calmed">✓ Calmed</span>` : ready(f.r);
+  if (f.boss) return `<button class="fcard is-boss" data-foe="${id}" aria-current="${cur}">${ART(id, "fc-art")}
+      <span class="fc-body"><span class="label">Boss</span><span class="fc-name">${f.name}</span>${tag}${foeStats(f)}
+      <span class="foe-extra">${S.calmed ? `<span class="gift is-kept">Gift kept</span>` : `<span class="lock">${I("lock",14)}Warding 10</span><span class="t-2">Calm him · opens the crypt</span>`}</span></span></button>`;
+  return `<button class="fcard" data-foe="${id}" aria-current="${cur}">${ART(id, "fc-art")}<span class="fc-body"><span class="fc-name">${f.name}</span>${tag}${foeStats(f)}</span></button>`;
+}
+function goBar() {
+  const id = S.foe, f = FOES[id], locked = f.lock && !S.calmed;
+  const sp = f.specials.map(([w, n, x]) => `${w}: ${n} ${x}`).concat(f.telling ? [`Telling blows ${f.telling}`] : []);
+  const note = sp.length ? `<span class="warn-line">◆ ${sp.join(" · ")}</span>` : f.leaves ? `<span class="t-2">Leaves ${f.leaves.map(([, n, c]) => `${n} ${pct(c)}%`).join(" · ")}</span>` : "";
+  return `<article class="panel go-bar" aria-labelledby="chosen-h">${POR(id, 48)}
+    <div class="go-what"><h2 id="chosen-h">${f.name}</h2>${note}</div>${ready(f.r, true)}
+    ${locked ? `<button class="btn" disabled>Needs Warding ${f.lock}</button>` : `<button class="btn btn-primary btn-begin" data-begin>Begin</button>`}</article>`;
+}
+function logRow([who, name, v, kind]) {
+  const cls = (who === "you" ? "is-you " : "") + (kind === "tell" ? "is-telling" : kind === "special" ? "is-special" : kind === "heal" ? "is-heal" : "");
+  const g = kind === "tell" ? "✶" : kind === "special" ? "◆" : kind === "heal" ? "+" : "·";
+  const what = kind === "tell" ? "Telling blow ×2" : kind === "special" ? "the Press ×2.5" : kind === "heal" ? "Chamomile" : "";
+  const face = who === "you" ? `<span class="you-dot">${RI.icon("candle",14)}</span>` : POR("skrzat",22);
+  return `<li class="${cls}"><span class="g" aria-hidden="true">${g}</span><span class="who">${face}${name}</span><span class="what">${what}</span><span class="dmg num">${kind === "heal" ? "+" : ""}${v}</span></li>`;
+}
+function stage() {
+  const f = FOES.skrzat;
+  return `<article class="panel stage" data-skill="warding" aria-labelledby="fight-h" id="stage">
+    <header class="stage-head"><span class="label">Warding · fighting</span><h2 id="fight-h">Skrzat</h2><span class="stage-count num"><b id="st-beaten">${F.beaten}</b> warded off</span><button class="btn btn-ghost" data-stop>Stop</button></header>
+    <div class="arena">
+      <div class="foe-hp"><span class="who">${I("health",16)}Skrzat</span><span class="bar"><span class="bar-fill" id="foe-bar" style="--v:${F.foe / f.hp}"></span></span><span class="hp num" id="foe-n">${F.foe}<span class="unit">/${f.hp}</span></span></div>
+      <div class="art-stage"><span class="candle-pool" aria-hidden="true"></span>${ART("skrzat", "big", "The Skrzat")}<span class="hits" id="hits" aria-live="polite"></span><span class="banner" id="banner" aria-hidden="true"></span></div>
+      <div class="beat"><span>Next blow</span><span class="bar timed"><span class="bar-fill" id="beat-fill" style="animation-duration:${BEAT}s;animation-iteration-count:1"></span></span><span class="beat-who" id="beat-who">${F.turn === "foe" ? "Skrzat" : "You"}</span></div>
+      <div class="you-hp" id="you-hp"><span class="who">${RI.icon("candle",16)}You</span><span class="bar"><span class="bar-fill" id="you-bar" style="--v:${F.you / F.max}"></span></span><span class="hp num" id="you-n">${F.you}<span class="unit">/${F.max}</span></span></div>
+    </div>
+    <section class="tally"><span class="stat"><span class="label">Loot</span><span class="loot"><span class="chip out">${RI.icon("button",14)}<span class="num" id="st-loot">${F.loot}</span> lost buttons</span></span></span>
+      <span class="stat"><span class="label">Remedies left</span><b class="num" id="st-rem">${F.rem}</b></span><span class="stat"><span class="label">Charm uses</span><b class="num">${F.charm}</b></span></section>
+    <section class="log-sec"><ol class="log" id="log">${F.log.slice(0, 4).map(logRow).join("")}</ol></section></article>`;
+}
+function result() {
+  if (S.state === "stopped") return `<div class="result is-stopped" role="status"><span class="g">■</span><span class="what"><b>Stopped</b> · <span class="num">Skrzat ×23 · 7 lost buttons · 4 chamomile used</span></span><button class="btn btn-text btn-sm" data-state="choose">Dismiss</button></div>`;
+  if (S.state === "driven") return `<section class="driven" role="status">${POR("zmora",56)}<div class="dv-body"><h3><span>Driven off by the Zmora:</span><span class="what-hit">◆ the Press</span></h3>
+    <dl><dt>Cost</dt><dd>3 chamomile · the Zmora's loot</dd><dt>Kept</dt><dd>All gear · everything else</dd><dt>Now</dt><dd>Back to Tallow candle · Health returns as you work</dd></dl>
+    <div class="advice"><span>An iron Amulet halves its blows</span><span class="tag">Iron amulet · you hold 1</span><button class="btn btn-text btn-sm" data-slot="amulet">Wear it ›</button></div>
+    <div class="row"><button class="btn btn-ghost btn-sm" data-state="choose">Dismiss</button></div></div></section>`;
+  return "";
+}
+function cellar() {
+  const fighting = S.state === "fight";
+  return hero() + `<div class="cellar"><div class="col col-you">${youPanel()}</div>
+    <div class="col col-fight">${result()}${fighting ? stage() : `<div class="col-head"><span class="label">Choose a foe</span></div>
+      <div class="fcards">${["skrzat","kikimora","zmora"].map(fcard).join("")}</div>${fcard("domovoi")}${goBar()}`}</div></div>`;
+}
+function bestiary() {
+  const rib = (label, meta, cur) => `<button class="ribbon" ${cur ? 'aria-current="true"' : ""}><span>${label}</span><span class="meta num">${meta}</span></button>`;
+  const tile = id => { const f = FOES[id];
+    const sp = f.specials.map(([w, n, x]) => `${w}: ${n} ${x}`).join(" · ") + (f.telling ? ` · telling blows ${f.telling}` : "");
+    return `<article class="beast ${f.boss ? "is-boss" : ""}">${ART(id, "b-art", f.name)}<div class="b-body"><div><h3>${f.name}</h3><span class="meta num">${f.boss ? "Not yet calmed" : "Beaten " + f.beaten}</span></div>
+      <p class="b-line">${f.line}</p>
+      <dl><dt>Fears</dt><dd>${weakOf(f)}</dd><dt>Specials</dt><dd>${sp || "None"}</dd>
+        ${f.boss ? `<dt>Opens</dt><dd>The way down to the crypt</dd><dt>Gift</dt><dd>+5% speed in all skills · Health returns twice as fast</dd>` : `<dt>Leaves</dt><dd>${f.leaves.map(([, n, c]) => `${n} ${pct(c)}%`).join(" · ")}</dd>`}</dl></div></article>`; };
+  const locked = `<div class="beast is-locked">${I("lock",22)}<span>Not met yet</span><span class="num">Below the cellar</span></div>`;
+  return `<header class="hero"><span class="hero-mark">${RI.icon("book",34)}</span><div><h1>The Grimoire</h1><p class="lore">What's left of her book, and what you add to it.</p></div>
+      <div class="hero-stats"><span class="hero-stat accent"><span class="label">Insight to spend</span><b class="num">✦ 7</b></span><span class="hero-stat"><span class="label">Foes met</span><b class="num">4</b></span></div></header>
+    <div class="book"><nav class="book-index" aria-label="Grimoire contents"><span class="label">Hidden recipes</span>${rib("Dream pillow","1/3 known")}${rib("Hearth mark","0/3")}
+      <span class="label">The rest of the book</span>${rib("Grandmother's notes","6")}${rib("The Bestiary","4 met",true)}${rib("Curios","1/5")}${rib("Secrets","0/2")}</nav>
+      <article class="page"><div><span class="label">The Bestiary · the cellar</span><h2>What waits below</h2></div>
+        <div class="beasts">${["skrzat","kikimora","zmora"].map(tile).join("")}${tile("domovoi")}${locked}${locked}</div></article></div>`;
+}
+function side() {
+  const stitches = Array.from({length:10}, (_, i) => `<span class="stitch ${i < 2 ? "is-done" : i === 2 ? "is-current" : "is-ahead"}"></span>`).join("");
+  const fighting = S.state === "fight", n = fighting ? Math.min(25, F.beaten) : 23;
+  return `<aside class="shell-side">
+    <section class="panel tracker" aria-labelledby="tracker-h"><div class="panel-title"><h2 id="tracker-h" class="label" style="font-size:var(--text-lg);letter-spacing:.02em;color:var(--color-text)">Chapter II · Below</h2><span class="panel-aside num">2/10</span></div>
+      <div class="stitch-row" aria-label="2 of 10 steps done">${stitches}</div>
+      <div class="step-now"><div class="step-head"><strong>Ward off 25 Skrzats</strong><span class="meta num" id="side-n">${n}/25</span></div>
+        <span class="bar thin"><span class="bar-fill" style="--v:${n / 25}"></span></span>
+        <div class="step-head"><span class="t-2" style="font-size:var(--text-sm)">Then: calm the Domovoi</span><span class="reward num">+3 salt</span></div></div></section>
+    <section class="panel" aria-labelledby="omen-h"><div class="panel-title">${I("moon",18)}<h2 id="omen-h" style="font-size:inherit">Omens &amp; blessings</h2><span class="panel-aside num">1/2</span></div>
+      <div class="omen"><span class="omen-jars">${I("moon",22)}</span><span class="omen-what"><strong style="font-weight:500">Still Night</strong><span class="meta">×2 on one skill · 2 min</span></span><button class="btn btn-ghost btn-sm">Release</button></div>
+      ${fighting ? `<span class="label" style="display:block;margin-top:12px">Charms in use</span><ul class="ledger"><li><span class="item" data-skill="ritualism">${RI.icon("windowCharm",14)}Window charm</span><span class="n num">${F.charm} uses</span></li></ul>` : ""}
+      ${S.calmed ? `<span class="label" style="display:block;margin-top:12px">Keepsakes</span><ul class="ledger"><li><span class="item gift is-kept">The Domovoi's gift</span><span class="n">+5% speed</span></li></ul>` : ""}</section>
+    <details class="panel shelves"><summary class="panel-title">${I("lantern",18)}<h2 style="font-size:inherit">All shelves</h2><span class="panel-aside num">14 items</span></summary><p class="meta">Collapsed by default.</p></details></aside>`;
+}
+function dialog() {
+  if (S.state === "intro") {
+    const sec = (ic, h, p, extra) => `<section class="intro-sec"><span class="n">${ic}</span><h3>${h}</h3><div><p>${p}</p>${extra || ""}</div></section>`;
+    const tags = `<div class="inline-tags">${Object.keys(R).map(r => `<span class="ready" data-r="${r}">${pips(R[r][0])}${R[r][1]}</span>`).join("")}</div>`;
+    const ic = n => RI.icon(n,20);
+    return `<div class="scrim"><div class="dialog vellum" role="dialog" aria-modal="true" aria-labelledby="intro-h">
+      <div class="intro-head"><div class="intro-faces">${["skrzat","kikimora","zmora","domovoi"].map(id => POR(id, 56)).join("")}</div><span class="label">The cellar is open</span><h2 id="intro-h">Going down</h2><p class="lore">"They moved in after I stopped looking after the house. Take a candle, and bring some salt."</p></div>
+      <div class="intro-grid">
+        ${sec(ic("cellar"),"The cellar","Spirits have moved into the cellar under the kitchen. You fight them with a new skill called Warding.")}
+        ${sec(ic("speed"),"How a fight works","Pick a foe and press Begin. The fight runs on its own, one foe after another, until you press Stop.")}
+        ${sec(ic("anvil"),"Gear","You wear five pieces of gear: an amulet, something in your hand, a lantern, a garment and a belt. Gear is never used up. You make it with the Crafting skill.")}
+        ${sec(ic("sigil"),"Weakness","Every foe is afraid of one thing, like salt or iron. Wear gear with that thing on it and the fight gets much easier. You learn a foe's weakness after you beat it 10 times.")}
+        ${sec(ic("health"),"Readiness","Before you begin, the game tells you how likely you are to win, from Safe to Hopeless. Safe means you will almost never lose.", tags)}
+        ${sec(ic("button"),"Losing","If a foe beats you, you lose the remedies you used on it and what it would have dropped. You never lose gear.")}
+        ${sec(ic("moon"),"While you're away","If a fight is Safe, it keeps going while you're away.")}
+        ${sec(POR("domovoi",40),"The Domovoi","The house spirit is angry. Calm him down to open the way to the crypt. He will also make all your skills 5% faster, and your Health will come back twice as fast.")}
+      </div>
+      <div class="intro-foot"><button class="btn btn-primary" data-state="choose">Go down to the cellar</button></div></div></div>`;
+  }
+  if (S.state === "calmed") return `<div class="scrim"><div class="dialog calm" role="dialog" aria-modal="true" aria-labelledby="calm-h">
+      ${ART("domovoi","calm-art","The Domovoi by the stove")}<span class="label">Temper 0 · after 3 tries</span><h2 id="calm-h">The Domovoi is calmed</h2>
+      <p class="lore">He settles by the stove. Under his feet, a flagstone sits loose.</p>
+      <div class="gift-box"><span class="label">✦ His gift · a keepsake</span><span>+5% speed in all skills · Health returns twice as fast</span></div>
+      <p class="t-2" style="font-size:15px">The way down to the crypt is open · Chapter III</p>
+      <div class="actions"><button class="btn btn-ghost" data-close-dialog>Back to the cellar</button></div></div></div>`;
+  if (S.state === "away") return `<div class="scrim"><div class="dialog" role="dialog" aria-modal="true" aria-labelledby="away-h" data-place="cellar" style="width:min(520px,100%)">
+      <h2 id="away-h">While you were away · <span class="num">5h 12m</span></h2>
+      <ul class="away-list"><li class="is-new">${POR("skrzat",22)}<span><b style="font-weight:500">The cellar:</b> <span class="num">212 Skrzats warded off · 64 lost buttons · 9 chamomile used</span></span></li>
+        <li data-skill="chandlery">${I("chandlery",20)}<span class="num">Chandlery idle · the cellar kept you busy</span></li>
+        <li>${I("health",20)}<span>Health back to full</span></li></ul>
+      <div class="actions"><button class="btn btn-primary" data-close-dialog>Carry on</button></div></div></div>`;
+  return "";
+}
+function render() {
+  const tabs = [["house","House","house"],["grimoire","Grimoire","book"],["village","Village","lantern"],["circle","Circle","circleRite"],["cellar","Cellar","cellar"]];
+  const main = S.tab === "grimoire" ? bestiary() : cellar();
+  document.getElementById("app").innerHTML = `<nav class="review" aria-label="Mock states"><b>Mock state</b>${STATES.map(([id, l]) => `<button data-state="${id}" aria-pressed="${S.state === id}">${l}</button>`).join("")}<a href="crafting.html" style="color:#c4c8d6;margin-left:8px">Crafting window ›</a></nav>`
+    + topbar() + `<div class="shell" data-place="${S.tab}"><div class="shell-main">
+    <div class="tabs" role="tablist" aria-label="Places">${tabs.map(([id, l, ic]) => `<button class="tab" role="tab" data-tab="${id}" aria-selected="${S.tab === id}">${RI.icon(ic,18)}${l}</button>`).join("")}</div>
+    ${main}</div>${side()}</div>` + dialog();
+  schedule();
+}
+
+/* ---------- The fight, played out ---------- */
+let timer;
+function schedule() { clearTimeout(timer); if (S.state === "fight") timer = setTimeout(blow, BEAT * 1000); }
+const $ = id => document.getElementById(id);
+function pop(text, cls) {
+  const h = $("hits"); if (!h) return;
+  const s = document.createElement("span"); s.className = "hit " + cls; s.textContent = text;
+  s.style.left = (35 + Math.random() * 30) + "%"; s.style.top = (30 + Math.random() * 25) + "%";
+  h.appendChild(s); setTimeout(() => s.remove(), 1000);
+}
+function kick(el, cls) { if (!el) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
+function blow() {
+  const f = FOES.skrzat, art = document.querySelector(".art.big");
+  if (F.turn === "you") {
+    const tell = Math.random() < 0.15, v = +((5.2 + Math.random() * 2.4) * (tell ? 2 : 1)).toFixed(1);
+    F.foe = Math.max(0, +(F.foe - v).toFixed(1)); F.log.unshift(["you","You",v.toFixed(1),tell ? "tell" : ""]);
+    pop((tell ? "✶ " : "−") + v.toFixed(1), tell ? "is-telling" : "is-yours"); kick(art, tell ? "is-crit" : "is-hit");
+    if (tell) { const b = $("banner"); b.textContent = "✶ Telling blow ×2"; kick(b, "is-on"); }
+    if (F.foe <= 0) {
+      F.beaten++; F.foe = f.hp; kick(art, "is-down");
+      if (Math.random() < 0.3) { F.loot++; float($("st-loot"), "+1 lost button", "tone-item"); } else float($("foe-n"), "Warded off", "tone-good");
+    }
+    F.turn = "foe";
+  } else {
+    const v = +(1 + Math.random() * .8).toFixed(1); F.you = Math.max(1, +(F.you - v).toFixed(1)); F.log.unshift(["foe","Skrzat",v.toFixed(1),""]);
+    kick(art, "is-lunge"); kick($("you-hp"), "is-struck");
+    if (F.you < F.max * S.heal / 100 && F.rem > 0) { F.rem--; F.you = Math.min(F.max, +(F.you + 4.4).toFixed(1)); F.log.unshift(["you","You","4.4","heal"]); }
+    F.turn = "you";
+  }
+  F.log.length = Math.min(F.log.length, 6);
+  $("foe-bar").style.setProperty("--v", F.foe / f.hp); $("foe-n").innerHTML = `${F.foe}<span class="unit">/${f.hp}</span>`;
+  $("you-bar").style.setProperty("--v", F.you / F.max); $("you-n").innerHTML = `${F.you}<span class="unit">/${F.max}</span>`;
+  $("st-beaten").textContent = F.beaten; $("st-loot").textContent = F.loot; $("st-rem").textContent = F.rem;
+  $("beat-who").textContent = F.turn === "foe" ? "Skrzat" : "You"; kick($("beat-fill"), "rearm");
+  const bf = $("beat-fill"); bf.style.animation = "none"; void bf.offsetWidth; bf.style.animation = `bar-fill ${BEAT}s linear 1`;
+  $("log").innerHTML = F.log.slice(0, 4).map(logRow).join("");
+  const tb = $("tb-hp"); if (tb) { tb.style.setProperty("--v", F.foe / f.hp); $("tb-hp-n").textContent = `${F.foe}/${f.hp}`; }
+  const sn = $("side-n"); if (sn) sn.textContent = Math.min(25, F.beaten) + "/25";
+  schedule();
+}
+function float(el, text, tone) {
+  if (!el) return; const b = el.getBoundingClientRect();
+  const fl = document.createElement("span"); fl.className = `float ${tone}`; fl.textContent = text;
+  fl.style.left = b.left + b.width / 2 + "px"; fl.style.top = b.top + "px";
+  $("floats").appendChild(fl); setTimeout(() => fl.remove(), 1200);
+}
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-gsel],[data-you],[data-state],[data-foe],[data-slot],[data-pick],[data-close-picker],[data-presets],[data-heal],[data-begin],[data-stop],[data-tab],[data-close-dialog]");
+  if (!t) { if (S.picker || S.presets) { S.picker = null; S.presets = false; render(); } return; }
+  const d = t.dataset;
+  if (d.gsel) { S.gsel = d.gsel; S.picker = null; return render(); }
+  if (d.you) { S.youTab = d.you; S.picker = null; return render(); }
+  if (d.state) return setState(d.state);
+  if (d.foe) { S.foe = d.foe; S.picker = null; if (["stopped","driven","picker"].includes(S.state)) S.state = "choose"; if (d.foe === "domovoi" && S.state !== "calmed") S.state = "boss"; else if (S.state === "boss") S.state = "choose"; }
+  else if (d.slot) { S.youTab = "gear"; if (SLOTS.some(s => s[0] === d.slot)) S.gsel = d.slot; S.picker = S.picker === d.slot ? null : d.slot; }
+  else if (d.pick) { const [k, id] = d.pick.split(":"); S.G[k] = id; S.picker = null; }
+  else if ("closePicker" in d) S.picker = null;
+  else if ("presets" in d) S.presets = !S.presets;
+  else if (d.heal) S.heal = Math.min(80, Math.max(10, S.heal + +d.heal));
+  else if ("begin" in d) return setState("fight");
+  else if ("stop" in d) return setState("stopped");
+  else if (d.tab) { if (d.tab === "cellar") return setState(S.state === "bestiary" ? "choose" : S.state); if (d.tab === "grimoire") return setState("bestiary"); location.href = "places.html"; return; }
+  else if ("closeDialog" in d) { S.calmed = S.state === "calmed"; S.state = "choose"; }
+  render();
+});
+const start = location.hash.slice(1);
+setState(STATES.some(s => s[0] === start) ? start : "choose");
+</script>
+</body>
+</html>
