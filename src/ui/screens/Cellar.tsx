@@ -1053,18 +1053,15 @@ function Spoils({ state, foe, loot }: { state: GameState; foe: FoeId; loot: Part
           const n = id === "curio" ? 0 : loot[id as ItemId] ?? 0;
           const chance = Math.min(100, l.chance * m.loot * combatStats(state).loot * 100);
           return (
-            <li key={id} className={`spoil ${n > 0 ? "has" : ""} ${fresh.includes(id) ? "is-new" : ""}`}>
-              <span className="spoil-ic" aria-hidden="true">
-                {id === "curio" ? <CellarIcon glyph="button" size={26} /> : <ItemIcon item={id as ItemId} size={26} />}
-              </span>
-              <span className="spoil-name">
-                {id === "curio" ? "Curio" : ITEMS[id as ItemId].name}
-                <span className="t-2 num">
-                  {chance < 1 ? chance.toFixed(1) : Math.round(chance)}% a foe{id !== "curio" ? ` · you hold ${state.inventory[id as ItemId] ?? 0}` : ""}
+            <Tip key={id} content={{ title: id === "curio" ? "Curio" : ITEMS[id as ItemId].name, rows: [["Chance a foe", `${chance < 1 ? chance.toFixed(1) : Math.round(chance)}%`], ...(id !== "curio" ? ([["You hold", String(state.inventory[id as ItemId] ?? 0)]] as [string, string][]) : [])] }}>
+              <li className={`spoil ${n > 0 ? "has" : ""} ${fresh.includes(id) ? "is-new" : ""}`} tabIndex={0}>
+                <span className="spoil-ic" aria-hidden="true">
+                  {id === "curio" ? <CellarIcon glyph="button" size={26} /> : <ItemIcon item={id as ItemId} size={26} />}
                 </span>
-              </span>
-              {id !== "curio" && <b className="spoil-n num">+{n}</b>}
-            </li>
+                <span className="spoil-name">{id === "curio" ? "Curio" : ITEMS[id as ItemId].name}</span>
+                {id !== "curio" && <b className="spoil-n num">+{n}</b>}
+              </li>
+            </Tip>
           );
         })}
       </ul>
